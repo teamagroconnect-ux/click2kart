@@ -10,6 +10,13 @@ export default function UserLayout() {
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
   const { cartCount } = useCart()
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    window.location.reload()
+  }
 
   useEffect(() => {
     setMobileOpen(false)
@@ -78,18 +85,35 @@ export default function UserLayout() {
                 )}
               </Link>
               <div className="hidden sm:flex items-center gap-2">
-                <Link
-                  to="/login"
-                  className="px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-900 transition-colors"
-                >
-                  Login
-                </Link>
-                <Link
-                  to="/signup"
-                  className="px-8 py-3 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-gray-200 hover:bg-gray-800 transition-all active:scale-95"
-                >
-                  Join Now
-                </Link>
+                {user ? (
+                  <div className="flex items-center gap-4">
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] font-black uppercase text-gray-900 leading-none">{user.name}</span>
+                      <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">Business Account</span>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="px-6 py-3 rounded-2xl bg-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <Link
+                      to="/login"
+                      className="px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-900 transition-colors"
+                    >
+                      Login
+                    </Link>
+                    <Link
+                      to="/signup"
+                      className="px-8 py-3 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-gray-200 hover:bg-gray-800 transition-all active:scale-95"
+                    >
+                      Join Now
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -119,8 +143,19 @@ export default function UserLayout() {
                 ))}
               </nav>
               <div className="flex gap-4 pt-4">
-                <Link to="/login" className="flex-1 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center border border-gray-100">Login</Link>
-                <Link to="/signup" className="flex-1 px-6 py-4 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest text-center shadow-xl">Join Now</Link>
+                {user ? (
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-6 py-4 rounded-2xl bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest text-center shadow-xl shadow-red-100"
+                  >
+                    Logout ({user.name})
+                  </button>
+                ) : (
+                  <>
+                    <Link to="/login" className="flex-1 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center border border-gray-100">Login</Link>
+                    <Link to="/signup" className="flex-1 px-6 py-4 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest text-center shadow-xl">Join Now</Link>
+                  </>
+                )}
               </div>
             </div>
           )}

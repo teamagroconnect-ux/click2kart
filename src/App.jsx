@@ -19,6 +19,8 @@ import Partner from './pages/user/Partner.jsx'
 import UserLayout from './components/UserLayout.jsx'
 import UserLogin from './pages/user/Login.jsx'
 import UserSignup from './pages/user/Signup.jsx'
+import ForgotPassword from './pages/user/ForgotPassword.jsx'
+import ResetPassword from './pages/user/ResetPassword.jsx'
 import OrderHistory from './pages/user/OrderHistory.jsx'
 import Cart from './pages/user/Cart.jsx'
 
@@ -53,6 +55,8 @@ export default function App() {
         <Route path="partner" element={<Partner />} />
         <Route path="login" element={<UserLogin />} />
         <Route path="signup" element={<UserSignup />} />
+        <Route path="forgot-password" element={<ForgotPassword />} />
+        <Route path="reset-password" element={<ResetPassword />} />
         <Route path="orders" element={<OrderHistory />} />
         <Route path="cart" element={<Cart />} />
       </Route>

@@ -6,21 +6,22 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'
 
 export default function Partner() {
   const [code, setCode] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
   const [data, setData] = useState(null)
 
   const fetchSummary = async (e) => {
     e.preventDefault()
-    if (!code) return
+    if (!code || !password) return
     setLoading(true)
-    setError('')
+    setError(null)
     setData(null)
     try {
-      const { data } = await api.get(`/api/partners/summary/${code}`)
+      const { data } = await api.post(`/api/public/partner/summary/${code}`, { password })
       setData(data)
-    } catch (e) {
-      setError('Could not find details for this coupon. Please check the code.')
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Failed to fetch summary')
     } finally {
       setLoading(false)
     }
@@ -39,21 +40,29 @@ export default function Partner() {
             </div>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight">Partner Dashboard</h1>
             <p className="text-sm text-gray-500 font-medium max-w-xl">
-              Track your referral performance, view commission earnings by category, and manage your payouts in real-time.
+              Enter your referral credentials to track your performance and earnings in real-time.
             </p>
           </div>
           
-          <form onSubmit={fetchSummary} className="flex items-center bg-gray-50 p-1.5 rounded-3xl border border-gray-100 shadow-inner group focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+          <form onSubmit={fetchSummary} className="flex flex-col sm:flex-row items-center bg-gray-50 p-2 rounded-[2rem] border border-gray-100 shadow-inner group focus-within:ring-2 focus-within:ring-blue-500/20 transition-all gap-2">
             <input
-              className="bg-transparent border-none rounded-2xl px-5 py-3 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none min-w-[240px]"
-              placeholder="Enter Coupon Code..."
+              className="bg-transparent border-none px-5 py-3 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none min-w-[180px]"
+              placeholder="Coupon Code..."
               value={code}
               onChange={e=>setCode(e.target.value)}
             />
+            <div className="h-8 w-[1px] bg-gray-200 hidden sm:block"></div>
+            <input
+              type="password"
+              className="bg-transparent border-none px-5 py-3 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none min-w-[180px]"
+              placeholder="Partner Password..."
+              value={password}
+              onChange={e=>setPassword(e.target.value)}
+            />
             <button
               type="submit"
-              className="px-8 py-3 bg-gray-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-gray-800 transition-all disabled:opacity-30 active:scale-95"
-              disabled={!code || loading}
+              className="px-8 py-3 bg-gray-900 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-lg hover:bg-gray-800 transition-all disabled:opacity-30 active:scale-95 whitespace-nowrap"
+              disabled={!code || !password || loading}
             >
               {loading ? 'Verifying...' : 'Access Portal'}
             </button>
@@ -64,7 +73,7 @@ export default function Partner() {
           <div className="bg-red-50 border border-red-100 text-red-600 text-xs font-bold px-6 py-4 rounded-[2rem] animate-in zoom-in-95">
             <div className="flex items-center gap-2">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-              {error === 'not_found' ? 'Invalid coupon code. Please check and try again.' : error}
+              {error === 'not_found' ? 'Invalid coupon code.' : error === 'invalid_password' ? 'Incorrect partner password.' : error}
             </div>
           </div>
         )}

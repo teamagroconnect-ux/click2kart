@@ -6,7 +6,7 @@ export default function Coupons(){
   const [expandedId, setExpandedId] = useState(null)
   const [form, setForm] = useState({
     code:'', type:'PERCENT', value:'', minAmount:'', expiryDate:'', usageLimit:'',
-    partnerId:'', partnerCommissionPercent:'', maxTotalSales:'', isActive:true
+    partnerId:'', partnerCommissionPercent:'', maxTotalSales:'', isActive:true, password:''
   })
   const [partners, setPartners] = useState([])
   const [newPartner, setNewPartner] = useState({ name:'', email:'', phone:'' })
@@ -19,10 +19,11 @@ export default function Coupons(){
     minAmount: form.minAmount? Number(form.minAmount): undefined,
     usageLimit: form.usageLimit? Number(form.usageLimit): undefined,
     partnerCommissionPercent: form.partnerCommissionPercent ? Number(form.partnerCommissionPercent) : undefined,
-    maxTotalSales: form.maxTotalSales ? Number(form.maxTotalSales) : undefined
+    maxTotalSales: form.maxTotalSales ? Number(form.maxTotalSales) : undefined,
+    password: form.password ? String(form.password).trim() : undefined
   }); setForm({
     code:'', type:'PERCENT', value:'', minAmount:'', expiryDate:'', usageLimit:'',
-    partnerId:'', partnerCommissionPercent:'', maxTotalSales:'', isActive:true
+    partnerId:'', partnerCommissionPercent:'', maxTotalSales:'', isActive:true, password:''
   }); load() }
   const disable = async (c)=>{ await api.delete(`/api/coupons/${c._id}`); load() }
   const createPartner = async (e)=> {
@@ -97,6 +98,10 @@ export default function Coupons(){
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Sales Cap</label>
                       <input className="w-full bg-blue-50/50 border-none rounded-2xl px-4 py-3 text-sm font-bold text-blue-700 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50000" value={form.maxTotalSales} onChange={e=>setForm({...form, maxTotalSales:e.target.value})} />
+                    </div>
+                    <div className="col-span-2 space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Partner Portal Password</label>
+                      <input className="w-full bg-emerald-50/50 border-none rounded-2xl px-4 py-3 text-sm font-bold text-emerald-700 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Set password for partner access" value={form.password} onChange={e=>setForm({...form, password:e.target.value})} />
                     </div>
                   </div>
                 )}
@@ -178,6 +183,12 @@ export default function Coupons(){
                               <span className="text-[10px] font-bold text-blue-600 uppercase">Comm.</span>
                               <span className="text-xs font-black text-blue-900">{c.partnerCommissionPercent}%</span>
                             </div>
+                            {c.password && (
+                              <div className="flex justify-between">
+                                <span className="text-[10px] font-bold text-emerald-600 uppercase">Portal Pass</span>
+                                <span className="text-xs font-black text-emerald-900">{c.password}</span>
+                              </div>
+                            )}
                             {c.maxTotalSales > 0 && (
                               <div className="pt-2 border-t border-blue-100">
                                 <div className="text-[9px] font-bold text-blue-400 uppercase mb-1">Sales Cap Progress</div>

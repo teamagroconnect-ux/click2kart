@@ -1,56 +1,95 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import api from '../../lib/api'
+import { useToast } from '../../components/Toast'
 
 export default function Login() {
-  const [phone, setPhone] = useState('')
+  const { notify } = useToast()
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  })
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (phone.length < 10) return alert('Please enter a valid phone number')
-    localStorage.setItem('userPhone', phone)
-    navigate('/orders')
+    setLoading(true)
+    try {
+      const { data } = await api.post('/api/auth/customer/login', formData)
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      notify('Welcome back!', 'success')
+      navigate('/')
+    } catch (err) {
+      notify(err?.response?.data?.error || 'Invalid email or password', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-        <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
-            Login to your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link to="/signup" className="font-medium text-blue-600 hover:text-blue-500">
-              create a new account
-            </Link>
-          </p>
+    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-gray-50">
+      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-3xl bg-blue-600 text-white text-2xl font-black shadow-xl shadow-blue-100 mb-4">
+            C2K
+          </div>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight">Welcome Back</h2>
+          <p className="text-sm text-gray-500 font-medium">Access your B2B dashboard and inventory.</p>
         </div>
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="phone" className="sr-only">Phone Number</label>
+          <div className="space-y-4">
+            <div className="group">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Email Address</label>
               <input
-                id="phone"
-                name="phone"
-                type="tel"
+                name="email"
+                type="email"
                 required
-                className="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-                placeholder="Phone Number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                placeholder="john@business.com"
+                value={formData.email}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="group">
+              <div className="flex items-center justify-between ml-1 mb-1">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block">Password</label>
+                <Link to="/forgot-password" size="sm" className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700">
+                  Forgot?
+                </Link>
+              </div>
+              <input
+                name="password"
+                type="password"
+                required
+                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
               />
             </div>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              Sign in
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+          >
+            {loading ? 'Authenticating...' : 'Sign In'}
+          </button>
+
+          <p className="text-center text-xs text-gray-400 font-bold mt-6 uppercase tracking-widest">
+            New to Click2Kart?{' '}
+            <Link to="/signup" className="text-blue-600 hover:text-blue-700">
+              Create Account
+            </Link>
+          </p>
         </form>
       </div>
     </div>

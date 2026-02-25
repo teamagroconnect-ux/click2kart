@@ -1,17 +1,52 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import api from '../../lib/api'
+import { useToast } from '../../components/Toast'
 
 export default function Signup() {
+  const { notify } = useToast()
+  const navigate = useNavigate()
+  const [step, setStep] = useState(1) // 1: Details, 2: OTP
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    email: ''
+    email: '',
+    password: ''
   })
+  const [otp, setOtp] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSendOTP = async (e) => {
     e.preventDefault()
-    // TODO: Implement signup logic
-    alert('Signup functionality coming soon!')
+    setLoading(true)
+    try {
+      await api.post('/api/auth/customer/signup', formData)
+      notify('OTP sent to your email', 'success')
+      setStep(2)
+    } catch (err) {
+      notify(err?.response?.data?.error || 'Failed to send OTP', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleVerifyOTP = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const { data } = await api.post('/api/auth/customer/verify-otp', {
+        email: formData.email,
+        otp
+      })
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      notify('Account created successfully!', 'success')
+      navigate('/')
+    } catch (err) {
+      notify(err?.response?.data?.error || 'Invalid OTP', 'error')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleChange = (e) => {
@@ -19,68 +54,125 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-        <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
-            Create an account
+    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-gray-50">
+      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-3xl bg-blue-600 text-white text-2xl font-black shadow-xl shadow-blue-100 mb-4">
+            C2K
+          </div>
+          <h2 className="text-3xl font-black text-gray-900 tracking-tight">
+            {step === 1 ? 'Create Business Account' : 'Verify Email'}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              login to your existing account
-            </Link>
+          <p className="text-sm text-gray-500 font-medium">
+            {step === 1 
+              ? 'Join 500+ businesses sourcing premium tech.' 
+              : `We've sent a 6-digit code to ${formData.email}`}
           </p>
         </div>
-        <form className="mt-8 space-y-4" onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="name" className="sr-only">Full Name</label>
-            <input
-              id="name"
-              name="name"
-              type="text"
-              required
-              className="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-              placeholder="Full Name"
-              value={formData.name}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label htmlFor="phone" className="sr-only">Phone Number</label>
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              required
-              className="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-              placeholder="Phone Number"
-              value={formData.phone}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="sr-only">Email Address</label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              className="appearance-none rounded-md relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
-              placeholder="Email Address (Optional)"
-              value={formData.email}
-              onChange={handleChange}
-            />
-          </div>
 
-          <div className="pt-2">
+        {step === 1 ? (
+          <form className="mt-8 space-y-5" onSubmit={handleSendOTP}>
+            <div className="space-y-4">
+              <div className="group">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Full Name</label>
+                <input
+                  name="name"
+                  type="text"
+                  required
+                  className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="John Doe"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="group">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Email Address</label>
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="john@business.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="group">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Phone Number (Mandatory)</label>
+                <input
+                  name="phone"
+                  type="tel"
+                  required
+                  className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="+91 98765 43210"
+                  value={formData.phone}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="group">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Create Password</label>
+                <input
+                  name="password"
+                  type="password"
+                  required
+                  minLength={6}
+                  className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
             >
-              Sign up
+              {loading ? 'Sending OTP...' : 'Send Verification Code'}
             </button>
-          </div>
-        </form>
+
+            <p className="text-center text-xs text-gray-400 font-bold mt-6 uppercase tracking-widest">
+              Already have an account?{' '}
+              <Link to="/login" className="text-blue-600 hover:text-blue-700">
+                Login
+              </Link>
+            </p>
+          </form>
+        ) : (
+          <form className="mt-8 space-y-6" onSubmit={handleVerifyOTP}>
+            <div className="group text-center">
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 block">Enter 6-Digit OTP</label>
+              <input
+                type="text"
+                required
+                maxLength={6}
+                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-6 text-3xl font-black text-center text-gray-900 tracking-[0.5em] placeholder-gray-300 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                placeholder="000000"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || otp.length < 6}
+              className="w-full bg-blue-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+            >
+              {loading ? 'Verifying...' : 'Complete Registration'}
+            </button>
+
+            <div className="flex flex-col gap-4 text-center">
+              <button 
+                type="button"
+                onClick={() => setStep(1)}
+                className="text-xs text-gray-400 font-bold uppercase tracking-widest hover:text-gray-600"
+              >
+                Change Details
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     </div>
   )
