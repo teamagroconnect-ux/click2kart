@@ -62,11 +62,10 @@ export default function Billing(){
       const { data } = await api.post('/api/bills', payload)
       notify('Bill generated','success')
       
-      // Fetch PDF with token and open
-      const response = await api.get(`/api/bills/${data._id}/pdf`, { responseType: 'blob' })
-      const file = new Blob([response.data], { type: 'application/pdf' })
-      const fileURL = URL.createObjectURL(file)
-      window.open(fileURL, '_blank')
+      // Open PDF with token in URL
+      const token = localStorage.getItem('token')
+      const pdfUrl = `${api.defaults.baseURL}/api/bills/${data._id}/pdf?token=${token}`
+      window.open(pdfUrl, '_blank')
 
       setSelected([]); setCouponCode(''); setCouponInfo(null)
     } catch (err) {

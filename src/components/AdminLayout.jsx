@@ -192,13 +192,13 @@ export default function AdminLayout() {
               />
             </svg>
           </button>
-          <div className="inline-flex items-center gap-2">
-            <span className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center text-xs font-semibold text-white">
+          <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-900 rounded-lg shadow-sm border border-gray-800">
+            <span className="h-6 w-6 rounded-md bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white shadow-inner">
               C2K
             </span>
             <div className="leading-tight">
-              <div className="text-sm font-semibold tracking-tight text-gray-900">Click2Kart Admin</div>
-              <div className="text-[10px] text-gray-500">Inventory & billing cockpit</div>
+              <div className="text-xs font-bold tracking-wider text-white uppercase">Click2Kart Admin</div>
+              <div className="text-[8px] text-gray-400 font-medium uppercase tracking-widest">Control Panel</div>
             </div>
           </div>
         </div>

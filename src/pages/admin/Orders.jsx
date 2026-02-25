@@ -83,6 +83,21 @@ export default function Orders(){
                       <span className={`px-2 py-0.5 rounded-full text-[10px] ${badgeClass}`}>
                         {o.status}
                       </span>
+                      {o.billId && (
+                        <button
+                          onClick={() => {
+                            const token = localStorage.getItem('token')
+                            const pdfUrl = `${api.defaults.baseURL}/api/bills/${o.billId}/pdf?token=${token}`
+                            window.open(pdfUrl, '_blank')
+                          }}
+                          className="text-[11px] text-emerald-600 hover:text-emerald-500 font-bold flex items-center gap-1"
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                          </svg>
+                          View Bill
+                        </button>
+                      )}
                       <button
                         onClick={() => toggle(o._id)}
                         className="text-[11px] text-blue-600 hover:text-blue-500"
