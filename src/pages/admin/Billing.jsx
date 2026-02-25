@@ -65,72 +65,188 @@ export default function Billing(){
   }
 
   return (
-    <div className="grid grid-cols-3 gap-6">
-      <div className="col-span-2 space-y-4">
-        <div className="flex items-center gap-2"><input className="border p-2 flex-1" placeholder="Search products" value={q} onChange={e=>setQ(e.target.value)} /></div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {!loading && products.map(p => (
-            <div key={p._id} className="bg-white border rounded p-3">
-              <div className="font-medium text-sm mb-1">{p.name}</div>
-              <div className="text-xs text-gray-600">₹{p.price} • {p.stock} in stock</div>
-              <button onClick={()=>addItem(p)} className="mt-2 w-full bg-blue-600 text-white py-1 rounded">Add</button>
-            </div>
-          ))}
-          {loading && Array.from({length:8}).map((_,i)=> (
-            <div key={i} className="bg-white border rounded p-3 animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-2/3 mb-2"/>
-              <div className="h-3 bg-gray-200 rounded w-1/2"/>
-              <div className="mt-2 h-8 bg-gray-200 rounded"/>
-            </div>
-          ))}
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-5 md:gap-6">
+      <div className="space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-semibold text-slate-50">Billing</h1>
+            <p className="text-[11px] text-slate-400">
+              Build a cart and generate GST bills for in‑store or online customers.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              className="border border-slate-700 bg-slate-900/70 text-slate-50 text-sm rounded-lg px-3 py-2 w-56"
+              placeholder="Search products"
+              value={q}
+              onChange={e => setQ(e.target.value)}
+            />
+          </div>
         </div>
-        <div className="flex justify-between p-2">
-          <div>Page {page} of {Math.max(1, Math.ceil(total/limit))}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+          {!loading &&
+            products.map(p => (
+              <div
+                key={p._id}
+                className="bg-slate-900/70 border border-slate-800 rounded-xl p-3 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="font-medium text-xs md:text-sm text-slate-50 mb-1 line-clamp-2">
+                    {p.name}
+                  </div>
+                  <div className="text-[11px] text-slate-400">
+                    ₹{p.price} • {p.stock} in stock
+                  </div>
+                </div>
+                <button
+                  onClick={() => addItem(p)}
+                  className="mt-2 w-full bg-blue-600 hover:bg-blue-500 text-white py-1.5 rounded-lg text-xs font-semibold"
+                >
+                  Add to cart
+                </button>
+              </div>
+            ))}
+          {loading &&
+            Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-slate-900/70 border border-slate-800 rounded-xl p-3 animate-pulse"
+              >
+                <div className="h-4 bg-slate-800 rounded w-2/3 mb-2" />
+                <div className="h-3 bg-slate-800 rounded w-1/2" />
+                <div className="mt-2 h-8 bg-slate-800 rounded" />
+              </div>
+            ))}
+        </div>
+        <div className="flex justify-between items-center text-[11px] text-slate-400">
+          <div>
+            Page {page} of {Math.max(1, Math.ceil(total / limit))}
+          </div>
           <div className="space-x-2">
-            <button onClick={()=>load(Math.max(1, page-1))} className="px-2 py-1 border rounded" disabled={page===1}>Prev</button>
-            <button onClick={()=>load(page+1)} className="px-2 py-1 border rounded" disabled={page*limit>=total}>Next</button>
+            <button
+              onClick={() => load(Math.max(1, page - 1))}
+              className="px-2 py-1 border border-slate-700 rounded-md hover:bg-slate-800 disabled:opacity-40"
+              disabled={page === 1}
+            >
+              Prev
+            </button>
+            <button
+              onClick={() => load(page + 1)}
+              className="px-2 py-1 border border-slate-700 rounded-md hover:bg-slate-800 disabled:opacity-40"
+              disabled={page * limit >= total}
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>
+
       <div className="space-y-4">
-        <div className="bg-white border rounded p-4 space-y-2">
-          <div className="font-semibold">Customer</div>
-          <input className="border p-2 w-full" placeholder="Name" value={customer.name} onChange={e=>setCustomer({...customer, name:e.target.value})} />
-          <input className="border p-2 w-full" placeholder="Phone" value={customer.phone} onChange={e=>setCustomer({...customer, phone:e.target.value})} />
-          <input className="border p-2 w-full" placeholder="Email" value={customer.email} onChange={e=>setCustomer({...customer, email:e.target.value})} />
-          <input className="border p-2 w-full" placeholder="Address" value={customer.address} onChange={e=>setCustomer({...customer, address:e.target.value})} />
+        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
+          <div className="font-semibold text-slate-50 text-sm">Customer</div>
+          <input
+            className="border border-slate-700 bg-slate-950/40 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
+            placeholder="Name"
+            value={customer.name}
+            onChange={e => setCustomer({ ...customer, name: e.target.value })}
+          />
+          <input
+            className="border border-slate-700 bg-slate-950/40 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
+            placeholder="Phone"
+            value={customer.phone}
+            onChange={e => setCustomer({ ...customer, phone: e.target.value })}
+          />
+          <input
+            className="border border-slate-700 bg-slate-950/40 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
+            placeholder="Email"
+            value={customer.email}
+            onChange={e => setCustomer({ ...customer, email: e.target.value })}
+          />
+          <input
+            className="border border-slate-700 bg-slate-950/40 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
+            placeholder="Address"
+            value={customer.address}
+            onChange={e => setCustomer({ ...customer, address: e.target.value })}
+          />
         </div>
-        <div className="bg-white border rounded p-4 space-y-2">
-          <div className="font-semibold">Cart</div>
+
+        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
+          <div className="font-semibold text-slate-50 text-sm">Cart</div>
           {selected.map(it => (
             <div key={it.productId} className="flex items-center justify-between gap-2">
-              <div className="text-sm flex-1">{it.name}</div>
-              <input type="number" min="1" className="border w-16 p-1" value={it.quantity} onChange={e=>updateQty(it.productId, Number(e.target.value))} />
-              <button onClick={()=>removeItem(it.productId)} className="text-red-600 text-sm">Remove</button>
+              <div className="text-xs md:text-sm flex-1 text-slate-50 truncate">{it.name}</div>
+              <input
+                type="number"
+                min="1"
+                className="border border-slate-700 bg-slate-950/60 text-slate-50 text-xs rounded-lg w-16 px-2 py-1"
+                value={it.quantity}
+                onChange={e => updateQty(it.productId, Number(e.target.value))}
+              />
+              <button
+                onClick={() => removeItem(it.productId)}
+                className="text-red-400 text-[11px] hover:text-red-300"
+              >
+                Remove
+              </button>
             </div>
           ))}
-          {selected.length===0 && <div className="text-sm text-gray-500">No items</div>}
+          {selected.length === 0 && (
+            <div className="text-xs text-slate-500">No items in cart yet.</div>
+          )}
         </div>
-        <div className="bg-white border rounded p-4 space-y-2">
+
+        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2 text-sm text-slate-50">
           <div className="flex gap-2">
-            <input className="border p-2 flex-1" placeholder="Coupon code" value={couponCode} onChange={e=>setCouponCode(e.target.value)} />
-            <button onClick={applyCoupon} className="px-3 bg-gray-800 text-white rounded">Apply</button>
+            <input
+              className="border border-slate-700 bg-slate-950/60 text-slate-50 text-sm rounded-lg px-3 py-2 flex-1"
+              placeholder="Coupon code"
+              value={couponCode}
+              onChange={e => setCouponCode(e.target.value)}
+            />
+            <button
+              onClick={applyCoupon}
+              className="px-3 bg-slate-100 text-slate-900 rounded-lg text-xs font-semibold hover:bg-white"
+            >
+              Apply
+            </button>
           </div>
-          <div className="text-sm">Subtotal: ₹{totals.subtotal.toFixed(2)}</div>
-          <div className="text-sm">GST: ₹{totals.gstTotal.toFixed(2)}</div>
-          <div className="text-sm">Total: ₹{totals.total.toFixed(2)}</div>
-          {totals.discount>0 && <div className="text-sm">Discount: -₹{totals.discount.toFixed(2)}</div>}
-          <div className="text-sm">
-            Payment type:
-            <select className="border p-1 ml-2 text-xs" value={paymentType} onChange={e=>setPaymentType(e.target.value)}>
+          <div className="text-xs text-slate-400">
+            Subtotal: <span className="text-slate-100">₹{totals.subtotal.toFixed(2)}</span>
+          </div>
+          <div className="text-xs text-slate-400">
+            GST: <span className="text-slate-100">₹{totals.gstTotal.toFixed(2)}</span>
+          </div>
+          <div className="text-xs text-slate-400">
+            Total: <span className="text-slate-100">₹{totals.total.toFixed(2)}</span>
+          </div>
+          {totals.discount > 0 && (
+            <div className="text-xs text-emerald-300">
+              Discount: -₹{totals.discount.toFixed(2)}
+            </div>
+          )}
+          <div className="text-xs text-slate-400 flex items-center justify-between pt-1">
+            <span>Payment type</span>
+            <select
+              className="border border-slate-700 bg-slate-950/60 text-slate-50 text-xs rounded-lg px-2 py-1"
+              value={paymentType}
+              onChange={e => setPaymentType(e.target.value)}
+            >
               <option value="CASH">Cash</option>
               <option value="CARD">Card</option>
               <option value="UPI">UPI</option>
               <option value="ONLINE">Online</option>
             </select>
           </div>
-          <div className="font-semibold">Payable: ₹{totals.payable.toFixed(2)}</div>
-          <button disabled={selected.length===0 || !customer.name || !customer.phone} onClick={submit} className="w-full bg-green-600 text-white py-2 rounded disabled:opacity-50">Generate Bill</button>
+          <div className="font-semibold text-sm pt-1">
+            Payable: <span className="text-emerald-300">₹{totals.payable.toFixed(2)}</span>
+          </div>
+          <button
+            disabled={selected.length === 0 || !customer.name || !customer.phone}
+            onClick={submit}
+            className="mt-1 w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Generate bill & PDF
+          </button>
         </div>
       </div>
     </div>
