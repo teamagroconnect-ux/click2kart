@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { Fragment, useEffect, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
@@ -86,7 +86,7 @@ export default function Partners() {
                 </tr>
               ) : (
                 items.map(p => (
-                  <React.Fragment key={p.couponId}>
+                  <Fragment key={p.couponId}>
                     <tr 
                       className="group hover:bg-gray-50/50 transition-colors cursor-pointer"
                       onClick={() => setViewingPartner(p)}
@@ -125,7 +125,7 @@ export default function Partners() {
                         </td>
                       </tr>
                     )}
-                  </React.Fragment>
+                  </Fragment>
                 ))
               )}
             </tbody>

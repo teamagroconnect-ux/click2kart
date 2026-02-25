@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { Fragment, useEffect, useState } from 'react'
 import api from '../../lib/api'
 
 export default function Orders(){
@@ -78,7 +78,7 @@ export default function Orders(){
                     NEW: 'bg-amber-50 text-amber-700 border-amber-100'
                   };
                   return (
-                    <React.Fragment key={o._id}>
+                    <Fragment key={o._id}>
                       <tr 
                         className={`group hover:bg-gray-50/50 transition-all cursor-pointer ${isExpanded ? 'bg-gray-50/80' : ''}`}
                         onClick={() => toggle(o._id)}
@@ -171,7 +171,7 @@ export default function Orders(){
                           </td>
                         </tr>
                       )}
-                    </React.Fragment>
+                    </Fragment>
                   );
                 })
               )}

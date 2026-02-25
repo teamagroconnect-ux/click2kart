@@ -1,5 +1,5 @@
+import React, { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
 
 const Icon = ({ name }) => (
   <span className="inline-block w-4 h-4 mr-2 align-middle">
