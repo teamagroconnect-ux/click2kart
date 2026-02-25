@@ -72,17 +72,6 @@ export default function UserLayout() {
                 >
                   Products
                 </NavLink>
-                <NavLink
-                  to="/partner"
-                  className={({ isActive }) =>
-                    classNames(
-                      'px-2 py-1 rounded-md hover:bg-gray-100',
-                      isActive && 'text-blue-600 font-medium'
-                    )
-                  }
-                >
-                  Partner
-                </NavLink>
               </nav>
             </div>
 
@@ -150,17 +139,6 @@ export default function UserLayout() {
                 >
                   Products
                 </NavLink>
-                <NavLink
-                  to="/partner"
-                  className={({ isActive }) =>
-                    classNames(
-                      'px-2 py-1.5 rounded-md',
-                      isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-100'
-                    )
-                  }
-                >
-                  Partner
-                </NavLink>
                 <div className="flex gap-2 pt-2">
                   <Link
                     to="/login"
@@ -181,11 +159,134 @@ export default function UserLayout() {
         </div>
       </header>
 
-      <main className="flex-1 min-h-0">
+      <main className="flex-1 min-h-0 pb-14 md:pb-0">
         <Outlet />
       </main>
 
-      <footer className="border-t bg-white">
+      {/* Mobile bottom nav */}
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-white/95 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between text-[11px] text-gray-600">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              classNames(
+                'flex flex-col items-center justify-center flex-1 h-full',
+                isActive && 'text-blue-600'
+              )
+            }
+          >
+            <svg className="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5.5h-5V21H5a1 1 0 0 1-1-1v-9.5Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            <span>Home</span>
+          </NavLink>
+          <NavLink
+            to="/products"
+            className={({ isActive }) =>
+              classNames(
+                'flex flex-col items-center justify-center flex-1 h-full',
+                isActive && 'text-blue-600'
+              )
+            }
+          >
+            <svg className="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none">
+              <rect
+                x="4"
+                y="4"
+                width="6"
+                height="7"
+                rx="1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <rect
+                x="14"
+                y="4"
+                width="6"
+                height="7"
+                rx="1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <rect
+                x="4"
+                y="14"
+                width="6"
+                height="6"
+                rx="1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <rect
+                x="14"
+                y="14"
+                width="6"
+                height="6"
+                rx="1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+            </svg>
+            <span>Browse</span>
+          </NavLink>
+          <NavLink
+            to="/order"
+            className={({ isActive }) =>
+              classNames(
+                'flex flex-col items-center justify-center flex-1 h-full',
+                isActive && 'text-blue-600'
+              )
+            }
+          >
+            <svg className="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none">
+              <path
+                d="M6 6h13l-1.2 7H8.2L6 6Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <circle cx="10" cy="19" r="1.3" fill="currentColor" />
+              <circle cx="17" cy="19" r="1.3" fill="currentColor" />
+            </svg>
+            <span>Order</span>
+          </NavLink>
+          <NavLink
+            to="/login"
+            className={({ isActive }) =>
+              classNames(
+                'flex flex-col items-center justify-center flex-1 h-full',
+                isActive && 'text-blue-600'
+              )
+            }
+          >
+            <svg className="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none">
+              <circle
+                cx="12"
+                cy="8"
+                r="3.25"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M6 19.5c.8-2.1 3-3.5 6-3.5s5.2 1.4 6 3.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+            <span>Account</span>
+          </NavLink>
+        </div>
+      </nav>
+
+      <footer className="hidden md:block border-t bg-white">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <div className="text-[11px] text-gray-500">
             © {new Date().getFullYear()} Click2Kart. All rights reserved.
