@@ -16,317 +16,167 @@ export default function UserLayout() {
   }, [location.pathname])
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="sticky top-0 z-30 border-b bg-white/90 backdrop-blur">
-        <div className="max-w-6xl mx-auto px-3 md:px-4">
-          <div className="flex items-center justify-between h-14 gap-3">
-            <div className="flex items-center gap-2">
+    <div className="min-h-screen flex flex-col bg-white">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 md:px-10">
+          <div className="flex items-center justify-between h-20 gap-8">
+            <div className="flex items-center gap-6">
               <button
-                className="md:hidden p-1.5 rounded hover:bg-gray-100"
+                className="lg:hidden p-2 rounded-xl hover:bg-gray-50 border border-gray-100 transition-colors"
                 onClick={() => setMobileOpen(!mobileOpen)}
               >
-                <span className="sr-only">Toggle menu</span>
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M4 7h16M4 12h16M4 17h16"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                  />
-                </svg>
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
               </button>
-              <Link to="/" className="inline-flex items-center gap-1">
-                <span className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
+              <Link to="/" className="flex items-center gap-3 group">
+                <span className="h-10 w-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xs font-black shadow-xl shadow-blue-100 border border-blue-500 transition-transform group-hover:scale-110">
                   C2K
                 </span>
-                <div className="leading-tight">
-                  <div className="text-base font-semibold tracking-tight text-gray-900">
-                    Click2Kart
-                  </div>
-                  <div className="text-xs text-gray-500 hidden xs:block">
-                    Electronics & mobiles
-                  </div>
+                <div className="flex flex-col">
+                  <span className="text-lg font-black tracking-tighter text-gray-900 leading-none">Click2Kart</span>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 hidden xs:block">Premium Tech</span>
                 </div>
               </Link>
             </div>
 
-            <div className="hidden md:flex flex-1 items-center gap-4">
-              <nav className="flex items-center gap-2 text-base">
+            <nav className="hidden lg:flex items-center gap-2">
+              {[
+                { to: '/', label: 'Home' },
+                { to: '/products', label: 'Catalogue' },
+                { to: '/order', label: 'Order Online' },
+                { to: '/orders', label: 'My Orders' },
+                { to: '/partner', label: 'Partner Portal' }
+              ].map((link) => (
                 <NavLink
-                  to="/"
+                  key={link.to}
+                  to={link.to}
                   className={({ isActive }) =>
                     classNames(
-                      'px-2 py-1 rounded-md hover:bg-gray-100',
-                      isActive && 'text-blue-600 font-medium'
+                      'px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-200',
+                      isActive 
+                        ? 'bg-gray-900 text-white shadow-xl shadow-gray-200 scale-105' 
+                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                     )
                   }
                 >
-                  Home
+                  {link.label}
                 </NavLink>
-                <NavLink
-                  to="/products"
-                  className={({ isActive }) =>
-                    classNames(
-                      'px-2 py-1 rounded-md hover:bg-gray-100',
-                      isActive && 'text-blue-600 font-medium'
-                    )
-                  }
-                >
-                  Products
-                </NavLink>
-                <NavLink
-                  to="/orders"
-                  className={({ isActive }) =>
-                    classNames(
-                      'px-2 py-1 rounded-md hover:bg-gray-100',
-                      isActive && 'text-blue-600 font-medium'
-                    )
-                  }
-                >
-                  My Orders
-                </NavLink>
-              </nav>
-            </div>
+              ))}
+            </nav>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               <Link
                 to="/cart"
-                className="relative inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100"
+                className="group relative h-12 w-12 flex items-center justify-center rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-xl transition-all active:scale-95"
               >
-                <svg className="w-6 h-6 text-gray-700" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M7 6h14l-1.2 6H9.2L7 6z"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M7 6 5.5 3.5H3"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <circle cx="10" cy="18" r="1.3" fill="currentColor" />
-                  <circle cx="17" cy="18" r="1.3" fill="currentColor" />
+                <svg className="w-6 h-6 text-gray-600 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
                 {cartCount > 0 && (
-                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-blue-600 rounded-full">
+                  <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-[10px] font-black text-white bg-blue-600 rounded-lg shadow-lg shadow-blue-200 border-2 border-white">
                     {cartCount}
                   </span>
                 )}
               </Link>
-              <Link
-                to="/login"
-                className="hidden sm:inline-flex items-center px-4 py-2 rounded-md text-sm font-medium border border-gray-200 hover:bg-gray-50"
-              >
-                Login
-              </Link>
-              <Link
-                to="/signup"
-                className="inline-flex items-center px-4 py-2 rounded-md text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700"
-              >
-                Sign up
-              </Link>
+              <div className="hidden sm:flex items-center gap-2">
+                <Link
+                  to="/login"
+                  className="px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-900 transition-colors"
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-8 py-3 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-gray-200 hover:bg-gray-800 transition-all active:scale-95"
+                >
+                  Join Now
+                </Link>
+              </div>
             </div>
           </div>
 
           {mobileOpen && (
-            <div className="md:hidden pb-3 space-y-2 text-base">
-              <nav className="flex flex-col border-t pt-2 mt-1">
-                <NavLink
-                  to="/"
-                  className={({ isActive }) =>
-                    classNames(
-                      'px-2 py-2 rounded-md',
-                      isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-100'
-                    )
-                  }
-                >
-                  Home
-                </NavLink>
-                <NavLink
-                  to="/products"
-                  className={({ isActive }) =>
-                    classNames(
-                      'px-2 py-2 rounded-md',
-                      isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-100'
-                    )
-                  }
-                >
-                  Products
-                </NavLink>
-                <NavLink
-                  to="/orders"
-                  className={({ isActive }) =>
-                    classNames(
-                      'px-2 py-2 rounded-md',
-                      isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-100'
-                    )
-                  }
-                >
-                  My Orders
-                </NavLink>
-                <div className="flex gap-2 pt-2">
-                  <Link
-                    to="/login"
-                    className="flex-1 inline-flex justify-center items-center px-4 py-2 rounded-md text-sm font-medium border border-gray-200 hover:bg-gray-50"
+            <div className="lg:hidden py-8 space-y-6 animate-in slide-in-from-top-4 duration-300">
+              <nav className="flex flex-col gap-2 border-t border-gray-50 pt-6">
+                {[
+                  { to: '/', label: 'Home' },
+                  { to: '/products', label: 'Catalogue' },
+                  { to: '/order', label: 'Order Online' },
+                  { to: '/orders', label: 'My Orders' },
+                  { to: '/partner', label: 'Partner Portal' }
+                ].map((link) => (
+                  <NavLink
+                    key={link.to}
+                    to={link.to}
+                    className={({ isActive }) =>
+                      classNames(
+                        'px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all',
+                        isActive ? 'bg-gray-900 text-white shadow-xl' : 'text-gray-500 hover:bg-gray-50'
+                      )
+                    }
                   >
-                    Login
-                  </Link>
-                  <Link
-                    to="/signup"
-                    className="flex-1 inline-flex justify-center items-center px-4 py-2 rounded-md text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700"
-                  >
-                    Sign up
-                  </Link>
-                </div>
+                    {link.label}
+                  </NavLink>
+                ))}
               </nav>
+              <div className="flex gap-4 pt-4">
+                <Link to="/login" className="flex-1 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center border border-gray-100">Login</Link>
+                <Link to="/signup" className="flex-1 px-6 py-4 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest text-center shadow-xl">Join Now</Link>
+              </div>
             </div>
           )}
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 pb-14 md:pb-0">
+      <main className="flex-1 min-h-0 pb-20 lg:pb-0 animate-in fade-in duration-700">
         <Outlet />
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 border-t bg-white/95 backdrop-blur">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between text-[11px] text-gray-600">
-          <NavLink
-            to="/"
-            className={({ isActive }) =>
-              classNames(
-                'flex flex-col items-center justify-center flex-1 h-full',
-                isActive && 'text-blue-600'
-              )
-            }
-          >
-            <svg className="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5.5h-5V21H5a1 1 0 0 1-1-1v-9.5Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span>Home</span>
-          </NavLink>
-          <NavLink
-            to="/products"
-            className={({ isActive }) =>
-              classNames(
-                'flex flex-col items-center justify-center flex-1 h-full',
-                isActive && 'text-blue-600'
-              )
-            }
-          >
-            <svg className="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none">
-              <rect
-                x="4"
-                y="4"
-                width="6"
-                height="7"
-                rx="1"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <rect
-                x="14"
-                y="4"
-                width="6"
-                height="7"
-                rx="1"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <rect
-                x="4"
-                y="14"
-                width="6"
-                height="6"
-                rx="1"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <rect
-                x="14"
-                y="14"
-                width="6"
-                height="6"
-                rx="1"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-            </svg>
-            <span>Browse</span>
-          </NavLink>
-          <NavLink
-            to="/order"
-            className={({ isActive }) =>
-              classNames(
-                'flex flex-col items-center justify-center flex-1 h-full',
-                isActive && 'text-blue-600'
-              )
-            }
-          >
-            <svg className="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M6 6h13l-1.2 7H8.2L6 6Z"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <circle cx="10" cy="19" r="1.3" fill="currentColor" />
-              <circle cx="17" cy="19" r="1.3" fill="currentColor" />
-            </svg>
-            <span>Order</span>
-          </NavLink>
-          <NavLink
-            to="/login"
-            className={({ isActive }) =>
-              classNames(
-                'flex flex-col items-center justify-center flex-1 h-full',
-                isActive && 'text-blue-600'
-              )
-            }
-          >
-            <svg className="w-5 h-5 mb-0.5" viewBox="0 0 24 24" fill="none">
-              <circle
-                cx="12"
-                cy="8"
-                r="3.25"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M6 19.5c.8-2.1 3-3.5 6-3.5s5.2 1.4 6 3.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-            <span>Account</span>
-          </NavLink>
+      <nav className="lg:hidden fixed bottom-6 inset-x-6 z-40">
+        <div className="max-w-md mx-auto h-16 bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 flex items-center justify-around px-4">
+          {[
+            { to: '/', i: <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />, l: 'Home' },
+            { to: '/products', i: <path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />, l: 'Browse' },
+            { to: '/order', i: <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />, l: 'Order' },
+            { to: '/login', i: <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />, l: 'Profile' }
+          ].map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) =>
+                classNames(
+                  'flex flex-col items-center justify-center gap-1 transition-all',
+                  isActive ? 'text-blue-400 scale-110' : 'text-gray-500 hover:text-white'
+                )
+              }
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                {item.i}
+              </svg>
+              <span className="text-[9px] font-black uppercase tracking-widest">{item.l}</span>
+            </NavLink>
+          ))}
         </div>
       </nav>
 
-      <footer className="hidden md:block border-t bg-white">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <div className="text-[11px] text-gray-500">
-            © {new Date().getFullYear()} Click2Kart. All rights reserved.
+      <footer className="hidden lg:block border-t border-gray-50 bg-white py-12">
+        <div className="max-w-7xl mx-auto px-10 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="flex items-center gap-6">
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart Premium</span>
+            <div className="flex gap-4">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Store Status: Online</span>
+            </div>
           </div>
-          <div className="text-[11px] text-gray-400 flex gap-3">
-            <span>Secure billing</span>
-            <span>Local service support</span>
+          <div className="flex gap-8">
+            {['Privacy Policy', 'Terms of Service', 'Support'].map((f) => (
+              <span key={f} className="text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-900 transition-colors">{f}</span>
+            ))}
           </div>
         </div>
       </footer>
     </div>
   )
+}
 }
 

@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
 export default function Partners() {
   const { notify } = useToast()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedCode, setSelectedCode] = useState(null)
+  const [viewingPartner, setViewingPartner] = useState(null)
   const [form, setForm] = useState({ amount:'', method:'MANUAL', utr:'', razorpayPaymentId:'', notes:'' })
 
   const load = async () => {
@@ -83,9 +87,12 @@ export default function Partners() {
               ) : (
                 items.map(p => (
                   <React.Fragment key={p.couponId}>
-                    <tr className="group hover:bg-gray-50/50 transition-colors">
+                    <tr 
+                      className="group hover:bg-gray-50/50 transition-colors cursor-pointer"
+                      onClick={() => setViewingPartner(p)}
+                    >
                       <td className="px-6 py-4">
-                        <div className="font-bold text-gray-900">{p.partnerName || '-'}</div>
+                        <div className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{p.partnerName || '-'}</div>
                         <div className="text-[10px] text-gray-400 font-bold">{p.partnerPhone || 'No Phone'}</div>
                       </td>
                       <td className="px-6 py-4">
@@ -125,6 +132,108 @@ export default function Partners() {
           </table>
         </div>
       </div>
+
+      {viewingPartner && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto space-y-8 animate-in zoom-in-95 custom-scrollbar">
+            <div className="flex items-center justify-between border-b border-gray-50 pb-6">
+              <div className="flex items-center gap-4">
+                <div className="h-14 w-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600 font-black text-xl">
+                  {viewingPartner.partnerName?.charAt(0) || 'P'}
+                </div>
+                <div>
+                  <h2 className="text-2xl font-black text-gray-900 tracking-tight">{viewingPartner.partnerName || 'Partner Detail'}</h2>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg tracking-widest">{viewingPartner.code}</span>
+                    <span className="text-xs text-gray-400 font-bold tracking-tight">{viewingPartner.partnerPhone || viewingPartner.partnerEmail || 'No contact info'}</span>
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => setViewingPartner(null)} className="p-3 hover:bg-gray-50 rounded-2xl transition-colors text-gray-400">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-6">
+                <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Earnings Breakdown</h3>
+                <div className="h-[300px] w-full bg-gray-50/50 rounded-3xl p-4">
+                  {viewingPartner.categoryBreakdown && viewingPartner.categoryBreakdown.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={viewingPartner.categoryBreakdown}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {viewingPartner.categoryBreakdown.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value) => `₹${Number(value).toFixed(2)}`}
+                          contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
+                        />
+                        <Legend verticalAlign="bottom" height={36}/>
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center text-gray-400 text-xs italic font-medium">
+                      No sales recorded for this partner yet.
+                    </div>
+                  )}
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-900 rounded-3xl p-5 text-white">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Total Commission</div>
+                    <div className="text-2xl font-black tracking-tight">₹{viewingPartner.totalCommission.toLocaleString()}</div>
+                  </div>
+                  <div className="bg-blue-600 rounded-3xl p-5 text-white">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-blue-200 mb-1">Current Balance</div>
+                    <div className="text-2xl font-black tracking-tight">₹{viewingPartner.balance.toLocaleString()}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Recent Payouts</h3>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setViewingPartner(null); openPayout(viewingPartner.code); }}
+                    className="text-[10px] font-black uppercase text-blue-600 hover:text-blue-700 tracking-widest"
+                  >
+                    + Record New
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {viewingPartner.payouts && viewingPartner.payouts.length > 0 ? (
+                    viewingPartner.payouts.slice(0, 5).map((p, idx) => (
+                      <div key={idx} className="bg-white border border-gray-100 p-4 rounded-2xl flex items-center justify-between group hover:border-blue-100 transition-colors">
+                        <div>
+                          <div className="font-bold text-gray-900">₹{p.amount.toLocaleString()}</div>
+                          <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.method} • {new Date(p.createdAt).toLocaleDateString()}</div>
+                        </div>
+                        <div className="h-8 w-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="py-12 text-center text-gray-400 italic text-xs font-medium bg-gray-50/50 rounded-3xl border border-dashed border-gray-200">
+                      No payouts recorded yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedCode && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-300">

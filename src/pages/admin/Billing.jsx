@@ -24,17 +24,49 @@ export default function Billing(){
   useEffect(()=>{ load(1) }, [q])
 
   const addItem = (p) => {
+    if (p.stock <= 0) {
+      notify('This product is out of stock', 'error')
+      return
+    }
     const existing = selected.find(x=>x.productId===p._id)
-    if (existing) setSelected(selected.map(x=> x.productId===p._id? {...x, quantity: x.quantity+1}: x))
-    else setSelected([...selected, { productId:p._id, name:p.name, price:p.price, gst:p.gst, quantity:1 }])
+    if (existing) {
+      if (existing.quantity + 1 > p.stock) {
+        notify(`Only ${p.stock} units available in stock`, 'error')
+        return
+      }
+      setSelected(selected.map(x=> x.productId===p._id? {...x, quantity: x.quantity+1}: x))
+    }
+    else setSelected([...selected, { 
+      productId:p._id, 
+      name:p.name, 
+      price:p.price, 
+      gst:p.gst, 
+      quantity:1,
+      stock: p.stock,
+      bulkQty: p.bulkDiscountQuantity || 0,
+      bulkRed: p.bulkDiscountPriceReduction || 0
+    }])
   }
-  const updateQty = (id, qty) => setSelected(selected.map(x=> x.productId===id? {...x, quantity: Math.max(1, qty)}: x))
+
+  const updateQty = (id, q) => {
+    if (q < 1) return
+    const item = selected.find(x => x.productId === id)
+    if (item && q > item.stock) {
+      notify(`Only ${item.stock} units available in stock`, 'error')
+      return
+    }
+    setSelected(selected.map(x => x.productId === id ? { ...x, quantity: q } : x))
+  }
   const removeItem = (id) => setSelected(selected.filter(x=>x.productId!==id))
 
   const totals = useMemo(()=>{
     let subtotal=0, gstTotal=0
     for(const it of selected){
-      const lineSubtotal = it.price*it.quantity
+      let effectivePrice = it.price
+      if (it.bulkQty > 0 && it.quantity >= it.bulkQty) {
+        effectivePrice = Math.max(0, it.price - it.bulkRed)
+      }
+      const lineSubtotal = effectivePrice * it.quantity
       const lineGst = (lineSubtotal*(it.gst||0))/100
       subtotal += lineSubtotal
       gstTotal += lineGst
@@ -148,13 +180,32 @@ export default function Billing(){
             <div className="space-y-3 pt-4">
               <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Order Summary</h4>
               <div className="max-h-[200px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
-                {selected.map(it => (
-                  <div key={it.productId} className="flex items-center justify-between gap-4 group">
-                    <div className="flex-1 min-w-0">
-                      <div className="text-xs font-bold truncate">{it.name}</div>
-                      <div className="text-[10px] text-gray-500 font-bold">₹{it.price} × {it.quantity}</div>
-                    </div>
-                    <div className="flex items-center gap-3">
+                {selected.map(it => {
+                  const isBulkApplied = it.bulkQty > 0 && it.quantity >= it.bulkQty;
+                  return (
+                    <div key={it.productId} className="flex items-center justify-between gap-4 group">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-bold truncate flex items-center gap-2">
+                          {it.name}
+                          {isBulkApplied && (
+                            <span className="bg-emerald-500/10 text-emerald-400 text-[8px] px-1 rounded uppercase font-black tracking-tighter border border-emerald-500/20">
+                              Bulk applied
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-gray-500 font-bold">
+                          {isBulkApplied ? (
+                            <>
+                              <span className="line-through text-gray-600">₹{it.price}</span>
+                              <span className="ml-1 text-emerald-400">₹{it.price - it.bulkRed}</span>
+                            </>
+                          ) : (
+                            `₹${it.price}`
+                          )}
+                          {' '} × {it.quantity}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
                       <div className="flex items-center bg-gray-800 rounded-lg p-1">
                         <button onClick={() => updateQty(it.productId, it.quantity - 1)} className="w-6 h-6 flex items-center justify-center hover:text-blue-400 transition-colors text-xs">－</button>
                         <span className="w-6 text-center text-xs font-bold">{it.quantity}</span>

@@ -10,7 +10,7 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', category:'', stock:'', gst:'', images: '', description:'' })
+  const [form, setForm] = useState({ name:'', price:'', category:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' })
   const [editing, setEditing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
   const [categories, setCategories] = useState([])
@@ -35,8 +35,16 @@ export default function Products() {
   const create = async (e) => {
     e.preventDefault()
     const images = form.images.split(',').map(s=>s.trim()).filter(Boolean)
-    await api.post('/api/products', { ...form, price: Number(form.price), stock: Number(form.stock), gst: Number(form.gst||0), images })
-    setForm({ name:'', price:'', category:'', stock:'', gst:'', images: '', description:'' }); load(page); notify('Product added','success')
+    await api.post('/api/products', { 
+      ...form, 
+      price: Number(form.price), 
+      stock: Number(form.stock), 
+      gst: Number(form.gst||0), 
+      bulkDiscountQuantity: Number(form.bulkDiscountQuantity||0),
+      bulkDiscountPriceReduction: Number(form.bulkDiscountPriceReduction||0),
+      images 
+    })
+    setForm({ name:'', price:'', category:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' }); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -44,7 +52,12 @@ export default function Products() {
     if (qty>0){ await api.patch(`/api/products/${id}/stock`, { quantity: qty }); load(page) }
   }
 
-  const openEdit = (p) => setEditing({ ...p, images: (p.images||[]).map(i=>i.url||i).join(', ') })
+  const openEdit = (p) => setEditing({ 
+    ...p, 
+    images: (p.images||[]).map(i=>i.url||i).join(', '),
+    bulkDiscountQuantity: p.bulkDiscountQuantity || '',
+    bulkDiscountPriceReduction: p.bulkDiscountPriceReduction || ''
+  })
   const saveEdit = async (e) => {
     e.preventDefault()
     const payload = {
@@ -54,6 +67,8 @@ export default function Products() {
       category: editing.category,
       stock: Number(editing.stock),
       gst: Number(editing.gst||0),
+      bulkDiscountQuantity: Number(editing.bulkDiscountQuantity||0),
+      bulkDiscountPriceReduction: Number(editing.bulkDiscountPriceReduction||0),
       images: (editing.images||'').split(',').map(s=>s.trim()).filter(Boolean)
     }
     await api.put(`/api/products/${editing._id}`, payload)
@@ -108,6 +123,11 @@ export default function Products() {
                           <td className="px-6 py-4">
                             <div className="font-black text-gray-900">₹{p.price.toLocaleString()}</div>
                             <div className="text-[10px] text-gray-400 font-bold">{p.gst}% GST</div>
+                            {p.bulkDiscountQuantity > 0 && (
+                              <div className="mt-1 inline-flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100 uppercase tracking-tight">
+                                {p.bulkDiscountQuantity}+: -₹{p.bulkDiscountPriceReduction}
+                              </div>
+                            )}
                           </td>
                           <td className="px-6 py-4">
                             <div className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black border ${p.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
@@ -179,6 +199,16 @@ export default function Products() {
                     <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12" value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} />
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Bulk Qty</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 10" value={form.bulkDiscountQuantity} onChange={e => setForm({ ...form, bulkDiscountQuantity: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Reduction/Unit (₹)</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 50" value={form.bulkDiscountPriceReduction} onChange={e => setForm({ ...form, bulkDiscountPriceReduction: e.target.value })} />
+                  </div>
+                </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Images</label>
                   <div className="flex gap-2">
@@ -236,6 +266,14 @@ export default function Products() {
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>
                 <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="GST %" value={editing.gst} onChange={e => setEditing({ ...editing, gst: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Bulk Qty</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="10" value={editing.bulkDiscountQuantity} onChange={e => setEditing({ ...editing, bulkDiscountQuantity: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Reduction (₹)</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={editing.bulkDiscountPriceReduction} onChange={e => setEditing({ ...editing, bulkDiscountPriceReduction: e.target.value })} />
               </div>
               <div className="space-y-1 md:col-span-2">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Images</label>

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import api from '../../lib/api'
-import { useCart } from '../../lib/CartContext'
+import { useCart, getStockStatus } from '../../lib/CartContext'
 
 export default function Catalogue(){
   const { addToCart } = useCart()
@@ -47,86 +47,181 @@ export default function Catalogue(){
   }, [items, minPrice, maxPrice, sort])
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-8">
-      <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">All Products</h1>
-          <p className="text-sm text-gray-600">Browse by category, search and filter like a shopping site.</p>
-        </div>
-        <div className="flex gap-3 items-center">
-          <input className="border p-2.5 rounded-md text-base w-64" placeholder="Search products" value={q} onChange={e=>setQ(e.target.value)} />
-          <select className="border p-2.5 rounded-md text-base" value={sort} onChange={e=>setSort(e.target.value)}>
-            <option value="NEW">Newest</option>
-            <option value="PRICE_LOW">Price: Low to High</option>
-            <option value="PRICE_HIGH">Price: High to Low</option>
-          </select>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] gap-6">
-        <aside className="bg-white border rounded-lg p-5 space-y-5 h-max">
-          <div>
-            <div className="text-base font-semibold mb-3">Categories</div>
-            <div className="space-y-1 max-h-60 overflow-y-auto text-base">
-              <button onClick={()=>setCategory('')} className={`block w-full text-left px-3 py-1.5 rounded-md ${category===''? 'bg-blue-50 text-blue-700 font-semibold':'hover:bg-gray-100'}`}>All</button>
-              {categories.map(c => (
-                <button key={c._id} onClick={()=>setCategory(c.name)} className={`block w-full text-left px-3 py-1.5 rounded-md capitalize ${category===c.name? 'bg-blue-50 text-blue-700 font-semibold':'hover:bg-gray-100'}`}>{c.name}</button>
-              ))}
-            </div>
+    <div className="bg-white min-h-screen">
+      <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-12">
+        <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 animate-in fade-in slide-in-from-top-4 duration-700">
+          <div className="space-y-2">
+            <div className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-1">Our Collection</div>
+            <h1 className="text-4xl font-black text-gray-900 tracking-tight">Explore Products</h1>
+            <p className="text-sm text-gray-500 font-medium max-w-md">Discover premium tech and accessories curated for your digital lifestyle.</p>
           </div>
-          <div>
-            <div className="text-base font-semibold mb-3">Price Range</div>
-            <div className="flex gap-3 text-sm">
-              <input className="border p-2 rounded-md w-1/2" placeholder="Min" value={minPrice} onChange={e=>setMinPrice(e.target.value)} />
-              <input className="border p-2 rounded-md w-1/2" placeholder="Max" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} />
+          <div className="flex flex-col sm:flex-row items-stretch gap-3">
+            <div className="relative group">
+              <input 
+                className="bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl pl-11 pr-4 py-3.5 w-full sm:w-72 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white shadow-inner transition-all" 
+                placeholder="Search products..." 
+                value={q} 
+                onChange={e=>setQ(e.target.value)} 
+              />
+              <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             </div>
+            <select 
+              className="bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white shadow-inner transition-all appearance-none font-bold" 
+              value={sort} 
+              onChange={e=>setSort(e.target.value)}
+            >
+              <option value="NEW">Newest First</option>
+              <option value="PRICE_LOW">Price: Low to High</option>
+              <option value="PRICE_HIGH">Price: High to Low</option>
+            </select>
           </div>
-        </aside>
-        <main className="space-y-6">
-          {loading && <div className="text-base text-gray-500">Loading products...</div>}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {filteredSorted.map(p => (
-              <Link key={p._id} to={`/products/${p._id}`} className="bg-white border rounded-lg overflow-hidden hover:shadow transition-shadow flex flex-col">
-                <div className="bg-gray-100 aspect-[4/3] flex items-center justify-center">
-                  {p.images && p.images.length>0
-                    ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain" />
-                    : <span className="text-sm text-gray-400">No image</span>}
-                </div>
-                <div className="p-4 space-y-2 flex-1 flex flex-col">
-                  <div className="text-xs uppercase text-gray-500 tracking-wider font-medium">{p.category || 'Uncategorized'}</div>
-                  <div className="font-semibold text-base line-clamp-2">{p.name}</div>
-                <div className="pt-2 flex gap-2">
+        </header>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-10">
+          <aside className="space-y-8 sticky top-28 h-max">
+            <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-8">
+              <div className="space-y-4">
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Filter by Category</div>
+                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                   <button 
-                    onClick={() => addToCart(p)}
-                    className="flex-1 bg-gray-900 text-white py-2 rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors"
+                    onClick={()=>setCategory('')} 
+                    className={`group w-full flex items-center justify-between px-5 py-3 rounded-2xl text-xs font-black transition-all ${category===''? 'bg-gray-900 text-white shadow-xl shadow-gray-200':'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
                   >
-                    Add to Cart
+                    <span>All Products</span>
+                    <span className={`h-1.5 w-1.5 rounded-full ${category===''? 'bg-blue-400':'bg-transparent'}`}></span>
                   </button>
-                  <Link 
-                    to={`/products/${p._id}`}
-                    className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  </Link>
+                  {categories.map(c => (
+                    <button 
+                      key={c._id} 
+                      onClick={()=>setCategory(c.name)} 
+                      className={`group w-full flex items-center justify-between px-5 py-3 rounded-2xl text-xs font-black transition-all capitalize ${category===c.name? 'bg-gray-900 text-white shadow-xl shadow-gray-200':'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
+                    >
+                      <span>{c.name}</span>
+                      <span className={`h-1.5 w-1.5 rounded-full ${category===c.name? 'bg-blue-400':'bg-transparent'}`}></span>
+                    </button>
+                  ))}
                 </div>
               </div>
-            </Link>
-            ))}
-            {!loading && filteredSorted.length===0 && (
-              <div className="col-span-full py-20 text-center text-gray-500 text-lg">No products found</div>
-            )}
-          </div>
-          <div className="flex justify-between items-center text-sm text-gray-600 pt-4 border-t">
-            <div>Page {page} of {Math.max(1, Math.ceil(total/limit))}</div>
-            <div className="flex gap-2">
-              <button onClick={()=>load(Math.max(1, page-1))} className="px-4 py-2 border rounded-md hover:bg-gray-50 disabled:opacity-50" disabled={page===1}>Previous</button>
-              <button onClick={()=>load(page+1)} className="px-4 py-2 border rounded-md hover:bg-gray-50 disabled:opacity-50" disabled={page*limit>=total}>Next</button>
+
+              <div className="space-y-4 pt-8 border-t border-gray-50">
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price Range (₹)</div>
+                <div className="flex gap-3">
+                  <div className="relative flex-1">
+                    <input className="w-full bg-gray-50 border border-transparent rounded-xl px-4 py-2.5 text-xs font-bold text-gray-900 placeholder-gray-400 focus:bg-white focus:border-gray-100 outline-none transition-all" placeholder="Min" value={minPrice} onChange={e=>setMinPrice(e.target.value)} />
+                  </div>
+                  <div className="relative flex-1">
+                    <input className="w-full bg-gray-50 border border-transparent rounded-xl px-4 py-2.5 text-xs font-bold text-gray-900 placeholder-gray-400 focus:bg-white focus:border-gray-100 outline-none transition-all" placeholder="Max" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        </main>
+          </aside>
+
+          <main className="space-y-10">
+            {loading && (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+                {[1,2,3,4,5,6].map(i => (
+                  <div key={i} className="aspect-[4/5] bg-gray-50 rounded-[2.5rem] animate-pulse"></div>
+                ))}
+              </div>
+            )}
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+              {filteredSorted.map(p => (
+                <div key={p._id} className="group bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] flex flex-col transition-all duration-500 transform hover:-translate-y-2">
+                  <Link to={`/products/${p._id}`} className="relative block">
+                    <div className="bg-gray-50/50 aspect-square flex items-center justify-center overflow-hidden">
+                      {p.images && p.images.length>0
+                        ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 p-8" />
+                        : <div className="text-4xl">📦</div>}
+                    </div>
+                    {p.bulkDiscountQuantity > 0 && (
+                      <div className="absolute top-4 right-4 bg-amber-400 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-amber-200 uppercase tracking-widest animate-bounce">
+                        Bulk Offer
+                      </div>
+                    )}
+                  </Link>
+                  <div className="p-6 md:p-8 flex-1 flex flex-col space-y-4">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <div className="text-[10px] uppercase text-blue-600 font-black tracking-widest">{p.category || 'General'}</div>
+                      </div>
+                      <Link to={`/products/${p._id}`} className="block group-hover:text-blue-600 transition-colors">
+                        <div className="font-black text-gray-900 line-clamp-2 min-h-[3rem] text-sm md:text-base leading-tight tracking-tight">{p.name}</div>
+                      </Link>
+                    </div>
+
+                    <div className="flex flex-col space-y-4 pt-4 border-t border-gray-50 mt-auto">
+                      <div className="flex items-center justify-between">
+                        <div className="text-xl font-black text-gray-900 tracking-tighter">₹{p.price.toLocaleString()}</div>
+                        {p.bulkDiscountQuantity > 0 && (
+                          <div className="text-[9px] text-emerald-600 font-black uppercase bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
+                            Save ₹{p.bulkDiscountPriceReduction}/u
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        {(() => {
+                          const status = getStockStatus(p.stock)
+                          return (
+                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${status.bg} ${status.color} border ${status.border}`}>
+                              {status.text}
+                            </span>
+                          )
+                        })()}
+                      </div>
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={(e) => { e.preventDefault(); addToCart(p); }}
+                          disabled={p.stock <= 0}
+                          className="flex-1 bg-gray-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-gray-800 transition-all active:scale-95 disabled:opacity-30 disabled:hover:bg-gray-900 disabled:cursor-not-allowed"
+                        >
+                          {p.stock > 0 ? 'Add to Cart' : 'Sold Out'}
+                        </button>
+                        <Link 
+                          to={`/products/${p._id}`}
+                          className="p-3 bg-gray-50 text-gray-400 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {!loading && filteredSorted.length===0 && (
+              <div className="py-32 flex flex-col items-center justify-center text-center animate-in fade-in duration-1000">
+                <div className="h-24 w-24 rounded-[2rem] bg-gray-50 flex items-center justify-center text-4xl mb-6 shadow-inner">🔍</div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">No products found</h3>
+                <p className="text-sm text-gray-400 font-bold mt-2 max-w-xs">Try adjusting your filters or search terms to find what you're looking for.</p>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center pt-10 border-t border-gray-50">
+              <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Page {page} of {Math.max(1, Math.ceil(total/limit))}</div>
+              <div className="flex gap-3">
+                <button 
+                  onClick={()=>load(Math.max(1, page-1))} 
+                  className="px-6 py-2.5 border border-gray-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition-all disabled:opacity-30" 
+                  disabled={page===1}
+                >
+                  Previous
+                </button>
+                <button 
+                  onClick={()=>load(page+1)} 
+                  className="px-6 py-2.5 border border-gray-200 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition-all disabled:opacity-30" 
+                  disabled={page*limit>=total}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </main>
+        </div>
       </div>
     </div>
   )
+}
 }

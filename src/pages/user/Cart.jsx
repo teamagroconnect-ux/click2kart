@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useCart } from '../../lib/CartContext'
+import { useCart, getStockStatus } from '../../lib/CartContext'
 
 export default function Cart() {
   const { cart, removeFromCart, updateQuantity, cartTotal } = useCart()
@@ -36,7 +36,18 @@ export default function Cart() {
               </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-base font-bold text-gray-900 truncate">{item.name}</h3>
-                <p className="text-sm text-gray-500">₹{item.price}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="text-sm text-gray-500">₹{item.price.toLocaleString()}</p>
+                  {(() => {
+                    const status = getStockStatus(item.stock)
+                    if (item.stock > 20) return null
+                    return (
+                      <span className={`text-[9px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded ${status.bg} ${status.color} border ${status.border}`}>
+                        {status.text}
+                      </span>
+                    )
+                  })()}
+                </div>
                 <div className="flex items-center gap-3 mt-2">
                   <div className="flex items-center border rounded-lg overflow-hidden">
                     <button

@@ -111,7 +111,7 @@ export default function AdminLayout() {
                 <span className="text-base font-black tracking-tight text-gray-900">Click2Kart</span>
                 <span className="px-2 py-0.5 bg-gray-900 text-[10px] font-black text-white rounded-lg tracking-widest uppercase">Admin</span>
               </div>
-              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Operational Cockpit</div>
+              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Admin Panel</div>
             </div>
           </div>
         </div>
