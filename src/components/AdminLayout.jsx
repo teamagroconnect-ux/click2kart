@@ -4,148 +4,65 @@ import { useState } from 'react'
 const Icon = ({ name }) => (
   <span className="inline-block w-4 h-4 mr-2 align-middle">
     {name === 'dash' && (
-      <svg viewBox="0 0 24 24" fill="none">
-        <rect x="3" y="3" width="8" height="8" rx="2" fill="currentColor" />
-        <rect x="3" y="13" width="8" height="8" rx="2" fill="currentColor" opacity="0.75" />
-        <rect x="13" y="3" width="8" height="8" rx="2" fill="currentColor" opacity="0.5" />
-        <rect x="13" y="13" width="8" height="8" rx="2" fill="currentColor" opacity="0.3" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" />
+        <rect x="14" y="3" width="7" height="7" />
+        <rect x="14" y="14" width="7" height="7" />
+        <rect x="3" y="14" width="7" height="7" />
       </svg>
     )}
     {name === 'prod' && (
-      <svg viewBox="0 0 24 24" fill="none">
-        <path
-          d="M4 7.5 12 4l8 3.5-8 3.5L4 7.5Z"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M4 11.5 12 15l8-3.5"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M4 15.5 12 19l8-3.5"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m7.5 4.27 9 5.15" />
+        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+        <path d="m3.3 7 8.7 5 8.7-5" />
+        <path d="M12 22V12" />
       </svg>
     )}
     {name === 'cat' && (
-      <svg viewBox="0 0 24 24" fill="none">
-        <rect
-          x="4"
-          y="4"
-          width="16"
-          height="6"
-          rx="1.5"
-          stroke="currentColor"
-          strokeWidth="1.4"
-        />
-        <rect
-          x="4"
-          y="14"
-          width="10"
-          height="6"
-          rx="1.5"
-          stroke="currentColor"
-          strokeWidth="1.4"
-        />
-        <path
-          d="M17 14v6"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-        />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z" />
+        <path d="M9 12h6" />
+        <path d="M12 9v6" />
       </svg>
     )}
     {name === 'bill' && (
-      <svg viewBox="0 0 24 24" fill="none">
-        <path
-          d="M7 3h10a1 1 0 0 1 1 1v16l-3-2-3 2-3-2-3 2V4a1 1 0 0 1 1-1Z"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <path d="M9 7h6M9 11h6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+        <path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1Z" />
+        <path d="M12 11h4" />
+        <path d="M12 16h4" />
+        <path d="M8 11h.01" />
+        <path d="M8 16h.01" />
       </svg>
     )}
     {name === 'order' && (
-      <svg viewBox="0 0 24 24" fill="none">
-        <path
-          d="M5 7h14l-1.2 9H6.2L5 7Z"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        <circle cx="10" cy="19" r="1.4" fill="currentColor" />
-        <circle cx="17" cy="19" r="1.4" fill="currentColor" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+        <path d="M3 6h18" />
+        <path d="M16 10a4 4 0 0 1-8 0" />
       </svg>
     )}
     {name === 'coupon' && (
-      <svg viewBox="0 0 24 24" fill="none">
-        <rect
-          x="4"
-          y="5"
-          width="16"
-          height="14"
-          rx="2"
-          stroke="currentColor"
-          strokeWidth="1.4"
-        />
-        <path
-          d="M12 5v14"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeDasharray="2 2"
-        />
-        <circle cx="9" cy="10" r="1" fill="currentColor" />
-        <circle cx="9" cy="14" r="1" fill="currentColor" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 9V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 0 0 6v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 0 0-6Z" />
+        <path d="M12 11h.01" />
+        <path d="M12 15h.01" />
+        <path d="M12 7h.01" />
       </svg>
     )}
     {name === 'partner' && (
-      <svg viewBox="0 0 24 24" fill="none">
-        <circle
-          cx="9"
-          cy="9"
-          r="3"
-          stroke="currentColor"
-          strokeWidth="1.4"
-        />
-        <circle
-          cx="17"
-          cy="9"
-          r="3"
-          stroke="currentColor"
-          strokeWidth="1.4"
-        />
-        <path
-          d="M4.5 19c.7-2.2 2.8-3.5 4.5-3.5s3.8 1.3 4.5 3.5"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-        />
-        <path
-          d="M13.5 18.5c.6-1.9 2.2-3 3.5-3 1.3 0 2.9 1.1 3.5 3"
-          stroke="currentColor"
-          strokeWidth="1.4"
-          strokeLinecap="round"
-        />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     )}
     {name === 'cust' && (
-      <svg viewBox="0 0 24 24" fill="none">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="9" cy="7" r="4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+        <circle cx="12" cy="7" r="4" />
       </svg>
     )}
   </span>
@@ -192,13 +109,16 @@ export default function AdminLayout() {
               />
             </svg>
           </button>
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-gray-900 rounded-lg shadow-sm border border-gray-800">
-            <span className="h-6 w-6 rounded-md bg-blue-600 flex items-center justify-center text-[10px] font-bold text-white shadow-inner">
+          <div className="flex items-center gap-3">
+            <span className="h-8 w-8 rounded-xl bg-blue-600 flex items-center justify-center text-[10px] font-black text-white shadow-lg border border-blue-500">
               C2K
             </span>
-            <div className="leading-tight">
-              <div className="text-xs font-bold tracking-wider text-white uppercase">Click2Kart Admin</div>
-              <div className="text-[8px] text-gray-400 font-medium uppercase tracking-widest">Control Panel</div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-black tracking-tight text-gray-900">Click2Kart</span>
+                <span className="px-1.5 py-0.5 bg-gray-900 text-[10px] font-bold text-white rounded-md tracking-wider">ADMIN</span>
+              </div>
+              <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Control Panel</div>
             </div>
           </div>
         </div>
@@ -277,19 +197,9 @@ export default function AdminLayout() {
               {link('/admin/settings', (
                 <>
                   <span className="inline-block w-4 h-4 mr-2 align-middle">
-                    <svg viewBox="0 0 24 24" fill="none">
-                      <path
-                        d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"
-                        stroke="currentColor"
-                        strokeWidth="1.4"
-                      />
-                      <path
-                        d="M4.5 13.5V11l1.7-.5a1 1 0 0 0 .6-.5l.9-1.7-1-1.7 1.8-1.8 1.7 1 1.7-.9a1 1 0 0 0 .5-.6L13.5 3h3l.5 1.7a1 1 0 0 0 .5.6l1.7.9 1.7-1 1.8 1.8-1 1.7.9 1.7a1 1 0 0 0 .6.5L21 11v2.5l-1.7.5a1 1 0 0 0-.6.5l-.9 1.7 1 1.7-1.8 1.8-1.7-1-1.7.9a1 1 0 0 0-.5.6L13.5 21h-3l-.5-1.7a1 1 0 0 0-.5-.6l-1.7-.9-1.7 1-1.8-1.8 1-1.7-.9-1.7a1 1 0 0 0-.6-.5l-1.7-.5Z"
-                        stroke="currentColor"
-                        strokeWidth="1.4"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                      <circle cx="12" cy="12" r="3" />
                     </svg>
                   </span>
                   Settings
