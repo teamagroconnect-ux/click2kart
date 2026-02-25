@@ -16,6 +16,8 @@ import ProductDetail from './pages/user/ProductDetail.jsx'
 import Enquiry from './pages/user/Enquiry.jsx'
 import Partner from './pages/user/Partner.jsx'
 import UserLayout from './components/UserLayout.jsx'
+import UserLogin from './pages/user/Login.jsx'
+import UserSignup from './pages/user/Signup.jsx'
 
 export default function App() {
   return (
@@ -45,6 +47,8 @@ export default function App() {
         <Route path="products/:id" element={<ProductDetail />} />
         <Route path="order" element={<Enquiry />} />
         <Route path="partner" element={<Partner />} />
+        <Route path="login" element={<UserLogin />} />
+        <Route path="signup" element={<UserSignup />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

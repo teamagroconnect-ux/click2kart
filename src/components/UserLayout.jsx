@@ -34,14 +34,14 @@ export default function UserLayout() {
                 </svg>
               </button>
               <Link to="/" className="inline-flex items-center gap-1">
-                <span className="h-7 w-7 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-semibold">
+                <span className="h-8 w-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">
                   C2K
                 </span>
                 <div className="leading-tight">
-                  <div className="text-sm font-semibold tracking-tight text-gray-900">
+                  <div className="text-base font-semibold tracking-tight text-gray-900">
                     Click2Kart
                   </div>
-                  <div className="text-[10px] text-gray-500 hidden xs:block">
+                  <div className="text-xs text-gray-500 hidden xs:block">
                     Electronics & mobiles
                   </div>
                 </div>
@@ -49,7 +49,7 @@ export default function UserLayout() {
             </div>
 
             <div className="hidden md:flex flex-1 items-center gap-4">
-              <nav className="flex items-center gap-2 text-sm">
+              <nav className="flex items-center gap-2 text-base">
                 <NavLink
                   to="/"
                   className={({ isActive }) =>
@@ -78,9 +78,9 @@ export default function UserLayout() {
             <div className="flex items-center gap-2">
               <Link
                 to="/cart"
-                className="relative inline-flex items-center justify-center p-1.5 rounded-full hover:bg-gray-100"
+                className="relative inline-flex items-center justify-center p-2 rounded-full hover:bg-gray-100"
               >
-                <svg className="w-5 h-5 text-gray-700" viewBox="0 0 24 24" fill="none">
+                <svg className="w-6 h-6 text-gray-700" viewBox="0 0 24 24" fill="none">
                   <path
                     d="M7 6h14l-1.2 6H9.2L7 6z"
                     stroke="currentColor"
@@ -101,13 +101,13 @@ export default function UserLayout() {
               </Link>
               <Link
                 to="/login"
-                className="hidden sm:inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium border border-gray-200 hover:bg-gray-50"
+                className="hidden sm:inline-flex items-center px-4 py-2 rounded-md text-sm font-medium border border-gray-200 hover:bg-gray-50"
               >
                 Login
               </Link>
               <Link
                 to="/signup"
-                className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700"
+                className="inline-flex items-center px-4 py-2 rounded-md text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700"
               >
                 Sign up
               </Link>
@@ -115,13 +115,13 @@ export default function UserLayout() {
           </div>
 
           {mobileOpen && (
-            <div className="md:hidden pb-3 space-y-2 text-sm">
+            <div className="md:hidden pb-3 space-y-2 text-base">
               <nav className="flex flex-col border-t pt-2 mt-1">
                 <NavLink
                   to="/"
                   className={({ isActive }) =>
                     classNames(
-                      'px-2 py-1.5 rounded-md',
+                      'px-2 py-2 rounded-md',
                       isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-100'
                     )
                   }
@@ -132,7 +132,7 @@ export default function UserLayout() {
                   to="/products"
                   className={({ isActive }) =>
                     classNames(
-                      'px-2 py-1.5 rounded-md',
+                      'px-2 py-2 rounded-md',
                       isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-100'
                     )
                   }
@@ -142,13 +142,13 @@ export default function UserLayout() {
                 <div className="flex gap-2 pt-2">
                   <Link
                     to="/login"
-                    className="flex-1 inline-flex justify-center items-center px-3 py-1.5 rounded-md text-xs font-medium border border-gray-200 hover:bg-gray-50"
+                    className="flex-1 inline-flex justify-center items-center px-4 py-2 rounded-md text-sm font-medium border border-gray-200 hover:bg-gray-50"
                   >
                     Login
                   </Link>
                   <Link
                     to="/signup"
-                    className="flex-1 inline-flex justify-center items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700"
+                    className="flex-1 inline-flex justify-center items-center px-4 py-2 rounded-md text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700"
                   >
                     Sign up
                   </Link>

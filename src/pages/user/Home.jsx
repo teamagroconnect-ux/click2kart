@@ -20,49 +20,49 @@ export default function Home() {
     <div className="bg-gray-50">
       <section className="bg-gradient-to-r from-blue-700 to-blue-500 text-white">
         <div className="max-w-6xl mx-auto px-4 py-10 md:py-14 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="space-y-3 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-medium tracking-wide">
+          <div className="space-y-4 max-w-xl">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 text-sm font-medium tracking-wide">
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
               Trusted local electronics store
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
               Click2Kart
             </h1>
-            <p className="mt-1 text-sm md:text-base text-blue-100">
+            <p className="mt-2 text-base md:text-lg text-blue-100">
               Mobiles, accessories & electronics delivered with a clean, premium shopping
               experience.
             </p>
-            <div className="mt-4 flex flex-col sm:flex-row gap-3">
+            <div className="mt-6 flex flex-col sm:flex-row gap-4">
               <Link
                 to="/products"
-                className="inline-flex justify-center items-center bg-white text-blue-700 px-4 py-2 rounded-md text-sm font-semibold shadow-sm hover:bg-blue-50"
+                className="inline-flex justify-center items-center bg-white text-blue-700 px-6 py-3 rounded-md text-base font-semibold shadow-sm hover:bg-blue-50"
               >
                 Browse products
               </Link>
               <Link
                 to="/order"
-                className="inline-flex justify-center items-center border border-white/70 text-white px-4 py-2 rounded-md text-sm hover:bg-white/10"
+                className="inline-flex justify-center items-center border border-white/70 text-white px-6 py-3 rounded-md text-base hover:bg-white/10"
               >
                 Order now
               </Link>
             </div>
           </div>
           <div className="hidden md:block">
-            <div className="bg-white/10 rounded-xl p-4 grid grid-cols-2 gap-3 text-xs">
+            <div className="bg-white/10 rounded-xl p-6 grid grid-cols-2 gap-4 text-sm">
               <div>
-                <div className="font-semibold">Fast delivery</div>
+                <div className="font-semibold text-base">Fast delivery</div>
                 <div className="text-blue-100">Same‑day on selected pin codes</div>
               </div>
               <div>
-                <div className="font-semibold">Assured quality</div>
+                <div className="font-semibold text-base">Assured quality</div>
                 <div className="text-blue-100">Genuine, GST‑billed products</div>
               </div>
               <div>
-                <div className="font-semibold">Easy support</div>
+                <div className="font-semibold text-base">Easy support</div>
                 <div className="text-blue-100">Store + WhatsApp assistance</div>
               </div>
               <div>
-                <div className="font-semibold">Great prices</div>
+                <div className="font-semibold text-base">Great prices</div>
                 <div className="text-blue-100">Curated deals on top brands</div>
               </div>
             </div>
@@ -70,32 +70,32 @@ export default function Home() {
         </div>
       </section>
 
-      <main className="max-w-6xl mx-auto px-4 py-6 space-y-8">
+      <main className="max-w-6xl mx-auto px-4 py-8 space-y-10">
         <section>
-          <h2 className="text-lg font-semibold mb-3">Shop by category</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <h2 className="text-xl font-semibold mb-4">Shop by category</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {cats.map((c) => (
               <Link
                 key={c._id}
                 to={`/products?category=${encodeURIComponent(c.name)}`}
-                className="bg-white border rounded-lg p-3 capitalize hover:shadow-sm flex flex-col transition-shadow"
+                className="bg-white border rounded-lg p-4 capitalize hover:shadow-sm flex flex-col transition-shadow"
               >
-                <div className="font-medium text-sm truncate">{c.name}</div>
-                <div className="text-xs text-gray-500 line-clamp-2 mt-1">
+                <div className="font-medium text-base truncate">{c.name}</div>
+                <div className="text-sm text-gray-500 line-clamp-2 mt-1">
                   {c.description}
                 </div>
               </Link>
             ))}
             {cats.length === 0 && (
-              <div className="text-gray-600 text-sm">No categories</div>
+              <div className="text-gray-600 text-base">No categories</div>
             )}
           </div>
         </section>
 
         <section>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-semibold">Featured products</h2>
-            <Link to="/products" className="text-xs text-blue-600">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Featured products</h2>
+            <Link to="/products" className="text-sm text-blue-600 font-medium">
               View all
             </Link>
           </div>
