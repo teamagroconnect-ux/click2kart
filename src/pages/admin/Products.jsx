@@ -67,26 +67,26 @@ export default function Products() {
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <h1 className="text-lg font-semibold text-slate-50">Products</h1>
-            <p className="text-[11px] text-slate-400">
+            <h1 className="text-lg font-semibold text-gray-900">Products</h1>
+            <p className="text-[11px] text-gray-500">
               Manage Click2Kart catalogue, stock levels and pricing.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <input
               placeholder="Search products"
-              className="border border-slate-700 bg-slate-900/70 text-slate-50 text-sm rounded-lg px-3 py-2 w-56 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="border border-gray-300 bg-white text-gray-900 text-sm rounded-lg px-3 py-2 w-56 outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               value={q}
               onChange={e => setQ(e.target.value)}
             />
           </div>
         </div>
 
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl overflow-hidden shadow-inner">
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-xs md:text-sm">
               <thead>
-                <tr className="text-left bg-slate-900/80 text-slate-400 border-b border-slate-800">
+                <tr className="text-left bg-gray-50 text-gray-500 border-b border-gray-200">
                   <th className="px-3 py-2 font-medium">Name</th>
                   <th className="px-3 py-2 font-medium">Price</th>
                   <th className="px-3 py-2 font-medium">Stock</th>
@@ -99,14 +99,14 @@ export default function Products() {
                   items.map(p => (
                     <tr
                       key={p._id}
-                      className="border-t border-slate-800/80 hover:bg-slate-900/80"
+                      className="border-t border-gray-100 hover:bg-gray-50"
                     >
                       <td className="px-3 py-2">
-                        <div className="font-medium text-slate-50 truncate">{p.name}</div>
+                        <div className="font-medium text-gray-900 truncate">{p.name}</div>
                       </td>
-                      <td className="px-3 py-2 text-slate-200">₹{p.price}</td>
-                      <td className="px-3 py-2 text-slate-200">{p.stock}</td>
-                      <td className="px-3 py-2 text-slate-200">{p.gst}%</td>
+                      <td className="px-3 py-2 text-gray-700">₹{p.price}</td>
+                      <td className="px-3 py-2 text-gray-700">{p.stock}</td>
+                      <td className="px-3 py-2 text-gray-700">{p.gst}%</td>
                       <td className="px-3 py-2">
                         <div className="flex justify-end gap-2">
                           <button
@@ -133,42 +133,42 @@ export default function Products() {
                   ))}
                 {loading &&
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="border-t border-slate-800 animate-pulse">
+                    <tr key={i} className="border-t border-gray-100 animate-pulse">
                       <td className="px-3 py-2">
-                        <div className="h-4 bg-slate-800 rounded w-2/3" />
+                        <div className="h-4 bg-gray-200 rounded w-2/3" />
                       </td>
                       <td className="px-3 py-2">
-                        <div className="h-4 bg-slate-800 rounded w-16" />
+                        <div className="h-4 bg-gray-200 rounded w-16" />
                       </td>
                       <td className="px-3 py-2">
-                        <div className="h-4 bg-slate-800 rounded w-12" />
+                        <div className="h-4 bg-gray-200 rounded w-12" />
                       </td>
                       <td className="px-3 py-2">
-                        <div className="h-4 bg-slate-800 rounded w-10" />
+                        <div className="h-4 bg-gray-200 rounded w-10" />
                       </td>
                       <td className="px-3 py-2">
-                        <div className="h-8 bg-slate-800 rounded w-full" />
+                        <div className="h-8 bg-gray-200 rounded w-full" />
                       </td>
                     </tr>
                   ))}
               </tbody>
             </table>
           </div>
-          <div className="flex justify-between items-center px-3 py-2 border-t border-slate-800 text-[11px] text-slate-400">
+          <div className="flex justify-between items-center px-3 py-2 border-t border-gray-200 text-[11px] text-gray-500">
             <div>
               Page {page} of {Math.max(1, Math.ceil(total / limit))}
             </div>
             <div className="space-x-2">
               <button
                 onClick={() => load(Math.max(1, page - 1))}
-                className="px-2 py-1 border border-slate-700 rounded-md hover:bg-slate-800 disabled:opacity-40"
+                className="px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-40"
                 disabled={page === 1}
               >
                 Prev
               </button>
               <button
                 onClick={() => load(page + 1)}
-                className="px-2 py-1 border border-slate-700 rounded-md hover:bg-slate-800 disabled:opacity-40"
+                className="px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-40"
                 disabled={page * limit >= total}
               >
                 Next

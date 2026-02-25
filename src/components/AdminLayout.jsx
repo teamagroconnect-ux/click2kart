@@ -168,11 +168,11 @@ export default function AdminLayout() {
   )
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="flex h-14 items-center justify-between border-b border-slate-800 px-4 md:px-6">
+    <div className="min-h-screen bg-gray-50 text-gray-900">
+      <div className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-6 shadow-sm">
         <div className="flex items-center gap-2">
           <button
-            className="md:hidden p-1.5 rounded-lg hover:bg-slate-800 border border-slate-800"
+            className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 border border-gray-200"
             onClick={() => setOpen(!open)}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
@@ -185,18 +185,18 @@ export default function AdminLayout() {
             </svg>
           </button>
           <div className="inline-flex items-center gap-2">
-            <span className="h-7 w-7 rounded-full bg-blue-500 flex items-center justify-center text-xs font-semibold">
+            <span className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center text-xs font-semibold text-white">
               C2K
             </span>
             <div className="leading-tight">
-              <div className="text-sm font-semibold tracking-tight">Click2Kart Admin</div>
-              <div className="text-[10px] text-slate-400">Inventory & billing cockpit</div>
+              <div className="text-sm font-semibold tracking-tight text-gray-900">Click2Kart Admin</div>
+              <div className="text-[10px] text-gray-500">Inventory & billing cockpit</div>
             </div>
           </div>
         </div>
         <button
           onClick={logout}
-          className="inline-flex items-center gap-1 rounded-lg border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-red-600 hover:border-red-500"
+          className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
         >
           <span>Logout</span>
         </button>
@@ -204,20 +204,20 @@ export default function AdminLayout() {
 
       <div className="grid min-h-[calc(100vh-3.5rem)] md:grid-cols-[240px_minmax(0,1fr)]">
         <aside
-          className={`border-r border-slate-800 bg-slate-950/60 backdrop-blur-md ${
+          className={`border-r border-gray-200 bg-white ${
             open ? 'block' : 'hidden'
           } md:block`}
         >
           <div className="h-full flex flex-col">
-            <div className="px-4 py-4 border-b border-slate-800">
-              <div className="text-xs uppercase text-slate-500 tracking-wide mb-1">
+            <div className="px-4 py-4 border-b border-gray-200">
+              <div className="text-xs uppercase text-gray-500 tracking-wide mb-1">
                 Navigation
               </div>
-              <div className="text-[11px] text-slate-500">
+              <div className="text-[11px] text-gray-500">
                 Manage products, orders and billing.
               </div>
             </div>
-            <nav className="flex-1 px-3 py-4 space-y-1 text-slate-100">
+            <nav className="flex-1 px-3 py-4 space-y-1 text-gray-800">
               {link('/admin', (
                 <>
                   <Icon name="dash" />
@@ -261,15 +261,15 @@ export default function AdminLayout() {
                 </>
               ))}
             </nav>
-            <div className="px-4 py-3 border-t border-slate-800 text-[11px] text-slate-500">
+            <div className="px-4 py-3 border-t border-gray-200 text-[11px] text-gray-500">
               Last synced just now • All data lives on Click2Kart server.
             </div>
           </div>
         </aside>
 
-        <main className="bg-slate-950/90 text-slate-50">
+        <main className="bg-gray-50 text-gray-900">
           <div className="max-w-6xl mx-auto px-4 py-4 md:py-6">
-            <div className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-[0_18px_45px_rgba(15,23,42,0.8)] p-3 md:p-5">
+            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-3 md:p-5">
               <Outlet />
             </div>
           </div>
