@@ -216,8 +216,13 @@ export default function Billing(){
                       </button>
                     </div>
                   </div>
-                ))}
-                {selected.length === 0 && <div className="text-center py-6 text-gray-600 text-xs italic font-medium">Cart is empty</div>}
+                );
+              })}
+              {selected.length === 0 && (
+                <div className="text-center py-6 text-gray-600 text-xs italic font-medium">
+                  Cart is empty
+                </div>
+              )}
               </div>
             </div>
 
