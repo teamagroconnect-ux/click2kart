@@ -260,6 +260,27 @@ export default function AdminLayout() {
                   Partners
                 </>
               ))}
+              {link('/admin/settings', (
+                <>
+                  <span className="inline-block w-4 h-4 mr-2 align-middle">
+                    <svg viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                      />
+                      <path
+                        d="M4.5 13.5V11l1.7-.5a1 1 0 0 0 .6-.5l.9-1.7-1-1.7 1.8-1.8 1.7 1 1.7-.9a1 1 0 0 0 .5-.6L13.5 3h3l.5 1.7a1 1 0 0 0 .5.6l1.7.9 1.7-1 1.8 1.8-1 1.7.9 1.7a1 1 0 0 0 .6.5L21 11v2.5l-1.7.5a1 1 0 0 0-.6.5l-.9 1.7 1 1.7-1.8 1.8-1.7-1-1.7.9a1 1 0 0 0-.5.6L13.5 21h-3l-.5-1.7a1 1 0 0 0-.5-.6l-1.7-.9-1.7 1-1.8-1.8 1-1.7-.9-1.7a1 1 0 0 0-.6-.5l-1.7-.5Z"
+                        stroke="currentColor"
+                        strokeWidth="1.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </span>
+                  Settings
+                </>
+              ))}
             </nav>
             <div className="px-4 py-3 border-t border-gray-200 text-[11px] text-gray-500">
               Last synced just now • All data lives on Click2Kart server.

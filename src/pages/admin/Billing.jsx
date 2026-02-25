@@ -58,10 +58,15 @@ export default function Billing(){
 
   const submit = async () => {
     const payload = { customer, items: selected.map(x=>({ productId:x.productId, quantity:x.quantity })), couponCode: couponInfo?.valid? couponCode: undefined, paymentType }
-    const { data } = await api.post('/api/bills', payload)
-    notify('Bill generated','success')
-    window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/bills/${data._id}/pdf`, '_blank')
-    setSelected([]); setCouponCode(''); setCouponInfo(null)
+    try {
+      const { data } = await api.post('/api/bills', payload)
+      notify('Bill generated','success')
+      window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/bills/${data._id}/pdf`, '_blank')
+      setSelected([]); setCouponCode(''); setCouponInfo(null)
+    } catch (err) {
+      const code = err?.response?.data?.error || 'bill_failed'
+      notify(`Bill failed: ${code}`, 'error')
+    }
   }
 
   return (
@@ -69,14 +74,14 @@ export default function Billing(){
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <h1 className="text-lg font-semibold text-slate-50">Billing</h1>
-            <p className="text-[11px] text-slate-400">
+            <h1 className="text-lg font-semibold text-gray-900">Billing</h1>
+            <p className="text-[11px] text-gray-500">
               Build a cart and generate GST bills for in‑store or online customers.
             </p>
           </div>
           <div className="flex items-center gap-2">
             <input
-              className="border border-slate-700 bg-slate-900/70 text-slate-50 text-sm rounded-lg px-3 py-2 w-56"
+              className="border border-gray-300 bg-white text-gray-900 text-sm rounded-lg px-3 py-2 w-56"
               placeholder="Search products"
               value={q}
               onChange={e => setQ(e.target.value)}
@@ -88,13 +93,13 @@ export default function Billing(){
             products.map(p => (
               <div
                 key={p._id}
-                className="bg-slate-900/70 border border-slate-800 rounded-xl p-3 flex flex-col justify-between"
+                className="bg-white border border-gray-200 rounded-xl p-3 flex flex-col justify-between shadow-sm"
               >
                 <div>
-                  <div className="font-medium text-xs md:text-sm text-slate-50 mb-1 line-clamp-2">
+                  <div className="font-medium text-xs md:text-sm text-gray-900 mb-1 line-clamp-2">
                     {p.name}
                   </div>
-                  <div className="text-[11px] text-slate-400">
+                  <div className="text-[11px] text-gray-500">
                     ₹{p.price} • {p.stock} in stock
                   </div>
                 </div>
@@ -110,29 +115,29 @@ export default function Billing(){
             Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-slate-900/70 border border-slate-800 rounded-xl p-3 animate-pulse"
+                className="bg-white border border-gray-200 rounded-xl p-3 animate-pulse"
               >
-                <div className="h-4 bg-slate-800 rounded w-2/3 mb-2" />
-                <div className="h-3 bg-slate-800 rounded w-1/2" />
-                <div className="mt-2 h-8 bg-slate-800 rounded" />
+                <div className="h-4 bg-gray-200 rounded w-2/3 mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-1/2" />
+                <div className="mt-2 h-8 bg-gray-200 rounded" />
               </div>
             ))}
         </div>
-        <div className="flex justify-between items-center text-[11px] text-slate-400">
+        <div className="flex justify-between items-center text-[11px] text-gray-500">
           <div>
             Page {page} of {Math.max(1, Math.ceil(total / limit))}
           </div>
           <div className="space-x-2">
             <button
               onClick={() => load(Math.max(1, page - 1))}
-              className="px-2 py-1 border border-slate-700 rounded-md hover:bg-slate-800 disabled:opacity-40"
+              className="px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-40"
               disabled={page === 1}
             >
               Prev
             </button>
             <button
               onClick={() => load(page + 1)}
-              className="px-2 py-1 border border-slate-700 rounded-md hover:bg-slate-800 disabled:opacity-40"
+              className="px-2 py-1 border border-gray-300 rounded-md hover:bg-gray-100 disabled:opacity-40"
               disabled={page * limit >= total}
             >
               Next
@@ -142,92 +147,92 @@ export default function Billing(){
       </div>
 
       <div className="space-y-4">
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
-          <div className="font-semibold text-slate-50 text-sm">Customer</div>
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2 shadow-sm">
+          <div className="font-semibold text-gray-900 text-sm">Customer</div>
           <input
-            className="border border-slate-700 bg-slate-950/40 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
+            className="border border-gray-300 bg-white text-gray-900 text-sm rounded-lg px-3 py-2 w-full"
             placeholder="Name"
             value={customer.name}
             onChange={e => setCustomer({ ...customer, name: e.target.value })}
           />
           <input
-            className="border border-slate-700 bg-slate-950/40 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
+            className="border border-gray-300 bg-white text-gray-900 text-sm rounded-lg px-3 py-2 w-full"
             placeholder="Phone"
             value={customer.phone}
             onChange={e => setCustomer({ ...customer, phone: e.target.value })}
           />
           <input
-            className="border border-slate-700 bg-slate-950/40 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
+            className="border border-gray-300 bg-white text-gray-900 text-sm rounded-lg px-3 py-2 w-full"
             placeholder="Email"
             value={customer.email}
             onChange={e => setCustomer({ ...customer, email: e.target.value })}
           />
           <input
-            className="border border-slate-700 bg-slate-950/40 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
+            className="border border-gray-300 bg-white text-gray-900 text-sm rounded-lg px-3 py-2 w-full"
             placeholder="Address"
             value={customer.address}
             onChange={e => setCustomer({ ...customer, address: e.target.value })}
           />
         </div>
 
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2">
-          <div className="font-semibold text-slate-50 text-sm">Cart</div>
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2 shadow-sm">
+          <div className="font-semibold text-gray-900 text-sm">Cart</div>
           {selected.map(it => (
             <div key={it.productId} className="flex items-center justify-between gap-2">
-              <div className="text-xs md:text-sm flex-1 text-slate-50 truncate">{it.name}</div>
+              <div className="text-xs md:text-sm flex-1 text-gray-900 truncate">{it.name}</div>
               <input
                 type="number"
                 min="1"
-                className="border border-slate-700 bg-slate-950/60 text-slate-50 text-xs rounded-lg w-16 px-2 py-1"
+                className="border border-gray-300 bg-white text-gray-900 text-xs rounded-lg w-16 px-2 py-1"
                 value={it.quantity}
                 onChange={e => updateQty(it.productId, Number(e.target.value))}
               />
               <button
                 onClick={() => removeItem(it.productId)}
-                className="text-red-400 text-[11px] hover:text-red-300"
+                className="text-red-600 text-[11px] hover:text-red-500"
               >
                 Remove
               </button>
             </div>
           ))}
           {selected.length === 0 && (
-            <div className="text-xs text-slate-500">No items in cart yet.</div>
+            <div className="text-xs text-gray-500">No items in cart yet.</div>
           )}
         </div>
 
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 space-y-2 text-sm text-slate-50">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-2 text-sm text-gray-900 shadow-sm">
           <div className="flex gap-2">
             <input
-              className="border border-slate-700 bg-slate-950/60 text-slate-50 text-sm rounded-lg px-3 py-2 flex-1"
+              className="border border-gray-300 bg-white text-gray-900 text-sm rounded-lg px-3 py-2 flex-1"
               placeholder="Coupon code"
               value={couponCode}
               onChange={e => setCouponCode(e.target.value)}
             />
             <button
               onClick={applyCoupon}
-              className="px-3 bg-slate-100 text-slate-900 rounded-lg text-xs font-semibold hover:bg-white"
+              className="px-3 bg-gray-900 text-white rounded-lg text-xs font-semibold hover:bg-gray-800"
             >
               Apply
             </button>
           </div>
-          <div className="text-xs text-slate-400">
-            Subtotal: <span className="text-slate-100">₹{totals.subtotal.toFixed(2)}</span>
+          <div className="text-xs text-gray-500">
+            Subtotal: <span className="text-gray-900">₹{totals.subtotal.toFixed(2)}</span>
           </div>
-          <div className="text-xs text-slate-400">
-            GST: <span className="text-slate-100">₹{totals.gstTotal.toFixed(2)}</span>
+          <div className="text-xs text-gray-500">
+            GST: <span className="text-gray-900">₹{totals.gstTotal.toFixed(2)}</span>
           </div>
-          <div className="text-xs text-slate-400">
-            Total: <span className="text-slate-100">₹{totals.total.toFixed(2)}</span>
+          <div className="text-xs text-gray-500">
+            Total: <span className="text-gray-900">₹{totals.total.toFixed(2)}</span>
           </div>
           {totals.discount > 0 && (
-            <div className="text-xs text-emerald-300">
+            <div className="text-xs text-emerald-700">
               Discount: -₹{totals.discount.toFixed(2)}
             </div>
           )}
-          <div className="text-xs text-slate-400 flex items-center justify-between pt-1">
+          <div className="text-xs text-gray-500 flex items-center justify-between pt-1">
             <span>Payment type</span>
             <select
-              className="border border-slate-700 bg-slate-950/60 text-slate-50 text-xs rounded-lg px-2 py-1"
+              className="border border-gray-300 bg-white text-gray-900 text-xs rounded-lg px-2 py-1"
               value={paymentType}
               onChange={e => setPaymentType(e.target.value)}
             >
@@ -238,12 +243,12 @@ export default function Billing(){
             </select>
           </div>
           <div className="font-semibold text-sm pt-1">
-            Payable: <span className="text-emerald-300">₹{totals.payable.toFixed(2)}</span>
+            Payable: <span className="text-emerald-700">₹{totals.payable.toFixed(2)}</span>
           </div>
           <button
             disabled={selected.length === 0 || !customer.name || !customer.phone}
             onClick={submit}
-            className="mt-1 w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-1 w-full bg-emerald-500 hover:bg-emerald-400 text-white py-2 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Generate bill & PDF
           </button>

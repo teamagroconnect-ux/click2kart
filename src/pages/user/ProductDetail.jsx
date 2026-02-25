@@ -24,11 +24,11 @@ export default function ProductDetail(){
             <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{p.description}</div>
             <div className="pt-3">
               <Link
-                to="/enquiry"
+                to="/order"
                 state={{ productId: p._id, name: p.name }}
                 className="inline-block bg-blue-600 text-white px-5 py-2 rounded-md text-sm font-semibold"
               >
-                Enquire
+                Order now
               </Link>
             </div>
           </div>

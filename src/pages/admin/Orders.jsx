@@ -20,14 +20,14 @@ export default function Orders(){
     <div className="space-y-5">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
         <div>
-          <h1 className="text-lg font-semibold text-slate-50">Orders</h1>
-          <p className="text-[11px] text-slate-400">
+          <h1 className="text-lg font-semibold text-gray-900">Orders</h1>
+          <p className="text-[11px] text-gray-500">
             Monitor Click2Kart orders and quickly update their status.
           </p>
         </div>
         <div className="flex items-center gap-2">
           <select
-            className="border border-slate-700 bg-slate-900/70 text-slate-50 text-xs rounded-lg px-3 py-2"
+            className="border border-gray-300 bg-white text-gray-900 text-xs rounded-lg px-3 py-2"
             value={status}
             onChange={e => setStatus(e.target.value)}
           >
@@ -40,25 +40,25 @@ export default function Orders(){
         </div>
       </div>
 
-      <div className="bg-slate-900/70 border border-slate-800 rounded-2xl divide-y divide-slate-800">
+      <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 shadow-sm">
         {!loading &&
           items.map(o => {
             const badgeClass =
               o.status === 'FULFILLED'
-                ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                 : o.status === 'CANCELLED'
-                ? 'bg-red-500/10 text-red-300 border border-red-500/30'
+                ? 'bg-red-50 text-red-700 border border-red-200'
                 : o.status === 'CONFIRMED'
-                ? 'bg-blue-500/15 text-blue-300 border border-blue-500/30'
-                : 'bg-amber-500/15 text-amber-300 border border-amber-500/30'
+                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                : 'bg-amber-50 text-amber-700 border border-amber-200'
             return (
               <div key={o._id} className="p-3 md:p-4 space-y-2">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   <div>
-                    <div className="font-medium text-slate-50 text-sm">
+                    <div className="font-medium text-gray-900 text-sm">
                       {o.customer.name} • {o.customer.phone}
                     </div>
-                    <div className="text-[11px] text-slate-400">
+                    <div className="text-[11px] text-gray-500">
                       {o.createdAt ? new Date(o.createdAt).toLocaleString() : ''} • Items:{' '}
                       {o.items.length} • ₹{o.totalEstimate}
                     </div>
@@ -72,7 +72,7 @@ export default function Orders(){
                           className={`px-2 py-1 rounded-full text-[10px] border ${
                             o.status === s
                               ? 'bg-blue-600 text-white border-blue-500'
-                              : 'border-slate-700 text-slate-200 hover:bg-slate-800'
+                              : 'border-gray-300 text-gray-700 hover:bg-gray-100'
                           }`}
                         >
                           {s}
@@ -85,7 +85,7 @@ export default function Orders(){
                       </span>
                       <button
                         onClick={() => toggle(o._id)}
-                        className="text-[11px] text-blue-400 hover:text-blue-300"
+                        className="text-[11px] text-blue-600 hover:text-blue-500"
                       >
                         {expandedId === o._id ? 'Hide items' : 'View items'}
                       </button>
@@ -93,7 +93,7 @@ export default function Orders(){
                   </div>
                 </div>
                 {expandedId === o._id && (
-                  <div className="mt-2 border-t border-slate-800 pt-2 text-[11px] text-slate-200 space-y-1">
+                  <div className="mt-2 border-t border-gray-200 pt-2 text-[11px] text-gray-700 space-y-1">
                     {o.items.map((it, idx) => (
                       <div key={idx} className="flex justify-between">
                         <span className="truncate">{it.name}</span>
@@ -108,24 +108,24 @@ export default function Orders(){
         {loading &&
           Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="p-3 md:p-4 animate-pulse space-y-2">
-              <div className="h-4 bg-slate-800 rounded w-1/3" />
-              <div className="h-3 bg-slate-800 rounded w-1/4" />
+              <div className="h-4 bg-gray-200 rounded w-1/3" />
+              <div className="h-3 bg-gray-200 rounded w-1/4" />
             </div>
           ))}
         {items.length === 0 && !loading && (
-          <div className="p-4 text-slate-400 text-sm">No orders found.</div>
+          <div className="p-4 text-gray-500 text-sm">No orders found.</div>
         )}
       </div>
       <div className="flex justify-end gap-2 text-[11px]">
         <button
           onClick={() => load(Math.max(1, page - 1))}
-          className="px-3 py-1.5 border border-slate-700 rounded-lg text-slate-200 hover:bg-slate-800"
+          className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
         >
           Prev
         </button>
         <button
           onClick={() => load(page + 1)}
-          className="px-3 py-1.5 border border-slate-700 rounded-lg text-slate-200 hover:bg-slate-800"
+          className="px-3 py-1.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
         >
           Next
         </button>
