@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { useCart } from '../lib/CartContext'
+import { useCart } from '../../lib/CartContext'
 
 export default function Cart() {
   const { cart, removeFromCart, updateQuantity, cartTotal } = useCart()
