@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import api from '../../lib/api'
+import { useCart } from '../../lib/CartContext'
 
 export default function Catalogue(){
+  const { addToCart } = useCart()
   const [q, setQ] = useState('')
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
@@ -92,10 +94,25 @@ export default function Catalogue(){
                 <div className="p-4 space-y-2 flex-1 flex flex-col">
                   <div className="text-xs uppercase text-gray-500 tracking-wider font-medium">{p.category || 'Uncategorized'}</div>
                   <div className="font-semibold text-base line-clamp-2">{p.name}</div>
-                  <div className="mt-1 text-lg font-bold text-gray-900">₹{p.price}</div>
-                  <div className="mt-auto pt-3 text-sm font-medium text-blue-600">View details</div>
+                <div className="pt-2 flex gap-2">
+                  <button 
+                    onClick={() => addToCart(p)}
+                    className="flex-1 bg-gray-900 text-white py-2 rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors"
+                  >
+                    Add to Cart
+                  </button>
+                  <Link 
+                    to={`/products/${p._id}`}
+                    className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </Link>
                 </div>
-              </Link>
+              </div>
+            </Link>
             ))}
             {!loading && filteredSorted.length===0 && (
               <div className="col-span-full py-20 text-center text-gray-500 text-lg">No products found</div>

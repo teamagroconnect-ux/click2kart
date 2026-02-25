@@ -101,39 +101,57 @@ export default function Home() {
               View all
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {featured.map((p) => (
-              <Link
+              <div
                 key={p._id}
-                to={`/products/${p._id}`}
-                className="bg-white border rounded-lg overflow-hidden hover:shadow-sm flex flex-col transition-shadow"
+                className="group bg-white border rounded-2xl overflow-hidden hover:shadow-xl flex flex-col transition-all duration-300 transform hover:-translate-y-1"
               >
-                <div className="bg-gray-100 aspect-[4/3] flex items-center justify-center">
-                  {p.images && p.images.length > 0 ? (
-                    <img
-                      src={p.images[0].url}
-                      alt={p.name}
-                      className="w-full h-full object-contain"
-                    />
-                  ) : (
-                    <span className="text-xs text-gray-400">No image</span>
-                  )}
-                </div>
-                <div className="p-3 space-y-1 flex-1 flex flex-col">
-                  <div className="text-xs uppercase text-gray-500 tracking-wide">
-                    {p.category || 'Uncategorized'}
+                <Link to={`/products/${p._id}`} className="block">
+                  <div className="bg-gray-50 aspect-square flex items-center justify-center overflow-hidden">
+                    {p.images && p.images.length > 0 ? (
+                      <img
+                        src={p.images[0].url}
+                        alt={p.name}
+                        className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110 p-4"
+                      />
+                    ) : (
+                      <span className="text-sm text-gray-400 font-medium">No image available</span>
+                    )}
                   </div>
-                  <div className="font-medium text-sm line-clamp-2">{p.name}</div>
-                  <div className="mt-auto">
-                    <div className="text-base font-semibold text-gray-900">
-                      ₹{p.price}
+                </Link>
+                <div className="p-5 flex-1 flex flex-col space-y-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="text-[10px] uppercase text-blue-600 font-bold tracking-widest bg-blue-50 px-2 py-0.5 rounded-md">
+                      {p.category || 'General'}
                     </div>
+                    <div className="text-sm font-bold text-gray-900">₹{p.price.toLocaleString()}</div>
+                  </div>
+                  <Link to={`/products/${p._id}`} className="block group-hover:text-blue-600 transition-colors">
+                    <div className="font-bold text-gray-900 line-clamp-2 min-h-[3rem] text-sm leading-tight">{p.name}</div>
+                  </Link>
+                  <div className="pt-2 flex gap-2">
+                    <button 
+                      onClick={() => addToCart(p)}
+                      className="flex-1 bg-gray-900 text-white py-2 rounded-lg text-xs font-bold hover:bg-gray-800 transition-colors"
+                    >
+                      Add to Cart
+                    </button>
+                    <Link 
+                      to={`/products/${p._id}`}
+                      className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </Link>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
             {featured.length === 0 && (
-              <div className="text-gray-600 text-sm">No products yet.</div>
+              <div className="col-span-full py-12 text-center text-gray-500 font-medium italic">Discover our latest arrivals soon...</div>
             )}
           </div>
         </section>

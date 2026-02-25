@@ -8,6 +8,7 @@ import Orders from './pages/admin/Orders.jsx'
 import Coupons from './pages/admin/Coupons.jsx'
 import Partners from './pages/admin/Partners.jsx'
 import Settings from './pages/admin/Settings.jsx'
+import Customers from './pages/admin/Customers.jsx'
 import AdminLayout from './components/AdminLayout.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Home from './pages/user/Home.jsx'
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="orders" element={<Orders />} />
         <Route path="coupons" element={<Coupons />} />
         <Route path="partners" element={<Partners />} />
+        <Route path="customers" element={<Customers />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 
