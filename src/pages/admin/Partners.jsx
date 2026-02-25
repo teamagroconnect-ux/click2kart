@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 
@@ -46,63 +46,121 @@ export default function Partners() {
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold mb-2">Partners</h1>
-      <div className="bg-white border rounded">
-        <div className="grid grid-cols-7 gap-2 px-4 py-2 text-sm font-semibold border-b">
-          <div>Partner</div>
-          <div>Coupon</div>
-          <div>Txn Amount</div>
-          <div>Commission %</div>
-          <div>Total Commission</div>
-          <div>Paid</div>
-          <div>Balance</div>
+    <div className="space-y-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Channel Partners</h1>
+          <p className="text-sm text-gray-500 font-medium">Track sales performance and manage commission payouts for your partners.</p>
         </div>
-        {loading && <div className="p-4 text-sm text-gray-500">Loading...</div>}
-        {!loading && items.map(p => (
-          <div key={p.couponId} className="border-t px-4 py-2 text-sm flex flex-col gap-1">
-            <div className="grid grid-cols-7 gap-2 items-center">
-              <div>
-                <div className="font-medium">{p.partnerName || '-'}</div>
-                {p.partnerPhone && <div className="text-xs text-gray-600">{p.partnerPhone}</div>}
-              </div>
-              <div>{p.code}</div>
-              <div>₹{p.totalSales.toFixed(2)}</div>
-              <div>{p.commissionPercent}%</div>
-              <div>₹{p.totalCommission.toFixed(2)}</div>
-              <div>₹{p.totalPaid.toFixed(2)}</div>
-              <div className="flex items-center gap-2">
-                <span>₹{p.balance.toFixed(2)}</span>
-                <button className="px-2 py-1 text-xs bg-blue-600 text-white rounded" onClick={()=>openPayout(p.code)}>Mark paid</button>
-              </div>
-            </div>
-            {p.payouts && p.payouts.length>0 && (
-              <div className="text-xs text-gray-600 mt-1">
-                Last payout: ₹{p.payouts[0].amount.toFixed(2)} on {new Date(p.payouts[0].createdAt).toLocaleString()} via {p.payouts[0].method}{p.payouts[0].utr? ` • UTR ${p.payouts[0].utr}`:''}{p.payouts[0].razorpayPaymentId? ` • Razorpay ${p.payouts[0].razorpayPaymentId}`:''}
-              </div>
-            )}
-          </div>
-        ))}
-        {!loading && items.length===0 && <div className="p-4 text-sm text-gray-500">No partners configured. Create coupons with partner details to see them here.</div>}
       </div>
-      {selectedCode && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-20">
-          <div className="bg-white rounded shadow-lg p-6 w-full max-w-md space-y-3">
-            <h2 className="text-lg font-semibold">Record payout for {selectedCode}</h2>
-            <form onSubmit={submitPayout} className="space-y-3">
-              <input className="border p-2 w-full" placeholder="Amount" type="number" min="0" step="0.01" value={form.amount} onChange={e=>setForm({...form, amount:e.target.value})} required />
-              <select className="border p-2 w-full" value={form.method} onChange={e=>setForm({...form, method:e.target.value})}>
-                <option value="MANUAL">Manual / Bank transfer</option>
-                <option value="RAZORPAY">Razorpay</option>
-              </select>
-              <input className="border p-2 w-full" placeholder="UTR (for bank transfer)" value={form.utr} onChange={e=>setForm({...form, utr:e.target.value})} />
-              {form.method==='RAZORPAY' && (
-                <input className="border p-2 w-full" placeholder="Razorpay payment ID" value={form.razorpayPaymentId} onChange={e=>setForm({...form, razorpayPaymentId:e.target.value})} />
+
+      <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
+              <tr>
+                <th className="px-6 py-4">Partner</th>
+                <th className="px-6 py-4">Coupon</th>
+                <th className="px-6 py-4">Sales</th>
+                <th className="px-6 py-4">Comm. %</th>
+                <th className="px-6 py-4">Earnings</th>
+                <th className="px-6 py-4">Paid</th>
+                <th className="px-6 py-4">Balance</th>
+                <th className="px-6 py-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {loading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td colSpan="8" className="px-6 py-8"><div className="h-4 bg-gray-100 rounded w-full"></div></td>
+                  </tr>
+                ))
+              ) : items.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="px-6 py-12 text-center text-gray-400 italic font-medium">No partners configured yet.</td>
+                </tr>
+              ) : (
+                items.map(p => (
+                  <React.Fragment key={p.couponId}>
+                    <tr className="group hover:bg-gray-50/50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-gray-900">{p.partnerName || '-'}</div>
+                        <div className="text-[10px] text-gray-400 font-bold">{p.partnerPhone || 'No Phone'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-lg text-[10px] font-black tracking-widest">{p.code}</span>
+                      </td>
+                      <td className="px-6 py-4 font-bold text-gray-900">₹{p.totalSales.toLocaleString()}</td>
+                      <td className="px-6 py-4 font-bold text-gray-500">{p.commissionPercent}%</td>
+                      <td className="px-6 py-4 font-bold text-gray-900">₹{p.totalCommission.toLocaleString()}</td>
+                      <td className="px-6 py-4 font-bold text-emerald-600">₹{p.totalPaid.toLocaleString()}</td>
+                      <td className="px-6 py-4">
+                        <div className={`font-black ${p.balance > 0 ? 'text-red-600' : 'text-gray-400'}`}>₹{p.balance.toLocaleString()}</div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button 
+                          onClick={()=>openPayout(p.code)}
+                          className="bg-gray-900 text-white px-4 py-2 rounded-xl text-[10px] font-black hover:bg-gray-800 transition-all uppercase tracking-widest"
+                        >
+                          Mark Paid
+                        </button>
+                      </td>
+                    </tr>
+                    {p.payouts && p.payouts.length > 0 && (
+                      <tr>
+                        <td colSpan="8" className="px-6 py-3 bg-gray-50/30">
+                          <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            Last Payout: <span className="text-gray-600">₹{p.payouts[0].amount}</span> on <span className="text-gray-600">{new Date(p.payouts[0].createdAt).toLocaleDateString()}</span> via <span className="text-gray-600">{p.payouts[0].method}</span>
+                            {p.payouts[0].utr && <> • UTR: <span className="text-gray-600">{p.payouts[0].utr}</span></>}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))
               )}
-              <textarea className="border p-2 w-full" placeholder="Notes (optional)" value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})} />
-              <div className="flex justify-end gap-2 pt-2">
-                <button type="button" className="px-3 py-1 border rounded" onClick={()=>setSelectedCode(null)}>Cancel</button>
-                <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded">Save</button>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {selectedCode && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl p-8 w-full max-w-md space-y-6 animate-in zoom-in-95">
+            <div className="space-y-1">
+              <h2 className="text-xl font-black text-gray-900 tracking-tight">Record Payout</h2>
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Partner: {selectedCode}</p>
+            </div>
+            
+            <form onSubmit={submitPayout} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Amount (₹)</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" type="number" min="0" step="0.01" value={form.amount} onChange={e=>setForm({...form, amount:e.target.value})} required />
+              </div>
+              
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Payment Method</label>
+                <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.method} onChange={e=>setForm({...form, method:e.target.value})}>
+                  <option value="MANUAL">Bank Transfer / Manual</option>
+                  <option value="RAZORPAY">Razorpay</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">{form.method === 'RAZORPAY' ? 'Razorpay ID' : 'UTR Number'}</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder={form.method === 'RAZORPAY' ? 'pay_...' : 'Transaction ID'} value={form.method === 'RAZORPAY' ? form.razorpayPaymentId : form.utr} onChange={e=>setForm({...form, [form.method === 'RAZORPAY' ? 'razorpayPaymentId' : 'utr']: e.target.value})} />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Notes</label>
+                <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px]" placeholder="Optional notes..." value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})} />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={()=>setSelectedCode(null)} className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl text-sm font-black hover:bg-gray-200 transition-all uppercase tracking-widest">Cancel</button>
+                <button className="flex-2 bg-gray-900 text-white py-4 px-8 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all uppercase tracking-widest">Confirm Payout</button>
               </div>
             </form>
           </div>

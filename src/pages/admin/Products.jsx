@@ -190,102 +190,80 @@ export default function Products() {
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
                   <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px]" placeholder="Product details..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                 </div>
-                <button className="w-full bg-gray-900 text-white py-4 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 active:scale-95">ADD TO INVENTORY</button>
+                <button className="w-full bg-gray-900 text-white py-4 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest">ADD TO INVENTORY</button>
               </form>
             </div>
           </div>
         </div>
       </div>
-      </div>
 
       {editing && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-40">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-300">
           <form
             onSubmit={saveEdit}
-            className="bg-slate-950 border border-slate-800 rounded-2xl p-5 w-full max-w-xl grid grid-cols-1 md:grid-cols-2 gap-3 shadow-[0_18px_45px_rgba(15,23,42,1)]"
+            className="bg-white border border-gray-100 rounded-3xl p-8 w-full max-w-2xl shadow-2xl space-y-6 animate-in zoom-in-95 duration-300"
           >
-            <div className="md:col-span-2 text-base font-semibold mb-1 text-slate-50">
-              Edit product
-            </div>
-            <input
-              className="border border-slate-700 bg-slate-900/70 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
-              placeholder="Name"
-              value={editing.name}
-              onChange={e => setEditing({ ...editing, name: e.target.value })}
-            />
-            <input
-              className="border border-slate-700 bg-slate-900/70 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
-              placeholder="Price"
-              value={editing.price}
-              onChange={e => setEditing({ ...editing, price: e.target.value })}
-            />
-            <select
-              className="border border-slate-700 bg-slate-900/70 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
-              value={editing.category || ''}
-              onChange={e => setEditing({ ...editing, category: e.target.value })}
-            >
-              <option value="">Select category</option>
-              {categories.map(c => (
-                <option key={c._id} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <input
-              className="border border-slate-700 bg-slate-900/70 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
-              placeholder="Stock"
-              value={editing.stock}
-              onChange={e => setEditing({ ...editing, stock: e.target.value })}
-            />
-            <input
-              className="border border-slate-700 bg-slate-900/70 text-slate-50 text-sm rounded-lg px-3 py-2 w-full"
-              placeholder="GST %"
-              value={editing.gst}
-              onChange={e => setEditing({ ...editing, gst: e.target.value })}
-            />
-            <div className="md:col-span-2 flex flex-col md:flex-row items-stretch md:items-center gap-2">
-              <input
-                className="border border-slate-700 bg-slate-900/70 text-slate-50 text-sm rounded-lg px-3 py-2 flex-1"
-                placeholder="Images (comma separated)"
-                value={editing.images}
-                onChange={e => setEditing({ ...editing, images: e.target.value })}
-              />
-              <ImageUpload
-                onUploaded={url =>
-                  setEditing(ed => ({
-                    ...ed,
-                    images: (ed.images ? ed.images + ', ' : '') + url
-                  }))
-                }
-              />
-            </div>
-            <textarea
-              className="border border-slate-700 bg-slate-900/70 text-slate-50 text-sm rounded-lg px-3 py-2 md:col-span-2 min-h-[72px]"
-              placeholder="Description"
-              value={editing.description || ''}
-              onChange={e => setEditing({ ...editing, description: e.target.value })}
-            />
-            <div className="md:col-span-2 flex justify-end gap-2 mt-1">
-              <button
-                type="button"
-                onClick={() => setEditing(null)}
-                className="px-3 py-1.5 border border-slate-700 rounded-lg text-xs text-slate-200 hover:bg-slate-800"
-              >
-                Cancel
+            <div className="flex items-center justify-between border-b border-gray-50 pb-4">
+              <div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">Edit Product</h3>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Update item details</p>
+              </div>
+              <button type="button" onClick={() => setEditing(null)} className="p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-400">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
-              <button className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold">
-                Save
-              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Product Name</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Name" value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Price (₹)</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Price" value={editing.price} onChange={e => setEditing({ ...editing, price: e.target.value })} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category</label>
+                <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={editing.category || ''} onChange={e => setEditing({ ...editing, category: e.target.value })} required>
+                  <option value="">Select category</option>
+                  {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Stock</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Stock" value={editing.stock} onChange={e => setEditing({ ...editing, stock: e.target.value })} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="GST %" value={editing.gst} onChange={e => setEditing({ ...editing, gst: e.target.value })} />
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Images</label>
+                <div className="flex gap-2">
+                  <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-[10px] font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Image URLs" value={editing.images} onChange={e => setEditing({ ...editing, images: e.target.value })} />
+                  <ImageUpload onUploaded={url => setEditing(f => ({ ...f, images: (f.images ? f.images + ', ' : '') + url }))} />
+                </div>
+              </div>
+              <div className="space-y-1 md:col-span-2">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
+                <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[100px]" placeholder="Description" value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button type="button" onClick={() => setEditing(null)} className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl text-sm font-black hover:bg-gray-200 transition-all uppercase tracking-widest">Cancel</button>
+              <button className="flex-2 bg-gray-900 text-white py-4 px-12 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest">Save Changes</button>
             </div>
           </form>
         </div>
       )}
+
       <ConfirmModal
         open={!!toDelete}
-        title="Delete Product"
-        message={`Delete ${toDelete?.name}?`}
-        onCancel={() => setToDelete(null)}
+        title="Delete Product?"
+        message={`Are you sure you want to remove "${toDelete?.name}"? This action cannot be undone.`}
         onConfirm={confirmDelete}
+        onCancel={() => setToDelete(null)}
       />
     </>
   )

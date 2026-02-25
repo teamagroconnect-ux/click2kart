@@ -81,10 +81,10 @@ export default function AdminLayout() {
       onClick={() => setOpen(false)}
       className={({ isActive }) =>
         [
-          'flex items-center px-3 py-2 rounded-lg text-sm transition-colors',
+          'flex items-center px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-200 group',
           isActive
-            ? 'bg-blue-600 text-white shadow-sm'
-            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+            ? 'bg-gray-900 text-white shadow-lg shadow-gray-200 scale-[1.02]'
+            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:pl-5'
         ].join(' ')
       }
     >
@@ -93,59 +93,53 @@ export default function AdminLayout() {
   )
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="flex h-14 items-center justify-between border-b border-gray-200 bg-white px-4 md:px-6 shadow-sm">
-        <div className="flex items-center gap-2">
+    <div className="min-h-screen bg-white text-gray-900 selection:bg-blue-100 selection:text-blue-900">
+      <div className="flex h-20 items-center justify-between border-b border-gray-100 bg-white/80 backdrop-blur-md px-6 md:px-10 sticky top-0 z-30">
+        <div className="flex items-center gap-4">
           <button
-            className="md:hidden p-1.5 rounded-lg hover:bg-gray-100 border border-gray-200"
+            className="md:hidden p-2 rounded-xl hover:bg-gray-50 border border-gray-100 transition-colors"
             onClick={() => setOpen(!open)}
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M4 7h16M4 12h16M4 17h16"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
+            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
           <div className="flex items-center gap-3">
-            <span className="h-8 w-8 rounded-xl bg-blue-600 flex items-center justify-center text-[10px] font-black text-white shadow-lg border border-blue-500">
+            <span className="h-10 w-10 rounded-2xl bg-blue-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-blue-100 border border-blue-500">
               C2K
             </span>
             <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-black tracking-tight text-gray-900">Click2Kart</span>
-                <span className="px-1.5 py-0.5 bg-gray-900 text-[10px] font-bold text-white rounded-md tracking-wider">ADMIN</span>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-black tracking-tight text-gray-900">Click2Kart</span>
+                <span className="px-2 py-0.5 bg-gray-900 text-[10px] font-black text-white rounded-lg tracking-widest uppercase">Admin</span>
               </div>
-              <div className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Control Panel</div>
+              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Operational Cockpit</div>
             </div>
           </div>
         </div>
         <button
           onClick={logout}
-          className="inline-flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+          className="group inline-flex items-center gap-2 rounded-2xl border border-gray-200 px-5 py-2.5 text-xs font-black text-gray-600 hover:bg-red-50 hover:border-red-100 hover:text-red-600 transition-all active:scale-95"
         >
-          <span>Logout</span>
+          <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+          <span className="uppercase tracking-widest">Logout</span>
         </button>
       </div>
 
-      <div className="grid min-h-[calc(100vh-3.5rem)] md:grid-cols-[240px_minmax(0,1fr)]">
+      <div className="grid min-h-[calc(100vh-5rem)] md:grid-cols-[280px_minmax(0,1fr)]">
         <aside
-          className={`border-r border-gray-200 bg-white ${
-            open ? 'block' : 'hidden'
-          } md:block`}
+          className={`border-r border-gray-100 bg-white/50 backdrop-blur-sm ${
+            open ? 'fixed inset-0 z-40 bg-white pt-20' : 'hidden'
+          } md:block sticky top-20 h-[calc(100vh-5rem)]`}
         >
-          <div className="h-full flex flex-col">
-            <div className="px-4 py-4 border-b border-gray-200">
-              <div className="text-xs uppercase text-gray-500 tracking-wide mb-1">
+          <div className="h-full flex flex-col p-6">
+            <div className="mb-8 px-2">
+              <div className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">
                 Navigation
               </div>
-              <div className="text-[11px] text-gray-500">
-                Manage products, orders and billing.
+              <div className="text-xs text-gray-500 font-medium leading-relaxed">
+                Manage your store inventory, customers and finances.
               </div>
             </div>
-            <nav className="flex-1 px-3 py-4 space-y-1 text-gray-800">
+            <nav className="flex-1 space-y-2">
               {link('/admin', (
                 <>
                   <Icon name="dash" />
@@ -191,30 +185,38 @@ export default function AdminLayout() {
               {link('/admin/customers', (
                 <>
                   <Icon name="cust" />
-                  My Customers
+                  Customers
                 </>
               ))}
-              {link('/admin/settings', (
-                <>
-                  <span className="inline-block w-4 h-4 mr-2 align-middle">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  </span>
-                  Settings
-                </>
-              ))}
+              <div className="pt-6 mt-6 border-t border-gray-50">
+                <div className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-4 px-2">
+                  System
+                </div>
+                {link('/admin/settings', (
+                  <>
+                    <span className="inline-block w-4 h-4 mr-2 align-middle">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    </span>
+                    Settings
+                  </>
+                ))}
+              </div>
             </nav>
-            <div className="px-4 py-3 border-t border-gray-200 text-[11px] text-gray-500">
-              Last synced just now • All data lives on Click2Kart server.
+            <div className="mt-auto pt-6 border-t border-gray-50 px-2">
+              <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                System Online
+              </div>
             </div>
           </div>
         </aside>
 
-        <main className="bg-gray-50 text-gray-900">
-          <div className="max-w-6xl mx-auto px-4 py-4 md:py-6">
-            <div className="rounded-2xl border border-gray-200 bg-white shadow-sm p-3 md:p-5">
+        <main className="bg-gray-50/30">
+          <div className="max-w-[1400px] mx-auto p-6 md:p-10">
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-700">
               <Outlet />
             </div>
           </div>
