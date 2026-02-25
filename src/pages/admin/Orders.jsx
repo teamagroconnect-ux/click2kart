@@ -15,6 +15,7 @@ export default function Orders(){
   }
   useEffect(()=>{ load(1) }, [status])
   const update = async(id, s)=>{ await api.patch(`/api/orders/${id}/status`, { status: s }); load(page) }
+  const approveCash = async(id)=>{ await api.patch(`/api/orders/${id}/approve-cash`); load(page) }
   const toggle = (id) => setExpandedId(expandedId === id ? null : id)
   return (
     <div className="space-y-6">
@@ -34,6 +35,7 @@ export default function Orders(){
             >
               <option value="">All Statuses</option>
               <option value="NEW">New</option>
+              <option value="PENDING_CASH_APPROVAL">Pending Cash Approval</option>
               <option value="CONFIRMED">Confirmed</option>
               <option value="FULFILLED">Fulfilled</option>
               <option value="CANCELLED">Cancelled</option>
@@ -75,7 +77,8 @@ export default function Orders(){
                     FULFILLED: 'bg-emerald-50 text-emerald-700 border-emerald-100',
                     CANCELLED: 'bg-red-50 text-red-700 border-red-100',
                     CONFIRMED: 'bg-blue-50 text-blue-700 border-blue-100',
-                    NEW: 'bg-amber-50 text-amber-700 border-amber-100'
+                    NEW: 'bg-amber-50 text-amber-700 border-amber-100',
+                    PENDING_CASH_APPROVAL: 'bg-purple-50 text-purple-700 border-purple-100'
                   };
                   return (
                     <Fragment key={o._id}>
@@ -142,22 +145,50 @@ export default function Orders(){
                                 </div>
                               </div>
                               <div className="space-y-4">
-                                <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Order Actions</h4>
-                                <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm space-y-4">
-                                  <div className="flex flex-wrap gap-2">
-                                    {['NEW', 'CONFIRMED', 'FULFILLED', 'CANCELLED'].map(s => (
-                                      <button
-                                        key={s}
-                                        onClick={(e) => { e.stopPropagation(); update(o._id, s); }}
-                                        className={`px-4 py-2 rounded-xl text-[10px] font-bold border transition-all ${
-                                          o.status === s
-                                            ? 'bg-gray-900 text-white border-gray-900 shadow-md transform scale-105'
-                                            : 'border-gray-100 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-                                        }`}
-                                      >
-                                        {s}
-                                      </button>
-                                    ))}
+                                <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Payment & Actions</h4>
+                                <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm space-y-6">
+                                  <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                      <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Method</div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-lg">{o.paymentMethod === 'CASH' ? '💵' : '💳'}</span>
+                                        <span className="text-xs font-black text-gray-900">{o.paymentMethod}</span>
+                                      </div>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Payment Status</div>
+                                      <div className={`text-xs font-black uppercase tracking-widest ${o.paymentStatus === 'PAID' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                        {o.paymentStatus}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {o.status === 'PENDING_CASH_APPROVAL' && (
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); approveCash(o._id); }}
+                                      className="w-full bg-emerald-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 hover:bg-emerald-500 transition-all transform hover:-translate-y-0.5"
+                                    >
+                                      Approve Cash Payment
+                                    </button>
+                                  )}
+
+                                  <div className="space-y-2">
+                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Update Order Status</div>
+                                    <div className="flex flex-wrap gap-2">
+                                      {['NEW', 'CONFIRMED', 'FULFILLED', 'CANCELLED'].map(s => (
+                                        <button
+                                          key={s}
+                                          onClick={(e) => { e.stopPropagation(); update(o._id, s); }}
+                                          className={`px-4 py-2 rounded-xl text-[10px] font-bold border transition-all ${
+                                            o.status === s
+                                              ? 'bg-gray-900 text-white border-gray-900 shadow-md transform scale-105'
+                                              : 'border-gray-100 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                                          }`}
+                                        >
+                                          {s}
+                                        </button>
+                                      ))}
+                                    </div>
                                   </div>
                                   {o.notes && (
                                     <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100/50">

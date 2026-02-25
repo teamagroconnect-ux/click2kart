@@ -66,7 +66,7 @@ export default function Signup() {
           <p className="text-sm text-gray-500 font-medium">
             {step === 1 
               ? 'Join 500+ businesses sourcing premium tech.' 
-              : `We've sent a 6-digit code to ${formData.email}`}
+              : `We've sent a 4-digit code to ${formData.email}`}
           </p>
         </div>
 
@@ -142,13 +142,13 @@ export default function Signup() {
         ) : (
           <form className="mt-8 space-y-6" onSubmit={handleVerifyOTP}>
             <div className="group text-center">
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 block">Enter 6-Digit OTP</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 block">Enter 4-Digit OTP</label>
               <input
                 type="text"
                 required
-                maxLength={6}
+                maxLength={4}
                 className="w-full bg-gray-50 border-none rounded-2xl px-5 py-6 text-3xl font-black text-center text-gray-900 tracking-[0.5em] placeholder-gray-300 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                placeholder="000000"
+                placeholder="0000"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
               />
@@ -156,7 +156,7 @@ export default function Signup() {
 
             <button
               type="submit"
-              disabled={loading || otp.length < 6}
+              disabled={loading || otp.length < 4}
               className="w-full bg-blue-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
             >
               {loading ? 'Verifying...' : 'Complete Registration'}

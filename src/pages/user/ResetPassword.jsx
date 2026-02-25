@@ -49,9 +49,9 @@ export default function ResetPassword() {
               <input
                 type="text"
                 required
-                maxLength={6}
+                maxLength={4}
                 className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-center text-xl font-black tracking-widest text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                placeholder="000000"
+                placeholder="0000"
                 value={formData.otp}
                 onChange={(e) => setFormData({ ...formData, otp: e.target.value.replace(/\D/g, '') })}
               />
@@ -72,7 +72,7 @@ export default function ResetPassword() {
 
           <button
             type="submit"
-            disabled={loading || formData.otp.length < 6}
+            disabled={loading || formData.otp.length < 4}
             className="w-full bg-blue-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
           >
             {loading ? 'Updating...' : 'Reset Password'}

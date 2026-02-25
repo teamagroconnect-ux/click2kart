@@ -4,6 +4,7 @@ import api from '../../lib/api'
 export default function Coupons(){
   const [items, setItems] = useState([])
   const [expandedId, setExpandedId] = useState(null)
+  const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({
     code:'', type:'PERCENT', value:'', minAmount:'', expiryDate:'', usageLimit:'',
     partnerId:'', partnerCommissionPercent:'', maxTotalSales:'', isActive:true, password:''
@@ -13,19 +14,64 @@ export default function Coupons(){
   const load = async()=>{ const {data}=await api.get('/api/coupons'); setItems(data) }
   const loadPartners = async()=>{ const {data}=await api.get('/api/partner-accounts'); setPartners(data) }
   useEffect(()=>{ load(); loadPartners() }, [])
-  const create = async (e)=>{ e.preventDefault(); await api.post('/api/coupons', {
-    ...form,
-    value: Number(form.value),
-    minAmount: form.minAmount? Number(form.minAmount): undefined,
-    usageLimit: form.usageLimit? Number(form.usageLimit): undefined,
-    partnerCommissionPercent: form.partnerCommissionPercent ? Number(form.partnerCommissionPercent) : undefined,
-    maxTotalSales: form.maxTotalSales ? Number(form.maxTotalSales) : undefined,
-    password: form.password ? String(form.password).trim() : undefined
-  }); setForm({
-    code:'', type:'PERCENT', value:'', minAmount:'', expiryDate:'', usageLimit:'',
-    partnerId:'', partnerCommissionPercent:'', maxTotalSales:'', isActive:true, password:''
-  }); load() }
-  const disable = async (c)=>{ await api.delete(`/api/coupons/${c._id}`); load() }
+
+  const resetForm = () => {
+    setForm({
+      code:'', type:'PERCENT', value:'', minAmount:'', expiryDate:'', usageLimit:'',
+      partnerId:'', partnerCommissionPercent:'', maxTotalSales:'', isActive:true, password:''
+    });
+    setEditingId(null);
+  }
+
+  const startEdit = (c) => {
+    setEditingId(c._id);
+    setForm({
+      code: c.code,
+      type: c.type,
+      value: c.value,
+      minAmount: c.minAmount || '',
+      expiryDate: c.expiryDate ? new Date(c.expiryDate).toISOString().split('T')[0] : '',
+      usageLimit: c.usageLimit || '',
+      partnerId: c.partner?._id || c.partner || '',
+      partnerCommissionPercent: c.partnerCommissionPercent || '',
+      maxTotalSales: c.maxTotalSales || '',
+      isActive: c.isActive,
+      password: c.password || ''
+    });
+    setExpandedId(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  const save = async (e)=>{ 
+    e.preventDefault(); 
+    const payload = {
+      ...form,
+      value: Number(form.value),
+      minAmount: form.minAmount? Number(form.minAmount): undefined,
+      usageLimit: form.usageLimit? Number(form.usageLimit): undefined,
+      partnerCommissionPercent: form.partnerCommissionPercent ? Number(form.partnerCommissionPercent) : undefined,
+      maxTotalSales: form.maxTotalSales ? Number(form.maxTotalSales) : undefined,
+      password: form.password ? String(form.password).trim() : undefined
+    };
+
+    if (editingId) {
+      await api.put(`/api/coupons/${editingId}`, payload);
+    } else {
+      await api.post('/api/coupons', payload);
+    }
+    resetForm(); 
+    load(); 
+  }
+
+  const remove = async (c)=>{ 
+    if (c.isActive) {
+      if (!confirm(`Disable coupon "${c.code}"?`)) return;
+    } else {
+      if (!confirm(`Permanently DELETE coupon "${c.code}"? This cannot be undone.`)) return;
+    }
+    await api.delete(`/api/coupons/${c._id}`); 
+    load(); 
+  }
   const createPartner = async (e)=> {
     e.preventDefault()
     if (!newPartner.name) return
@@ -46,8 +92,15 @@ export default function Coupons(){
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-1 space-y-6">
           <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Create New Coupon</h3>
-            <form onSubmit={create} className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">
+                {editingId ? 'Edit Coupon' : 'Create New Coupon'}
+              </h3>
+              {editingId && (
+                <button onClick={resetForm} className="text-[10px] font-black text-red-500 uppercase tracking-widest hover:underline">Cancel</button>
+              )}
+            </div>
+            <form onSubmit={save} className="space-y-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Coupon Code</label>
                 <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. WELCOME10" value={form.code} onChange={e=>setForm({...form, code:e.target.value})} required />
@@ -107,7 +160,9 @@ export default function Coupons(){
                 )}
               </div>
 
-              <button className="w-full bg-gray-900 text-white py-4 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 active:scale-95">CREATE COUPON</button>
+              <button className={`w-full py-4 rounded-2xl text-sm font-black shadow-lg transition-all transform hover:-translate-y-0.5 active:scale-95 ${editingId ? 'bg-blue-600 text-white' : 'bg-gray-900 text-white'}`}>
+                {editingId ? 'UPDATE COUPON' : 'CREATE COUPON'}
+              </button>
             </form>
           </div>
 
@@ -203,7 +258,16 @@ export default function Coupons(){
                         )}
                       </div>
                       <div className="col-span-2 pt-4 flex gap-3">
-                        <button onClick={(e)=>{ e.stopPropagation(); disable(c); }} className="flex-1 bg-red-50 text-red-600 py-3 rounded-2xl text-[10px] font-black hover:bg-red-100 transition-all uppercase tracking-widest">
+                        <button 
+                          onClick={(e)=>{ e.stopPropagation(); startEdit(c); }} 
+                          className="flex-1 bg-gray-50 text-gray-900 py-3 rounded-2xl text-[10px] font-black hover:bg-gray-100 transition-all uppercase tracking-widest border border-gray-100"
+                        >
+                          Edit Details
+                        </button>
+                        <button 
+                          onClick={(e)=>{ e.stopPropagation(); remove(c); }} 
+                          className={`flex-1 py-3 rounded-2xl text-[10px] font-black transition-all uppercase tracking-widest ${c.isActive ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}
+                        >
                           {c.isActive ? 'Disable Coupon' : 'Delete Permanent'}
                         </button>
                       </div>
