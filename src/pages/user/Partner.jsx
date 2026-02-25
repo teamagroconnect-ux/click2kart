@@ -210,13 +210,3 @@ export default function Partner() {
   )
 }
 
-        {!data && !loading && !error && (
-          <div className="text-center text-sm text-gray-500">
-            Enter your coupon code above to view your dashboard.
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
