@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function Login() {
   const [phone, setPhone] = useState('')
+  const navigate = useNavigate()
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    // TODO: Implement login logic
-    alert('Login functionality coming soon!')
+    if (phone.length < 10) return alert('Please enter a valid phone number')
+    localStorage.setItem('userPhone', phone)
+    navigate('/orders')
   }
 
   return (

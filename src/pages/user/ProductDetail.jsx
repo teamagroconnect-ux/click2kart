@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
+import { useCart } from '../../lib/CartContext'
 
 export default function ProductDetail(){
   const { id } = useParams()
+  const navigate = useNavigate()
+  const { addToCart } = useCart()
   const [p, setP] = useState(null)
   useEffect(()=>{ api.get(`/api/products/${id}`).then(({data})=>setP(data)) }, [id])
   if (!p) return <div className="p-10 text-center text-lg text-gray-500">Loading product details...</div>
@@ -33,14 +36,22 @@ export default function ProductDetail(){
               <h3 className="text-base font-semibold text-gray-900">Description</h3>
               <p className="text-base text-gray-600 leading-relaxed whitespace-pre-line">{p.description}</p>
             </div>
-            <div className="pt-6 border-t">
-              <Link
-                to="/order"
-                state={{ productId: p._id, name: p.name }}
-                className="w-full md:w-auto inline-flex justify-center items-center bg-blue-600 text-white px-10 py-4 rounded-xl text-lg font-bold shadow-lg hover:bg-blue-700 transition-colors"
+            <div className="pt-6 border-t flex flex-col sm:flex-row gap-4">
+              <button
+                onClick={() => {
+                  addToCart(p)
+                  navigate('/cart')
+                }}
+                className="flex-1 inline-flex justify-center items-center bg-blue-600 text-white px-10 py-4 rounded-xl text-lg font-bold shadow-lg hover:bg-blue-700 transition-colors"
               >
-                Order now
-              </Link>
+                Buy Now
+              </button>
+              <button
+                onClick={() => addToCart(p)}
+                className="flex-1 inline-flex justify-center items-center border-2 border-blue-600 text-blue-600 px-10 py-4 rounded-xl text-lg font-bold hover:bg-blue-50 transition-colors"
+              >
+                Add to Cart
+              </button>
             </div>
           </div>
         </div>

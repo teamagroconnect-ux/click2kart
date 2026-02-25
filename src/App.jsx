@@ -18,6 +18,8 @@ import Partner from './pages/user/Partner.jsx'
 import UserLayout from './components/UserLayout.jsx'
 import UserLogin from './pages/user/Login.jsx'
 import UserSignup from './pages/user/Signup.jsx'
+import OrderHistory from './pages/user/OrderHistory.jsx'
+import Cart from './pages/user/Cart.jsx'
 
 export default function App() {
   return (
@@ -49,6 +51,8 @@ export default function App() {
         <Route path="partner" element={<Partner />} />
         <Route path="login" element={<UserLogin />} />
         <Route path="signup" element={<UserSignup />} />
+        <Route path="orders" element={<OrderHistory />} />
+        <Route path="cart" element={<Cart />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

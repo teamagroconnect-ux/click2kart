@@ -93,11 +93,23 @@ export default function Orders(){
                   </div>
                 </div>
                 {expandedId === o._id && (
-                  <div className="mt-2 border-t border-gray-200 pt-2 text-[11px] text-gray-700 space-y-1">
+                  <div className="mt-2 border-t border-gray-200 pt-2 text-[11px] text-gray-700 space-y-2">
                     {o.items.map((it, idx) => (
-                      <div key={idx} className="flex justify-between">
-                        <span className="truncate">{it.name}</span>
-                        <span>Qty {it.quantity}</span>
+                      <div key={idx} className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-50 rounded border overflow-hidden flex-shrink-0 flex items-center justify-center">
+                          {it.image ? (
+                            <img src={it.image} alt="" className="w-full h-full object-contain" />
+                          ) : (
+                            <span className="text-[8px] text-gray-400">No img</span>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="truncate font-medium">{it.name}</div>
+                          <div className="text-gray-500">Qty {it.quantity} • ₹{it.price}</div>
+                        </div>
+                        <div className="text-right font-semibold">
+                          ₹{it.lineTotal}
+                        </div>
                       </div>
                     ))}
                   </div>

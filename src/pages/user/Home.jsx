@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import api from '../../lib/api'
+import { useCart } from '../../lib/CartContext'
 
 export default function Home() {
   const [cats, setCats] = useState([])
   const [featured, setFeatured] = useState([])
+  const { addToCart } = useCart()
 
   useEffect(() => {
     api.get('/api/public/categories').then(({ data }) => setCats(data))

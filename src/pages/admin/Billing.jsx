@@ -61,7 +61,13 @@ export default function Billing(){
     try {
       const { data } = await api.post('/api/bills', payload)
       notify('Bill generated','success')
-      window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/bills/${data._id}/pdf`, '_blank')
+      
+      // Fetch PDF with token and open
+      const response = await api.get(`/api/bills/${data._id}/pdf`, { responseType: 'blob' })
+      const file = new Blob([response.data], { type: 'application/pdf' })
+      const fileURL = URL.createObjectURL(file)
+      window.open(fileURL, '_blank')
+
       setSelected([]); setCouponCode(''); setCouponInfo(null)
     } catch (err) {
       const code = err?.response?.data?.error || 'bill_failed'

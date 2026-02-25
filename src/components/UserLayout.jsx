@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { useCart } from '../lib/CartContext'
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -8,6 +9,7 @@ function classNames(...classes) {
 export default function UserLayout() {
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { cartCount } = useCart()
 
   useEffect(() => {
     setMobileOpen(false)
@@ -72,6 +74,17 @@ export default function UserLayout() {
                 >
                   Products
                 </NavLink>
+                <NavLink
+                  to="/orders"
+                  className={({ isActive }) =>
+                    classNames(
+                      'px-2 py-1 rounded-md hover:bg-gray-100',
+                      isActive && 'text-blue-600 font-medium'
+                    )
+                  }
+                >
+                  My Orders
+                </NavLink>
               </nav>
             </div>
 
@@ -98,6 +111,11 @@ export default function UserLayout() {
                   <circle cx="10" cy="18" r="1.3" fill="currentColor" />
                   <circle cx="17" cy="18" r="1.3" fill="currentColor" />
                 </svg>
+                {cartCount > 0 && (
+                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-blue-600 rounded-full">
+                    {cartCount}
+                  </span>
+                )}
               </Link>
               <Link
                 to="/login"
@@ -138,6 +156,17 @@ export default function UserLayout() {
                   }
                 >
                   Products
+                </NavLink>
+                <NavLink
+                  to="/orders"
+                  className={({ isActive }) =>
+                    classNames(
+                      'px-2 py-2 rounded-md',
+                      isActive ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-gray-100'
+                    )
+                  }
+                >
+                  My Orders
                 </NavLink>
                 <div className="flex gap-2 pt-2">
                   <Link
