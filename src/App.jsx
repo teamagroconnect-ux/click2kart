@@ -14,12 +14,20 @@ import Catalogue from './pages/user/Catalogue.jsx'
 import ProductDetail from './pages/user/ProductDetail.jsx'
 import Enquiry from './pages/user/Enquiry.jsx'
 import Partner from './pages/user/Partner.jsx'
+import UserLayout from './components/UserLayout.jsx'
 
 export default function App() {
   return (
     <Routes>
       <Route path="/admin/login" element={<Login />} />
-      <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Dashboard />} />
         <Route path="products" element={<Products />} />
         <Route path="categories" element={<Categories />} />
@@ -29,11 +37,14 @@ export default function App() {
         <Route path="partners" element={<Partners />} />
       </Route>
 
-      <Route path="/" element={<Home />} />
-      <Route path="/products" element={<Catalogue />} />
-      <Route path="/products/:id" element={<ProductDetail />} />
-      <Route path="/enquiry" element={<Enquiry />} />
-      <Route path="/partner" element={<Partner />} />
+      <Route path="/" element={<UserLayout />}>
+        <Route index element={<Home />} />
+        <Route path="products" element={<Catalogue />} />
+        <Route path="products/:id" element={<ProductDetail />} />
+        <Route path="enquiry" element={<Enquiry />} />
+        <Route path="order" element={<Enquiry />} />
+        <Route path="partner" element={<Partner />} />
+      </Route>
 
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
