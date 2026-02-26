@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import { useCart } from '../lib/CartContext'
+import { CONFIG } from '../shared/lib/config.js'
 import logo from '../click2kart.png'
 
 function classNames(...classes) {
@@ -50,7 +51,7 @@ export default function UserLayout() {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xl font-black tracking-tighter text-gray-900 leading-none group-hover:text-violet-600 transition-colors">Click2Kart</span>
+                  <span className="text-xl font-black tracking-tighter text-gray-900 leading-none group-hover:text-violet-600 transition-colors">{CONFIG.BRAND_NAME}</span>
                   <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1 hidden xs:block">Premium B2B Tech</span>
                 </div>
               </Link>
@@ -212,7 +213,7 @@ export default function UserLayout() {
           </div>
           <div className="flex items-center gap-8">
             <a 
-              href="https://wa.me/917978880244" 
+              href={`https://wa.me/${CONFIG.SUPPORT_WHATSAPP}`} 
               target="_blank" 
               rel="noreferrer"
               className="flex items-center gap-2 group"
@@ -222,7 +223,7 @@ export default function UserLayout() {
               </span>
               <div className="flex flex-col">
                 <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest leading-none">WhatsApp Support</span>
-                <span className="text-[9px] font-bold text-emerald-600 mt-1">+91 79788 80244</span>
+                <span className="text-[9px] font-bold text-emerald-600 mt-1">{CONFIG.SUPPORT_PHONE_DISPLAY}</span>
               </div>
             </a>
             <div className="h-8 w-[1px] bg-gray-100"></div>

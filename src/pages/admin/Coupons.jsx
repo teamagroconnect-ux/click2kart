@@ -178,29 +178,29 @@ export default function Coupons(){
             </form>
           </div>
 
-          <div className="bg-gray-900 rounded-3xl p-6 shadow-xl space-y-6">
-            <h3 className="text-sm font-black uppercase tracking-widest text-gray-500">Partner Accounts</h3>
+          <div className="bg-white rounded-3xl p-6 shadow-xl space-y-6 border border-gray-100">
+            <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Partner Accounts</h3>
             
-            <form onSubmit={createPartner} className="space-y-3 bg-gray-800/50 p-4 rounded-2xl border border-gray-800">
-              <div className="text-[10px] font-black uppercase tracking-widest text-gray-600 mb-2">Quick Add Partner</div>
-              <input className="w-full bg-gray-800 border-none rounded-xl px-4 py-2.5 text-sm font-bold text-white placeholder-gray-600 outline-none" placeholder="Partner Name" value={newPartner.name} onChange={e=>setNewPartner({...newPartner, name:e.target.value})} />
-              <input className="w-full bg-gray-800 border-none rounded-xl px-4 py-2.5 text-sm font-bold text-white placeholder-gray-600 outline-none" placeholder="Phone" value={newPartner.phone} onChange={e=>setNewPartner({...newPartner, phone:e.target.value})} />
-              <button className="w-full bg-white text-gray-900 py-2.5 rounded-xl text-[10px] font-black hover:bg-gray-100 transition-all uppercase tracking-widest">SAVE PARTNER</button>
+            <form onSubmit={createPartner} className="space-y-3 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+              <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Quick Add Partner</div>
+              <input className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Partner Name" value={newPartner.name} onChange={e=>setNewPartner({...newPartner, name:e.target.value})} />
+              <input className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Phone" value={newPartner.phone} onChange={e=>setNewPartner({...newPartner, phone:e.target.value})} />
+              <button className="w-full bg-gray-900 text-white py-2.5 rounded-xl text-[10px] font-black hover:bg-gray-800 transition-all uppercase tracking-widest">SAVE PARTNER</button>
             </form>
 
             <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
               {partners.length === 0 ? (
-                <div className="text-[10px] text-gray-600 font-bold uppercase tracking-widest text-center py-4 italic">No partners configured yet.</div>
+                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest text-center py-4 italic">No partners configured yet.</div>
               ) : (
                 partners.map(p => (
-                  <div key={p._id} className="flex items-center justify-between p-3 rounded-2xl bg-gray-800/30 border border-gray-800 group hover:border-gray-700 transition-all">
+                  <div key={p._id} className="flex items-center justify-between p-3 rounded-2xl bg-white border border-gray-100 group hover:border-gray-200 transition-all">
                     <div className="min-w-0">
-                      <div className="text-xs font-black text-white truncate">{p.name}</div>
+                      <div className="text-xs font-black text-gray-900 truncate">{p.name}</div>
                       <div className="text-[9px] text-gray-500 font-bold truncate">{p.phone || 'No Phone'}</div>
                     </div>
                     <button 
                       onClick={() => deletePartner(p._id)}
-                      className="p-2 text-gray-600 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                      className="p-2 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
@@ -331,4 +331,3 @@ export default function Coupons(){
     </div>
   )
 }
-

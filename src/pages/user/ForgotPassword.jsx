@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
+import logo from '../../click2kart.png'
 
 export default function ForgotPassword() {
   const { notify } = useToast()
@@ -27,8 +28,8 @@ export default function ForgotPassword() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-gray-50">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-3xl bg-blue-600 text-white text-2xl font-black shadow-xl shadow-blue-100 mb-4">
-            C2K
+          <div className="inline-flex items-center justify-center h-16 rounded-3xl bg-white shadow-xl border border-gray-100 p-1 overflow-hidden mb-4">
+            <img src={logo} alt="Click2Kart" className="h-full w-auto object-contain" />
           </div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Recover Password</h2>
           <p className="text-sm text-gray-500 font-medium">Enter your email to receive a reset code.</p>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import logo from '../click2kart.png'
+import { CONFIG } from '../shared/lib/config.js'
 
 const Icon = ({ name }) => (
   <span className="inline-block w-4 h-4 mr-2 align-middle">
@@ -109,7 +110,7 @@ export default function AdminLayout() {
             </span>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <span className="text-base font-black tracking-tight text-gray-900">Click2Kart</span>
+                <span className="text-base font-black tracking-tight text-gray-900">{CONFIG.BRAND_NAME}</span>
                 <span className="px-2 py-0.5 bg-gray-900 text-[10px] font-black text-white rounded-lg tracking-widest uppercase">Admin</span>
               </div>
               <div className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Admin Panel</div>

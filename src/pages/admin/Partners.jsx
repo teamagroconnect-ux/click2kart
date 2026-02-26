@@ -106,10 +106,10 @@ export default function Partners() {
                         <div className={`font-black ${p.balance > 0 ? 'text-red-600' : 'text-gray-400'}`}>₹{p.balance.toLocaleString()}</div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button 
-                          onClick={()=>openPayout(p.code)}
-                          className="bg-gray-900 text-white px-4 py-2 rounded-xl text-[10px] font-black hover:bg-gray-800 transition-all uppercase tracking-widest"
-                        >
+                    <button 
+                      onClick={()=>openPayout(p.code)}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black hover:bg-blue-500 transition-all uppercase tracking-widest"
+                    >
                           Mark Paid
                         </button>
                       </td>
@@ -189,12 +189,12 @@ export default function Partners() {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-900 rounded-3xl p-5 text-white">
+                  <div className="bg-white border border-gray-100 rounded-3xl p-5 text-gray-900">
                     <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1">Total Commission</div>
                     <div className="text-2xl font-black tracking-tight">₹{viewingPartner.totalCommission.toLocaleString()}</div>
                   </div>
-                  <div className="bg-blue-600 rounded-3xl p-5 text-white">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-blue-200 mb-1">Current Balance</div>
+                  <div className="bg-blue-50 rounded-3xl p-5 text-blue-700 border border-blue-100">
+                    <div className="text-[10px] font-black uppercase tracking-widest mb-1">Current Balance</div>
                     <div className="text-2xl font-black tracking-tight">₹{viewingPartner.balance.toLocaleString()}</div>
                   </div>
                 </div>
@@ -269,7 +269,7 @@ export default function Partners() {
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={()=>setSelectedCode(null)} className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl text-sm font-black hover:bg-gray-200 transition-all uppercase tracking-widest">Cancel</button>
-                <button className="flex-2 bg-gray-900 text-white py-4 px-8 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all uppercase tracking-widest">Confirm Payout</button>
+                <button className="flex-2 bg-blue-600 text-white py-4 px-8 rounded-2xl text-sm font-black shadow-lg hover:bg-blue-500 transition-all uppercase tracking-widest">Confirm Payout</button>
               </div>
             </form>
           </div>
@@ -278,4 +278,3 @@ export default function Partners() {
     </div>
   )
 }
-

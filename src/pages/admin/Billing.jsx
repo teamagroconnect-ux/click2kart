@@ -167,15 +167,15 @@ export default function Billing(){
       </div>
 
       <div className="lg:col-span-1 space-y-6">
-        <div className="bg-gray-900 rounded-[2.5rem] p-8 shadow-2xl sticky top-6 text-white space-y-8 border border-gray-800">
+        <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl sticky top-6 text-gray-900 space-y-8 border border-gray-100">
           <div className="space-y-1">
             <h3 className="text-xl font-black tracking-tight">Checkout</h3>
             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Customer & Order Details</p>
           </div>
 
           <div className="space-y-4">
-            <input className="w-full bg-gray-800/50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-white placeholder-gray-600 outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="Customer Name" value={customer.name} onChange={e=>setCustomer({...customer, name:e.target.value})} />
-            <input className="w-full bg-gray-800/50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-white placeholder-gray-600 outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="Phone Number" value={customer.phone} onChange={e=>setCustomer({...customer, phone:e.target.value})} />
+            <input className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="Customer Name" value={customer.name} onChange={e=>setCustomer({...customer, name:e.target.value})} />
+            <input className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="Phone Number" value={customer.phone} onChange={e=>setCustomer({...customer, phone:e.target.value})} />
             
             <div className="space-y-3 pt-4">
               <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Order Summary</h4>
@@ -206,10 +206,10 @@ export default function Billing(){
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                      <div className="flex items-center bg-gray-800 rounded-lg p-1">
-                        <button onClick={() => updateQty(it.productId, it.quantity - 1)} className="w-6 h-6 flex items-center justify-center hover:text-blue-400 transition-colors text-xs">－</button>
+                      <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                        <button onClick={() => updateQty(it.productId, it.quantity - 1)} className="w-6 h-6 flex items-center justify-center hover:text-violet-600 transition-colors text-xs">－</button>
                         <span className="w-6 text-center text-xs font-bold">{it.quantity}</span>
-                        <button onClick={() => updateQty(it.productId, it.quantity + 1)} className="w-6 h-6 flex items-center justify-center hover:text-blue-400 transition-colors text-xs">＋</button>
+                        <button onClick={() => updateQty(it.productId, it.quantity + 1)} className="w-6 h-6 flex items-center justify-center hover:text-violet-600 transition-colors text-xs">＋</button>
                       </div>
                       <button onClick={() => removeItem(it.productId)} className="text-gray-600 hover:text-red-400 transition-colors p-1">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
@@ -226,9 +226,9 @@ export default function Billing(){
               </div>
             </div>
 
-            <div className="pt-6 border-t border-gray-800 space-y-4">
+            <div className="pt-6 border-t border-gray-100 space-y-4">
               <div className="flex gap-2">
-                <input className="flex-1 bg-gray-800/50 border-none rounded-2xl px-4 py-3 text-xs font-bold text-white placeholder-gray-600 outline-none" placeholder="Promo Code" value={couponCode} onChange={e=>setCouponCode(e.target.value)} />
+                <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-xs font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Promo Code" value={couponCode} onChange={e=>setCouponCode(e.target.value)} />
                 <button onClick={applyCoupon} className="bg-blue-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black hover:bg-blue-500 transition-all uppercase tracking-widest shadow-lg shadow-blue-900/20">Apply</button>
               </div>
               {couponInfo && (
@@ -253,9 +253,9 @@ export default function Billing(){
                   <span>- ₹{totals.discount.toFixed(2)}</span>
                 </div>
               )}
-              <div className="flex justify-between text-lg font-black pt-4 border-t border-gray-800 text-white tracking-tight">
+              <div className="flex justify-between text-lg font-black pt-4 border-t border-gray-100 text-gray-900 tracking-tight">
                 <span>Total Payable</span>
-                <span className="text-blue-400">₹{totals.payable.toFixed(2)}</span>
+                <span className="text-violet-600">₹{totals.payable.toFixed(2)}</span>
               </div>
             </div>
 
@@ -264,7 +264,7 @@ export default function Billing(){
                 <button
                   key={type}
                   onClick={() => setPaymentType(type)}
-                  className={`flex-1 py-3 rounded-2xl text-[10px] font-black border transition-all ${paymentType === type ? 'bg-white text-gray-900 border-white shadow-xl scale-105' : 'bg-transparent text-gray-500 border-gray-800 hover:border-gray-600'}`}
+                  className={`flex-1 py-3 rounded-2xl text-[10px] font-black border transition-all ${paymentType === type ? 'bg-white text-gray-900 border-white shadow-xl scale-105' : 'bg-transparent text-gray-500 border-gray-200 hover:border-gray-300'}`}
                 >
                   {type}
                 </button>
