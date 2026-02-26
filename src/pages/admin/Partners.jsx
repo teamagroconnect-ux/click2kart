@@ -82,7 +82,7 @@ export default function Partners() {
                 ))
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan="8" className="px-6 py-12 text-center text-gray-400 italic font-medium">No partners configured yet.</td>
+                  <td colSpan="8" className="px-6 py-12 text-center text-gray-400 italic font-medium">No partner sales or commissions found yet.</td>
                 </tr>
               ) : (
                 items.map(p => (
