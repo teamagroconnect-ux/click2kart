@@ -225,22 +225,6 @@ export default function UserLayout() {
           </div>
         </div>
       </footer>
-
-      {/* Floating WhatsApp Button */}
-      <a 
-        href="https://wa.me/917978880244" 
-        target="_blank" 
-        rel="noreferrer"
-        className="fixed bottom-24 right-6 lg:bottom-10 lg:right-10 z-50 group flex items-center gap-3"
-      >
-        <div className="bg-white px-5 py-3 rounded-2xl shadow-2xl border border-gray-50 flex-col items-end hidden lg:flex group-hover:translate-x-0 translate-x-4 opacity-0 group-hover:opacity-100 transition-all duration-500">
-          <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest leading-none">Need Help?</span>
-          <span className="text-[9px] font-bold text-emerald-600 mt-1">Chat on WhatsApp</span>
-        </div>
-        <div className="h-16 w-16 bg-emerald-500 text-white rounded-[2rem] flex items-center justify-center shadow-[0_20px_50px_rgba(16,185,129,0.3)] hover:bg-emerald-400 transition-all transform hover:-translate-y-2 active:scale-95 animate-in zoom-in duration-700">
-          <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.246 2.248 3.484 5.232 3.484 8.412-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.309 1.656zm6.224-3.82c1.516.903 3.125 1.378 4.773 1.379 5.428 0 9.843-4.415 9.845-9.845.001-2.631-1.023-5.104-2.883-6.964s-4.333-2.883-6.964-2.884c-5.43 0-9.844 4.415-9.846 9.845-.001 1.696.442 3.351 1.282 4.796l-1.07 3.907 4.008-1.052zm11.332-6.845c-.312-.156-1.848-.912-2.126-1.013-.279-.1-.482-.15-.683.15-.201.3-.778 1.013-.954 1.213-.177.2-.353.226-.665.07-.312-.156-1.318-.486-2.512-1.55-.928-.828-1.555-1.85-1.737-2.163-.182-.313-.02-.482.137-.638.141-.14.312-.363.469-.544.156-.181.209-.312.312-.519.104-.207.052-.389-.026-.544-.078-.156-.683-1.646-.936-2.257-.246-.594-.497-.514-.683-.524-.176-.01-.378-.011-.58-.011s-.53.076-.807.377c-.278.301-1.061 1.038-1.061 2.532s1.087 2.94 1.238 3.141c.151.201 2.138 3.265 5.18 4.577.723.312 1.288.499 1.728.639.726.231 1.387.198 1.909.12.583-.087 1.848-.755 2.11-1.482.261-.728.261-1.355.183-1.482-.078-.127-.29-.203-.602-.359z"/></svg>
-        </div>
-      </a>
     </div>
   )
 }

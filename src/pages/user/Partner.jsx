@@ -78,6 +78,46 @@ export default function Partner() {
           </div>
         )}
 
+        <section className="bg-gray-900 rounded-[3rem] p-8 md:p-16 text-center space-y-10 animate-in fade-in zoom-in duration-1000">
+          <div className="max-w-3xl mx-auto space-y-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-black tracking-widest uppercase border border-blue-500/20">
+              Onboarding Process
+            </div>
+            <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter">How to Become a <span className="text-blue-500">Partner?</span></h2>
+            <p className="text-gray-400 font-medium leading-relaxed">
+              Join our exclusive network of B2B partners and start earning high commissions on every sale. 
+              Contact our onboarding team to get your unique coupon code and portal password.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8">
+              <a 
+                href="https://wa.me/917978880244" 
+                target="_blank" 
+                rel="noreferrer"
+                className="group flex items-center gap-4 bg-emerald-500/10 border border-emerald-500/20 p-6 rounded-[2rem] hover:bg-emerald-500/20 transition-all text-left"
+              >
+                <div className="h-12 w-12 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-xl shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.246 2.248 3.484 5.232 3.484 8.412-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.309 1.656zm6.224-3.82c1.516.903 3.125 1.378 4.773 1.379 5.428 0 9.843-4.415 9.845-9.845.001-2.631-1.023-5.104-2.883-6.964s-4.333-2.883-6.964-2.884c-5.43 0-9.844 4.415-9.846 9.845-.001 1.696.442 3.351 1.282 4.796l-1.07 3.907 4.008-1.052zm11.332-6.845c-.312-.156-1.848-.912-2.126-1.013-.279-.1-.482-.15-.683.15-.201.3-.778 1.013-.954 1.213-.177.2-.353.226-.665.07-.312-.156-1.318-.486-2.512-1.55-.928-.828-1.555-1.85-1.737-2.163-.182-.313-.02-.482.137-.638.141-.14.312-.363.469-.544.156-.181.209-.312.312-.519.104-.207.052-.389-.026-.544-.078-.156-.683-1.646-.936-2.257-.246-.594-.497-.514-.683-.524-.176-.01-.378-.011-.58-.011s-.53.076-.807.377c-.278.301-1.061 1.038-1.061 2.532s1.087 2.94 1.238 3.141c.151.201 2.138 3.265 5.18 4.577.723.312 1.288.499 1.728.639.726.231 1.387.198 1.909.12.583-.087 1.848-.755 2.11-1.482.261-.728.261-1.355.183-1.482-.078-.127-.29-.203-.602-.359z"/></svg>
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Chat with Team</div>
+                  <div className="text-lg font-black text-white">+91 79788 80244</div>
+                </div>
+              </a>
+
+              <div className="flex items-center gap-4 bg-blue-500/10 border border-blue-500/20 p-6 rounded-[2rem] text-left">
+                <div className="h-12 w-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl shadow-lg shadow-blue-500/20">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Email Inquiry</div>
+                  <div className="text-lg font-black text-white truncate max-w-[180px]">Support@Click2Kart</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {data && (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <section className="bg-white border border-gray-100 rounded-[3rem] shadow-sm p-8 md:p-12 relative overflow-hidden">
