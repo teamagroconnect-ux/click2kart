@@ -5,6 +5,7 @@ import { useCart, getStockStatus } from '../../lib/CartContext'
 
 export default function Catalogue(){
   const { addToCart } = useCart()
+  const authed = !!localStorage.getItem('token')
   const [q, setQ] = useState('')
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
@@ -37,15 +38,17 @@ export default function Catalogue(){
 
   const filteredSorted = useMemo(()=>{
     let list = [...items]
-    const min = Number(minPrice)
-    const max = Number(maxPrice)
-    if (!Number.isNaN(min) && minPrice!=='') list = list.filter(p => p.price >= min)
-    if (!Number.isNaN(max) && maxPrice!=='') list = list.filter(p => p.price <= max)
-    if (sort === 'PRICE_LOW') list.sort((a,b)=>a.price-b.price)
-    if (sort === 'PRICE_HIGH') list.sort((a,b)=>b.price-a.price)
+    if (authed) {
+      const min = Number(minPrice)
+      const max = Number(maxPrice)
+      if (!Number.isNaN(min) && minPrice!=='') list = list.filter(p => (p.price ?? Infinity) >= min)
+      if (!Number.isNaN(max) && maxPrice!=='') list = list.filter(p => (p.price ?? -Infinity) <= max)
+      if (sort === 'PRICE_LOW') list.sort((a,b)=>(a.price??0)-(b.price??0))
+      if (sort === 'PRICE_HIGH') list.sort((a,b)=>(b.price??0)-(a.price??0))
+    }
     if (sort === 'NEW') list.sort((a,b)=> new Date(b.createdAt||0) - new Date(a.createdAt||0))
     return list
-  }, [items, minPrice, maxPrice, sort])
+  }, [items, minPrice, maxPrice, sort, authed])
 
   return (
     <div className="bg-white min-h-screen">
@@ -72,8 +75,8 @@ export default function Catalogue(){
               onChange={e=>setSort(e.target.value)}
             >
               <option value="NEW">Newest First</option>
-              <option value="PRICE_LOW">Price: Low to High</option>
-              <option value="PRICE_HIGH">Price: High to Low</option>
+              {authed && <option value="PRICE_LOW">Price: Low to High</option>}
+              {authed && <option value="PRICE_HIGH">Price: High to Low</option>}
             </select>
           </div>
         </header>
@@ -121,10 +124,10 @@ export default function Catalogue(){
                 <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price Range (₹)</div>
                 <div className="flex gap-3">
                   <div className="relative flex-1">
-                    <input className="w-full bg-gray-50 border border-transparent rounded-xl px-4 py-2.5 text-xs font-bold text-gray-900 placeholder-gray-400 focus:bg-white focus:border-gray-100 outline-none transition-all" placeholder="Min" value={minPrice} onChange={e=>setMinPrice(e.target.value)} />
+                    <input disabled={!authed} className="w-full bg-gray-50 border border-transparent rounded-xl px-4 py-2.5 text-xs font-bold text-gray-900 placeholder-gray-400 focus:bg-white focus:border-gray-100 outline-none transition-all disabled:opacity-50" placeholder="Min" value={minPrice} onChange={e=>setMinPrice(e.target.value)} />
                   </div>
                   <div className="relative flex-1">
-                    <input className="w-full bg-gray-50 border border-transparent rounded-xl px-4 py-2.5 text-xs font-bold text-gray-900 placeholder-gray-400 focus:bg-white focus:border-gray-100 outline-none transition-all" placeholder="Max" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} />
+                    <input disabled={!authed} className="w-full bg-gray-50 border border-transparent rounded-xl px-4 py-2.5 text-xs font-bold text-gray-900 placeholder-gray-400 focus:bg-white focus:border-gray-100 outline-none transition-all disabled:opacity-50" placeholder="Max" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} />
                   </div>
                 </div>
               </div>
@@ -144,9 +147,9 @@ export default function Catalogue(){
               {filteredSorted.map(p => (
                 <div key={p._id} className="group bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] flex flex-col transition-all duration-500 transform hover:-translate-y-2">
                   <Link to={`/products/${p._id}`} className="relative block">
-                    <div className="bg-gray-50/50 aspect-square flex items-center justify-center overflow-hidden">
+                    <div className="bg-gray-50/50 aspect-[4/3] flex items-center justify-center overflow-hidden">
                       {p.images && p.images.length>0
-                        ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 p-4 md:p-8" />
+                        ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 p-4" />
                         : <div className="text-4xl">📦</div>}
                     </div>
                     {p.bulkDiscountQuantity > 0 && (
@@ -155,7 +158,7 @@ export default function Catalogue(){
                       </div>
                     )}
                   </Link>
-                  <div className="p-4 md:p-8 flex-1 flex flex-col space-y-4">
+                  <div className="p-4 md:p-6 flex-1 flex flex-col space-y-3">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <div className="text-[10px] uppercase text-blue-600 font-black tracking-widest">{p.category || 'General'}</div>
@@ -167,8 +170,10 @@ export default function Catalogue(){
 
                     <div className="flex flex-col space-y-4 pt-4 border-t border-gray-50 mt-auto">
                       <div className="flex items-center justify-between">
-                        <div className="text-xl font-black text-gray-900 tracking-tighter">₹{p.price.toLocaleString()}</div>
-                        {p.bulkDiscountQuantity > 0 && (
+                        <div className="text-xl font-black text-gray-900 tracking-tighter">
+                          {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'}
+                        </div>
+                        {authed && p.bulkDiscountQuantity > 0 && (
                           <div className="text-[9px] text-emerald-600 font-black uppercase bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
                             Save ₹{p.bulkDiscountPriceReduction}/u
                           </div>
@@ -186,18 +191,12 @@ export default function Catalogue(){
                       </div>
                       <div className="flex gap-2">
                         <button 
-                          onClick={(e) => { e.preventDefault(); addToCart(p); }}
-                          disabled={p.stock <= 0}
+                          onClick={(e) => { e.preventDefault(); if (authed) addToCart(p); }}
+                          disabled={!authed || p.stock <= 0}
                           className="flex-1 bg-gray-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-gray-800 transition-all active:scale-95 disabled:opacity-30 disabled:hover:bg-gray-900 disabled:cursor-not-allowed"
                         >
-                          {p.stock > 0 ? 'Add to Cart' : 'Sold Out'}
+                          {authed ? (p.stock > 0 ? 'Add to Cart' : 'Sold Out') : 'Login to add'}
                         </button>
-                        <Link 
-                          to={`/products/${p._id}`}
-                          className="p-3 bg-gray-50 text-gray-400 rounded-2xl hover:bg-blue-50 hover:text-blue-600 transition-all active:scale-95"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                        </Link>
                       </div>
                     </div>
                   </div>

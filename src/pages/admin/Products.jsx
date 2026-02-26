@@ -117,8 +117,19 @@ export default function Products() {
                       items.map(p => (
                         <tr key={p._id} className="group hover:bg-gray-50/50 transition-colors">
                           <td className="px-6 py-4">
-                            <div className="font-bold text-gray-900 truncate max-w-[200px]">{p.name}</div>
-                            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.category || 'General'}</div>
+                            <div className="flex items-center gap-3">
+                              <div className="h-12 w-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center">
+                                {p.images?.[0]?.url ? (
+                                  <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain p-1" />
+                                ) : (
+                                  <span className="text-[10px] text-gray-400">No Img</span>
+                                )}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold text-gray-900 truncate max-w-[240px]">{p.name}</div>
+                                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.category || 'General'}</div>
+                              </div>
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="font-black text-gray-900">₹{p.price.toLocaleString()}</div>

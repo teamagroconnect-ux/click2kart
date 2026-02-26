@@ -5,6 +5,7 @@ export default function Customers() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [q, setQ] = useState('')
+  const [busyId, setBusyId] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -13,6 +14,16 @@ export default function Customers() {
       setItems(data)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const approve = async (id) => {
+    setBusyId(id)
+    try {
+      await api.post(`/api/admin/customers/${id}/approve`)
+      setItems(prev => prev.map(x => x._id === id ? { ...x, isActive: true } : x))
+    } finally {
+      setBusyId('')
     }
   }
 
@@ -48,6 +59,7 @@ export default function Customers() {
                 <th className="px-6 py-4">Order Stats</th>
                 <th className="px-6 py-4">Address</th>
                 <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -86,6 +98,17 @@ export default function Customers() {
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-widest border ${c.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
                         {c.isActive ? 'ACTIVE' : 'INACTIVE'}
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {!c.isActive && (
+                        <button
+                          onClick={() => approve(c._id)}
+                          disabled={busyId === c._id}
+                          className="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-bold tracking-widest uppercase disabled:opacity-50"
+                        >
+                          {busyId === c._id ? 'Approving...' : 'Approve'}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

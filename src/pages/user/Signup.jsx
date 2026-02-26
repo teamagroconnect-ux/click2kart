@@ -35,14 +35,12 @@ export default function Signup() {
     e.preventDefault()
     setLoading(true)
     try {
-      const { data } = await api.post('/api/auth/customer/verify-otp', {
+      await api.post('/api/auth/customer/verify-otp', {
         email: formData.email,
         otp
       })
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
-      notify('Account created successfully!', 'success')
-      navigate('/')
+      notify('Application submitted. We will approve your account shortly.', 'success')
+      navigate('/login')
     } catch (err) {
       notify(err?.response?.data?.error || 'Invalid OTP', 'error')
     } finally {

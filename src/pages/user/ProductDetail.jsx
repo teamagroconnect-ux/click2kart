@@ -8,6 +8,7 @@ export default function ProductDetail(){
   const navigate = useNavigate()
   const { addToCart } = useCart()
   const [p, setP] = useState(null)
+  const authed = !!localStorage.getItem('token')
   useEffect(()=>{ api.get(`/api/products/${id}`).then(({data})=>setP(data)) }, [id])
   if (!p) return <div className="p-10 text-center text-lg text-gray-500">Loading product details...</div>
   return (
@@ -54,8 +55,10 @@ export default function ProductDetail(){
               </div>
               <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter leading-tight">{p.name}</h1>
               <div className="flex items-center gap-4 pt-2">
-                <div className="text-4xl font-black text-gray-900 tracking-tighter">₹{p.price.toLocaleString()}</div>
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">Inclusive of all taxes</div>
+                <div className="text-4xl font-black text-gray-900 tracking-tighter">
+                  {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'}
+                </div>
+                {authed && <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">Inclusive of all taxes</div>}
               </div>
             </div>
 
@@ -102,23 +105,25 @@ export default function ProductDetail(){
             <div className="pt-10 flex flex-col sm:flex-row gap-4">
               <button
                 onClick={() => {
+                  if (!authed) { navigate('/login'); return }
                   if (addToCart(p)) {
                     navigate('/cart')
                   }
                 }}
-                disabled={p.stock <= 0}
+                disabled={!authed || p.stock <= 0}
                 className="flex-2 bg-gray-900 text-white px-12 py-5 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-gray-800 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-30 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
               >
-                {p.stock > 0 ? 'Secure Buy Now' : 'Sold Out'}
+                {authed ? (p.stock > 0 ? 'Secure Buy Now' : 'Sold Out') : 'Login to Buy'}
               </button>
               <button
                 onClick={() => {
+                  if (!authed) { navigate('/login'); return }
                   addToCart(p)
                 }}
-                disabled={p.stock <= 0}
+                disabled={!authed || p.stock <= 0}
                 className="flex-1 bg-white border-2 border-gray-100 text-gray-900 px-10 py-5 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] hover:bg-gray-50 hover:border-gray-200 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
               >
-                {p.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                {authed ? (p.stock > 0 ? 'Add to Cart' : 'Out of Stock') : 'Login to Add'}
               </button>
             </div>
             
@@ -132,4 +137,3 @@ export default function ProductDetail(){
     </div>
   )
 }
-

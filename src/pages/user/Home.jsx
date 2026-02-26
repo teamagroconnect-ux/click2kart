@@ -6,7 +6,7 @@ export default function Home() {
   // Home page intentionally does not load or display products/categories
 
   return (
-    <div className="bg-white selection:bg-violet-100 selection:text-violet-900">
+    <div className="bg-gray-950 selection:bg-violet-300 selection:text-violet-900">
       {/* Hero Section - B2B Aggressive Style */}
       <section className="relative overflow-hidden bg-gray-950 pt-20 pb-32 md:pt-32 md:pb-48">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[800px] bg-violet-600/10 rounded-full blur-[140px] -z-0"></div>
@@ -106,7 +106,7 @@ export default function Home() {
             <div className="pt-8">
               <Link
                 to="/signup"
-                className="inline-flex items-center justify-center bg-white text-gray-900 px-12 py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl hover:bg-gray-100 transition-all transform hover:-translate-y-2 active:scale-95"
+                className="inline-flex items-center justify-center bg-violet-600 text-white px-12 py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl hover:bg-violet-500 transition-all transform hover:-translate-y-2 active:scale-95"
               >
                 Create B2B Account
                 <svg className="w-5 h-5 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
