@@ -35,12 +35,19 @@ export default function UserLayout() {
                 <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
               </button>
               <Link to="/" className="flex items-center gap-3 group">
-                <span className="h-10 w-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xs font-black shadow-xl shadow-blue-100 border border-blue-500 transition-transform group-hover:scale-110">
-                  C2K
-                </span>
+                <div className="h-12 w-12 rounded-2xl bg-violet-600 text-white flex items-center justify-center text-xs font-black shadow-xl shadow-violet-100 border border-violet-500 transition-all group-hover:scale-110 overflow-hidden relative">
+                  {/* Logo Placeholder */}
+                  <img 
+                    src="/logo.png" 
+                    alt="Logo" 
+                    className="w-full h-full object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                  />
+                  <span className="relative z-10">C2K</span>
+                </div>
                 <div className="flex flex-col">
-                  <span className="text-lg font-black tracking-tighter text-gray-900 leading-none">Click2Kart</span>
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1 hidden xs:block">Premium Tech</span>
+                  <span className="text-xl font-black tracking-tighter text-gray-900 leading-none group-hover:text-violet-600 transition-colors">Click2Kart</span>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1 hidden xs:block">Premium B2B Tech</span>
                 </div>
               </Link>
             </div>
@@ -75,11 +82,11 @@ export default function UserLayout() {
                 to="/cart"
                 className="group relative h-12 w-12 flex items-center justify-center rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-xl transition-all active:scale-95"
               >
-                <svg className="w-6 h-6 text-gray-600 group-hover:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-6 h-6 text-gray-600 group-hover:text-violet-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-[10px] font-black text-white bg-blue-600 rounded-lg shadow-lg shadow-blue-200 border-2 border-white">
+                  <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-[10px] font-black text-white bg-violet-600 rounded-lg shadow-lg shadow-violet-200 border-2 border-white">
                     {cartCount}
                   </span>
                 )}

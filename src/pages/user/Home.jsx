@@ -19,20 +19,20 @@ export default function Home() {
   }, [])
 
   return (
-    <div className="bg-white">
+    <div className="bg-white selection:bg-violet-100 selection:text-violet-900">
       {/* Hero Section - B2B Aggressive Style */}
-      <section className="relative overflow-hidden bg-gray-900 pt-20 pb-32 md:pt-32 md:pb-48">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[800px] bg-blue-600/10 rounded-full blur-[140px] -z-0"></div>
-        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-500/5 rounded-full blur-[100px] -z-0"></div>
+      <section className="relative overflow-hidden bg-gray-950 pt-20 pb-32 md:pt-32 md:pb-48">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[800px] bg-violet-600/10 rounded-full blur-[140px] -z-0"></div>
+        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-violet-500/5 rounded-full blur-[100px] -z-0"></div>
         
         <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10 flex flex-col items-center text-center space-y-12 animate-in fade-in slide-in-from-bottom-12 duration-1000">
           <div className="space-y-8 max-w-4xl">
-            <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-black tracking-[0.3em] uppercase border border-blue-500/20 shadow-2xl backdrop-blur-sm">
-              <span className="h-2 w-2 rounded-full bg-blue-500 animate-ping"></span>
+            <div className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-violet-500/10 text-violet-400 text-[10px] font-black tracking-[0.3em] uppercase border border-violet-500/20 shadow-2xl backdrop-blur-sm">
+              <span className="h-2 w-2 rounded-full bg-violet-500 animate-ping"></span>
               India's Premier B2B Tech Hub
             </div>
             <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[0.95]">
-              Scale Your <span className="text-blue-500">Business</span> <br />
+              Scale Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500">Business</span> <br />
               With Premium <span className="text-gray-400">Tech.</span>
             </h1>
             <p className="text-lg md:text-2xl text-gray-400 font-medium leading-relaxed max-w-3xl mx-auto">
@@ -42,13 +42,13 @@ export default function Home() {
             <div className="pt-8 flex flex-col sm:flex-row items-center justify-center gap-6">
               <Link
                 to="/products"
-                className="group relative inline-flex items-center justify-center bg-blue-600 text-white px-12 py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-[0_20px_50px_rgba(37,99,235,0.3)] hover:bg-blue-500 transition-all transform hover:-translate-y-2 active:scale-95 overflow-hidden"
+                className="group relative inline-flex items-center justify-center bg-violet-600 text-white px-12 py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-[0_20px_50px_rgba(139,92,246,0.3)] hover:bg-violet-500 transition-all transform hover:-translate-y-2 active:scale-95 overflow-hidden"
               >
                 <span className="relative z-10 flex items-center">
                   Wholesale Catalog
                   <svg className="w-5 h-5 ml-3 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                 </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-violet-400 opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </Link>
               <Link
                 to="/partner"
@@ -67,7 +67,7 @@ export default function Home() {
               { t: 'Express Freight', d: 'Priority Pan-India Logistics', i: '✈️' },
               { t: 'Brand Warranty', d: '100% Genuine Authorized Stock', i: '🛡️' }
             ].map((f, i) => (
-              <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] text-left hover:bg-white/10 hover:border-blue-500/50 transition-all duration-500 group cursor-default shadow-2xl">
+              <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] text-left hover:bg-white/10 hover:border-violet-500/50 transition-all duration-500 group cursor-default shadow-2xl">
                 <div className="text-4xl mb-4 transform group-hover:scale-110 transition-transform duration-500">{f.i}</div>
                 <div className="font-black text-white text-base tracking-tight">{f.t}</div>
                 <div className="text-xs text-gray-500 font-bold mt-2 leading-relaxed">{f.d}</div>
@@ -78,7 +78,7 @@ export default function Home() {
       </section>
 
       {/* Stats Section */}
-      <section className="bg-blue-600 py-16 -mt-10 relative z-20 rounded-[4rem] shadow-[0_-20px_50px_rgba(0,0,0,0.1)]">
+      <section className="bg-violet-600 py-16 -mt-10 relative z-20 rounded-[4rem] shadow-[0_-20px_50px_rgba(0,0,0,0.1)]">
         <div className="max-w-7xl mx-auto px-10 grid grid-cols-2 lg:grid-cols-4 gap-12 text-center">
           {[
             { n: '500+', t: 'Active Partners' },
@@ -88,7 +88,7 @@ export default function Home() {
           ].map((s, i) => (
             <div key={i} className="space-y-1">
               <div className="text-4xl md:text-5xl font-black text-white tracking-tighter">{s.n}</div>
-              <div className="text-[10px] font-black text-blue-100 uppercase tracking-widest">{s.t}</div>
+              <div className="text-[10px] font-black text-violet-100 uppercase tracking-widest">{s.t}</div>
             </div>
           ))}
         </div>
@@ -99,7 +99,7 @@ export default function Home() {
         <section className="space-y-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-3">
-              <div className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">Verticals</div>
+              <div className="text-[10px] font-black text-violet-600 uppercase tracking-[0.3em]">Verticals</div>
               <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">Wholesale Verticals</h2>
             </div>
             <p className="text-sm text-gray-400 font-bold max-w-xs md:text-right">Select a vertical to explore bulk-ready inventory and exclusive volume pricing.</p>
@@ -109,18 +109,18 @@ export default function Home() {
               <Link
                 key={c._id}
                 to={`/products?category=${encodeURIComponent(c.name)}`}
-                className="group relative bg-white border border-gray-100 rounded-[3rem] p-10 overflow-hidden hover:shadow-[0_40px_80px_-15px_rgba(37,99,235,0.15)] hover:scale-[1.05] transition-all duration-700"
+                className="group relative bg-white border border-gray-100 rounded-[3rem] p-10 overflow-hidden hover:shadow-[0_40px_80px_-15px_rgba(139,92,246,0.15)] hover:scale-[1.05] transition-all duration-700"
               >
                 <div className="relative z-10 space-y-3">
-                  <div className="h-12 w-12 rounded-2xl bg-gray-50 flex items-center justify-center text-xl group-hover:bg-blue-600 group-hover:text-white transition-all duration-500">
+                  <div className="h-12 w-12 rounded-2xl bg-gray-50 flex items-center justify-center text-xl group-hover:bg-violet-600 group-hover:text-white transition-all duration-500">
                     {c.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="font-black text-gray-900 text-lg tracking-tight capitalize group-hover:text-blue-600 transition-colors">{c.name}</div>
+                  <div className="font-black text-gray-900 text-lg tracking-tight capitalize group-hover:text-violet-600 transition-colors">{c.name}</div>
                   <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-tight">
                     {c.description || 'Explore Bulk Stock'}
                   </div>
                 </div>
-                <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-blue-50/50 rounded-full group-hover:scale-[4] transition-transform duration-1000 blur-2xl"></div>
+                <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-violet-50/50 rounded-full group-hover:scale-[4] transition-transform duration-1000 blur-2xl"></div>
               </Link>
             ))}
           </div>
@@ -130,10 +130,10 @@ export default function Home() {
         <section className="space-y-12">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-gray-100 pb-10">
             <div className="space-y-3">
-              <div className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">Market Ready</div>
+              <div className="text-[10px] font-black text-violet-600 uppercase tracking-[0.3em]">Market Ready</div>
               <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">Top Movers</h2>
             </div>
-            <Link to="/products" className="group flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-blue-600 transition-all">
+            <Link to="/products" className="group flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-violet-600 transition-all">
               Full Inventory
               <svg className="w-5 h-5 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
             </Link>
@@ -143,7 +143,7 @@ export default function Home() {
             {featured.map((p) => (
               <div
                 key={p._id}
-                className="group bg-white border border-gray-50 rounded-[3rem] overflow-hidden hover:shadow-[0_50px_100px_-20px_rgba(0,0,0,0.12)] flex flex-col transition-all duration-700 transform hover:-translate-y-4"
+                className="group bg-white border border-gray-50 rounded-[3rem] overflow-hidden hover:shadow-[0_50px_100px_-20px_rgba(139,92,246,0.12)] flex flex-col transition-all duration-700 transform hover:-translate-y-4"
               >
                 <Link to={`/products/${p._id}`} className="relative block">
                   <div className="bg-gray-50/50 aspect-square flex items-center justify-center overflow-hidden p-12">
@@ -165,10 +165,10 @@ export default function Home() {
                 </Link>
                 <div className="p-10 flex-1 flex flex-col space-y-6">
                   <div className="space-y-2">
-                    <div className="text-[10px] uppercase text-blue-600 font-black tracking-widest bg-blue-50 px-3 py-1 rounded-lg inline-block">
+                    <div className="text-[10px] uppercase text-violet-600 font-black tracking-widest bg-violet-50 px-3 py-1 rounded-lg inline-block">
                       {p.category || 'General'}
                     </div>
-                    <Link to={`/products/${p._id}`} className="block group-hover:text-blue-600 transition-colors">
+                    <Link to={`/products/${p._id}`} className="block group-hover:text-violet-600 transition-colors">
                       <div className="font-black text-gray-900 line-clamp-2 min-h-[3.5rem] text-lg leading-tight tracking-tight">{p.name}</div>
                     </Link>
                   </div>
@@ -180,7 +180,7 @@ export default function Home() {
                     </div>
                     <button 
                       onClick={() => addToCart(p)}
-                      className="h-14 w-14 bg-gray-900 text-white rounded-2xl flex items-center justify-center hover:bg-blue-600 transition-all shadow-2xl active:scale-90"
+                      className="h-14 w-14 bg-gray-900 text-white rounded-2xl flex items-center justify-center hover:bg-violet-600 transition-all shadow-2xl active:scale-90"
                     >
                       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                     </button>
@@ -193,10 +193,10 @@ export default function Home() {
 
         {/* B2B Partnership Banner */}
         <section className="relative overflow-hidden bg-gray-900 rounded-[4rem] p-12 md:p-24 text-center space-y-10">
-          <div className="absolute inset-0 bg-blue-600/10 blur-[120px] -z-0"></div>
+          <div className="absolute inset-0 bg-violet-600/10 blur-[120px] -z-0"></div>
           <div className="relative z-10 max-w-3xl mx-auto space-y-6">
             <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-tight">
-              Ready to <span className="text-blue-500">Transform</span> Your Inventory?
+              Ready to <span className="text-violet-500">Transform</span> Your Inventory?
             </h2>
             <p className="text-lg text-gray-400 font-medium leading-relaxed">
               Join 500+ businesses sourcing directly from Click2Kart. Get access to credit lines, 
