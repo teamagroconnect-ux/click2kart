@@ -175,10 +175,10 @@ export default function UserLayout() {
       <nav className="lg:hidden fixed bottom-6 inset-x-6 z-40">
         <div className="max-w-md mx-auto h-16 bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 flex items-center justify-around px-4">
           {[
-            { to: '/', i: <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />, l: 'Home' },
-            { to: '/products', i: <path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />, l: 'Browse' },
-            { to: '/order', i: <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />, l: 'Order' },
-            { to: '/login', i: <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />, l: 'Profile' }
+            { to: '/', l: 'Home', icon: () => (<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />) },
+            { to: '/products', l: 'Browse', icon: () => (<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />) },
+            { to: '/order', l: 'Order', icon: () => (<path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />) },
+            { to: '/login', l: 'Profile', icon: () => (<path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />) }
           ].map((item) => (
             <NavLink
               key={item.to}
@@ -186,12 +186,12 @@ export default function UserLayout() {
               className={({ isActive }) =>
                 classNames(
                   'flex flex-col items-center justify-center gap-1 transition-all',
-                  isActive ? 'text-blue-400 scale-110' : 'text-gray-500 hover:text-white'
+                  isActive ? 'text-violet-400 scale-110' : 'text-gray-500 hover:text-white'
                 )
               }
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                {item.i}
+                {item.icon()}
               </svg>
               <span className="text-[9px] font-black uppercase tracking-widest">{item.l}</span>
             </NavLink>
