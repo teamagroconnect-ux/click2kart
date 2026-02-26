@@ -83,7 +83,7 @@ export default function Partner() {
         )}
 
         {!data && (
-          <section className="bg-gray-950 rounded-[4rem] p-12 md:p-24 text-center space-y-12 animate-in fade-in zoom-in duration-1000 relative overflow-hidden">
+          <section className="bg-white rounded-[4rem] p-12 md:p-24 text-center space-y-12 animate-in fade-in zoom-in duration-1000 relative overflow-hidden border border-gray-100 shadow-2xl">
             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-[120px] -mr-64 -mt-64"></div>
             <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-fuchsia-600/5 rounded-full blur-[100px] -ml-32 -mb-32"></div>
             
@@ -91,10 +91,10 @@ export default function Partner() {
               <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-violet-500/10 text-violet-400 text-[10px] font-black tracking-[0.2em] uppercase border border-violet-500/20 backdrop-blur-md">
                 Onboarding Process
               </div>
-              <h2 className="text-4xl md:text-7xl font-black text-white tracking-tighter leading-none">
+              <h2 className="text-4xl md:text-7xl font-black text-gray-900 tracking-tighter leading-none">
                 How to Become a <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500">Partner?</span>
               </h2>
-              <p className="text-xl text-gray-400 font-medium leading-relaxed">
+              <p className="text-xl text-gray-600 font-medium leading-relaxed">
                 Join India's most exclusive network of B2B tech distributors. 
                 Get your unique referral credentials and start earning today.
               </p>
@@ -115,13 +115,13 @@ export default function Partner() {
                   </div>
                 </a>
 
-                <div className="flex items-center gap-6 bg-white/5 border border-white/10 p-8 rounded-[3rem] text-left backdrop-blur-xl shadow-2xl">
+                <div className="flex items-center gap-6 bg-white border border-gray-100 p-8 rounded-[3rem] text-left shadow-2xl">
                   <div className="h-16 w-16 rounded-[1.5rem] bg-violet-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-violet-500/20">
                     <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                   </div>
                   <div>
-                    <div className="text-[10px] font-black text-violet-400 uppercase tracking-widest">Direct Email</div>
-                    <div className="text-xl font-black text-white tracking-tight mt-1">support@click2kart</div>
+                    <div className="text-[10px] font-black text-violet-600 uppercase tracking-widest">Direct Email</div>
+                    <div className="text-xl font-black text-gray-900 tracking-tight mt-1">support@click2kart</div>
                   </div>
                 </div>
               </div>
@@ -269,4 +269,3 @@ export default function Partner() {
     </div>
   )
 }
-

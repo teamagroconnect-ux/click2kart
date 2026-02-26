@@ -1,7 +1,7 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import { useCart } from '../lib/CartContext'
-import logo from '../click2kart.svg'
+import logo from '../click2kart.png'
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -46,7 +46,7 @@ export default function UserLayout() {
                   <img
                     src={logo}
                     alt="Click2Kart"
-                    className="h-10 w-auto"
+                    className="h-10 w-auto object-contain"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -179,7 +179,7 @@ export default function UserLayout() {
 
       {/* Mobile bottom nav */}
       <nav className="lg:hidden fixed bottom-6 inset-x-6 z-40">
-        <div className="max-w-md mx-auto h-16 bg-gray-900/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/10 flex items-center justify-around px-4">
+        <div className="max-w-md mx-auto h-16 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-violet-100 flex items-center justify-around px-4">
           {bottomNavItems.map((item) => (
             <NavLink
               key={item.to}
@@ -187,7 +187,7 @@ export default function UserLayout() {
               className={({ isActive }) =>
                 classNames(
                   'flex flex-col items-center justify-center gap-1 transition-all',
-                  isActive ? 'text-violet-400 scale-110' : 'text-gray-500 hover:text-white'
+                  isActive ? 'text-violet-600 scale-110' : 'text-gray-600 hover:text-violet-600'
                 )
               }
             >
