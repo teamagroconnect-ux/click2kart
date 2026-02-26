@@ -1,23 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
-import api from '../../lib/api'
-import { useCart } from '../../lib/CartContext'
 import { CONFIG } from '../../shared/lib/config.js'
 
 export default function Home() {
-  const [cats, setCats] = useState([])
-  const [featured, setFeatured] = useState([])
-  const { addToCart } = useCart()
-
-  useEffect(() => {
-    api.get('/api/public/categories').then(({ data }) => setCats(data))
-  }, [])
-
-  useEffect(() => {
-    api
-      .get('/api/products', { params: { page: 1, limit: 8 } })
-      .then(({ data }) => setFeatured(data.items))
-  }, [])
+  // Home page intentionally does not load or display products/categories
 
   return (
     <div className="bg-white selection:bg-violet-100 selection:text-violet-900">
@@ -104,101 +90,7 @@ export default function Home() {
       </section>
 
       <main className="max-w-7xl mx-auto px-6 md:px-10 py-32 space-y-32">
-        {/* Categories Section - Professional B2B Grid */}
-        <section className="space-y-12">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-3">
-              <div className="text-[10px] font-black text-violet-600 uppercase tracking-[0.3em]">Verticals</div>
-              <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">Wholesale Verticals</h2>
-            </div>
-            <p className="text-sm text-gray-400 font-bold max-w-xs md:text-right">Select a vertical to explore bulk-ready inventory and exclusive volume pricing.</p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-            {cats.map((c) => (
-              <Link
-                key={c._id}
-                to={`/products?category=${encodeURIComponent(c.name)}`}
-                className="group relative bg-white border border-gray-100 rounded-[3rem] p-10 overflow-hidden hover:shadow-[0_40px_80px_-15px_rgba(139,92,246,0.15)] hover:scale-[1.05] transition-all duration-700"
-              >
-                <div className="relative z-10 space-y-3">
-                  <div className="h-12 w-12 rounded-2xl bg-gray-50 flex items-center justify-center text-xl group-hover:bg-violet-600 group-hover:text-white transition-all duration-500">
-                    {c.name.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="font-black text-gray-900 text-lg tracking-tight capitalize group-hover:text-violet-600 transition-colors">{c.name}</div>
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest leading-tight">
-                    {c.description || 'Explore Bulk Stock'}
-                  </div>
-                </div>
-                <div className="absolute -right-4 -bottom-4 w-20 h-20 bg-violet-50/50 rounded-full group-hover:scale-[4] transition-transform duration-1000 blur-2xl"></div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* Featured Products - B2B Catalog Style */}
-        <section className="space-y-12">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-gray-100 pb-10">
-            <div className="space-y-3">
-              <div className="text-[10px] font-black text-violet-600 uppercase tracking-[0.3em]">Market Ready</div>
-              <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight">Top Movers</h2>
-            </div>
-            <Link to="/products" className="group flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-gray-400 hover:text-violet-600 transition-all">
-              Full Inventory
-              <svg className="w-5 h-5 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-            </Link>
-          </div>
-          
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-10">
-            {featured.map((p) => (
-              <div
-                key={p._id}
-                className="group bg-white border border-gray-50 rounded-[3rem] overflow-hidden hover:shadow-[0_50px_100px_-20px_rgba(139,92,246,0.12)] flex flex-col transition-all duration-700 transform hover:-translate-y-4"
-              >
-                <Link to={`/products/${p._id}`} className="relative block">
-                  <div className="bg-gray-50/50 aspect-square flex items-center justify-center overflow-hidden p-12">
-                    {p.images && p.images.length > 0 ? (
-                      <img
-                        src={p.images[0].url}
-                        alt={p.name}
-                        className="w-full h-full object-contain transition-transform duration-1000 group-hover:scale-110"
-                      />
-                    ) : (
-                      <div className="text-6xl">📦</div>
-                    )}
-                  </div>
-                  {p.bulkDiscountQuantity > 0 && (
-                    <div className="absolute top-6 right-6 bg-emerald-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full shadow-xl shadow-emerald-200 uppercase tracking-[0.2em] animate-pulse">
-                      Bulk Savings
-                    </div>
-                  )}
-                </Link>
-                <div className="p-10 flex-1 flex flex-col space-y-6">
-                  <div className="space-y-2">
-                    <div className="text-[10px] uppercase text-violet-600 font-black tracking-widest bg-violet-50 px-3 py-1 rounded-lg inline-block">
-                      {p.category || 'General'}
-                    </div>
-                    <Link to={`/products/${p._id}`} className="block group-hover:text-violet-600 transition-colors">
-                      <div className="font-black text-gray-900 line-clamp-2 min-h-[3.5rem] text-lg leading-tight tracking-tight">{p.name}</div>
-                    </Link>
-                  </div>
-                  
-                  <div className="flex items-center justify-between pt-6 border-t border-gray-50 mt-auto">
-                    <div className="space-y-1">
-                      <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Single Unit</div>
-                      <div className="text-2xl font-black text-gray-900 tracking-tighter">₹{p.price.toLocaleString()}</div>
-                    </div>
-                    <button 
-                      onClick={() => addToCart(p)}
-                      className="h-14 w-14 bg-gray-900 text-white rounded-2xl flex items-center justify-center hover:bg-violet-600 transition-all shadow-2xl active:scale-90"
-                    >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Intentionally no product/category listings on Home. Browse page handles catalogue. */}
 
         {/* B2B Partnership Banner */}
         <section className="relative overflow-hidden bg-gray-900 rounded-[4rem] p-12 md:p-24 text-center space-y-10">

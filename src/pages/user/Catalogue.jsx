@@ -9,6 +9,7 @@ export default function Catalogue(){
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [categories, setCategories] = useState([])
   const [category, setCategory] = useState('')
   const [sort, setSort] = useState('NEW')
@@ -77,8 +78,21 @@ export default function Catalogue(){
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-10">
-          <aside className="space-y-8 sticky top-28 h-max">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-6 md:gap-10">
+          {/* Mobile filters trigger */}
+          <div className="lg:hidden flex items-center justify-between">
+            <button
+              onClick={() => setFiltersOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-2xl border border-gray-200 text-xs font-black uppercase tracking-widest bg-white hover:bg-gray-50"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6h18M7 12h10M10 18h4"/></svg>
+              Filters
+            </button>
+            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Page {page} of {Math.max(1, Math.ceil(total/limit))}</div>
+          </div>
+
+          {/* Desktop filters */}
+          <aside className="hidden lg:block space-y-8 sticky top-28 h-max">
             <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-8">
               <div className="space-y-4">
                 <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Filter by Category</div>
@@ -117,22 +131,22 @@ export default function Catalogue(){
             </div>
           </aside>
 
-          <main className="space-y-10">
+          <main className="space-y-8 md:space-y-10">
             {loading && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
                 {[1,2,3,4,5,6].map(i => (
                   <div key={i} className="aspect-[4/5] bg-gray-50 rounded-[2.5rem] animate-pulse"></div>
                 ))}
               </div>
             )}
             
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
               {filteredSorted.map(p => (
                 <div key={p._id} className="group bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] flex flex-col transition-all duration-500 transform hover:-translate-y-2">
                   <Link to={`/products/${p._id}`} className="relative block">
                     <div className="bg-gray-50/50 aspect-square flex items-center justify-center overflow-hidden">
                       {p.images && p.images.length>0
-                        ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 p-8" />
+                        ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 p-4 md:p-8" />
                         : <div className="text-4xl">📦</div>}
                     </div>
                     {p.bulkDiscountQuantity > 0 && (
@@ -141,13 +155,13 @@ export default function Catalogue(){
                       </div>
                     )}
                   </Link>
-                  <div className="p-6 md:p-8 flex-1 flex flex-col space-y-4">
+                  <div className="p-4 md:p-8 flex-1 flex flex-col space-y-4">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <div className="text-[10px] uppercase text-blue-600 font-black tracking-widest">{p.category || 'General'}</div>
                       </div>
                       <Link to={`/products/${p._id}`} className="block group-hover:text-blue-600 transition-colors">
-                        <div className="font-black text-gray-900 line-clamp-2 min-h-[3rem] text-sm md:text-base leading-tight tracking-tight">{p.name}</div>
+                        <div className="font-black text-gray-900 line-clamp-2 min-h-[2.5rem] text-sm md:text-base leading-tight tracking-tight">{p.name}</div>
                       </Link>
                     </div>
 
@@ -199,7 +213,7 @@ export default function Catalogue(){
               </div>
             )}
 
-            <div className="flex justify-between items-center pt-10 border-t border-gray-50">
+            <div className="hidden lg:flex justify-between items-center pt-10 border-t border-gray-50">
               <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Page {page} of {Math.max(1, Math.ceil(total/limit))}</div>
               <div className="flex gap-3">
                 <button 
@@ -220,6 +234,50 @@ export default function Catalogue(){
             </div>
           </main>
         </div>
+
+        {/* Mobile Filters Sheet */}
+        {filtersOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div className="absolute inset-0 bg-black/40" onClick={()=>setFiltersOpen(false)}></div>
+            <div className="absolute bottom-0 inset-x-0 bg-white rounded-t-[2rem] p-6 space-y-6 max-h-[80vh] overflow-y-auto border-t border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-black uppercase tracking-widest text-gray-400">Filters</div>
+                <button onClick={()=>setFiltersOpen(false)} className="p-2 rounded-xl hover:bg-gray-50 border border-gray-100">
+                  <svg className="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Filter by Category</div>
+                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                  <button 
+                    onClick={()=>{setCategory(''); setFiltersOpen(false)}}
+                    className={`group w-full flex items-center justify-between px-5 py-3 rounded-2xl text-xs font-black transition-all ${category===''? 'bg-gray-900 text-white shadow-xl shadow-gray-200':'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
+                  >
+                    <span>All Products</span>
+                    <span className={`h-1.5 w-1.5 rounded-full ${category===''? 'bg-blue-400':'bg-transparent'}`}></span>
+                  </button>
+                  {categories.map(c => (
+                    <button 
+                      key={c._id} 
+                      onClick={()=>{setCategory(c.name); setFiltersOpen(false)}}
+                      className={`group w-full flex items-center justify-between px-5 py-3 rounded-2xl text-xs font-black transition-all capitalize ${category===c.name? 'bg-gray-900 text-white shadow-xl shadow-gray-200':'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}
+                    >
+                      <span>{c.name}</span>
+                      <span className={`h-1.5 w-1.5 rounded-full ${category===c.name? 'bg-blue-400':'bg-transparent'}`}></span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-4 pt-4 border-t border-gray-50">
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price Range (₹)</div>
+                <div className="flex gap-3">
+                  <input className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold outline-none" placeholder="Min" value={minPrice} onChange={e=>setMinPrice(e.target.value)} />
+                  <input className="flex-1 bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold outline-none" placeholder="Max" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

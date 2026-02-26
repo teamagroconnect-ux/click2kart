@@ -10,7 +10,6 @@ function classNames(...classes) {
 
 export default function UserLayout() {
   const location = useLocation()
-  const [mobileOpen, setMobileOpen] = useState(false)
   const { cartCount } = useCart()
   const user = JSON.parse(localStorage.getItem('user') || 'null')
   const bottomNavItems = [
@@ -26,9 +25,7 @@ export default function UserLayout() {
     window.location.reload()
   }
 
-  useEffect(() => {
-    setMobileOpen(false)
-  }, [location.pathname])
+  useEffect(() => {}, [location.pathname])
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -36,12 +33,6 @@ export default function UserLayout() {
         <div className="max-w-7xl mx-auto px-6 md:px-10">
           <div className="flex items-center justify-between h-20 gap-8">
             <div className="flex items-center gap-6">
-              <button
-                className="lg:hidden p-2 rounded-xl hover:bg-gray-50 border border-gray-100 transition-colors"
-                onClick={() => setMobileOpen(!mobileOpen)}
-              >
-                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-              </button>
               <Link to="/" className="flex items-center gap-3 group">
                 <div className="h-14 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 transition-all group-hover:scale-110 p-1 overflow-hidden">
                   <img
@@ -130,47 +121,7 @@ export default function UserLayout() {
             </div>
           </div>
 
-          {mobileOpen && (
-            <div className="lg:hidden py-8 space-y-6 animate-in slide-in-from-top-4 duration-300">
-              <nav className="flex flex-col gap-2 border-t border-gray-50 pt-6">
-                {[
-                  { to: '/', label: 'Home' },
-                  { to: '/products', label: 'Catalogue' },
-                  { to: '/order', label: 'Order Online' },
-                  { to: '/orders', label: 'My Orders' },
-                  { to: '/partner', label: 'Partner Portal' }
-                ].map((link) => (
-                  <NavLink
-                    key={link.to}
-                    to={link.to}
-                    className={({ isActive }) =>
-                      classNames(
-                        'px-6 py-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all',
-                        isActive ? 'bg-gray-900 text-white shadow-xl' : 'text-gray-500 hover:bg-gray-50'
-                      )
-                    }
-                  >
-                    {link.label}
-                  </NavLink>
-                ))}
-              </nav>
-              <div className="flex gap-4 pt-4">
-                {user ? (
-                  <button
-                    onClick={handleLogout}
-                    className="w-full px-6 py-4 rounded-2xl bg-red-50 text-red-600 text-[10px] font-black uppercase tracking-widest text-center shadow-xl shadow-red-100"
-                  >
-                    Logout ({user.name})
-                  </button>
-                ) : (
-                  <>
-                    <Link to="/login" className="flex-1 px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center border border-gray-100">Login</Link>
-                    <Link to="/signup" className="flex-1 px-6 py-4 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest text-center shadow-xl">Join Now</Link>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Mobile menu removed by request; bottom nav handles navigation */}
         </div>
       </header>
 
