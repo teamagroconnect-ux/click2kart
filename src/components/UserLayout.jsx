@@ -42,11 +42,11 @@ export default function UserLayout() {
                 <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
               </button>
               <Link to="/" className="flex items-center gap-3 group">
-                <div className="rounded-2xl bg-white flex items-center justify-center text-xs font-black shadow-xl border border-gray-100 transition-all group-hover:scale-110 px-2 py-2">
+                <div className="h-14 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 transition-all group-hover:scale-110 p-1 overflow-hidden">
                   <img
                     src={logo}
                     alt="Click2Kart"
-                    className="h-10 w-auto object-contain"
+                    className="h-full w-auto object-contain"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -203,7 +203,7 @@ export default function UserLayout() {
       <footer className="hidden lg:block border-t border-gray-50 bg-white py-12">
         <div className="max-w-7xl mx-auto px-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-6">
-            <img src={logo} alt="Click2Kart" className="h-8 w-auto rounded-xl border border-gray-100 shadow-sm" />
+            <img src={logo} alt="Click2Kart" className="h-10 w-auto rounded-xl border border-gray-100 shadow-sm" />
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart Premium</span>
             <div className="flex gap-4 items-center">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
