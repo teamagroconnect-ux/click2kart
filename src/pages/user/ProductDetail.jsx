@@ -62,7 +62,7 @@ export default function ProductDetail(){
               </div>
             </div>
 
-            {p.bulkDiscountQuantity > 0 && (
+            {authed && p.bulkDiscountQuantity > 0 && (
               <div className="relative overflow-hidden bg-emerald-50/50 border border-emerald-100 rounded-[2.5rem] p-8 space-y-4 group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100 rounded-full -mr-16 -mt-16 opacity-30 blur-2xl transition-transform group-hover:scale-150 duration-700"></div>
                 <div className="flex items-center gap-3 relative z-10">

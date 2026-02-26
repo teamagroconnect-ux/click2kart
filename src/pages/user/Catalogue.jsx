@@ -6,6 +6,7 @@ import { useCart, getStockStatus } from '../../lib/CartContext'
 export default function Catalogue(){
   const { addToCart } = useCart()
   const authed = !!localStorage.getItem('token')
+  const [preview, setPreview] = useState('')
   const [q, setQ] = useState('')
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
@@ -147,12 +148,15 @@ export default function Catalogue(){
               {filteredSorted.map(p => (
                 <div key={p._id} className="group bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] flex flex-col transition-all duration-500 transform hover:-translate-y-2">
                   <Link to={`/products/${p._id}`} className="relative block">
-                    <div className="bg-gray-50/50 aspect-[4/3] flex items-center justify-center overflow-hidden">
+                    <div 
+                      className="bg-gray-50/50 aspect-[4/3] flex items-center justify-center overflow-hidden cursor-zoom-in"
+                      onClick={(e)=>{ e.preventDefault(); if (p.images?.[0]?.url) setPreview(p.images[0].url) }}
+                    >
                       {p.images && p.images.length>0
                         ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 p-4" />
                         : <div className="text-4xl">📦</div>}
                     </div>
-                    {p.bulkDiscountQuantity > 0 && (
+                    {authed && p.bulkDiscountQuantity > 0 && (
                       <div className="absolute top-4 right-4 bg-amber-400 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-amber-200 uppercase tracking-widest animate-bounce">
                         Bulk Offer
                       </div>
@@ -233,6 +237,14 @@ export default function Catalogue(){
             </div>
           </main>
         </div>
+
+        {preview && (
+          <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-6" onClick={()=>setPreview('')}>
+            <div className="max-w-4xl w-full">
+              <img src={preview} alt="Preview" className="w-full h-auto rounded-3xl shadow-2xl object-contain" />
+            </div>
+          </div>
+        )}
 
         {/* Mobile Filters Sheet */}
         {filtersOpen && (
