@@ -1,7 +1,7 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import { useCart } from '../lib/CartContext'
-import logo from '../click2kart.png'
+import logo from '../click2kart.svg'
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -42,11 +42,11 @@ export default function UserLayout() {
                 <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
               </button>
               <Link to="/" className="flex items-center gap-3 group">
-                <div className="h-12 w-12 rounded-2xl bg-white flex items-center justify-center text-xs font-black shadow-xl border border-gray-100 transition-all group-hover:scale-110 overflow-hidden">
+                <div className="rounded-2xl bg-white flex items-center justify-center text-xs font-black shadow-xl border border-gray-100 transition-all group-hover:scale-110 px-2 py-2">
                   <img
                     src={logo}
                     alt="Click2Kart"
-                    className="w-full h-full object-cover"
+                    className="h-10 w-auto"
                   />
                 </div>
                 <div className="flex flex-col">
