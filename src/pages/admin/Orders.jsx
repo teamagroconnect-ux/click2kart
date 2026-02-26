@@ -133,7 +133,7 @@ export default function Orders(){
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {o.billId && (
+                            {o.paymentStatus === 'PAID' && o.billId && (
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -144,6 +144,19 @@ export default function Orders(){
                                 title="View Bill"
                               >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                              </button>
+                            )}
+                            {o.paymentStatus === 'PAID' && o.billId && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const token = localStorage.getItem('token');
+                                  window.open(`${api.defaults.baseURL}/api/bills/${o.billId}/html?token=${token}`, '_blank');
+                                }}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                                title="View HTML Invoice"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7h18M3 12h18M3 17h18" /></svg>
                               </button>
                             )}
                             <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
@@ -194,7 +207,7 @@ export default function Orders(){
                                     </div>
                                   </div>
 
-                                  {o.status === 'PENDING_CASH_APPROVAL' && (
+                                  {o.paymentMethod === 'CASH' && o.status === 'PENDING_CASH_APPROVAL' && (
                                     <button 
                                       onClick={(e) => { e.stopPropagation(); approveCash(o._id); }}
                                       className="w-full bg-emerald-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 hover:bg-emerald-500 transition-all transform hover:-translate-y-0.5"
