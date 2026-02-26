@@ -197,7 +197,3 @@ export default function Enquiry(){
     </div>
   )
 }
-    </div>
-  )
-}
-
