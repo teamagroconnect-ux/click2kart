@@ -64,6 +64,12 @@ export default function OrderHistory() {
                       order.status === 'CANCELLED' ? 'text-red-600' : 'text-blue-600'
                     }`}>{order.status}</div>
                   </div>
+                  <div>
+                    <div className="text-gray-500 uppercase font-bold text-[10px] tracking-widest">Payment</div>
+                    <div className="font-bold text-gray-700">
+                      {order.paymentMethod === 'CASH' ? '💼 Offline' : '💳 Online'}
+                    </div>
+                  </div>
                 </div>
                 <div className="text-xs text-gray-400">ID: {order._id}</div>
               </div>

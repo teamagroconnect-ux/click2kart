@@ -1,18 +1,46 @@
 import React, { Fragment, useEffect, useState } from 'react'
 import api from '../../lib/api'
+import { io } from 'socket.io-client'
+import { useToast } from '../../components/Toast'
 
 export default function Orders(){
+  const { notify } = useToast()
   const [items, setItems] = useState([])
   const [status, setStatus] = useState('')
   const [page, setPage] = useState(1)
   const [expandedId, setExpandedId] = useState(null)
   const limit = 20
   const [loading, setLoading] = useState(false)
+
   const load = async(p=1)=>{ 
     setLoading(true)
     try { const {data}=await api.get('/api/orders',{params:{status:status||undefined,page:p,limit}}); setItems(data.items||[]); setPage(p) }
     finally { setLoading(false) }
   }
+
+  useEffect(() => {
+    const socket = io(import.meta.env.VITE_API_URL || 'http://localhost:5000');
+    
+    socket.on('connect', () => {
+      socket.emit('join_admin');
+    });
+
+    socket.on('new_offline_order', (order) => {
+      notify(`New Offline Payment Request from ${order.customer.name}`, 'info');
+      load(page); // Reload the current page to show the new order
+      
+      // Play a notification sound
+      try {
+        const audio = new Audio('/notification.mp3');
+        audio.play();
+      } catch (err) {
+        console.log('Audio playback blocked');
+      }
+    });
+
+    return () => socket.disconnect();
+  }, [page]);
+
   useEffect(()=>{ load(1) }, [status])
   const update = async(id, s)=>{ await api.patch(`/api/orders/${id}/status`, { status: s }); load(page) }
   const approveCash = async(id)=>{ await api.patch(`/api/orders/${id}/approve-cash`); load(page) }
@@ -151,8 +179,10 @@ export default function Orders(){
                                     <div className="space-y-1">
                                       <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Method</div>
                                       <div className="flex items-center gap-2">
-                                        <span className="text-lg">{o.paymentMethod === 'CASH' ? '💵' : '💳'}</span>
-                                        <span className="text-xs font-black text-gray-900">{o.paymentMethod}</span>
+                                        <span className="text-lg">{o.paymentMethod === 'CASH' ? '💼' : '💳'}</span>
+                                        <span className="text-xs font-black text-gray-900">
+                                          {o.paymentMethod === 'CASH' ? 'Offline Payment' : 'Online Payment'}
+                                        </span>
                                       </div>
                                     </div>
                                     <div className="space-y-1">
@@ -168,7 +198,7 @@ export default function Orders(){
                                       onClick={(e) => { e.stopPropagation(); approveCash(o._id); }}
                                       className="w-full bg-emerald-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 hover:bg-emerald-500 transition-all transform hover:-translate-y-0.5"
                                     >
-                                      Approve Cash Payment
+                                      Approve Offline Payment
                                     </button>
                                   )}
 

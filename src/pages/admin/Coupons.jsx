@@ -66,11 +66,17 @@ export default function Coupons(){
   const remove = async (c)=>{ 
     if (c.isActive) {
       if (!confirm(`Disable coupon "${c.code}"?`)) return;
+      await api.delete(`/api/coupons/${c._id}`); 
     } else {
       if (!confirm(`Permanently DELETE coupon "${c.code}"? This cannot be undone.`)) return;
+      await api.delete(`/api/coupons/${c._id}`); 
     }
-    await api.delete(`/api/coupons/${c._id}`); 
     load(); 
+  }
+
+  const toggleStatus = async (c) => {
+    await api.put(`/api/coupons/${c._id}`, { isActive: !c.isActive });
+    load();
   }
   const createPartner = async (e)=> {
     e.preventDefault()
@@ -264,6 +270,14 @@ export default function Coupons(){
                         >
                           Edit Details
                         </button>
+                        {!c.isActive && (
+                          <button 
+                            onClick={(e)=>{ e.stopPropagation(); toggleStatus(c); }} 
+                            className="flex-1 bg-emerald-50 text-emerald-600 py-3 rounded-2xl text-[10px] font-black hover:bg-emerald-100 transition-all uppercase tracking-widest"
+                          >
+                            Enable Coupon
+                          </button>
+                        )}
                         <button 
                           onClick={(e)=>{ e.stopPropagation(); remove(c); }} 
                           className={`flex-1 py-3 rounded-2xl text-[10px] font-black transition-all uppercase tracking-widest ${c.isActive ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-red-50 text-red-600 hover:bg-red-100'}`}

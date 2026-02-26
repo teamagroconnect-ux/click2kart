@@ -144,24 +144,28 @@ export default function Enquiry(){
 
         <div className="space-y-4 pt-4 border-t border-gray-100">
           <div className="text-sm font-black uppercase tracking-widest text-gray-400">Payment Method</div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <button
               type="button"
               onClick={() => setPaymentMethod('RAZORPAY')}
-              className={`p-4 rounded-2xl border-2 transition-all text-left flex flex-col gap-2 ${paymentMethod === 'RAZORPAY' ? 'border-blue-600 bg-blue-50' : 'border-gray-100 hover:border-gray-200'}`}
+              className={`p-5 rounded-3xl border-2 transition-all text-left flex items-center gap-4 ${paymentMethod === 'RAZORPAY' ? 'border-blue-600 bg-blue-50 shadow-lg shadow-blue-100' : 'border-gray-100 hover:border-gray-200'}`}
             >
-              <span className="text-xl">💳</span>
-              <span className="text-xs font-black uppercase tracking-widest">Razorpay</span>
-              <span className="text-[10px] text-gray-500 font-medium leading-none">Automatic Billing</span>
+              <span className="text-3xl">💳</span>
+              <div className="flex flex-col">
+                <span className="text-sm font-black uppercase tracking-widest text-gray-900">Razorpay</span>
+                <span className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mt-1">Online Payment (Auto Confirmation)</span>
+              </div>
             </button>
             <button
               type="button"
               onClick={() => setPaymentMethod('CASH')}
-              className={`p-4 rounded-2xl border-2 transition-all text-left flex flex-col gap-2 ${paymentMethod === 'CASH' ? 'border-blue-600 bg-blue-50' : 'border-gray-100 hover:border-gray-200'}`}
+              className={`p-5 rounded-3xl border-2 transition-all text-left flex items-center gap-4 ${paymentMethod === 'CASH' ? 'border-blue-600 bg-blue-50 shadow-lg shadow-blue-100' : 'border-gray-100 hover:border-gray-200'}`}
             >
-              <span className="text-xl">💵</span>
-              <span className="text-xs font-black uppercase tracking-widest">Cash</span>
-              <span className="text-[10px] text-gray-500 font-medium leading-none">Admin Approval</span>
+              <span className="text-3xl">💼</span>
+              <div className="flex flex-col">
+                <span className="text-sm font-black uppercase tracking-widest text-gray-900">Offline Payment</span>
+                <span className="text-[10px] text-amber-600 font-bold uppercase tracking-widest mt-1">Manual Approval Required</span>
+              </div>
             </button>
           </div>
         </div>
