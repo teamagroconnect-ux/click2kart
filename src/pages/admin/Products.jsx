@@ -320,7 +320,6 @@ export default function Products() {
         onConfirm={confirmDelete}
         onCancel={() => setToDelete(null)}
       />
-    </>
       {preview && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-6" onClick={() => setPreview('')}>
           <div className="max-w-4xl w-full">
@@ -328,6 +327,7 @@ export default function Products() {
           </div>
         </div>
       )}
+    </>
   )
 }
 
