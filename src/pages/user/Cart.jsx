@@ -5,22 +5,6 @@ import { useCart, getStockStatus } from '../../lib/CartContext'
 export default function Cart() {
   const { cart, removeFromCart, updateQuantity, cartTotal } = useCart()
   const navigate = useNavigate()
-  const authed = !!localStorage.getItem('token')
-
-  if (!authed) {
-    return (
-      <div className="max-w-4xl mx-auto p-4 md:p-10 text-center space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900">Login Required</h1>
-        <p className="text-gray-600">Login to view prices and manage your cart.</p>
-        <Link
-          to="/login"
-          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-        >
-          Go to Login
-        </Link>
-      </div>
-    )
-  }
 
   if (cart.length === 0) {
     return (

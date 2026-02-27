@@ -223,18 +223,34 @@ export default function Catalogue(){
                     </div>
 
                     <div className="flex flex-col space-y-2 pt-2 border-t border-gray-50 mt-auto">
-                      <div className="flex items-center justify-between">
-                        <div className="text-xl font-black text-gray-900 tracking-tighter">
-                          {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'}
-                        </div>
-                        {authed && p.mrp != null && p.mrp > p.price && (
-                          <div className="text-right">
-                            <div className="text-[11px] text-gray-400 line-through">₹{Number(p.mrp).toLocaleString()}</div>
-                            <div className="text-[10px] font-black text-emerald-600 uppercase">
-                              {Math.round(((Number(p.mrp)-Number(p.price))/Number(p.mrp))*100)}% OFF
-                            </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-xl font-black text-gray-900 tracking-tighter">
+                            {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'}
                           </div>
-                        )}
+                          {authed && p.mrp != null && p.mrp > p.price && (
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <div className="text-[11px] text-gray-400 line-through">
+                                ₹{Number(p.mrp).toLocaleString()}
+                              </div>
+                              <div className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 text-[10px] font-black uppercase tracking-widest">
+                                {Math.round(((Number(p.mrp)-Number(p.price))/Number(p.mrp))*100)}% OFF
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <button 
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (authed) addToCart(p); }}
+                          disabled={!authed || p.stock <= 0}
+                          title={authed ? (p.stock > 0 ? 'Add to Cart' : 'Sold Out') : 'Login to add'}
+                          className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-[#0f172a] text-white shadow-md hover:bg-[#111827] active:scale-95 disabled:opacity-40"
+                        >
+                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M7 6h13l-1.2 7H9.2L7 6Z" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="10" cy="19" r="1.4" fill="currentColor" />
+                            <circle cx="17" cy="19" r="1.4" fill="currentColor" />
+                          </svg>
+                        </button>
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         {(() => {
@@ -248,15 +264,6 @@ export default function Catalogue(){
                           )
                         })()}
                       </div>
-                      {/* floating add to cart */}
-                      <button 
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (authed) addToCart(p); }}
-                        disabled={!authed || p.stock <= 0}
-                        title={authed ? (p.stock > 0 ? 'Add to Cart' : 'Sold Out') : 'Login to add'}
-                        className="absolute bottom-3 right-3 h-11 w-11 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-[0_10px_25px_rgba(139,92,246,0.4)] flex items-center justify-center active:scale-95 disabled:opacity-40"
-                      >
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4h-2l-1 2H2v2h2l3.6 7.59-1.35 2.45A2 2 0 0 0 8 20h10v-2H8.42l1.1-2h7.45a2 2 0 0 0 1.79-1.11L22 8H6.21l-.94-2H7V4zm3 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm8 0a2 2 0 1 0 .001 4.001A2 2 0 0 0 18 20z"/></svg>
-                      </button>
                     </div>
                   </div>
                 </div>
