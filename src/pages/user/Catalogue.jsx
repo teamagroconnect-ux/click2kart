@@ -162,17 +162,27 @@ export default function Catalogue(){
                       </div>
                     )}
                   </Link>
-                  <div className="p-4 md:p-6 flex-1 flex flex-col space-y-3">
+                  <div className="p-4 md:p-5 flex-1 flex flex-col space-y-2">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <div className="text-[10px] uppercase text-blue-600 font-black tracking-widest">{p.category || 'General'}</div>
+                        <div className="inline-flex items-center gap-2">
+                          <span className="text-[10px] uppercase text-blue-600 font-black tracking-widest">{p.category || 'General'}</span>
+                          <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-widest border border-blue-100">Assured</span>
+                        </div>
+                        {p.ratingCount > 0 && (
+                          <div className="inline-flex items-center gap-1 text-amber-500">
+                            <svg className="w-4 h-4 fill-amber-400" viewBox="0 0 24 24"><path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z"/></svg>
+                            <span className="text-xs font-bold text-gray-700">{Number(p.ratingAvg||0).toFixed(1)}</span>
+                            <span className="text-[10px] font-bold text-gray-400">({p.ratingCount})</span>
+                          </div>
+                        )}
                       </div>
                       <Link to={`/products/${p._id}`} className="block group-hover:text-blue-600 transition-colors">
-                        <div className="font-black text-gray-900 line-clamp-2 min-h-[2.5rem] text-sm md:text-base leading-tight tracking-tight">{p.name}</div>
+                        <div className="font-black text-gray-900 line-clamp-1 text-sm md:text-base leading-tight tracking-tight">{p.name}</div>
                       </Link>
                     </div>
 
-                    <div className="flex flex-col space-y-4 pt-4 border-t border-gray-50 mt-auto">
+                    <div className="flex flex-col space-y-3 pt-3 border-t border-gray-50 mt-auto">
                       <div className="flex items-center justify-between">
                         <div className="text-xl font-black text-gray-900 tracking-tighter">
                           {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'}
@@ -192,13 +202,10 @@ export default function Catalogue(){
                             </span>
                           )
                         })()}
-                        {p.ratingCount > 0 && (
-                          <div className="flex items-center gap-1 text-amber-500">
-                            <svg className="w-4 h-4 fill-amber-400" viewBox="0 0 24 24"><path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z"/></svg>
-                            <span className="text-xs font-bold text-gray-700">{Number(p.ratingAvg||0).toFixed(1)}</span>
-                            <span className="text-[10px] font-bold text-gray-400">({p.ratingCount})</span>
-                          </div>
-                        )}
+                        <div className="hidden md:flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest text-gray-500 border-gray-200">GST Invoice</span>
+                          <span className="px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest text-gray-500 border-gray-200">Fast Dispatch</span>
+                        </div>
                       </div>
                       <div className="flex gap-2">
                         <button 
@@ -208,6 +215,9 @@ export default function Catalogue(){
                         >
                           {authed ? (p.stock > 0 ? 'Add to Cart' : 'Sold Out') : 'Login to add'}
                         </button>
+                        <Link to={`/products/${p._id}`} className="px-4 py-3 rounded-2xl border border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-gray-50">
+                          View
+                        </Link>
                       </div>
                     </div>
                   </div>
