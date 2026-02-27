@@ -156,12 +156,24 @@ export default function Catalogue(){
                         ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 p-4" />
                         : <div className="text-4xl">📦</div>}
                     </div>
+                    <button
+                      onClick={(e)=>{ e.preventDefault(); e.stopPropagation(); }}
+                      className="absolute top-3 right-3 h-9 w-9 rounded-full bg-white/90 backdrop-blur border border-gray-200 flex items-center justify-center text-gray-400 hover:text-rose-500 shadow-md"
+                      title="Wishlist"
+                    >
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41 1.01 4.22 2.5C11.09 5.01 12.76 4 14.5 4 17 4 19 6 19 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </button>
                     {authed && p.bulkDiscountQuantity > 0 && (
                       <div className="absolute top-4 right-4 bg-amber-400 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-amber-200 uppercase tracking-widest animate-bounce">
                         Bulk Offer
                       </div>
                     )}
                   </Link>
+                  {p.ratingCount > 0 && (
+                    <div className="px-4 pt-2 text-[11px] text-gray-700 font-bold">
+                      <span className="text-amber-500">⭐</span> {Number(p.ratingAvg||0).toFixed(1)} | {Number(p.ratingCount).toLocaleString()} Ratings
+                    </div>
+                  )}
                   <div className="p-4 md:p-5 flex-1 flex flex-col space-y-2">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
@@ -187,6 +199,14 @@ export default function Catalogue(){
                         <div className="text-xl font-black text-gray-900 tracking-tighter">
                           {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'}
                         </div>
+                        {authed && p.mrp != null && p.mrp > p.price && (
+                          <div className="text-right">
+                            <div className="text-[11px] text-gray-400 line-through">₹{Number(p.mrp).toLocaleString()}</div>
+                            <div className="text-[10px] font-black text-emerald-600 uppercase">
+                              {Math.round(((Number(p.mrp)-Number(p.price))/Number(p.mrp))*100)}% OFF
+                            </div>
+                          </div>
+                        )}
                         {authed && p.bulkDiscountQuantity > 0 && (
                           <div className="text-[9px] text-emerald-600 font-black uppercase bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
                             Save ₹{p.bulkDiscountPriceReduction}/u
@@ -205,6 +225,7 @@ export default function Catalogue(){
                         <div className="hidden md:flex items-center gap-1">
                           <span className="px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest text-gray-500 border-gray-200">GST Invoice</span>
                           <span className="px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest text-gray-500 border-gray-200">Fast Dispatch</span>
+                          <span className="px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest text-emerald-600 border-emerald-100 bg-emerald-50">Free Delivery</span>
                         </div>
                       </div>
                       <div className="flex gap-2">

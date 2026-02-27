@@ -10,7 +10,7 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', category:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' })
   const [editing, setEditing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
   const [categories, setCategories] = useState([])
@@ -41,6 +41,7 @@ export default function Products() {
       price: Number(form.price), 
       stock: Number(form.stock), 
       gst: Number(form.gst||0), 
+      mrp: form.mrp ? Number(form.mrp) : undefined,
       bulkDiscountQuantity: Number(form.bulkDiscountQuantity||0),
       bulkDiscountPriceReduction: Number(form.bulkDiscountPriceReduction||0),
       images 
@@ -68,6 +69,7 @@ export default function Products() {
       category: editing.category,
       stock: Number(editing.stock),
       gst: Number(editing.gst||0),
+      mrp: editing.mrp ? Number(editing.mrp) : undefined,
       bulkDiscountQuantity: Number(editing.bulkDiscountQuantity||0),
       bulkDiscountPriceReduction: Number(editing.bulkDiscountPriceReduction||0),
       images: (editing.images||'').split(',').map(s=>s.trim()).filter(Boolean)
@@ -194,6 +196,12 @@ export default function Products() {
                     <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="999" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
                   </div>
                   <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">MRP (₹)</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="1099" value={form.mrp} onChange={e => setForm({ ...form, mrp: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Stock</label>
                     <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} required />
                   </div>
@@ -292,6 +300,12 @@ export default function Products() {
                 <div className="flex gap-2">
                   <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-[10px] font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Multiple URLs comma-separated" value={editing.images} onChange={e => setEditing({ ...editing, images: e.target.value })} />
                   <ImageUpload onUploaded={url => setEditing(f => ({ ...f, images: (f.images ? f.images + ', ' : '') + url }))} />
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-2">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">MRP (₹)</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-[10px] font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="1099" value={editing.mrp || ''} onChange={e => setEditing({ ...editing, mrp: e.target.value })} />
+                  </div>
                 </div>
                 <div className="flex gap-2 flex-wrap mt-2">
                   {(editing.images || '').split(',').map(s => s.trim()).filter(Boolean).map((url, i) => (
