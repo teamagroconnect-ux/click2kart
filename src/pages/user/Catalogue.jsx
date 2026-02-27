@@ -6,8 +6,9 @@ import { useCart, getStockStatus } from '../../lib/CartContext'
 export default function Catalogue(){
   const { addToCart } = useCart()
   const authed = !!localStorage.getItem('token')
-  const [preview, setPreview] = useState('')
   const [q, setQ] = useState('')
+  const [sug, setSug] = useState([])
+  const [showSug, setShowSug] = useState(false)
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -37,6 +38,21 @@ export default function Catalogue(){
     if (cat) setCategory(cat)
   }, [location.search])
 
+  useEffect(()=>{
+    let t
+    if (q.trim().length >= 2) {
+      t = setTimeout(async ()=>{
+        try {
+          const { data } = await api.get('/api/products/suggest', { params: { q } })
+          setSug(data || []); setShowSug(true)
+        } catch { setSug([]) }
+      }, 250)
+    } else {
+      setSug([]); setShowSug(false)
+    }
+    return ()=> t && clearTimeout(t)
+  }, [q])
+
   const filteredSorted = useMemo(()=>{
     let list = [...items]
     if (authed) {
@@ -60,15 +76,41 @@ export default function Catalogue(){
             <h1 className="text-4xl font-black text-gray-900 tracking-tight">Explore Products</h1>
             <p className="text-sm text-gray-500 font-medium max-w-md">Discover premium tech and accessories curated for your digital lifestyle.</p>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch gap-3">
-            <div className="relative group">
+          <div className="flex flex-col sm:flex-row items-stretch gap-3 relative">
+            <div className="relative group w-full sm:w-auto">
               <input 
-                className="bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl pl-11 pr-4 py-3.5 w-full sm:w-72 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white shadow-inner transition-all" 
-                placeholder="Search products..." 
+                className="bg-white/90 border border-gray-200 text-gray-900 text-sm rounded-2xl pl-11 pr-10 py-3.5 w-full sm:w-80 outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-300 shadow-[inset_0_2px_8px_rgba(0,0,0,0.05)] transition-all" 
+                placeholder="Search products, brands…" 
                 value={q} 
                 onChange={e=>setQ(e.target.value)} 
+                onFocus={()=> q.trim().length>=2 && setShowSug(true)}
+                onBlur={()=> setTimeout(()=>setShowSug(false), 150)}
               />
-              <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-violet-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              {q && (
+                <button
+                  onClick={()=>{ setQ(''); setSug([]); setShowSug(false) }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-gray-50 text-gray-400 hover:text-gray-600 border border-gray-200 flex items-center justify-center"
+                  aria-label="Clear"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.3 19.71 2.89 18.3 9.17 12 2.89 5.71 4.3 4.29l6.29 6.3 6.3-6.3z"/></svg>
+                </button>
+              )}
+              {showSug && sug.length > 0 && (
+                <div className="absolute z-30 mt-2 w-full bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden">
+                  {sug.map(s => (
+                    <Link key={s.id} to={`/products/${s.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
+                      <div className="h-8 w-8 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center">
+                        {s.image ? <img src={s.image} alt={s.name} className="h-full w-full object-contain" /> : <span className="text-[10px] text-gray-400">Img</span>}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-gray-900 truncate">{s.name}</div>
+                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest truncate">{s.category || 'General'}</div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
             <select 
               className="bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white shadow-inner transition-all appearance-none font-bold" 
@@ -149,11 +191,10 @@ export default function Catalogue(){
                 <div key={p._id} className="group bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] flex flex-col transition-all duration-500 transform hover:-translate-y-2">
                   <Link to={`/products/${p._id}`} className="relative block">
                     <div 
-                      className="bg-gray-50/50 aspect-[4/3] flex items-center justify-center overflow-hidden cursor-zoom-in"
-                      onClick={(e)=>{ e.preventDefault(); if (p.images?.[0]?.url) setPreview(p.images[0].url) }}
+                      className="bg-gray-50/50 aspect-[4/3] flex items-center justify-center overflow-hidden"
                     >
                       {p.images && p.images.length>0
-                        ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110 p-4" />
+                        ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain p-4" />
                         : <div className="text-4xl">📦</div>}
                     </div>
                     <button
@@ -275,14 +316,6 @@ export default function Catalogue(){
             </div>
           </main>
         </div>
-
-        {preview && (
-          <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-6" onClick={()=>setPreview('')}>
-            <div className="max-w-4xl w-full">
-              <img src={preview} alt="Preview" className="w-full h-auto rounded-3xl shadow-2xl object-contain" />
-            </div>
-          </div>
-        )}
 
         {/* Mobile Filters Sheet */}
         {filtersOpen && (
