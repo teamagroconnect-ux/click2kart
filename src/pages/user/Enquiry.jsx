@@ -17,7 +17,7 @@ export default function Enquiry(){
   const [items, setItems] = useState(initialItems)
   const [customer, setCustomer] = useState({ 
     name: '', 
-    phone: localStorage.getItem('userPhone') || '', 
+    phone: '', 
     email: '' 
   })
   const [paymentMethod, setPaymentMethod] = useState('RAZORPAY')
@@ -28,6 +28,24 @@ export default function Enquiry(){
       setItems(cart.map(item => ({ productId: item._id, quantity: item.quantity, name: item.name, price: item.price, image: item.images?.[0]?.url })))
     }
   }, [cart])
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) return
+    ;(async () => {
+      try {
+        const { data } = await api.get('/api/user/me')
+        setCustomer(prev => ({
+          ...prev,
+          name: data.name || prev.name,
+          phone: data.phone || prev.phone,
+          email: data.email || prev.email
+        }))
+      } catch {
+        // ignore
+      }
+    })()
+  }, [])
 
   const handleRazorpay = (orderData, razorpayOrderId) => {
     const options = {
@@ -143,16 +161,36 @@ export default function Enquiry(){
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="group">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-2 block group-focus-within:text-violet-600 transition-colors">Business Name</label>
-              <input className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all" placeholder="Uddhab Das" value={customer.name} onChange={e=>setCustomer({...customer, name:e.target.value})} required />
+              <input
+                className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                placeholder="Uddhab Das"
+                value={customer.name}
+                onChange={e=>setCustomer({...customer, name:e.target.value})}
+                required
+                readOnly={!!localStorage.getItem('token')}
+              />
             </div>
             <div className="group">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-2 block group-focus-within:text-violet-600 transition-colors">Contact Phone</label>
-              <input className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all" placeholder="9348412765" value={customer.phone} onChange={e=>setCustomer({...customer, phone:e.target.value})} required />
+              <input
+                className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                placeholder="9348412765"
+                value={customer.phone}
+                onChange={e=>setCustomer({...customer, phone:e.target.value})}
+                required
+                readOnly={!!localStorage.getItem('token')}
+              />
             </div>
           </div>
           <div className="group">
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-2 block group-focus-within:text-violet-600 transition-colors">Business Email (Optional)</label>
-            <input className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all" placeholder="mr.uddhabcharandas@gmail.com" value={customer.email} onChange={e=>setCustomer({...customer, email:e.target.value})} />
+            <input
+              className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+              placeholder="mr.uddhabcharandas@gmail.com"
+              value={customer.email}
+              onChange={e=>setCustomer({...customer, email:e.target.value})}
+              readOnly={!!localStorage.getItem('token')}
+            />
           </div>
         </div>
 

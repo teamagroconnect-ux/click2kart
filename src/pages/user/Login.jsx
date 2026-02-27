@@ -2,11 +2,13 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
+import { useAuth } from '../../lib/AuthContext'
 import logo from '../../click2kart.png'
 
 export default function Login() {
   const { notify } = useToast()
   const navigate = useNavigate()
+  const { setAuth } = useAuth()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
@@ -18,8 +20,7 @@ export default function Login() {
     setLoading(true)
     try {
       const { data } = await api.post('/api/auth/customer/login', formData)
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      setAuth(data.token, { ...data.user, role: 'customer' })
       notify('Welcome back!', 'success')
       navigate('/')
     } catch (err) {
