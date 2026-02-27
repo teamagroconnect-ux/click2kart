@@ -8,6 +8,9 @@ export default function ProductDetail(){
   const navigate = useNavigate()
   const { addToCart } = useCart()
   const [p, setP] = useState(null)
+  const [reviewOpen, setReviewOpen] = useState(false)
+  const [myRating, setMyRating] = useState(0)
+  const [myComment, setMyComment] = useState('')
   const authed = !!localStorage.getItem('token')
   useEffect(()=>{ api.get(`/api/products/${id}`).then(({data})=>setP(data)) }, [id])
   if (!p) return <div className="p-10 text-center text-lg text-gray-500">Loading product details...</div>
@@ -54,7 +57,15 @@ export default function ProductDetail(){
                 {p.category || 'General Collection'}
               </div>
               <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter leading-tight">{p.name}</h1>
-              <div className="flex items-center gap-4 pt-2">
+              <div className="flex items-center gap-6 pt-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex text-amber-500">
+                    {Array.from({length:5}).map((_,i)=>(
+                      <svg key={i} className={`w-5 h-5 ${i < Math.round(p.ratingAvg||0) ? 'fill-amber-400' : 'fill-gray-200'}`} viewBox="0 0 24 24"><path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z"/></svg>
+                    ))}
+                  </div>
+                  <div className="text-xs font-bold text-gray-500">({p.ratingCount || 0})</div>
+                </div>
                 <div className="text-4xl font-black text-gray-900 tracking-tighter">
                   {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'}
                 </div>
@@ -100,6 +111,14 @@ export default function ProductDetail(){
               <p className="text-base text-gray-500 font-medium leading-[1.8] whitespace-pre-line max-w-xl">
                 {p.description || "Experience the perfect blend of innovation and craftsmanship. This product is meticulously designed to exceed your expectations and integrate seamlessly into your digital ecosystem."}
               </p>
+              <div>
+                <button
+                  onClick={() => { if (!authed) { navigate('/login'); return } setReviewOpen(true) }}
+                  className="px-6 py-3 rounded-2xl bg-violet-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-violet-500 transition-all"
+                >
+                  Rate this Product
+                </button>
+              </div>
             </div>
 
             <div className="pt-10 flex flex-col sm:flex-row gap-4">
@@ -134,6 +153,39 @@ export default function ProductDetail(){
           </div>
         </div>
       </div>
+      {reviewOpen && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6" onClick={()=>setReviewOpen(false)}>
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md space-y-4" onClick={(e)=>e.stopPropagation()}>
+            <div className="text-lg font-black text-gray-900">Your Feedback</div>
+            <div className="flex items-center gap-2">
+              {Array.from({length:5}).map((_,i)=>(
+                <button key={i} onClick={()=>setMyRating(i+1)}>
+                  <svg className={`w-8 h-8 ${i < myRating ? 'fill-amber-400' : 'fill-gray-200'}`} viewBox="0 0 24 24"><path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z"/></svg>
+                </button>
+              ))}
+            </div>
+            <textarea className="w-full bg-gray-50 border rounded-2xl p-3 text-sm" rows="4" placeholder="Share your experience (optional)" value={myComment} onChange={e=>setMyComment(e.target.value)} />
+            <div className="flex gap-3">
+              <button onClick={()=>setReviewOpen(false)} className="flex-1 px-4 py-3 rounded-2xl bg-gray-100 text-gray-600 text-[10px] font-black uppercase tracking-widest">Cancel</button>
+              <button
+                onClick={async ()=>{
+                  if (myRating < 1) return;
+                  try {
+                    const { data } = await api.post(`/api/products/${id}/reviews`, { rating: myRating, comment: myComment })
+                    setP(prev => ({ ...prev, ratingAvg: data.ratingAvg, ratingCount: data.ratingCount }))
+                    setReviewOpen(false); setMyRating(0); setMyComment('')
+                  } catch (e) {
+                    alert(e?.response?.data?.error || 'Failed to submit')
+                  }
+                }}
+                className="flex-1 px-4 py-3 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

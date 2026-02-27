@@ -192,6 +192,13 @@ export default function Catalogue(){
                             </span>
                           )
                         })()}
+                        {p.ratingCount > 0 && (
+                          <div className="flex items-center gap-1 text-amber-500">
+                            <svg className="w-4 h-4 fill-amber-400" viewBox="0 0 24 24"><path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z"/></svg>
+                            <span className="text-xs font-bold text-gray-700">{Number(p.ratingAvg||0).toFixed(1)}</span>
+                            <span className="text-[10px] font-bold text-gray-400">({p.ratingCount})</span>
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-2">
                         <button 

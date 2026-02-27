@@ -15,6 +15,7 @@ export default function Products() {
   const [toDelete, setToDelete] = useState(null)
   const [categories, setCategories] = useState([])
   const limit = 10
+  const [preview, setPreview] = useState('')
 
   const [loading, setLoading] = useState(false)
   const load = async (p=1) => {
@@ -118,7 +119,7 @@ export default function Products() {
                         <tr key={p._id} className="group hover:bg-gray-50/50 transition-colors">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-12 w-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center">
+                              <div className="h-12 w-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => { if (p.images?.[0]?.url) setPreview(p.images[0].url) }}>
                                 {p.images?.[0]?.url ? (
                                   <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain p-1" />
                                 ) : (
@@ -223,7 +224,7 @@ export default function Products() {
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Images</label>
                   <div className="flex gap-2">
-                    <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-[10px] font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="URLs..." value={form.images} onChange={e => setForm({ ...form, images: e.target.value })} />
+                    <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-[10px] font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Multiple URLs comma-separated" value={form.images} onChange={e => setForm({ ...form, images: e.target.value })} />
                     <ImageUpload onUploaded={url => setForm(f => ({ ...f, images: (f.images ? f.images + ', ' : '') + url }))} />
                   </div>
                 </div>
@@ -289,8 +290,13 @@ export default function Products() {
               <div className="space-y-1 md:col-span-2">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Images</label>
                 <div className="flex gap-2">
-                  <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-[10px] font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Image URLs" value={editing.images} onChange={e => setEditing({ ...editing, images: e.target.value })} />
+                  <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-[10px] font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Multiple URLs comma-separated" value={editing.images} onChange={e => setEditing({ ...editing, images: e.target.value })} />
                   <ImageUpload onUploaded={url => setEditing(f => ({ ...f, images: (f.images ? f.images + ', ' : '') + url }))} />
+                </div>
+                <div className="flex gap-2 flex-wrap mt-2">
+                  {(editing.images || '').split(',').map(s => s.trim()).filter(Boolean).map((url, i) => (
+                    <img key={i} src={url} className="h-12 w-12 object-contain bg-gray-50 border rounded-xl p-1" />
+                  ))}
                 </div>
               </div>
               <div className="space-y-1 md:col-span-2">
@@ -315,6 +321,13 @@ export default function Products() {
         onCancel={() => setToDelete(null)}
       />
     </>
+      {preview && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-6" onClick={() => setPreview('')}>
+          <div className="max-w-4xl w-full">
+            <img src={preview} alt="Preview" className="w-full h-auto rounded-3xl shadow-2xl object-contain" />
+          </div>
+        </div>
+      )}
   )
 }
 
