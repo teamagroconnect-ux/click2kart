@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useCart, getStockStatus } from '../../lib/CartContext'
 
 export default function Catalogue(){
   const { addToCart } = useCart()
   const authed = !!localStorage.getItem('token')
+  const navigate = useNavigate()
   const [q, setQ] = useState('')
   const [sug, setSug] = useState([])
   const [showSug, setShowSug] = useState(false)
@@ -188,13 +189,17 @@ export default function Catalogue(){
             
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
               {filteredSorted.map(p => (
-                <div key={p._id} className="group bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden hover:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] flex flex-col transition-all duration-500 transform hover:-translate-y-2">
-                  <Link to={`/products/${p._id}`} className="relative block">
+                <div 
+                  key={p._id} 
+                  className="group relative bg-white/80 backdrop-blur border border-gray-100 rounded-[2rem] overflow-hidden shadow-md hover:shadow-xl flex flex-col transition-all duration-300 hover:scale-[1.01] cursor-pointer"
+                  onClick={()=>navigate(`/products/${p._id}`)}
+                >
+                  <Link to={`/products/${p._id}`} className="relative block" onClick={(e)=>e.stopPropagation()}>
                     <div 
-                      className="bg-gray-50/50 aspect-[4/3] flex items-center justify-center overflow-hidden"
+                      className="bg-gray-50/50 h-[160px] sm:h-[170px] flex items-center justify-center overflow-hidden"
                     >
                       {p.images && p.images.length>0
-                        ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain p-4" />
+                        ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain p-3" />
                         : <div className="text-4xl">📦</div>}
                     </div>
                     <button
@@ -210,32 +215,26 @@ export default function Catalogue(){
                       </div>
                     )}
                   </Link>
-                  {p.ratingCount > 0 && (
-                    <div className="px-4 pt-2 text-[11px] text-gray-700 font-bold">
-                      <span className="text-amber-500">⭐</span> {Number(p.ratingAvg||0).toFixed(1)} | {Number(p.ratingCount).toLocaleString()} Ratings
-                    </div>
-                  )}
-                  <div className="p-4 md:p-5 flex-1 flex flex-col space-y-2">
+                  <div className="p-4 md:p-4 flex-1 flex flex-col space-y-2" onClick={(e)=>e.stopPropagation()}>
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <div className="inline-flex items-center gap-2">
-                          <span className="text-[10px] uppercase text-blue-600 font-black tracking-widest">{p.category || 'General'}</span>
-                          <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-widest border border-blue-100">Assured</span>
-                        </div>
-                        {p.ratingCount > 0 && (
+                        {p.ratingCount > 0 ? (
                           <div className="inline-flex items-center gap-1 text-amber-500">
                             <svg className="w-4 h-4 fill-amber-400" viewBox="0 0 24 24"><path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z"/></svg>
                             <span className="text-xs font-bold text-gray-700">{Number(p.ratingAvg||0).toFixed(1)}</span>
-                            <span className="text-[10px] font-bold text-gray-400">({p.ratingCount})</span>
+                            <span className="text-[10px] font-bold text-gray-400">| {p.ratingCount >= 1000 ? `${(p.ratingCount/1000).toFixed(1)}k` : p.ratingCount}</span>
                           </div>
+                        ) : (
+                          <span className="text-[10px] uppercase text-gray-400 font-black tracking-widest">{p.category || 'General'}</span>
                         )}
+                        <span className="hidden md:inline-block text-[9px] text-gray-400 font-bold uppercase tracking-widest">Assured</span>
                       </div>
                       <Link to={`/products/${p._id}`} className="block group-hover:text-blue-600 transition-colors">
                         <div className="font-black text-gray-900 line-clamp-1 text-sm md:text-base leading-tight tracking-tight">{p.name}</div>
                       </Link>
                     </div>
 
-                    <div className="flex flex-col space-y-3 pt-3 border-t border-gray-50 mt-auto">
+                    <div className="flex flex-col space-y-2 pt-2 border-t border-gray-50 mt-auto">
                       <div className="flex items-center justify-between">
                         <div className="text-xl font-black text-gray-900 tracking-tighter">
                           {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'}
@@ -248,39 +247,28 @@ export default function Catalogue(){
                             </div>
                           </div>
                         )}
-                        {authed && p.bulkDiscountQuantity > 0 && (
-                          <div className="text-[9px] text-emerald-600 font-black uppercase bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                            Save ₹{p.bulkDiscountPriceReduction}/u
-                          </div>
-                        )}
                       </div>
                       <div className="flex items-center justify-between gap-2">
                         {(() => {
                           const status = getStockStatus(p.stock)
                           return (
-                            <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md ${status.bg} ${status.color} border ${status.border}`}>
-                              {status.text}
-                            </span>
+                            <div className="flex items-center gap-2 text-[11px]">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md border ${status.bg} ${status.color} ${status.border}`}>✔ {status.text}</span>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-gray-200 text-gray-600">🚚 Fast</span>
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-gray-200 text-gray-600">🧾 GST</span>
+                            </div>
                           )
                         })()}
-                        <div className="hidden md:flex items-center gap-1">
-                          <span className="px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest text-gray-500 border-gray-200">GST Invoice</span>
-                          <span className="px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest text-gray-500 border-gray-200">Fast Dispatch</span>
-                          <span className="px-2 py-0.5 rounded border text-[9px] font-black uppercase tracking-widest text-emerald-600 border-emerald-100 bg-emerald-50">Free Delivery</span>
-                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={(e) => { e.preventDefault(); if (authed) addToCart(p); }}
-                          disabled={!authed || p.stock <= 0}
-                          className="flex-1 bg-gray-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg hover:bg-gray-800 transition-all active:scale-95 disabled:opacity-30 disabled:hover:bg-gray-900 disabled:cursor-not-allowed"
-                        >
-                          {authed ? (p.stock > 0 ? 'Add to Cart' : 'Sold Out') : 'Login to add'}
-                        </button>
-                        <Link to={`/products/${p._id}`} className="px-4 py-3 rounded-2xl border border-gray-200 text-[10px] font-black uppercase tracking-widest text-gray-600 hover:bg-gray-50">
-                          View
-                        </Link>
-                      </div>
+                      {/* floating add to cart */}
+                      <button 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (authed) addToCart(p); }}
+                        disabled={!authed || p.stock <= 0}
+                        title={authed ? (p.stock > 0 ? 'Add to Cart' : 'Sold Out') : 'Login to add'}
+                        className="absolute bottom-3 right-3 h-11 w-11 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-[0_10px_25px_rgba(139,92,246,0.4)] flex items-center justify-center active:scale-95 disabled:opacity-40"
+                      >
+                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4h-2l-1 2H2v2h2l3.6 7.59-1.35 2.45A2 2 0 0 0 8 20h10v-2H8.42l1.1-2h7.45a2 2 0 0 0 1.79-1.11L22 8H6.21l-.94-2H7V4zm3 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm8 0a2 2 0 1 0 .001 4.001A2 2 0 0 0 18 20z"/></svg>
+                      </button>
                     </div>
                   </div>
                 </div>
