@@ -97,21 +97,7 @@ export default function Catalogue(){
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.3 19.71 2.89 18.3 9.17 12 2.89 5.71 4.3 4.29l6.29 6.3 6.3-6.3z"/></svg>
                 </button>
               )}
-              {showSug && sug.length > 0 && (
-                <div className="absolute z-30 mt-2 w-full bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden">
-                  {sug.map(s => (
-                    <Link key={s.id} to={`/products/${s.id}`} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors">
-                      <div className="h-8 w-8 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center">
-                        {s.image ? <img src={s.image} alt={s.name} className="h-full w-full object-contain" /> : <span className="text-[10px] text-gray-400">Img</span>}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-sm font-bold text-gray-900 truncate">{s.name}</div>
-                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest truncate">{s.category || 'General'}</div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
+              {showSug && sug.length > 0 && <SuggestList items={sug} />}
             </div>
             <select 
               className="bg-gray-50 border border-gray-100 text-gray-900 text-sm rounded-2xl px-5 py-3.5 outline-none focus:ring-2 focus:ring-blue-500/20 focus:bg-white shadow-inner transition-all appearance-none font-bold" 
@@ -210,7 +196,7 @@ export default function Catalogue(){
                       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41 1.01 4.22 2.5C11.09 5.01 12.76 4 14.5 4 17 4 19 6 19 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                     </button>
                     {authed && p.bulkDiscountQuantity > 0 && (
-                      <div className="absolute top-4 right-4 bg-amber-400 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-lg shadow-amber-200 uppercase tracking-widest animate-bounce">
+                      <div className="absolute top-3 left-3 bg-gradient-to-r from-orange-500 to-amber-400 text-white text-[10px] font-black px-3 py-1 rounded-full shadow-md uppercase tracking-widest">
                         Bulk Offer
                       </div>
                     )}
@@ -227,7 +213,9 @@ export default function Catalogue(){
                         ) : (
                           <span className="text-[10px] uppercase text-gray-400 font-black tracking-widest">{p.category || 'General'}</span>
                         )}
-                        <span className="hidden md:inline-block text-[9px] text-gray-400 font-bold uppercase tracking-widest">Assured</span>
+                        <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">
+                          ✔ Verified
+                        </span>
                       </div>
                       <Link to={`/products/${p._id}`} className="block group-hover:text-blue-600 transition-colors">
                         <div className="font-black text-gray-900 line-clamp-1 text-sm md:text-base leading-tight tracking-tight">{p.name}</div>
@@ -349,6 +337,39 @@ export default function Catalogue(){
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+function SuggestList({ items }) {
+  const [active, setActive] = React.useState(0)
+  const navigate = useNavigate()
+  return (
+    <div
+      className="absolute z-30 mt-2 w-full bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden"
+      onKeyDown={(e)=>{
+        if (e.key === 'ArrowDown') { e.preventDefault(); setActive(a => Math.min(items.length-1, a+1)) }
+        if (e.key === 'ArrowUp') { e.preventDefault(); setActive(a => Math.max(0, a-1)) }
+        if (e.key === 'Enter') { e.preventDefault(); navigate(`/products/${items[active]?.id}`) }
+      }}
+      tabIndex={0}
+    >
+      {items.map((s, i) => (
+        <div
+          key={s.id}
+          onMouseEnter={()=>setActive(i)}
+          onClick={()=>navigate(`/products/${s.id}`)}
+          className={`flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer ${i===active ? 'bg-gray-50' : 'hover:bg-gray-50'}`}
+        >
+          <div className="h-8 w-8 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center">
+            {s.image ? <img src={s.image} alt={s.name} className="h-full w-full object-contain" /> : <span className="text-[10px] text-gray-400">Img</span>}
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-gray-900 truncate">{s.name}</div>
+            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest truncate">{s.category || 'General'}</div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
