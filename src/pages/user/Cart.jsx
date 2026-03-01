@@ -86,8 +86,8 @@ export default function Cart() {
               <div className="text-right">
                 <p className="text-lg font-bold text-gray-900">₹{item.price * item.quantity}</p>
                 {item.bulkDiscountQuantity > 0 && item.quantity < item.bulkDiscountQuantity && (
-                  <div className="mt-1 text-[10px] text-amber-600 font-black uppercase tracking-widest">
-                    Buy {item.bulkDiscountQuantity - item.quantity} more save ₹{(item.bulkDiscountQuantity - item.quantity) * (item.bulkDiscountPriceReduction || 0)}
+                  <div className="mt-1 text-[10px] text-emerald-700 font-black uppercase tracking-widest">
+                    Add {item.bulkDiscountQuantity - item.quantity} more to unlock bulk savings
                   </div>
                 )}
               </div>

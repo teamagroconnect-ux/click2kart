@@ -6,6 +6,7 @@ import { useAuth } from '../../lib/AuthContext'
 export default function OrderHistory() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
+  const [expandedId, setExpandedId] = useState(null)
   const navigate = useNavigate()
   const { token, user } = useAuth()
 
@@ -42,9 +43,14 @@ export default function OrderHistory() {
         </div>
       ) : (
         <div className="space-y-6">
-          {orders.map((order) => (
-            <div key={order._id} className="bg-white border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-              <div className="bg-gray-50 px-6 py-4 border-b flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {orders.map((order) => {
+            const isExpanded = expandedId === order._id
+            return (
+            <div key={order._id} className={`bg-white border rounded-2xl overflow-hidden shadow-sm transition-all ${isExpanded ? 'ring-1 ring-violet-200 shadow-md' : 'hover:shadow-md'}`}>
+              <div 
+                className="bg-gray-50 px-6 py-4 border-b flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer"
+                onClick={() => setExpandedId(isExpanded ? null : order._id)}
+              >
                 <div className="flex gap-6 text-sm">
                   <div>
                     <div className="text-gray-500 uppercase font-bold text-[10px] tracking-widest">Order Placed</div>
@@ -74,7 +80,7 @@ export default function OrderHistory() {
                 </div>
                 <div className="text-xs text-gray-400">ID: {order._id}</div>
               </div>
-              <div className="p-6 space-y-4">
+              <div className={`p-6 space-y-4 ${isExpanded ? '' : 'hidden md:block'}`}>
                 {order.items.map((item, idx) => (
                   <div key={idx} className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-gray-50 rounded-lg border overflow-hidden flex-shrink-0 flex items-center justify-center">
@@ -114,9 +120,34 @@ export default function OrderHistory() {
                     </div>
                   </div>
                 )}
+                {order.paymentStatus === 'PAID' && order.billId && (
+                  <div className="pt-4 border-t">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Invoice</div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          const token = localStorage.getItem('token')
+                          window.open(`${api.defaults.baseURL}/api/bills/${order.billId}/pdf?token=${token}`, '_blank')
+                        }}
+                        className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest"
+                      >
+                        View PDF
+                      </button>
+                      <button
+                        onClick={() => {
+                          const token = localStorage.getItem('token')
+                          window.open(`${api.defaults.baseURL}/api/bills/${order.billId}/html?token=${token}`, '_blank')
+                        }}
+                        className="px-3 py-2 rounded-xl bg-violet-600 text-white text-[10px] font-black uppercase tracking-widest"
+                      >
+                        View HTML
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
     </div>
