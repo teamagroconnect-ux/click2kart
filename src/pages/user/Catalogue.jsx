@@ -226,7 +226,7 @@ export default function Catalogue(){
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <div className="text-xl font-black text-gray-900 tracking-tighter">
-                            {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'}
+                            {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : '₹***'}
                           </div>
                           {authed && p.mrp != null && p.mrp > p.price && (
                             <div className="flex items-center gap-2 mt-0.5">
