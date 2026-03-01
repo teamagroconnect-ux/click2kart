@@ -7,6 +7,8 @@ export default function Orders(){
   const { notify } = useToast()
   const [items, setItems] = useState([])
   const [status, setStatus] = useState('')
+  const [billQuery, setBillQuery] = useState('')
+  const [billResults, setBillResults] = useState([])
   const [page, setPage] = useState(1)
   const [expandedId, setExpandedId] = useState(null)
   const limit = 20
@@ -57,6 +59,15 @@ export default function Orders(){
       setSendingId('')
     }
   }
+  const searchBills = async () => {
+    if (!billQuery.trim()) { setBillResults([]); return }
+    try {
+      const { data } = await api.get('/api/bills/search', { params: { q: billQuery } })
+      setBillResults(data || [])
+    } catch {
+      setBillResults([])
+    }
+  }
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -84,8 +95,61 @@ export default function Orders(){
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
             </div>
           </div>
+          <div className="relative">
+            <input
+              className="bg-white border border-gray-200 text-gray-900 text-sm rounded-xl pl-10 pr-4 py-2.5 w-64 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all"
+              placeholder="Search invoice no..."
+              value={billQuery}
+              onChange={e => setBillQuery(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && searchBills()}
+            />
+            <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+          <button
+            onClick={searchBills}
+            className="px-4 py-2.5 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest"
+          >
+            Search
+          </button>
         </div>
       </div>
+      {billResults.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm p-4">
+          <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Invoice Results</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {billResults.map(b => (
+              <div key={b._id} className="border rounded-2xl p-3 flex items-center justify-between">
+                <div>
+                  <div className="text-sm font-black text-gray-900">{b.invoiceNumber}</div>
+                  <div className="text-[10px] text-gray-500">{b.customer?.name} • ₹{(b.payable || b.total).toLocaleString()}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      const token = localStorage.getItem('token');
+                      window.open(`${api.defaults.baseURL}/api/bills/${b._id}/pdf?token=${token}`, '_blank');
+                    }}
+                    className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
+                    title="View PDF"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const token = localStorage.getItem('token');
+                      window.open(`${api.defaults.baseURL}/api/bills/${b._id}/html?token=${token}`, '_blank');
+                    }}
+                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
+                    title="View HTML"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7h18M3 12h18M3 17h18" /></svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
