@@ -165,6 +165,25 @@ export default function OrderHistory() {
                     </div>
                   </div>
                 )}
+                {order.shipping?.waybill && (
+                  <div className="pt-4 border-t">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Delivery</div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-3 py-1 rounded-xl bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-widest border border-blue-200">
+                        {order.shipping.provider} • {order.shipping.status} • {order.shipping.waybill}
+                      </span>
+                      <button
+                        onClick={() => {
+                          const url = order.shipping.trackingUrl || `${api.defaults.baseURL}/api/shipping/delhivery/track/${order.shipping.waybill}`
+                          window.open(url, '_blank')
+                        }}
+                        className="px-3 py-2 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest"
+                      >
+                        Track
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )})}
