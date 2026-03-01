@@ -376,8 +376,109 @@ export default function Home() {
           position: relative; z-index: 1;
         }
 
-        /* ── mobile footer fix ── */
+        /* ── HOW IT WORKS STEPS ── */
+        .hm-steps-section {
+          max-width: 1200px; margin: 0 auto 88px;
+          padding: 0 24px; position: relative; z-index: 1;
+        }
+
+        .hm-steps-header { margin-bottom: 48px; }
+
+        /* 4-step grid */
+        .hm-steps-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+          position: relative;
+        }
+        @media(min-width:540px) { .hm-steps-grid { grid-template-columns: repeat(2,1fr); } }
+        @media(min-width:900px) { .hm-steps-grid { grid-template-columns: repeat(4,1fr); } }
+
+        /* connector line between cards — desktop only */
+        @media(min-width:900px) {
+          .hm-steps-grid::before {
+            content: '';
+            position: absolute;
+            top: 34px; left: calc(12.5% + 20px); right: calc(12.5% + 20px);
+            height: 2px;
+            background: linear-gradient(90deg,
+              rgba(139,92,246,0.3),
+              rgba(139,92,246,0.15),
+              rgba(5,150,105,0.3)
+            );
+            z-index: 0;
+          }
+        }
+
+        .hm-step-card {
+          background: white;
+          border: 1px solid rgba(139,92,246,0.12);
+          border-radius: 20px;
+          padding: 28px 24px;
+          position: relative; z-index: 1;
+          transition: all 0.3s;
+          box-shadow: 0 2px 16px rgba(139,92,246,0.05);
+        }
+        .hm-step-card::before {
+          content: '';
+          position: absolute; top: 0; left: 0; right: 0; height: 3px;
+          border-radius: 20px 20px 0 0;
+          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.35), transparent);
+          opacity: 0; transition: opacity 0.3s;
+        }
+        .hm-step-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(124,58,237,0.12); border-color: rgba(124,58,237,0.25); }
+        .hm-step-card:hover::before { opacity: 1; }
+
+        .hm-step-card.s-active {
+          border-color: rgba(124,58,237,0.28);
+          background: linear-gradient(160deg, white 50%, #faf8ff);
+          box-shadow: 0 4px 24px rgba(124,58,237,0.1);
+        }
+        .hm-step-card.s-active::before { opacity: 1; background: linear-gradient(90deg, transparent, #7c3aed, transparent); }
+
+        .hm-step-card.s-done {
+          border-color: rgba(5,150,105,0.22);
+          background: linear-gradient(160deg, white 50%, #f0fdf4);
+        }
+        .hm-step-card.s-done::before { opacity: 1; background: linear-gradient(90deg, transparent, #059669, transparent); }
+
+        .hm-step-num {
+          width: 44px; height: 44px; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 18px; letter-spacing: 0.05em;
+          margin-bottom: 20px;
+          background: #f5f3ff; border: 2px solid rgba(139,92,246,0.18);
+          color: #9ca3af;
+          transition: all 0.3s;
+        }
+        .hm-step-card:hover .hm-step-num { border-color: rgba(124,58,237,0.4); color: #7c3aed; }
+        .hm-step-card.s-active .hm-step-num { background: #7c3aed; border-color: #7c3aed; color: white; box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
+        .hm-step-card.s-done .hm-step-num { background: #059669; border-color: #059669; color: white; box-shadow: 0 6px 20px rgba(5,150,105,0.25); font-size: 16px; }
+
+        .hm-step-tag-pill {
+          display: inline-block;
+          font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+          color: #7c3aed; background: rgba(139,92,246,0.08);
+          border: 1px solid rgba(139,92,246,0.18);
+          padding: 3px 10px; border-radius: 100px;
+          margin-bottom: 10px;
+        }
+        .hm-step-tag-pill.green { color: #059669; background: rgba(5,150,105,0.08); border-color: rgba(5,150,105,0.18); }
+
+        .hm-step-h {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 20px; color: #1e1b2e; letter-spacing: 0.03em; line-height: 1;
+          margin-bottom: 10px;
+        }
+        .hm-step-p {
+          font-size: 13px; color: #6b7280; font-weight: 400; line-height: 1.7;
+        }
+        .hm-step-p strong { color: #1e1b2e; font-weight: 700; }
+
         @media(max-width:768px) {
+          .hm-steps-section { margin-bottom: 60px; }
+        }
           .hm-cta-section { margin-bottom: 100px; }
           .hm-cta-inner { padding: 40px 20px; }
           .hm-cta-title { font-size: clamp(32px, 9vw, 52px); }
@@ -518,6 +619,65 @@ export default function Home() {
                 Browse Catalog
               </Link>
             </div>
+          </div>
+        </section>
+
+        <div className="hm-divider" />
+
+        {/* ── HOW IT WORKS ── */}
+        <section className="hm-steps-section">
+          <div className="hm-steps-header">
+            <div className="hm-section-label">Simple Process</div>
+            <h2 className="hm-section-heading">
+              From Sign-Up to<br /><em>First Order</em> in 3 Steps
+            </h2>
+            <p className="hm-section-sub">
+              No complicated paperwork. No long waiting periods. Just a straightforward path to India's best wholesale pricing.
+            </p>
+          </div>
+
+          <div className="hm-steps-grid">
+
+            {/* Step 1 */}
+            <div className="hm-step-card s-active">
+              <div className="hm-step-num">1</div>
+              <div className="hm-step-tag-pill">Get Started</div>
+              <div className="hm-step-h">Create Your B2B Account</div>
+              <p className="hm-step-p">
+                Sign up at Click2Kart in under 2 minutes. Enter your business details — <strong>no documents needed</strong> at this stage.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="hm-step-card">
+              <div className="hm-step-num">2</div>
+              <div className="hm-step-tag-pill">Activation</div>
+              <div className="hm-step-h">Email Us for Activation</div>
+              <p className="hm-step-p">
+                Drop us an email from your registered address. Our team personally reviews and <strong>activates your account within 24 hours.</strong>
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="hm-step-card">
+              <div className="hm-step-num">3</div>
+              <div className="hm-step-tag-pill">Verification</div>
+              <div className="hm-step-h">Complete Quick KYC</div>
+              <p className="hm-step-p">
+                Submit your <strong>GST number, business PAN & address proof.</strong> Verification is guided, hassle-free, and typically done in 1–2 days.
+              </p>
+            </div>
+
+            {/* Step 4 — done */}
+            <div className="hm-step-card s-done">
+              <div className="hm-step-num">✓</div>
+              <div className="hm-step-tag-pill green">You're Live!</div>
+              <div className="hm-step-h">Order at Wholesale Prices</div>
+              <p className="hm-step-p">
+                Access <strong>500+ products</strong> at exclusive partner pricing. Earn commissions, track referrals, and scale your business — all from one dashboard.
+              </p>
+            </div>
+
           </div>
         </section>
 

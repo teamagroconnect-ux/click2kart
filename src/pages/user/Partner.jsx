@@ -383,16 +383,16 @@ export default function Partner() {
 
         /* ── STEPS — 2 column desktop layout ── */
 
-        /* outer 2-col grid on desktop */
+        /* outer 3-col grid on desktop */
         .pr-steps-layout {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 24px;
+          gap: 16px;
         }
         @media(min-width: 900px) {
           .pr-steps-layout {
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
             align-items: start;
           }
         }
@@ -591,7 +591,7 @@ export default function Partner() {
                   </p>
                 </div>
 
-                {/* steps — 2 col grid on desktop */}
+                {/* 3 steps — 3 col on desktop */}
                 <div className="pr-steps-layout">
 
                   {/* ── STEP 1 ── */}
@@ -601,29 +601,9 @@ export default function Partner() {
                     </div>
                     <div className="pr-step-content">
                       <div className="pr-step-tag">Get Started</div>
-                      <div className="pr-step-title">Create Your Account</div>
+                      <div className="pr-step-title">Send Us an Email</div>
                       <div className="pr-step-desc">
-                        Visit our sign-up page and fill in your basic business details. The entire process takes under 2 minutes — no documents required at this stage.
-                      </div>
-                      <a href="/signup" className="pr-step-btn">
-                        Sign Up Now
-                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                        </svg>
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* ── STEP 2 ── */}
-                  <div className="pr-step-card">
-                    <div className="pr-step-num-col">
-                      <div className="pr-step-circle">2</div>
-                    </div>
-                    <div className="pr-step-content">
-                      <div className="pr-step-tag">Activation</div>
-                      <div className="pr-step-title">Request Account Activation</div>
-                      <div className="pr-step-desc">
-                        After signing up, drop us an email from your registered address. Our team will review and activate your partner account within 24 hours.
+                        Write to us from your business email address expressing your interest in becoming a Click2Kart partner. Our team personally reviews every request.
                       </div>
                       <div className="pr-step-contact">
                         <div className="pr-contact-icon" style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0 }}>
@@ -633,42 +613,42 @@ export default function Partner() {
                         </div>
                         <div>
                           <div className="pr-contact-label">Email us at</div>
-                          <div className="pr-contact-value" style={{ fontSize: 14 }}>{CONFIG.SUPPORT_EMAIL}</div>
+                          <div className="pr-contact-value" style={{ fontSize: 13 }}>{CONFIG.SUPPORT_EMAIL}</div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* ── STEP 3 ── */}
+                  {/* ── STEP 2 ── */}
                   <div className="pr-step-card">
                     <div className="pr-step-num-col">
-                      <div className="pr-step-circle">3</div>
+                      <div className="pr-step-circle">2</div>
                     </div>
                     <div className="pr-step-content">
                       <div className="pr-step-tag">Verification</div>
-                      <div className="pr-step-title">Complete Your KYC</div>
+                      <div className="pr-step-title">Identity Verification</div>
                       <div className="pr-step-desc">
-                        Once activated, complete a quick KYC process. Submit your GST number, business PAN, and address proof to unlock full wholesale ordering privileges.
+                        Our onboarding team will reach out to verify your business credentials — GST number, business PAN, and address proof. A quick, completely guided process.
                       </div>
                       <div className="pr-step-info">
                         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: 1 }}>
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        KYC verification typically takes 1–2 business days.
+                        Verification is typically completed within <strong>24–48 hours.</strong>
                       </div>
                     </div>
                   </div>
 
-                  {/* ── STEP 4 ── */}
+                  {/* ── STEP 3 ── */}
                   <div className="pr-step-card done-card">
                     <div className="pr-step-num-col">
                       <div className="pr-step-circle done">✓</div>
                     </div>
                     <div className="pr-step-content">
-                      <div className="pr-step-tag green">You're In!</div>
+                      <div className="pr-step-tag green">You're a Partner!</div>
                       <div className="pr-step-title">Start Ordering & Earning</div>
                       <div className="pr-step-desc">
-                        Your account is fully live. Browse the entire wholesale catalogue at exclusive partner pricing, place bulk orders, and track every commission earned — right here on this dashboard.
+                        Your partner account is fully live. Access exclusive wholesale pricing, place bulk orders across 500+ products, and earn commission on every successful referral — all tracked on this dashboard.
                       </div>
                     </div>
                   </div>
