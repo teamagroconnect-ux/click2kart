@@ -69,7 +69,8 @@ export function CartProvider({ children }) {
     if (mode === 'guest') {
       let success = true
       setCart(prev => {
-        const existing = prev.find(item => item._id === product._id)
+        const pid = product._id || product.id
+        const existing = prev.find(item => item._id === pid)
         const currentQty = existing ? existing.quantity : 0
 
         if (currentQty + 1 > product.stock) {
@@ -80,10 +81,10 @@ export function CartProvider({ children }) {
 
         if (existing) {
           return prev.map(item => 
-            item._id === product._id ? { ...item, quantity: item.quantity + 1 } : item
+            item._id === pid ? { ...item, quantity: item.quantity + 1 } : item
           )
         }
-        return [...prev, { ...product, quantity: 1 }]
+        return [...prev, { ...product, _id: pid, quantity: 1 }]
       })
       return success
     }

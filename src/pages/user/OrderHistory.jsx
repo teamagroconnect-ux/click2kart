@@ -9,6 +9,11 @@ export default function OrderHistory() {
   const [expandedId, setExpandedId] = useState(null)
   const navigate = useNavigate()
   const { token, user } = useAuth()
+  const fmtIST = (d) => new Date(d).toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: true
+  })
 
   useEffect(() => {
     if (!token) { navigate('/login'); return }
@@ -54,7 +59,7 @@ export default function OrderHistory() {
                 <div className="flex gap-6 text-sm">
                   <div>
                     <div className="text-gray-500 uppercase font-bold text-[10px] tracking-widest">Order Placed</div>
-                    <div className="font-semibold">{new Date(order.createdAt).toLocaleDateString()}</div>
+                    <div className="font-semibold">{fmtIST(order.createdAt)}</div>
                   </div>
                   <div>
                     <div className="text-gray-500 uppercase font-bold text-[10px] tracking-widest">Total</div>
@@ -81,6 +86,21 @@ export default function OrderHistory() {
                 <div className="text-xs text-gray-400">ID: {order._id}</div>
               </div>
               <div className={`p-6 space-y-4 ${isExpanded ? '' : 'hidden md:block'}`}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="p-3 rounded-xl bg-gray-50 border">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Customer</div>
+                    <div className="text-sm font-bold text-gray-900">{order.customer?.name}</div>
+                    <div className="text-xs text-gray-500">{order.customer?.phone}</div>
+                    {order.customer?.email && <div className="text-xs text-gray-500">{order.customer.email}</div>}
+                  </div>
+                  <div className="p-3 rounded-xl bg-gray-50 border">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Identifiers</div>
+                    <div className="text-xs text-gray-500">Order ID: {order._id}</div>
+                    {order.billId && <div className="text-xs text-gray-500">Bill ID: {order.billId}</div>}
+                    <div className="text-xs text-gray-500">Created: {fmtIST(order.createdAt)}</div>
+                    <div className="text-xs text-gray-500">Updated: {fmtIST(order.updatedAt)}</div>
+                  </div>
+                </div>
                 {order.items.map((item, idx) => (
                   <div key={idx} className="flex items-center gap-4">
                     <div className="w-16 h-16 bg-gray-50 rounded-lg border overflow-hidden flex-shrink-0 flex items-center justify-center">

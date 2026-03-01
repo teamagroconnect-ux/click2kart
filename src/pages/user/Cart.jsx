@@ -7,6 +7,12 @@ export default function Cart() {
   const { cart, removeFromCart, updateQuantity, cartTotal, addToCart } = useCart()
   const navigate = useNavigate()
   const [suggestions, setSuggestions] = useState([])
+  const getBulkTiers = (item) => {
+    if (Array.isArray(item.bulkTiers) && item.bulkTiers.length) return item.bulkTiers.slice().sort((a,b) => a.quantity - b.quantity)
+    if (item.bulkDiscountQuantity > 0) return [{ quantity: item.bulkDiscountQuantity, priceReduction: item.bulkDiscountPriceReduction || 0 }]
+    return []
+  }
+  const getNextTier = (qty, tiers) => tiers.find(t => qty < t.quantity) || null
 
   useEffect(() => {
     const first = cart[0];
@@ -82,6 +88,34 @@ export default function Cart() {
                     Remove
                   </button>
                 </div>
+              {(() => {
+                const tiers = getBulkTiers(item)
+                if (!tiers.length) return null
+                const next = getNextTier(item.quantity, tiers)
+                const maxQ = Math.max(item.quantity, tiers[tiers.length - 1].quantity)
+                const pct = Math.min(100, Math.round((item.quantity / maxQ) * 100))
+                return (
+                  <div className="mt-3 space-y-2">
+                    <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+                      <div className="h-2 bg-emerald-500" style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
+                      <div className="flex items-center gap-2">
+                        {tiers.map((t, idx) => (
+                          <div key={idx} className="flex items-center gap-1">
+                            <span className="h-1 w-1 rounded-full bg-gray-300"></span>
+                            <span>{t.quantity}+</span>
+                          </div>
+                        ))}
+                      </div>
+                      {next
+                        ? <div className="text-emerald-700">Add {next.quantity - item.quantity} more for extra ₹{Number(next.priceReduction).toLocaleString()}/unit off</div>
+                        : <div className="text-emerald-700">Max bulk savings applied</div>
+                      }
+                    </div>
+                  </div>
+                )
+              })()}
               </div>
               <div className="text-right">
                 <p className="text-lg font-bold text-gray-900">₹{item.price * item.quantity}</p>
