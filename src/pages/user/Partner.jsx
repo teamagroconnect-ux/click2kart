@@ -401,7 +401,7 @@ export default function Partner() {
                   <img src="/logo.png" alt="Logo"
                     style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
                     onError={e => e.target.style.display = 'none'} />
-                  <span style={{ position: 'relative', zIndex: 1 }}>C2K</span>
+                 
                 </div>
                 <span className="pr-eyebrow">
                   <span className="pr-eyebrow-dot" />
