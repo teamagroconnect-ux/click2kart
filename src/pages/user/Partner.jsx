@@ -381,48 +381,95 @@ export default function Partner() {
 
         .pr-no-pay { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 220px; gap: 10px; text-align: center; }
 
-        /* ── STEPS ── */
-        .pr-steps { display: flex; flex-direction: column; }
+        /* ── STEPS — 2 column desktop layout ── */
 
-        .pr-step {
-          display: flex; gap: 20px;
-          margin-bottom: 0;
+        /* outer 2-col grid on desktop */
+        .pr-steps-layout {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 24px;
+        }
+        @media(min-width: 900px) {
+          .pr-steps-layout {
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: start;
+          }
         }
 
-        .pr-step-left {
-          display: flex; flex-direction: column; align-items: center;
+        /* each step card */
+        .pr-step-card {
+          background: white;
+          border: 1px solid rgba(139,92,246,0.12);
+          border-radius: 20px;
+          padding: 28px 28px 28px 24px;
+          position: relative;
+          overflow: hidden;
+          transition: all 0.3s;
+          display: flex;
+          gap: 20px;
+          box-shadow: 0 2px 16px rgba(139,92,246,0.05);
+        }
+        .pr-step-card:hover {
+          border-color: rgba(124,58,237,0.28);
+          box-shadow: 0 8px 32px rgba(124,58,237,0.1);
+          transform: translateY(-2px);
+        }
+        /* top accent line */
+        .pr-step-card::before {
+          content: '';
+          position: absolute; top: 0; left: 0; right: 0; height: 2px;
+          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.3), transparent);
+          opacity: 0; transition: opacity 0.3s;
+        }
+        .pr-step-card:hover::before { opacity: 1; }
+
+        /* active card — step 1 */
+        .pr-step-card.active-card {
+          border-color: rgba(124,58,237,0.25);
+          background: linear-gradient(135deg, white 60%, #faf8ff);
+          box-shadow: 0 4px 24px rgba(124,58,237,0.1);
+        }
+        .pr-step-card.active-card::before { opacity: 1; background: linear-gradient(90deg, transparent, #7c3aed, transparent); }
+
+        /* done card — step 4 */
+        .pr-step-card.done-card {
+          border-color: rgba(5,150,105,0.2);
+          background: linear-gradient(135deg, white 60%, #f0fdf4);
+        }
+        .pr-step-card.done-card::before { opacity: 1; background: linear-gradient(90deg, transparent, #059669, transparent); }
+
+        /* left: number circle column */
+        .pr-step-num-col {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
           flex-shrink: 0;
+          padding-top: 2px;
         }
 
         .pr-step-circle {
-          width: 40px; height: 40px; border-radius: 50%;
-          background: white;
-          border: 2px solid rgba(139,92,246,0.2);
+          width: 44px; height: 44px; border-radius: 50%;
+          background: #f5f3ff;
+          border: 2px solid rgba(139,92,246,0.18);
           display: flex; align-items: center; justify-content: center;
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 17px; color: #9ca3af; letter-spacing: 0.05em;
-          flex-shrink: 0; position: relative; z-index: 1;
+          font-size: 18px; color: #9ca3af; letter-spacing: 0.05em;
+          flex-shrink: 0;
           transition: all 0.3s;
         }
         .pr-step-circle.active {
           background: #7c3aed; border-color: #7c3aed; color: white;
-          box-shadow: 0 4px 16px rgba(124,58,237,0.35);
+          box-shadow: 0 6px 20px rgba(124,58,237,0.35);
         }
         .pr-step-circle.done {
           background: #059669; border-color: #059669; color: white;
-          box-shadow: 0 4px 16px rgba(5,150,105,0.3);
-          font-size: 16px;
+          box-shadow: 0 6px 20px rgba(5,150,105,0.28);
+          font-size: 17px;
         }
 
-        .pr-step-line {
-          width: 2px; flex: 1; min-height: 32px;
-          background: linear-gradient(to bottom, rgba(139,92,246,0.2), rgba(139,92,246,0.06));
-          margin: 6px 0;
-        }
-
-        .pr-step-body {
-          padding-bottom: 32px; flex: 1; min-width: 0;
-        }
+        /* right: content */
+        .pr-step-content { flex: 1; min-width: 0; }
 
         .pr-step-tag {
           display: inline-block;
@@ -433,33 +480,35 @@ export default function Partner() {
           padding: 3px 10px; border-radius: 100px;
           margin-bottom: 8px;
         }
+        .pr-step-tag.green { color: #059669; background: rgba(5,150,105,0.08); border-color: rgba(5,150,105,0.18); }
 
         .pr-step-title {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 22px; color: #1e1b2e; letter-spacing: 0.03em; line-height: 1;
+          font-size: 24px; color: #1e1b2e; letter-spacing: 0.03em; line-height: 1;
           margin-bottom: 10px;
         }
 
         .pr-step-desc {
-          font-size: 13px; color: #6b7280; font-weight: 400; line-height: 1.7;
-          margin-bottom: 16px; max-width: 520px;
+          font-size: 13px; color: #6b7280; font-weight: 400; line-height: 1.72;
+          margin-bottom: 18px;
         }
 
         .pr-step-btn {
           display: inline-flex; align-items: center; gap: 8px;
           background: #7c3aed; color: white;
-          padding: 11px 24px; border-radius: 10px;
+          padding: 11px 22px; border-radius: 10px;
           font-size: 11px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.14em;
           text-decoration: none; transition: all 0.25s;
           box-shadow: 0 6px 20px rgba(124,58,237,0.28);
         }
-        .pr-step-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(124,58,237,0.4); }
+        .pr-step-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(124,58,237,0.4); }
+        .pr-step-btn:active { transform: scale(0.97); }
 
         .pr-step-contact {
           display: inline-flex; align-items: center; gap: 12px;
           background: #f5f3ff; border: 1px solid rgba(139,92,246,0.18);
-          padding: 12px 18px; border-radius: 12px;
+          padding: 12px 16px; border-radius: 12px;
         }
 
         .pr-step-info {
@@ -469,6 +518,16 @@ export default function Partner() {
           padding: 10px 14px; border-radius: 10px;
           font-size: 12px; color: #7c3aed; font-weight: 500; line-height: 1.5;
         }
+
+        /* connector arrows between cards on desktop */
+        @media(min-width:900px) {
+          .pr-step-connector {
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(139,92,246,0.25); font-size: 20px;
+            padding: 8px 0;
+          }
+        }
+        .pr-step-connector { display: none; }
 
         @keyframes prFadeUp {
           from { opacity: 0; transform: translateY(20px); }
@@ -532,25 +591,21 @@ export default function Partner() {
                   </p>
                 </div>
 
-                {/* steps */}
-                <div className="pr-steps">
+                {/* steps — 2 col grid on desktop */}
+                <div className="pr-steps-layout">
 
-                  {/* step 1 */}
-                  <div className="pr-step">
-                    <div className="pr-step-left">
+                  {/* ── STEP 1 ── */}
+                  <div className="pr-step-card active-card">
+                    <div className="pr-step-num-col">
                       <div className="pr-step-circle active">1</div>
-                      <div className="pr-step-line" />
                     </div>
-                    <div className="pr-step-body">
+                    <div className="pr-step-content">
                       <div className="pr-step-tag">Get Started</div>
                       <div className="pr-step-title">Create Your Account</div>
                       <div className="pr-step-desc">
-                        Click the button below to visit our sign-up page. Fill in your business details — it takes less than 2 minutes. No documents needed at this stage.
+                        Visit our sign-up page and fill in your basic business details. The entire process takes under 2 minutes — no documents required at this stage.
                       </div>
-                      <a
-                        href="/signup"
-                        className="pr-step-btn"
-                      >
+                      <a href="/signup" className="pr-step-btn">
                         Sign Up Now
                         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
@@ -559,17 +614,16 @@ export default function Partner() {
                     </div>
                   </div>
 
-                  {/* step 2 */}
-                  <div className="pr-step">
-                    <div className="pr-step-left">
+                  {/* ── STEP 2 ── */}
+                  <div className="pr-step-card">
+                    <div className="pr-step-num-col">
                       <div className="pr-step-circle">2</div>
-                      <div className="pr-step-line" />
                     </div>
-                    <div className="pr-step-body">
+                    <div className="pr-step-content">
                       <div className="pr-step-tag">Activation</div>
                       <div className="pr-step-title">Request Account Activation</div>
                       <div className="pr-step-desc">
-                        Once registered, send us an email from your registered address. Our team will manually review and activate your partner account within 24 hours.
+                        After signing up, drop us an email from your registered address. Our team will review and activate your partner account within 24 hours.
                       </div>
                       <div className="pr-step-contact">
                         <div className="pr-contact-icon" style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0 }}>
@@ -585,37 +639,36 @@ export default function Partner() {
                     </div>
                   </div>
 
-                  {/* step 3 */}
-                  <div className="pr-step">
-                    <div className="pr-step-left">
+                  {/* ── STEP 3 ── */}
+                  <div className="pr-step-card">
+                    <div className="pr-step-num-col">
                       <div className="pr-step-circle">3</div>
-                      <div className="pr-step-line" />
                     </div>
-                    <div className="pr-step-body">
+                    <div className="pr-step-content">
                       <div className="pr-step-tag">Verification</div>
                       <div className="pr-step-title">Complete Your KYC</div>
                       <div className="pr-step-desc">
-                        After activation, you'll be prompted to complete a quick KYC (Know Your Customer) process. Submit your GST number, business PAN, and address proof to unlock full ordering privileges.
+                        Once activated, complete a quick KYC process. Submit your GST number, business PAN, and address proof to unlock full wholesale ordering privileges.
                       </div>
                       <div className="pr-step-info">
                         <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: 1 }}>
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        KYC typically takes 1–2 business days to verify.
+                        KYC verification typically takes 1–2 business days.
                       </div>
                     </div>
                   </div>
 
-                  {/* step 4 — final */}
-                  <div className="pr-step" style={{ marginBottom: 0 }}>
-                    <div className="pr-step-left">
+                  {/* ── STEP 4 ── */}
+                  <div className="pr-step-card done-card">
+                    <div className="pr-step-num-col">
                       <div className="pr-step-circle done">✓</div>
                     </div>
-                    <div className="pr-step-body" style={{ paddingBottom: 0 }}>
-                      <div className="pr-step-tag" style={{ background: 'rgba(5,150,105,0.1)', color: '#059669', borderColor: 'rgba(5,150,105,0.2)' }}>You're In!</div>
+                    <div className="pr-step-content">
+                      <div className="pr-step-tag green">You're In!</div>
                       <div className="pr-step-title">Start Ordering & Earning</div>
                       <div className="pr-step-desc">
-                        Your account is fully activated. Browse the entire wholesale catalogue, place bulk orders at exclusive partner pricing, and earn commission on every referral — tracked right here on this dashboard.
+                        Your account is fully live. Browse the entire wholesale catalogue at exclusive partner pricing, place bulk orders, and track every commission earned — right here on this dashboard.
                       </div>
                     </div>
                   </div>
