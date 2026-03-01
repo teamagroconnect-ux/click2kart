@@ -3,7 +3,7 @@ import api from '../../lib/api'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import { CONFIG } from '../../shared/lib/config.js'
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
+const COLORS = ['#a78bfa', '#7c3aed', '#c4b5fd', '#6d28d9', '#ddd6fe', '#8b5cf6']
 
 export default function Partner() {
   const [code, setCode] = useState('')
@@ -29,230 +29,677 @@ export default function Partner() {
   }
 
   return (
-    <div className="min-h-screen bg-white selection:bg-violet-100 selection:text-violet-900">
-      <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-12">
-        <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 animate-in fade-in slide-in-from-top-4 duration-700">
-          <div className="space-y-1">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="h-12 w-12 rounded-2xl bg-violet-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-violet-100 border border-violet-500 overflow-hidden relative group">
-                <img 
-                  src="/logo.png" 
-                  alt="Logo" 
-                  className="w-full h-full object-cover absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                  onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
-                />
-                <span className="relative z-10">C2K</span>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300&display=swap');
+
+        .partner-root {
+          font-family: 'DM Sans', system-ui, sans-serif;
+          background: #06040f;
+          min-height: 100vh;
+          color: #e8e4f0;
+          position: relative;
+          overflow-x: hidden;
+        }
+
+        /* grain */
+        .partner-root::before {
+          content: '';
+          position: fixed; inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+          pointer-events: none; z-index: 999; opacity: 0.4;
+        }
+
+        /* mesh bg blobs */
+        .partner-blob1 {
+          position: fixed; top: -200px; left: -200px;
+          width: 700px; height: 700px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(109,40,217,0.18), transparent 70%);
+          pointer-events: none; z-index: 0;
+        }
+        .partner-blob2 {
+          position: fixed; bottom: -300px; right: -200px;
+          width: 800px; height: 800px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(139,92,246,0.1), transparent 70%);
+          pointer-events: none; z-index: 0;
+        }
+
+        .partner-inner {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 48px 24px 80px;
+          position: relative; z-index: 1;
+        }
+
+        /* ── header ── */
+        .p-header {
+          display: flex;
+          flex-direction: column;
+          gap: 32px;
+          margin-bottom: 48px;
+          animation: fadeUp 0.7s ease both;
+        }
+        @media(min-width:900px) {
+          .p-header { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+        }
+
+        .p-logo-row {
+          display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+        }
+
+        .p-logo {
+          width: 48px; height: 48px; border-radius: 14px;
+          background: linear-gradient(135deg, #7c3aed, #a855f7);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 13px; font-weight: 900; color: white;
+          box-shadow: 0 8px 24px rgba(124,58,237,0.4);
+          border: 1px solid rgba(167,139,250,0.3);
+          overflow: hidden; position: relative;
+        }
+
+        .p-badge {
+          font-size: 9px; font-weight: 700;
+          letter-spacing: 0.2em; text-transform: uppercase;
+          background: rgba(139,92,246,0.15);
+          border: 1px solid rgba(139,92,246,0.3);
+          color: #a78bfa;
+          padding: 5px 14px; border-radius: 100px;
+        }
+
+        .p-title {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: clamp(36px, 5vw, 56px);
+          color: #f0ecff;
+          letter-spacing: 0.02em;
+          line-height: 1;
+          margin-bottom: 8px;
+        }
+
+        .p-subtitle {
+          font-size: 14px; color: #6b6882; font-weight: 400;
+          max-width: 380px; line-height: 1.6;
+        }
+
+        /* ── login form ── */
+        .p-form {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(139,92,246,0.15);
+          border-radius: 20px;
+          padding: 20px;
+          backdrop-filter: blur(12px);
+          width: 100%;
+          max-width: 460px;
+          align-self: flex-start;
+        }
+
+        .p-form-row {
+          display: flex; flex-direction: column; gap: 8px;
+        }
+        @media(min-width:500px) { .p-form-row { flex-direction: row; } }
+
+        .p-input {
+          flex: 1;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(139,92,246,0.2);
+          border-radius: 12px;
+          padding: 13px 16px;
+          font-size: 13px;
+          font-weight: 600;
+          color: #e8e4f0;
+          outline: none;
+          font-family: 'DM Sans', sans-serif;
+          transition: all 0.2s;
+        }
+        .p-input::placeholder { color: #4a4665; }
+        .p-input:focus {
+          border-color: rgba(139,92,246,0.5);
+          background: rgba(139,92,246,0.06);
+          box-shadow: 0 0 0 3px rgba(139,92,246,0.1);
+        }
+
+        .p-btn {
+          width: 100%;
+          background: linear-gradient(135deg, #7c3aed, #6d28d9);
+          color: white;
+          border: none;
+          border-radius: 12px;
+          padding: 14px 24px;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          cursor: pointer;
+          transition: all 0.25s;
+          box-shadow: 0 8px 30px rgba(109,40,217,0.35);
+          font-family: 'DM Sans', sans-serif;
+          position: relative; overflow: hidden;
+        }
+        .p-btn::before {
+          content: '';
+          position: absolute; inset: 0;
+          background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent);
+          opacity: 0; transition: opacity 0.25s;
+        }
+        .p-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(109,40,217,0.5); }
+        .p-btn:hover:not(:disabled)::before { opacity: 1; }
+        .p-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* ── error ── */
+        .p-error {
+          display: flex; align-items: center; gap: 12px;
+          background: rgba(239,68,68,0.08);
+          border: 1px solid rgba(239,68,68,0.2);
+          color: #f87171;
+          font-size: 13px; font-weight: 600;
+          padding: 16px 24px; border-radius: 14px;
+          animation: fadeUp 0.4s ease;
+          margin-bottom: 16px;
+        }
+
+        /* ── empty state ── */
+        .p-empty {
+          display: flex; flex-direction: column; align-items: center;
+          justify-content: center; text-align: center;
+          padding: 80px 24px;
+          animation: fadeUp 0.7s ease both;
+        }
+        .p-empty-icon {
+          width: 80px; height: 80px; border-radius: 24px;
+          background: rgba(139,92,246,0.1);
+          border: 1px solid rgba(139,92,246,0.2);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 32px; margin-bottom: 20px;
+        }
+        .p-empty h3 {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 28px; color: #e8e4f0; letter-spacing: 0.05em;
+        }
+        .p-empty p { font-size: 13px; color: #6b6882; margin-top: 8px; max-width: 280px; }
+
+        /* ── onboarding hero ── */
+        .p-onboard {
+          background: rgba(255,255,255,0.02);
+          border: 1px solid rgba(139,92,246,0.15);
+          border-radius: 28px;
+          padding: 64px 40px;
+          text-align: center;
+          position: relative; overflow: hidden;
+          animation: fadeUp 0.7s 0.1s ease both;
+        }
+        .p-onboard::before {
+          content: '';
+          position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+          width: 600px; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.5), transparent);
+        }
+        .p-onboard-glow {
+          position: absolute; top: -100px; left: 50%; transform: translateX(-50%);
+          width: 400px; height: 300px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(109,40,217,0.15), transparent 70%);
+          pointer-events: none;
+        }
+
+        .p-onboard-eyebrow {
+          display: inline-block;
+          font-size: 9px; font-weight: 700; letter-spacing: 0.25em; text-transform: uppercase;
+          color: #a78bfa;
+          background: rgba(139,92,246,0.1);
+          border: 1px solid rgba(139,92,246,0.25);
+          padding: 6px 16px; border-radius: 100px;
+          margin-bottom: 24px;
+        }
+
+        .p-onboard-title {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: clamp(36px, 6vw, 64px);
+          line-height: 1; letter-spacing: 0.02em;
+          color: #f0ecff; margin-bottom: 16px;
+        }
+        .p-onboard-title em { color: #a78bfa; font-style: normal; }
+
+        .p-onboard-sub {
+          font-size: 16px; color: #6b6882; font-weight: 300;
+          max-width: 480px; margin: 0 auto 40px; line-height: 1.7;
+        }
+
+        .p-contact-card {
+          display: inline-flex; align-items: center; gap: 16px;
+          background: rgba(139,92,246,0.08);
+          border: 1px solid rgba(139,92,246,0.2);
+          padding: 20px 32px; border-radius: 16px;
+          text-align: left;
+          transition: all 0.25s;
+        }
+        .p-contact-card:hover { background: rgba(139,92,246,0.14); border-color: rgba(139,92,246,0.4); }
+
+        .p-contact-icon {
+          width: 48px; height: 48px; border-radius: 14px;
+          background: linear-gradient(135deg, #7c3aed, #a855f7);
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+        }
+
+        .p-contact-label { font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #7c3aed; }
+        .p-contact-value { font-size: 16px; font-weight: 700; color: #e8e4f0; margin-top: 2px; }
+
+        /* ── dashboard ── */
+        .p-profile-card {
+          background: rgba(255,255,255,0.02);
+          border: 1px solid rgba(139,92,246,0.15);
+          border-radius: 24px;
+          padding: 36px 40px;
+          margin-bottom: 24px;
+          position: relative; overflow: hidden;
+          animation: fadeUp 0.6s ease both;
+        }
+        .p-profile-card::before {
+          content: '';
+          position: absolute; top: 0; left: 0; right: 0; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.5), transparent);
+        }
+        .p-profile-glow {
+          position: absolute; top: -80px; right: -80px;
+          width: 300px; height: 300px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(109,40,217,0.12), transparent 70%);
+          pointer-events: none;
+        }
+
+        .p-avatar {
+          width: 68px; height: 68px; border-radius: 20px;
+          background: linear-gradient(135deg, #6d28d9, #7c3aed);
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 28px; color: white; letter-spacing: 0.05em;
+          box-shadow: 0 8px 28px rgba(109,40,217,0.4);
+          border: 1px solid rgba(167,139,250,0.25);
+          margin-bottom: 16px;
+        }
+
+        .p-name {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 32px; color: #f0ecff; letter-spacing: 0.02em;
+          line-height: 1;
+        }
+
+        .p-contact-row {
+          display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px;
+        }
+        .p-contact-chip {
+          display: flex; align-items: center; gap: 6px;
+          font-size: 12px; color: #8b7aaa; font-weight: 500;
+        }
+
+        .p-code-tag {
+          display: inline-flex; align-items: center; gap: 8px;
+          background: rgba(139,92,246,0.12);
+          border: 1px solid rgba(139,92,246,0.3);
+          padding: 10px 20px; border-radius: 12px;
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 22px; color: #a78bfa; letter-spacing: 0.1em;
+        }
+
+        .p-rate-tag {
+          display: inline-flex; align-items: center; gap: 6px;
+          font-size: 10px; font-weight: 700; text-transform: uppercase;
+          letter-spacing: 0.15em; color: #34d399; margin-top: 8px;
+        }
+        .p-rate-dot { width: 6px; height: 6px; border-radius: 50%; background: #34d399; box-shadow: 0 0 6px #34d399; }
+
+        /* stats */
+        .p-stats-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+          margin-top: 28px;
+        }
+        @media(min-width:768px) { .p-stats-grid { grid-template-columns: repeat(4, 1fr); } }
+
+        .p-stat-card {
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(139,92,246,0.1);
+          border-radius: 18px;
+          padding: 22px 20px;
+          transition: all 0.3s;
+          position: relative; overflow: hidden;
+        }
+        .p-stat-card:hover {
+          background: rgba(139,92,246,0.06);
+          border-color: rgba(139,92,246,0.3);
+          transform: translateY(-3px);
+        }
+        .p-stat-card::before {
+          content: '';
+          position: absolute; top: 0; left: 0; right: 0; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.3), transparent);
+          opacity: 0; transition: opacity 0.3s;
+        }
+        .p-stat-card:hover::before { opacity: 1; }
+
+        .p-stat-label {
+          font-size: 9px; font-weight: 700; letter-spacing: 0.2em;
+          text-transform: uppercase; color: #4a4665; margin-bottom: 10px;
+        }
+        .p-stat-value {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 28px; color: #f0ecff; letter-spacing: 0.02em; line-height: 1;
+        }
+        .p-stat-card.green .p-stat-label { color: #059669; }
+        .p-stat-card.green .p-stat-value { color: #34d399; }
+        .p-stat-card.blue .p-stat-label { color: #3b82f6; }
+        .p-stat-card.blue .p-stat-value { color: #60a5fa; }
+
+        /* charts row */
+        .p-charts-row {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 16px;
+          margin-top: 16px;
+          animation: fadeUp 0.6s 0.15s ease both;
+        }
+        @media(min-width:768px) { .p-charts-row { grid-template-columns: 1fr 1fr; } }
+
+        .p-card {
+          background: rgba(255,255,255,0.02);
+          border: 1px solid rgba(139,92,246,0.12);
+          border-radius: 24px;
+          padding: 32px;
+          position: relative; overflow: hidden;
+        }
+        .p-card::before {
+          content: '';
+          position: absolute; top: 0; left: 0; right: 0; height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.35), transparent);
+        }
+
+        .p-card-title {
+          font-size: 9px; font-weight: 700; letter-spacing: 0.2em;
+          text-transform: uppercase; color: #4a4665; margin-bottom: 24px;
+          display: flex; align-items: center; justify-content: space-between;
+        }
+        .p-card-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: #7c3aed; box-shadow: 0 0 8px #7c3aed;
+          animation: pulse 2s ease infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+        /* payout items */
+        .p-payout-item {
+          background: rgba(255,255,255,0.02);
+          border: 1px solid rgba(139,92,246,0.08);
+          border-radius: 14px;
+          padding: 18px 20px;
+          margin-bottom: 10px;
+          transition: all 0.25s;
+        }
+        .p-payout-item:hover {
+          background: rgba(139,92,246,0.06);
+          border-color: rgba(139,92,246,0.2);
+        }
+        .p-payout-amount {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 22px; color: #a78bfa; letter-spacing: 0.05em;
+        }
+        .p-payout-date { font-size: 10px; color: #4a4665; font-weight: 600; }
+        .p-method-tag {
+          font-size: 9px; font-weight: 700; text-transform: uppercase;
+          letter-spacing: 0.15em; color: #7c3aed;
+          background: rgba(139,92,246,0.1);
+          border: 1px solid rgba(139,92,246,0.2);
+          padding: 3px 10px; border-radius: 6px;
+        }
+        .p-utr { font-size: 10px; color: #4a4665; font-weight: 600; }
+        .p-notes { font-size: 11px; color: #4a4665; font-style: italic; margin-top: 8px; }
+
+        .p-empty-chart {
+          height: 280px; display: flex; align-items: center; justify-content: center;
+          background: rgba(139,92,246,0.04); border-radius: 16px;
+          border: 1px dashed rgba(139,92,246,0.15);
+          font-size: 13px; color: #4a4665; font-weight: 500;
+        }
+
+        .p-scroll { max-height: 320px; overflow-y: auto; padding-right: 4px; }
+        .p-scroll::-webkit-scrollbar { width: 3px; }
+        .p-scroll::-webkit-scrollbar-track { background: transparent; }
+        .p-scroll::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 10px; }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+
+      <div className="partner-root">
+        <div className="partner-blob1" />
+        <div className="partner-blob2" />
+
+        <div className="partner-inner">
+
+          {/* ── HEADER ── */}
+          <div className="p-header">
+            <div>
+              <div className="p-logo-row">
+                <div className="p-logo">
+                  <img src="/logo.png" alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
+                    onError={e => e.target.style.display = 'none'} />
+                  <span style={{ position: 'relative', zIndex: 1 }}>C2K</span>
+                </div>
+                <span className="p-badge">Partner Portal</span>
               </div>
-              <span className="text-[10px] font-black uppercase text-violet-600 bg-violet-50 px-3 py-1 rounded-full tracking-widest border border-violet-100 uppercase">Partner Portal</span>
+              <h1 className="p-title">Partner Dashboard</h1>
+              <p className="p-subtitle">Enter your referral credentials to track your performance and earnings in real-time.</p>
             </div>
-            <h1 className="text-4xl font-black text-gray-900 tracking-tight">Partner Dashboard</h1>
-            <p className="text-sm text-gray-500 font-medium max-w-xl">
-              Enter your referral credentials to track your performance and earnings in real-time.
-            </p>
-          </div>
-          
-          <form onSubmit={fetchSummary} className="flex flex-col sm:flex-row items-center bg-gray-50 p-2 rounded-[2.5rem] border border-gray-100 shadow-inner group focus-within:ring-2 focus-within:ring-violet-500/20 transition-all gap-2">
-            <input
-              className="bg-transparent border-none px-6 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none min-w-[200px]"
-              placeholder="Coupon Code..."
-              value={code}
-              onChange={e=>setCode(e.target.value.toUpperCase())}
-            />
-            <div className="h-8 w-[1px] bg-gray-200 hidden sm:block"></div>
-            <input
-              type="password"
-              className="bg-transparent border-none px-6 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none min-w-[200px]"
-              placeholder="Portal Password..."
-              value={password}
-              onChange={e=>setPassword(e.target.value)}
-            />
-            <button
-              type="submit"
-              className="px-10 py-4 bg-gray-900 text-white rounded-[1.5rem] text-xs font-black uppercase tracking-widest shadow-xl hover:bg-violet-600 transition-all disabled:opacity-30 active:scale-95 whitespace-nowrap"
-              disabled={!code || !password || loading}
-            >
-              {loading ? 'Verifying...' : 'Access Portal'}
-            </button>
-          </form>
-        </header>
 
-        {error && (
-          <div className="bg-red-50 border border-red-100 text-red-600 text-xs font-bold px-8 py-5 rounded-[2.5rem] animate-in zoom-in-95 flex items-center gap-3">
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            <span>{error === 'not_found' ? 'Invalid coupon code or inactive partner.' : error === 'invalid_password' ? 'Incorrect portal password.' : error}</span>
-          </div>
-        )}
-
-        {!data && (
-          <section className="bg-white rounded-[4rem] p-12 md:p-24 text-center space-y-12 animate-in fade-in zoom-in duration-1000 relative overflow-hidden border border-gray-100 shadow-2xl">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-violet-600/10 rounded-full blur-[120px] -mr-64 -mt-64"></div>
-            <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-fuchsia-600/5 rounded-full blur-[100px] -ml-32 -mb-32"></div>
-            
-            <div className="max-w-3xl mx-auto space-y-8 relative z-10">
-              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-violet-500/10 text-violet-400 text-[10px] font-black tracking-[0.2em] uppercase border border-violet-500/20 backdrop-blur-md">
-                Onboarding Process
+            <form onSubmit={fetchSummary} className="p-form">
+              <div className="p-form-row">
+                <input
+                  className="p-input"
+                  placeholder="Coupon Code..."
+                  value={code}
+                  onChange={e => setCode(e.target.value.toUpperCase())}
+                />
+                <input
+                  type="password"
+                  className="p-input"
+                  placeholder="Portal Password..."
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                />
               </div>
-              <h2 className="text-4xl md:text-7xl font-black text-gray-900 tracking-tighter leading-none">
-                How to Become a <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500">Partner?</span>
+              <button
+                type="submit"
+                className="p-btn"
+                disabled={!code || !password || loading}
+              >
+                {loading ? '⟳ Verifying...' : 'Access Portal →'}
+              </button>
+            </form>
+          </div>
+
+          {/* ── ERROR ── */}
+          {error && (
+            <div className="p-error">
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {error === 'not_found' ? 'Invalid coupon code or inactive partner.' : error === 'invalid_password' ? 'Incorrect portal password.' : error}
+            </div>
+          )}
+
+          {/* ── ONBOARDING / HOW TO JOIN ── */}
+          {!data && !loading && !error && (
+            <div className="p-onboard">
+              <div className="p-onboard-glow" />
+              <span className="p-onboard-eyebrow">Onboarding Process</span>
+              <h2 className="p-onboard-title">
+                How to Become a <em>Partner?</em>
               </h2>
-              <p className="text-xl text-gray-600 font-medium leading-relaxed">
-                Join India's most exclusive network of B2B tech distributors. 
+              <p className="p-onboard-sub">
+                Join India's most exclusive network of B2B tech distributors.
                 Get your unique referral credentials and start earning today.
               </p>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-12">
-                {/* WhatsApp CTA removed as requested */}
-                <div className="flex items-center gap-6 bg-white border border-gray-100 p-8 rounded-[3rem] text-left shadow-2xl">
-                  <div className="h-16 w-16 rounded-[1.5rem] bg-violet-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-violet-500/20">
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-black text-violet-600 uppercase tracking-widest">Direct Email</div>
-                    <div className="text-xl font-black text-gray-900 tracking-tight mt-1">{CONFIG.SUPPORT_EMAIL}</div>
-                  </div>
+              <div className="p-contact-card">
+                <div className="p-contact-icon">
+                  <svg width="22" height="22" fill="none" stroke="white" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="p-contact-label">Direct Email</div>
+                  <div className="p-contact-value">{CONFIG.SUPPORT_EMAIL}</div>
                 </div>
               </div>
             </div>
-          </section>
-        )}
+          )}
 
-        {data && (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <section className="bg-white border border-gray-100 rounded-[3rem] shadow-sm p-8 md:p-12 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full -mr-32 -mt-32 opacity-50 blur-3xl"></div>
-              
-              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 relative z-10 border-b border-gray-50 pb-8 mb-8">
-                <div className="space-y-4">
-                  <div className="h-20 w-20 rounded-3xl bg-gray-900 flex items-center justify-center text-white text-3xl font-black shadow-2xl">
-                    {data.partnerName?.charAt(0) || 'P'}
+          {/* ── EMPTY CTA ── */}
+          {!data && !loading && !error && (
+            <div className="p-empty" style={{ marginTop: 32 }}>
+              <div className="p-empty-icon">🎟️</div>
+              <h3>Ready to check your earnings?</h3>
+              <p>Enter your unique partner coupon code above to access your performance data.</p>
+            </div>
+          )}
+
+          {/* ── DASHBOARD DATA ── */}
+          {data && (
+            <div style={{ animation: 'fadeUp 0.6s ease both' }}>
+
+              {/* Profile + Stats */}
+              <div className="p-profile-card">
+                <div className="p-profile-glow" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 24, position: 'relative', zIndex: 1 }}>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div className="p-avatar">{data.partnerName?.charAt(0) || 'P'}</div>
+                      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#4a4665', marginBottom: 6 }}>Partner Profile</div>
+                      <div className="p-name">{data.partnerName || '—'}</div>
+                      <div className="p-contact-row">
+                        {data.partnerPhone && (
+                          <span className="p-contact-chip">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                            {data.partnerPhone}
+                          </span>
+                        )}
+                        {data.partnerEmail && (
+                          <span className="p-contact-chip">
+                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                            {data.partnerEmail}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#4a4665', marginBottom: 10 }}>Active Code</div>
+                      <div className="p-code-tag"># {data.code}</div>
+                      <div className="p-rate-tag">
+                        <span className="p-rate-dot" />
+                        Commission: {data.commissionPercent}%
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Partner Profile</div>
-                    <div className="text-3xl font-black text-gray-900 tracking-tight">{data.partnerName || '-'}</div>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-gray-500 font-bold">
-                      {data.partnerPhone && <span className="flex items-center gap-1.5"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>{data.partnerPhone}</span>}
-                      {data.partnerEmail && <span className="flex items-center gap-1.5"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>{data.partnerEmail}</span>}
+
+                  {/* 4 stat cards */}
+                  <div className="p-stats-grid">
+                    <div className="p-stat-card">
+                      <div className="p-stat-label">Generated Sales</div>
+                      <div className="p-stat-value">₹{data.totalSales.toLocaleString()}</div>
+                    </div>
+                    <div className="p-stat-card">
+                      <div className="p-stat-label">Total Earnings</div>
+                      <div className="p-stat-value">₹{data.totalCommission.toLocaleString()}</div>
+                    </div>
+                    <div className="p-stat-card green">
+                      <div className="p-stat-label">Withdrawn</div>
+                      <div className="p-stat-value">₹{data.totalPaid.toLocaleString()}</div>
+                    </div>
+                    <div className="p-stat-card blue">
+                      <div className="p-stat-label">Current Balance</div>
+                      <div className="p-stat-value">₹{data.balance.toLocaleString()}</div>
                     </div>
                   </div>
                 </div>
-                <div className="text-left md:text-right space-y-2">
-                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Active Referral Code</div>
-                  <div className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gray-900 text-white text-lg font-black tracking-widest shadow-xl shadow-gray-200">
-                    {data.code}
-                  </div>
-                  <div className="text-[10px] text-emerald-500 font-black uppercase tracking-widest mt-2 flex items-center md:justify-end gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                    Comm. Rate: {data.commissionPercent}%
-                  </div>
-                </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
-                <div className="bg-gray-50/50 rounded-[2rem] p-6 border border-gray-100 hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
-                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Generated Sales</div>
-                  <div className="text-2xl font-black text-gray-900 tracking-tight">₹{data.totalSales.toLocaleString()}</div>
+              {/* Chart + Payouts */}
+              <div className="p-charts-row">
+                <div className="p-card">
+                  <div className="p-card-title">
+                    Commission by Category
+                    <span className="p-card-dot" />
+                  </div>
+                  {data.categoryBreakdown && data.categoryBreakdown.length > 0 ? (
+                    <div style={{ height: 280 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={data.categoryBreakdown} cx="50%" cy="50%" innerRadius={65} outerRadius={95} paddingAngle={6} dataKey="value">
+                            {data.categoryBreakdown.map((_, i) => (
+                              <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            formatter={v => `₹${Number(v).toFixed(2)}`}
+                            contentStyle={{
+                              background: '#0e0b1a', border: '1px solid rgba(139,92,246,0.3)',
+                              borderRadius: 12, color: '#e8e4f0', fontSize: 12, padding: '10px 16px'
+                            }}
+                          />
+                          <Legend
+                            verticalAlign="bottom" height={36} iconType="circle"
+                            wrapperStyle={{ fontSize: 10, color: '#8b7aaa' }}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <div className="p-empty-chart">No category data available yet.</div>
+                  )}
                 </div>
-                <div className="bg-gray-50/50 rounded-[2rem] p-6 border border-gray-100 hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
-                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Earnings</div>
-                  <div className="text-2xl font-black text-gray-900 tracking-tight">₹{data.totalCommission.toLocaleString()}</div>
-                </div>
-                <div className="bg-emerald-50/50 rounded-[2rem] p-6 border border-emerald-100 hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
-                  <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2">Withdrawn</div>
-                  <div className="text-2xl font-black text-emerald-700 tracking-tight">₹{data.totalPaid.toLocaleString()}</div>
-                </div>
-                <div className="bg-blue-50/50 rounded-[2rem] p-6 border border-blue-100 hover:bg-white hover:shadow-xl hover:scale-[1.02] transition-all duration-300">
-                  <div className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-2">Current Balance</div>
-                  <div className="text-2xl font-black text-blue-700 tracking-tight">₹{data.balance.toLocaleString()}</div>
+
+                <div className="p-card">
+                  <div className="p-card-title">
+                    Payout History
+                    {data.payouts && data.payouts.length > 0 && (
+                      <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', color: '#7c3aed', background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', padding: '3px 10px', borderRadius: 8 }}>
+                        {data.payouts.length} Payments
+                      </span>
+                    )}
+                  </div>
+
+                  {data.payouts && data.payouts.length > 0 ? (
+                    <div className="p-scroll">
+                      {data.payouts.map((p, i) => (
+                        <div key={i} className="p-payout-item">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                            <div className="p-payout-amount">₹{p.amount.toLocaleString()}</div>
+                            <div className="p-payout-date">{new Date(p.createdAt).toLocaleDateString()}</div>
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            <span className="p-method-tag">{p.method}</span>
+                            {p.utr && <span className="p-utr">UTR: {p.utr}</span>}
+                            {p.razorpayPaymentId && <span className="p-utr">ID: {p.razorpayPaymentId}</span>}
+                          </div>
+                          {p.notes && <div className="p-notes">"{p.notes}"</div>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 240, gap: 12 }}>
+                      <div style={{ fontSize: 36 }}>💸</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#e8e4f0', textAlign: 'center' }}>No Payouts Yet</div>
+                      <div style={{ fontSize: 11, color: '#4a4665', textAlign: 'center' }}>Your commission payments will appear here.</div>
+                    </div>
+                  )}
                 </div>
               </div>
-            </section>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
-              <section className="bg-white border border-gray-100 rounded-[3rem] p-8 md:p-10 shadow-sm space-y-8">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-sm font-black uppercase tracking-widest text-gray-400">Commission by Category</h2>
-                  <div className="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></div>
-                </div>
-                {data.categoryBreakdown && data.categoryBreakdown.length > 0 ? (
-                  <div className="h-[340px] w-full bg-gray-50/50 rounded-[2.5rem] p-6">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={data.categoryBreakdown}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={70}
-                          outerRadius={100}
-                          paddingAngle={8}
-                          dataKey="value"
-                        >
-                          {data.categoryBreakdown.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          formatter={(value) => `₹${Number(value).toFixed(2)}`}
-                          contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 20px 40px rgba(0,0,0,0.1)', padding: '12px 20px' }}
-                        />
-                        <Legend verticalAlign="bottom" height={36} iconType="circle"/>
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                ) : (
-                  <div className="h-[340px] flex items-center justify-center text-gray-400 text-xs italic font-medium bg-gray-50/50 rounded-[2.5rem] border border-dashed border-gray-200">
-                    No category data available yet.
-                  </div>
-                )}
-              </section>
-
-              {data.payouts && data.payouts.length > 0 ? (
-                <section className="bg-white border border-gray-100 rounded-[3rem] p-8 md:p-10 shadow-sm space-y-8">
-                  <div className="flex items-center justify-between border-b border-gray-50 pb-6">
-                    <h2 className="text-sm font-black uppercase tracking-widest text-gray-400">Payout History</h2>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-3 py-1 rounded-lg">
-                      {data.payouts.length} Payments
-                    </span>
-                  </div>
-                  <div className="max-h-[340px] overflow-y-auto pr-4 custom-scrollbar space-y-4">
-                    {data.payouts.map((p, idx) => (
-                      <div key={idx} className="bg-gray-50/50 hover:bg-white border border-transparent hover:border-blue-100 p-6 rounded-3xl transition-all duration-300 group">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">₹{p.amount.toLocaleString()}</div>
-                          <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{new Date(p.createdAt).toLocaleDateString()}</div>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <span className="text-[9px] font-black uppercase text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg tracking-widest border border-blue-100">{p.method}</span>
-                          {p.utr && <span className="text-[10px] text-gray-500 font-bold">UTR: {p.utr}</span>}
-                          {p.razorpayPaymentId && <span className="text-[10px] text-gray-500 font-bold">ID: {p.razorpayPaymentId}</span>}
-                        </div>
-                        {p.notes && <div className="mt-3 text-[11px] text-gray-400 font-medium italic">"{p.notes}"</div>}
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              ) : (
-                <section className="bg-white border border-gray-100 rounded-[3rem] p-8 md:p-10 shadow-sm flex flex-col items-center justify-center text-center space-y-4">
-                  <div className="h-20 w-20 rounded-full bg-gray-50 flex items-center justify-center text-3xl">💸</div>
-                  <div>
-                    <h3 className="text-sm font-black uppercase tracking-widest text-gray-900">No Payouts Yet</h3>
-                    <p className="text-xs text-gray-400 font-bold mt-1">Your commission payments will appear here.</p>
-                  </div>
-                </section>
-              )}
             </div>
-          </div>
-        )}
-
-        {!data && !loading && !error && (
-          <div className="py-32 flex flex-col items-center justify-center text-center animate-in fade-in duration-1000">
-            <div className="h-24 w-24 rounded-[2rem] bg-gray-50 flex items-center justify-center text-4xl mb-6 shadow-inner">🎟️</div>
-            <h3 className="text-xl font-black text-gray-900 tracking-tight">Ready to check your earnings?</h3>
-            <p className="text-sm text-gray-400 font-bold mt-2 max-w-xs">
-              Enter your unique partner coupon code in the field above to access your performance data.
-            </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
