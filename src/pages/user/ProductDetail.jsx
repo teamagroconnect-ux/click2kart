@@ -66,8 +66,24 @@ export default function ProductDetail(){
                   </div>
                   <div className="text-xs font-bold text-gray-500">({p.ratingCount || 0})</div>
                 </div>
-                <div className="text-4xl font-black text-gray-900 tracking-tighter">
-                  {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'}
+                <div className="flex items-center gap-3">
+                  <div className="text-4xl font-black text-gray-900 tracking-tighter">
+                    {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'}
+                  </div>
+                  {authed && (
+                    <button
+                      onClick={(e) => { e.preventDefault(); if (!authed) { navigate('/login'); return } addToCart(p) }}
+                      disabled={!authed || p.stock <= 0}
+                      title={authed ? (p.stock > 0 ? 'Add to Cart' : 'Sold Out') : 'Login to add'}
+                      className="inline-flex items-center justify-center h-11 w-11 rounded-2xl bg-gray-900 text-white shadow-md hover:bg-gray-800 active:scale-95 disabled:opacity-40"
+                    >
+                      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M7 6h13l-1.2 7H9.2L7 6Z" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                        <circle cx="10" cy="19" r="1.4" fill="currentColor" />
+                        <circle cx="17" cy="19" r="1.4" fill="currentColor" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
                 {authed && <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">Inclusive of all taxes</div>}
               </div>
@@ -108,9 +124,22 @@ export default function ProductDetail(){
 
             <div className="space-y-4 pt-8 border-t border-gray-50">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Product Narrative</h3>
-              <p className="text-base text-gray-500 font-medium leading-[1.8] whitespace-pre-line max-w-xl">
-                {p.description || "Experience the perfect blend of innovation and craftsmanship. This product is meticulously designed to exceed your expectations and integrate seamlessly into your digital ecosystem."}
-              </p>
+              <div className="relative overflow-hidden rounded-[2rem] border border-gray-100">
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-white to-emerald-50"></div>
+                <div className="relative p-8 space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                    Premium Description
+                  </div>
+                  <p className="text-base text-gray-700 font-medium leading-[1.9] whitespace-pre-line max-w-xl">
+                    {p.description || "Experience the perfect blend of innovation and craftsmanship. This product is meticulously designed to exceed expectations and integrate seamlessly into modern workflows."}
+                  </p>
+                  <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-widest text-gray-500">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-gray-100">✔ Warranty</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-gray-100">✔ GST Invoice</span>
+                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white border border-gray-100">✔ Fast Dispatch</span>
+                  </div>
+                </div>
+              </div>
               <div>
                 <button
                   onClick={() => { if (!authed) { navigate('/login'); return } setReviewOpen(true) }}
@@ -133,16 +162,6 @@ export default function ProductDetail(){
                 className="flex-2 bg-gray-900 text-white px-12 py-5 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-gray-800 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-30 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
               >
                 {authed ? (p.stock > 0 ? 'Secure Buy Now' : 'Sold Out') : 'Login to Buy'}
-              </button>
-              <button
-                onClick={() => {
-                  if (!authed) { navigate('/login'); return }
-                  addToCart(p)
-                }}
-                disabled={!authed || p.stock <= 0}
-                className="flex-1 bg-white border-2 border-gray-100 text-gray-900 px-10 py-5 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] hover:bg-gray-50 hover:border-gray-200 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed"
-              >
-                {authed ? (p.stock > 0 ? 'Add to Cart' : 'Out of Stock') : 'Login to Add'}
               </button>
             </div>
             

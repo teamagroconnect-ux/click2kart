@@ -78,8 +78,10 @@ export default function UserLayout() {
                 to="/cart"
                 className="group relative h-12 w-12 flex items-center justify-center rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-xl transition-all active:scale-95"
               >
-                <svg className="w-6 h-6 text-gray-600 group-hover:text-violet-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                <svg className="w-6 h-6 text-gray-700 group-hover:text-violet-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M7 6h13l-1.2 7H9.2L7 6Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="10" cy="19" r="1.6" fill="currentColor" />
+                  <circle cx="17" cy="19" r="1.6" fill="currentColor" />
                 </svg>
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-[10px] font-black text-white bg-violet-600 rounded-lg shadow-lg shadow-violet-200 border-2 border-white">
@@ -164,21 +166,14 @@ export default function UserLayout() {
           </div>
           <div className="flex items-center gap-8">
             <a 
-              href={`https://wa.me/${CONFIG.SUPPORT_WHATSAPP}`} 
-              target="_blank" 
-              rel="noreferrer"
-              className="flex items-center gap-2 group"
+              href={`mailto:${CONFIG.SUPPORT_EMAIL}`} 
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-700 hover:bg-white transition-all"
             >
-              <span className="h-8 w-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.246 2.248 3.484 5.232 3.484 8.412-.003 6.557-5.338 11.892-11.893 11.892-1.997-.001-3.951-.5-5.688-1.448l-6.309 1.656zm6.224-3.82c1.516.903 3.125 1.378 4.773 1.379 5.428 0 9.843-4.415 9.845-9.845.001-2.631-1.023-5.104-2.883-6.964s-4.333-2.883-6.964-2.884c-5.43 0-9.844 4.415-9.846 9.845-.001 1.696.442 3.351 1.282 4.796l-1.07 3.907 4.008-1.052zm11.332-6.845c-.312-.156-1.848-.912-2.126-1.013-.279-.1-.482-.15-.683.15-.201.3-.778 1.013-.954 1.213-.177.2-.353.226-.665.07-.312-.156-1.318-.486-2.512-1.55-.928-.828-1.555-1.85-1.737-2.163-.182-.313-.02-.482.137-.638.141-.14.312-.363.469-.544.156-.181.209-.312.312-.519.104-.207.052-.389-.026-.544-.078-.156-.683-1.646-.936-2.257-.246-.594-.497-.514-.683-.524-.176-.01-.378-.011-.58-.011s-.53.076-.807.377c-.278.301-1.061 1.038-1.061 2.532s1.087 2.94 1.238 3.141c.151.201 2.138 3.265 5.18 4.577.723.312 1.288.499 1.728.639.726.231 1.387.198 1.909.12.583-.087 1.848-.755 2.11-1.482.261-.728.261-1.355.183-1.482-.078-.127-.29-.203-.602-.359z"/></svg>
-              </span>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-gray-900 uppercase tracking-widest leading-none">WhatsApp Support</span>
-                <span className="text-[9px] font-bold text-emerald-600 mt-1">{CONFIG.SUPPORT_PHONE_DISPLAY}</span>
-              </div>
+              <span>Support</span>
+              <span className="text-violet-600">{CONFIG.SUPPORT_EMAIL}</span>
             </a>
             <div className="h-8 w-[1px] bg-gray-100"></div>
-            {['Privacy Policy', 'Terms of Service', 'Support'].map((f) => (
+            {['Privacy Policy', 'Terms of Service'].map((f) => (
               <span key={f} className="text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-900 transition-colors">{f}</span>
             ))}
           </div>

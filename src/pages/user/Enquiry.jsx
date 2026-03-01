@@ -15,11 +15,7 @@ export default function Enquiry(){
     : (loc.state?.productId ? [{ productId: loc.state.productId, quantity: 1, name: loc.state.name }] : [])
 
   const [items, setItems] = useState(initialItems)
-  const [customer, setCustomer] = useState({ 
-    name: '', 
-    phone: '', 
-    email: '' 
-  })
+  const [profile, setProfile] = useState({ name: '', phone: '', email: '' })
   const [paymentMethod, setPaymentMethod] = useState('RAZORPAY')
   const [loading, setLoading] = useState(false)
 
@@ -31,18 +27,16 @@ export default function Enquiry(){
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (!token) return
+    if (!token) { 
+      nav('/login')
+      return
+    }
     ;(async () => {
       try {
         const { data } = await api.get('/api/user/me')
-        setCustomer(prev => ({
-          ...prev,
-          name: data.name || prev.name,
-          phone: data.phone || prev.phone,
-          email: data.email || prev.email
-        }))
+        setProfile({ name: data.name || '', phone: data.phone || '', email: data.email || '' })
       } catch {
-        // ignore
+        nav('/login')
       }
     })()
   }, [])
@@ -71,9 +65,9 @@ export default function Enquiry(){
         }
       },
       prefill: {
-        name: customer.name,
-        email: customer.email,
-        contact: customer.phone
+        name: profile.name,
+        email: profile.email,
+        contact: profile.phone
       },
       theme: {
         color: "#2563eb"
@@ -87,7 +81,7 @@ export default function Enquiry(){
     e.preventDefault()
     setLoading(true)
     try {
-      const { data } = await api.post('/api/orders', { customer, items, paymentMethod })
+      const { data } = await api.post('/api/orders', { items, paymentMethod })
       
       if (paymentMethod === 'RAZORPAY') {
         handleRazorpay(data.order, data.razorpayOrderId);
@@ -156,41 +150,21 @@ export default function Enquiry(){
         <div className="space-y-8">
           <div className="flex items-center gap-3">
             <span className="h-10 w-10 rounded-2xl bg-violet-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-violet-100 uppercase tracking-widest">01</span>
-            <h3 className="text-lg font-black tracking-tight text-gray-900 uppercase">Customer Details</h3>
+            <h3 className="text-lg font-black tracking-tight text-gray-900 uppercase">Account Details</h3>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="group">
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-2 block group-focus-within:text-violet-600 transition-colors">Business Name</label>
-              <input
-                className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
-                placeholder="Uddhab Das"
-                value={customer.name}
-                onChange={e=>setCustomer({...customer, name:e.target.value})}
-                required
-                readOnly={!!localStorage.getItem('token')}
-              />
+            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Business Name</div>
+              <div className="text-sm font-bold text-gray-900 mt-1">{profile.name || '-'}</div>
             </div>
-            <div className="group">
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-2 block group-focus-within:text-violet-600 transition-colors">Contact Phone</label>
-              <input
-                className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
-                placeholder="9348412765"
-                value={customer.phone}
-                onChange={e=>setCustomer({...customer, phone:e.target.value})}
-                required
-                readOnly={!!localStorage.getItem('token')}
-              />
+            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Contact Phone</div>
+              <div className="text-sm font-bold text-gray-900 mt-1">{profile.phone || '-'}</div>
             </div>
           </div>
-          <div className="group">
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-2 block group-focus-within:text-violet-600 transition-colors">Business Email (Optional)</label>
-            <input
-              className="w-full bg-gray-50 border-none rounded-2xl px-6 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
-              placeholder="mr.uddhabcharandas@gmail.com"
-              value={customer.email}
-              onChange={e=>setCustomer({...customer, email:e.target.value})}
-              readOnly={!!localStorage.getItem('token')}
-            />
+          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+            <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Business Email</div>
+            <div className="text-sm font-bold text-gray-900 mt-1">{profile.email || '-'}</div>
           </div>
         </div>
 
