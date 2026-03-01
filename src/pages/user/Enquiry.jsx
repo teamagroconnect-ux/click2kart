@@ -34,6 +34,11 @@ export default function Enquiry(){
     ;(async () => {
       try {
         const { data } = await api.get('/api/user/me')
+        if (!data.isKycComplete) {
+          notify('Complete your KYC to place orders', 'error')
+          nav('/profile')
+          return
+        }
         setProfile({ name: data.name || '', phone: data.phone || '', email: data.email || '' })
       } catch {
         nav('/login')

@@ -75,7 +75,7 @@ export default function Customers() {
                 </tr>
               ) : (
                 items.map((c) => (
-                  <tr key={c._id} className="group hover:bg-gray-50/50 transition-colors">
+                  <tr key={c._id} className="group hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={()=>location.href=`/admin/customers/${c._id}`}>
                     <td className="px-6 py-4">
                       <div className="font-bold text-gray-900">{c.name}</div>
                       <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Member since {new Date(c.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' })}</div>

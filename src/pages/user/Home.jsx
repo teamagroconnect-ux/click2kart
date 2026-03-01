@@ -21,13 +21,12 @@ export default function Home() {
             <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white leading-[0.95]">
               {CONFIG.HERO_TITLE_LINE1 || CONFIG.HERO_TITLE_LINE2 ? (
                 <>
-                  <span className="block">{CONFIG.HERO_TITLE_LINE1 || 'Scale Your Business'}</span>
-                  <span className="block">{CONFIG.HERO_TITLE_LINE2 || 'With Premium Tech.'}</span>
+                  <span className="block">{CONFIG.HERO_TITLE_LINE1 || 'Wholesale with'}</span>
+                  <span className="block">{CONFIG.HERO_TITLE_LINE2 || 'Click2Kart'}</span>
                 </>
               ) : (
                 <>
-                  Scale Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500">Business</span> <br />
-                  With Premium <span className="text-gray-400">Tech.</span>
+                  Wholesale with <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-500">Click2Kart</span>
                 </>
               )}
             </h1>

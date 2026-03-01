@@ -128,7 +128,7 @@ export default function ProductDetail(){
                 <div className="absolute inset-0 bg-gradient-to-br from-violet-50 via-white to-emerald-50"></div>
                 <div className="relative p-8 space-y-4">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-500">
-                    Premium Description
+                    Product Details
                   </div>
                   <p className="text-base text-gray-700 font-medium leading-[1.9] whitespace-pre-line max-w-xl">
                     {p.description || "Experience the perfect blend of innovation and craftsmanship. This product is meticulously designed to exceed expectations and integrate seamlessly into modern workflows."}

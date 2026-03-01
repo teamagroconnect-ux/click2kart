@@ -80,6 +80,11 @@ export default function Dashboard() {
         <Card iconBg="bg-amber-50" icon="⚠️" title="Low Stock Alerts" value={inv.lowStock} />
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Card iconBg="bg-blue-50" icon="🛒" title="New Order Requests" value={stats?.newOrders ?? 0} />
+        <Card iconBg="bg-purple-50" icon="💼" title="Cash Approvals Pending" value={stats?.pendingCash ?? 0} />
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white border rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b">

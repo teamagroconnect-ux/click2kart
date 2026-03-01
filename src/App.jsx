@@ -9,6 +9,7 @@ import Coupons from './pages/admin/Coupons.jsx'
 import Partners from './pages/admin/Partners.jsx'
 import Settings from './pages/admin/Settings.jsx'
 import Customers from './pages/admin/Customers.jsx'
+import CustomerDetail from './pages/admin/CustomerDetail.jsx'
 import AdminLayout from './components/AdminLayout.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import Home from './pages/user/Home.jsx'
@@ -23,6 +24,7 @@ import ForgotPassword from './pages/user/ForgotPassword.jsx'
 import ResetPassword from './pages/user/ResetPassword.jsx'
 import OrderHistory from './pages/user/OrderHistory.jsx'
 import Cart from './pages/user/Cart.jsx'
+import Profile from './pages/user/Profile.jsx'
 
 export default function App() {
   return (
@@ -44,6 +46,7 @@ export default function App() {
         <Route path="coupons" element={<Coupons />} />
         <Route path="partners" element={<Partners />} />
         <Route path="customers" element={<Customers />} />
+        <Route path="customers/:id" element={<CustomerDetail />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 
@@ -58,6 +61,7 @@ export default function App() {
         <Route path="forgot-password" element={<ForgotPassword />} />
         <Route path="reset-password" element={<ResetPassword />} />
         <Route path="orders" element={<OrderHistory />} />
+        <Route path="profile" element={<Profile />} />
         <Route path="cart" element={<Cart />} />
       </Route>
 
@@ -65,4 +69,3 @@ export default function App() {
     </Routes>
   )
 }
-

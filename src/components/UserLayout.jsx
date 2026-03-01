@@ -43,7 +43,7 @@ export default function UserLayout() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xl font-black tracking-tighter text-gray-900 leading-none group-hover:text-violet-600 transition-colors">{CONFIG.BRAND_NAME}</span>
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1 hidden xs:block">Premium B2B Tech</span>
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1 hidden xs:block">B2B Wholesale</span>
                 </div>
               </Link>
             </div>
@@ -94,7 +94,7 @@ export default function UserLayout() {
                   <div className="flex items-center gap-4">
                     <div className="flex flex-col items-end">
                       <span className="text-[10px] font-black uppercase text-gray-900 leading-none">{user.name}</span>
-                      <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest mt-1">Business Account</span>
+                      <span className="inline-flex items-center gap-2 mt-1 px-2.5 py-1 rounded-xl border border-violet-200 text-[9px] font-black uppercase tracking-widest text-violet-700 bg-violet-50">Click2Kart Business</span>
                     </div>
                     <button
                       onClick={handleLogout}
@@ -128,6 +128,14 @@ export default function UserLayout() {
       </header>
 
       <main className="flex-1 min-h-0 pb-20 lg:pb-0 animate-in fade-in duration-700">
+        {user && (
+          <div className="max-w-7xl mx-auto px-6 md:px-10 mt-4">
+            <div className="rounded-2xl border border-violet-100 bg-violet-50 text-violet-800 px-4 py-3 text-[12px] font-bold flex items-center justify-between">
+              <div>Welcome, {user.name}. Keep your KYC updated for ordering.</div>
+              <Link to="/profile" className="px-3 py-1.5 rounded-lg bg-violet-600 text-white text-[10px] uppercase tracking-widest">Update KYC</Link>
+            </div>
+          </div>
+        )}
         <Outlet />
       </main>
 
@@ -158,7 +166,7 @@ export default function UserLayout() {
         <div className="max-w-7xl mx-auto px-10 flex flex-col md:flex-row items-center justify-between gap-8">
           <div className="flex items-center gap-6">
             <img src={logo} alt="Click2Kart" className="h-10 w-auto rounded-xl border border-gray-100 shadow-sm" />
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart Premium</span>
+            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart B2B</span>
             <div className="flex gap-4 items-center">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
               <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Store Status: Online</span>
