@@ -56,10 +56,14 @@ export default function OrderHistory() {
                   </div>
                   <div>
                     <div className="text-gray-500 uppercase font-bold text-[10px] tracking-widest">Status</div>
-                    <div className={`font-bold ${
-                      order.status === 'FULFILLED' ? 'text-emerald-600' : 
-                      order.status === 'CANCELLED' ? 'text-red-600' : 'text-blue-600'
-                    }`}>{order.status}</div>
+                    {(() => {
+                      const displayStatus = order.status === 'PENDING_CASH_APPROVAL' ? 'NEW' : order.status
+                      const cls =
+                        displayStatus === 'FULFILLED' ? 'text-emerald-600' :
+                        displayStatus === 'CANCELLED' ? 'text-red-600' :
+                        'text-blue-600'
+                      return <div className={`font-bold ${cls}`}>{displayStatus}</div>
+                    })()}
                   </div>
                   <div>
                     <div className="text-gray-500 uppercase font-bold text-[10px] tracking-widest">Payment</div>

@@ -1,10 +1,20 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart, getStockStatus } from '../../lib/CartContext'
+import api from '../../lib/api'
 
 export default function Cart() {
-  const { cart, removeFromCart, updateQuantity, cartTotal } = useCart()
+  const { cart, removeFromCart, updateQuantity, cartTotal, addToCart } = useCart()
   const navigate = useNavigate()
+  const [suggestions, setSuggestions] = useState([])
+
+  useEffect(() => {
+    const first = cart[0];
+    if (!first) { setSuggestions([]); return }
+    const pid = first.productId || first._id;
+    if (!pid) return;
+    api.get(`/api/recommendations/frequently-bought/${pid}`).then(({ data }) => setSuggestions(data || [])).catch(() => setSuggestions([]))
+  }, [cart])
 
   if (cart.length === 0) {
     return (
@@ -83,6 +93,32 @@ export default function Cart() {
               </div>
             </div>
           ))}
+          {suggestions.length > 0 && (
+            <div className="mt-6">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3">You may also need</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
+                {suggestions.map((p) => (
+                  <div key={p._id || p.id} className="bg-white border border-gray-100 rounded-xl p-3 flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                      {p.images && p.images[0]?.url
+                        ? <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain" />
+                        : <span className="text-[10px] text-gray-400">📦</span>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs font-bold text-gray-900 truncate">{p.name}</div>
+                      <div className="text-[11px] text-gray-500">{p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view'}</div>
+                    </div>
+                    <button
+                      onClick={() => addToCart(p)}
+                      className="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest"
+                    >
+                      Add
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="bg-white p-6 rounded-xl border shadow-sm h-fit space-y-6">

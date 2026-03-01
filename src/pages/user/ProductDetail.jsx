@@ -8,11 +8,17 @@ export default function ProductDetail(){
   const navigate = useNavigate()
   const { addToCart } = useCart()
   const [p, setP] = useState(null)
+  const [similar, setSimilar] = useState([])
+  const [fbt, setFbt] = useState([])
   const [reviewOpen, setReviewOpen] = useState(false)
   const [myRating, setMyRating] = useState(0)
   const [myComment, setMyComment] = useState('')
   const authed = !!localStorage.getItem('token')
-  useEffect(()=>{ api.get(`/api/products/${id}`).then(({data})=>setP(data)) }, [id])
+  useEffect(()=>{ 
+    api.get(`/api/products/${id}`).then(({data})=>setP(data)) 
+    api.get(`/api/products/${id}/recommendations`).then(({data})=>setSimilar(data||[])).catch(()=>setSimilar([]))
+    api.get(`/api/recommendations/frequently-bought/${id}`).then(({data})=>setFbt(data||[])).catch(()=>setFbt([]))
+  }, [id])
   if (!p) return <div className="p-10 text-center text-lg text-gray-500">Loading product details...</div>
   return (
     <div className="bg-white min-h-screen">
@@ -172,6 +178,20 @@ export default function ProductDetail(){
           </div>
         </div>
       </div>
+      <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-12">
+        {similar.length > 0 && (
+          <section className="space-y-4">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Similar Products</h3>
+            <RecGrid items={similar} />
+          </section>
+        )}
+        {fbt.length > 0 && (
+          <section className="space-y-4">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Frequently Bought Together</h3>
+            <RecGrid items={fbt} />
+          </section>
+        )}
+      </div>
       {reviewOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6" onClick={()=>setReviewOpen(false)}>
           <div className="bg-white rounded-3xl p-6 w-full max-w-md space-y-4" onClick={(e)=>e.stopPropagation()}>
@@ -205,6 +225,54 @@ export default function ProductDetail(){
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function RecGrid({ items }) {
+  const navigate = useNavigate()
+  const authed = !!localStorage.getItem('token')
+  const { addToCart } = useCart()
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+      {items.map((p) => (
+        <div
+          key={p._id || p.id}
+          className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col cursor-pointer border border-gray-100 hover:border-blue-100"
+          onClick={() => navigate(`/products/${p._id || p.id}`)}
+        >
+          <div className="relative bg-gray-50">
+            <div className="aspect-square flex items-center justify-center overflow-hidden p-4">
+              {p.images && p.images.length > 0
+                ? <img src={p.images[0].url || p.images[0]} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                : <div className="text-5xl opacity-30">📦</div>}
+            </div>
+          </div>
+          <div className="p-3 flex-1 flex flex-col">
+            <div className="text-sm font-bold text-gray-900 line-clamp-2 leading-tight hover:text-[#1244ea] transition-colors mb-2">
+              {p.name}
+            </div>
+            <div className="mt-auto flex items-center justify-between">
+              <div className="text-base font-black text-gray-900 leading-none">
+                {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : (
+                  <span className="text-gray-400">Login to view</span>
+                )}
+              </div>
+              <button
+                onClick={e => { e.stopPropagation(); e.preventDefault(); if (authed) addToCart(p) }}
+                disabled={!authed || (p.stock != null && p.stock <= 0)}
+                className="h-9 w-9 rounded-xl bg-[#1244ea] text-white flex items-center justify-center shadow-sm hover:bg-[#0d35c7] active:scale-95 disabled:opacity-40 transition-all flex-shrink-0"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M7 6h13l-1.2 7H9.2L7 6Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="10" cy="19" r="1.4" fill="currentColor" />
+                  <circle cx="17" cy="19" r="1.4" fill="currentColor" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

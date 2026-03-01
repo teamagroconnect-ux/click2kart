@@ -85,24 +85,24 @@ export default function Catalogue() {
     <div className="bg-gray-50 min-h-screen">
 
       {/* ── STICKY TOP SEARCH BAR (mobile) ── */}
-      <div className="lg:hidden sticky top-0 z-40 bg-[#1244ea] shadow-lg">
+      <div className="lg:hidden sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
         <div className="px-3 py-2.5">
           <div className="relative">
             <input
-              className="w-full bg-[#0a2db5] text-white placeholder-blue-200 text-sm rounded-xl pl-10 pr-10 py-3 outline-none focus:bg-[#0a35cc] transition-all"
+              className="w-full bg-white border border-gray-200 text-gray-900 placeholder-gray-400 text-sm rounded-xl pl-10 pr-10 py-3 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-300 transition-all"
               placeholder="Search products, brands…"
               value={q}
               onChange={e => setQ(e.target.value)}
               onFocus={() => { setSearchFocused(true); q.trim().length >= 2 && setShowSug(true) }}
               onBlur={() => { setTimeout(() => { setShowSug(false); setSearchFocused(false) }, 150) }}
             />
-            <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             {q && (
               <button
                 onClick={() => { setQ(''); setSug([]); setShowSug(false) }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-200 hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M18.3 5.71 12 12l6.3 6.29-1.41 1.42L10.59 13.4 4.3 19.71 2.89 18.3 9.17 12 2.89 5.71 4.3 4.29l6.29 6.3 6.3-6.3z" />
@@ -122,8 +122,8 @@ export default function Catalogue() {
           <button
             onClick={() => setCategory('')}
             className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${category === ''
-              ? 'bg-white text-[#1244ea] border-white shadow-md'
-              : 'bg-transparent text-blue-100 border-blue-300/50 hover:border-white hover:text-white'}`}
+              ? 'bg-gray-900 text-white border-gray-900 shadow-md'
+              : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
           >
             All
           </button>
@@ -132,8 +132,8 @@ export default function Catalogue() {
               key={c._id}
               onClick={() => setCategory(c.name)}
               className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-bold transition-all border capitalize ${category === c.name
-                ? 'bg-white text-[#1244ea] border-white shadow-md'
-                : 'bg-transparent text-blue-100 border-blue-300/50 hover:border-white hover:text-white'}`}
+                ? 'bg-gray-900 text-white border-gray-900 shadow-md'
+                : 'bg-white text-gray-700 border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
             >
               {c.name}
             </button>
@@ -222,8 +222,13 @@ export default function Catalogue() {
                       ? 'bg-[#1244ea] text-white'
                       : 'text-gray-600 hover:bg-gray-50'}`}
                   >
-                    <span className={`h-2 w-2 rounded-full flex-shrink-0 ${category === '' ? 'bg-blue-200' : 'bg-gray-200'}`}></span>
-                    All Products
+                    <div className="h-10 w-10 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                      <span className="text-[10px] text-gray-400">📦</span>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold">All Products</div>
+                      <div className="text-[10px] text-gray-400">Browse everything</div>
+                    </div>
                   </button>
                   {categories.map(c => (
                     <button
@@ -233,8 +238,15 @@ export default function Catalogue() {
                         ? 'bg-[#1244ea] text-white'
                         : 'text-gray-600 hover:bg-gray-50'}`}
                     >
-                      <span className={`h-2 w-2 rounded-full flex-shrink-0 ${category === c.name ? 'bg-blue-200' : 'bg-gray-200'}`}></span>
-                      {c.name}
+                      <div className="h-10 w-10 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                        {c.image
+                          ? <img src={c.image} alt={c.name} className="h-full w-full object-contain" />
+                          : <span className="text-[10px] text-gray-400">📷</span>}
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold">{c.name}</div>
+                        {c.description && <div className="text-[10px] text-gray-400 truncate">{c.description}</div>}
+                      </div>
                     </button>
                   ))}
                 </div>
@@ -290,8 +302,8 @@ export default function Catalogue() {
                       key={opt.v}
                       onClick={() => setSort(opt.v)}
                       className={`flex-shrink-0 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${sort === opt.v
-                        ? 'bg-[#1244ea] text-white border-[#1244ea]'
-                        : 'bg-white text-gray-600 border-gray-200'}`}
+                        ? 'bg-gray-900 text-white border-gray-900'
+                        : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
                     >
                       {opt.l}
                     </button>
@@ -562,7 +574,10 @@ function ProductCard({ p, authed, addToCart, navigate }) {
               {status.text}
             </span>
             <span className="text-[9px] font-bold text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">🚚 Fast</span>
-            <span className="text-[9px] font-bold text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">🧾 GST</span>
+            {p.gst > 0 && <span className="text-[9px] font-bold text-gray-500 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded-md">🧾 GST Invoice</span>}
+            {discount > 0 && authed && <span className="text-[9px] font-bold text-rose-600 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md">🔥 Price Drop</span>}
+            {authed && p.bulkDiscountQuantity > 0 && <span className="text-[9px] font-bold text-orange-600 bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-md">📦 Bulk Offer</span>}
+            {p.isVerified && <span className="text-[9px] font-bold text-[#1244ea] bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">✓ Assured</span>}
           </div>
         </div>
       </div>
