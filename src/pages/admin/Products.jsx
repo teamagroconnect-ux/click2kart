@@ -347,8 +347,8 @@ export default function Products() {
       />
       {preview && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-6" onClick={() => setPreview('')}>
-          <div className="max-w-4xl w-full">
-            <img src={preview} alt="Preview" className="w-full h-auto rounded-3xl shadow-2xl object-contain" />
+          <div className="max-w-2xl w-full">
+            <img src={preview} alt="Preview" className="w-full h-auto max-h-[80vh] rounded-3xl shadow-2xl object-contain" />
           </div>
         </div>
       )}

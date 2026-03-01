@@ -11,7 +11,15 @@ export default function Enquiry(){
   const { cart, clearCart, cartTotal } = useCart()
   
   const initialItems = cart.length > 0 
-    ? cart.map(item => ({ productId: item._id, quantity: item.quantity, name: item.name, price: item.price, image: item.images?.[0]?.url }))
+    ? cart.map(item => ({
+        productId: item.productId || item._id,
+        quantity: item.quantity,
+        name: item.name,
+        price: item.price,
+        image: item.image || item.images?.[0]?.url,
+        bulkQty: item.bulkDiscountQuantity || item.bulkQty || 0,
+        bulkRed: item.bulkDiscountPriceReduction || item.bulkRed || 0
+      }))
     : (loc.state?.productId ? [{ productId: loc.state.productId, quantity: 1, name: loc.state.name }] : [])
 
   const [items, setItems] = useState(initialItems)
@@ -21,7 +29,15 @@ export default function Enquiry(){
 
   useEffect(() => {
     if (cart.length > 0) {
-      setItems(cart.map(item => ({ productId: item._id, quantity: item.quantity, name: item.name, price: item.price, image: item.images?.[0]?.url })))
+      setItems(cart.map(item => ({
+        productId: item.productId || item._id,
+        quantity: item.quantity,
+        name: item.name,
+        price: item.price,
+        image: item.image || item.images?.[0]?.url,
+        bulkQty: item.bulkDiscountQuantity || item.bulkQty || 0,
+        bulkRed: item.bulkDiscountPriceReduction || item.bulkRed || 0
+      })))
     }
   }, [cart])
 
@@ -140,12 +156,17 @@ export default function Enquiry(){
                   {item.image ? (
                     <img src={item.image} alt="" className="w-full h-full object-contain" />
                   ) : (
-                    <span className="text-[10px] text-gray-400 font-black">BOX</span>
+                    <div className="w-10 h-10 rounded-xl bg-gray-100 border border-gray-200"></div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-base font-black text-gray-900 truncate tracking-tight">{item.name}</div>
                   <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Qty: {item.quantity} • Unit: ₹{item.price}</div>
+                  {item.bulkQty > 0 && item.quantity < item.bulkQty && (
+                    <div className="mt-1 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100">
+                      Buy {item.bulkQty - item.quantity} more to save ₹{(item.bulkQty - item.quantity) * (item.bulkRed || 0)}
+                    </div>
+                  )}
                 </div>
                 <div className="text-lg font-black text-gray-900">₹{item.price * item.quantity}</div>
               </div>

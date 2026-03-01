@@ -92,11 +92,13 @@ export default function UserLayout() {
                 {user ? (
                   <div className="flex items-center gap-4">
                     <div className="flex flex-col items-end">
-                      <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-white shadow-sm text-[10px] font-black uppercase tracking-widest text-gray-900">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                        {user.name}
-                      </span>
-                      <span className="inline-flex items-center gap-2 mt-1 px-3 py-1 rounded-xl border border-violet-200 text-[9px] font-black uppercase tracking-widest text-violet-700 bg-violet-50">Click2Kart Business</span>
+                      <div className="inline-flex flex-col items-end gap-0.5 px-3 py-1.5 rounded-full border border-gray-200 bg-white shadow-sm">
+                        <div className="inline-flex items-center gap-2">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-gray-900">{user.name}</span>
+                        </div>
+                        <span className="text-[8px] font-black uppercase tracking-widest text-gray-500 leading-none">Business</span>
+                      </div>
                     </div>
                     <button
                       onClick={handleLogout}
