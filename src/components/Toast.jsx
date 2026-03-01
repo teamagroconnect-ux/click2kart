@@ -13,12 +13,24 @@ export default function ToastProvider({ children }) {
   return (
     <ToastCtx.Provider value={{ notify }}>
       {children}
-      <div className="fixed bottom-4 right-4 space-y-2">
-        {messages.map(m => (
-          <div key={m.id} className={`px-4 py-2 rounded shadow text-white ${m.kind==='error'?'bg-red-600': m.kind==='success'?'bg-green-600':'bg-gray-800'}`}>{m.text}</div>
-        ))}
+      <div className="fixed top-4 left-0 right-0 z-50 pointer-events-none">
+        <div className="mx-auto max-w-md space-y-2 flex flex-col items-stretch px-4">
+          {messages.slice(-3).map(m => (
+            <div
+              key={m.id}
+              className={`pointer-events-auto px-4 py-3 rounded-2xl shadow-lg text-white text-sm font-semibold tracking-tight border ${
+                m.kind==='error'
+                  ? 'bg-red-600 border-red-500'
+                  : m.kind==='success'
+                  ? 'bg-emerald-600 border-emerald-500'
+                  : 'bg-gray-900 border-gray-800'
+              }`}
+            >
+              {m.text}
+            </div>
+          ))}
+        </div>
       </div>
     </ToastCtx.Provider>
   )
 }
-

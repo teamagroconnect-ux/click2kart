@@ -1,20 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
+import { useAuth } from '../../lib/AuthContext'
 
 export default function OrderHistory() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
-  const phone = localStorage.getItem('userPhone')
+  const { token, user } = useAuth()
 
   useEffect(() => {
-    if (!phone) {
-      navigate('/login')
-      return
-    }
-
-    api.get('/api/orders/my-orders', { params: { phone } })
+    if (!token) { navigate('/login'); return }
+    api.get('/api/orders/my')
       .then(({ data }) => {
         setOrders(data)
         setLoading(false)
@@ -22,7 +19,7 @@ export default function OrderHistory() {
       .catch(() => {
         setLoading(false)
       })
-  }, [phone, navigate])
+  }, [token, navigate])
 
   if (loading) return <div className="p-10 text-center text-lg text-gray-500">Loading your orders...</div>
 
@@ -30,7 +27,7 @@ export default function OrderHistory() {
     <div className="max-w-4xl mx-auto p-4 md:p-10 space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Your Orders</h1>
-        <p className="text-gray-600 mt-2">History of all orders placed with {phone}</p>
+        <p className="text-gray-600 mt-2">History of all your orders</p>
       </div>
 
       {orders.length === 0 ? (

@@ -10,7 +10,7 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' })
   const [editing, setEditing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
   const [categories, setCategories] = useState([])
@@ -46,7 +46,7 @@ export default function Products() {
       bulkDiscountPriceReduction: Number(form.bulkDiscountPriceReduction||0),
       images 
     })
-    setForm({ name:'', price:'', category:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' }); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' }); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -67,6 +67,7 @@ export default function Products() {
       description: editing.description,
       price: Number(editing.price),
       category: editing.category,
+      subcategory: editing.subcategory || undefined,
       stock: Number(editing.stock),
       gst: Number(editing.gst||0),
       mrp: editing.mrp ? Number(editing.mrp) : undefined,
@@ -215,6 +216,12 @@ export default function Products() {
                     </select>
                   </div>
                   <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Subcategory (optional)</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. mi" value={form.subcategory} onChange={e => setForm({ ...form, subcategory: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>
                     <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12" value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} />
                   </div>
@@ -278,6 +285,10 @@ export default function Products() {
                   <option value="">Select category</option>
                   {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                 </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Subcategory (optional)</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Subcategory" value={editing.subcategory || ''} onChange={e => setEditing({ ...editing, subcategory: e.target.value })} />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Stock</label>

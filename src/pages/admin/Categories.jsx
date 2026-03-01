@@ -3,10 +3,17 @@ import api from '../../lib/api'
 
 export default function Categories(){
   const [items, setItems] = useState([])
-  const [form, setForm] = useState({ name:'', description:'' })
+  const [form, setForm] = useState({ name:'', description:'', parentId:'' })
   const load = async () => { const {data} = await api.get('/api/categories'); setItems(data) }
   useEffect(()=>{ load() }, [])
-  const create = async (e) => { e.preventDefault(); await api.post('/api/categories', form); setForm({ name:'', description:'' }); load() }
+  const create = async (e) => { 
+    e.preventDefault(); 
+    const payload = { name: form.name, description: form.description }
+    if (form.parentId) payload.parentId = form.parentId
+    await api.post('/api/categories', payload); 
+    setForm({ name:'', description:'', parentId:'' }); 
+    load() 
+  }
   const toggle = async (c) => { await api.put(`/api/categories/${c._id}`, { isActive: !c.isActive }); load() }
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
@@ -27,6 +34,19 @@ export default function Categories(){
                 <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Summer Collection" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required />
               </div>
               <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Parent (Optional)</label>
+                <select
+                  className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={form.parentId}
+                  onChange={e=>setForm({...form, parentId:e.target.value})}
+                >
+                  <option value="">No Parent (Top-level)</option>
+                  {items.filter(x=>x.isActive).map(c=>(
+                    <option key={c._id} value={c._id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
                 <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[100px]" placeholder="Briefly describe this category..." value={form.description} onChange={e=>setForm({...form, description:e.target.value})} />
               </div>
@@ -43,6 +63,7 @@ export default function Categories(){
                 <div key={c._id} className="p-6 flex justify-between items-center hover:bg-gray-50/50 transition-colors">
                   <div className="space-y-1">
                     <div className="font-bold text-gray-900 capitalize text-lg tracking-tight">{c.name}</div>
+                    {c.parent?.name && <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Parent: {c.parent.name}</div>}
                     <div className="text-sm text-gray-500 font-medium">{c.description || 'No description provided.'}</div>
                   </div>
                   <div className="flex items-center gap-4">

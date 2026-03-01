@@ -74,7 +74,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card iconBg="bg-blue-50" icon="📦" title="Total Products" value={stats?.totalProducts ?? inv.totalSkus} />
-        <Card iconBg="bg-emerald-50" icon="✅" title="Active Customers" value={stats?.totalCustomers ?? 0} />
+        <Card iconBg="bg-yellow-50" icon="⏳" title="Pending Approvals" value={stats?.pendingCustomers ?? 0} />
         <Card iconBg="bg-violet-50" icon="🧾" title="Total Bills" value={stats?.totalBills ?? 0} />
         <Card iconBg="bg-green-50" icon="🧰" title="Units in Stock" value={inv.totalUnits} />
         <Card iconBg="bg-amber-50" icon="⚠️" title="Low Stock Alerts" value={inv.lowStock} />
