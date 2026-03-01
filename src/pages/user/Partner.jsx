@@ -381,6 +381,95 @@ export default function Partner() {
 
         .pr-no-pay { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 220px; gap: 10px; text-align: center; }
 
+        /* ── STEPS ── */
+        .pr-steps { display: flex; flex-direction: column; }
+
+        .pr-step {
+          display: flex; gap: 20px;
+          margin-bottom: 0;
+        }
+
+        .pr-step-left {
+          display: flex; flex-direction: column; align-items: center;
+          flex-shrink: 0;
+        }
+
+        .pr-step-circle {
+          width: 40px; height: 40px; border-radius: 50%;
+          background: white;
+          border: 2px solid rgba(139,92,246,0.2);
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 17px; color: #9ca3af; letter-spacing: 0.05em;
+          flex-shrink: 0; position: relative; z-index: 1;
+          transition: all 0.3s;
+        }
+        .pr-step-circle.active {
+          background: #7c3aed; border-color: #7c3aed; color: white;
+          box-shadow: 0 4px 16px rgba(124,58,237,0.35);
+        }
+        .pr-step-circle.done {
+          background: #059669; border-color: #059669; color: white;
+          box-shadow: 0 4px 16px rgba(5,150,105,0.3);
+          font-size: 16px;
+        }
+
+        .pr-step-line {
+          width: 2px; flex: 1; min-height: 32px;
+          background: linear-gradient(to bottom, rgba(139,92,246,0.2), rgba(139,92,246,0.06));
+          margin: 6px 0;
+        }
+
+        .pr-step-body {
+          padding-bottom: 32px; flex: 1; min-width: 0;
+        }
+
+        .pr-step-tag {
+          display: inline-block;
+          font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+          color: #7c3aed;
+          background: rgba(139,92,246,0.08);
+          border: 1px solid rgba(139,92,246,0.18);
+          padding: 3px 10px; border-radius: 100px;
+          margin-bottom: 8px;
+        }
+
+        .pr-step-title {
+          font-family: 'Bebas Neue', sans-serif;
+          font-size: 22px; color: #1e1b2e; letter-spacing: 0.03em; line-height: 1;
+          margin-bottom: 10px;
+        }
+
+        .pr-step-desc {
+          font-size: 13px; color: #6b7280; font-weight: 400; line-height: 1.7;
+          margin-bottom: 16px; max-width: 520px;
+        }
+
+        .pr-step-btn {
+          display: inline-flex; align-items: center; gap: 8px;
+          background: #7c3aed; color: white;
+          padding: 11px 24px; border-radius: 10px;
+          font-size: 11px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.14em;
+          text-decoration: none; transition: all 0.25s;
+          box-shadow: 0 6px 20px rgba(124,58,237,0.28);
+        }
+        .pr-step-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(124,58,237,0.4); }
+
+        .pr-step-contact {
+          display: inline-flex; align-items: center; gap: 12px;
+          background: #f5f3ff; border: 1px solid rgba(139,92,246,0.18);
+          padding: 12px 18px; border-radius: 12px;
+        }
+
+        .pr-step-info {
+          display: inline-flex; align-items: flex-start; gap: 8px;
+          background: rgba(139,92,246,0.05);
+          border: 1px solid rgba(139,92,246,0.12);
+          padding: 10px 14px; border-radius: 10px;
+          font-size: 12px; color: #7c3aed; font-weight: 500; line-height: 1.5;
+        }
+
         @keyframes prFadeUp {
           from { opacity: 0; transform: translateY(20px); }
           to   { opacity: 1; transform: translateY(0); }
@@ -397,12 +486,6 @@ export default function Partner() {
           <div className="pr-header">
             <div>
               <div className="pr-logo-row">
-                <div className="pr-logo">
-                  <img src="/logo.png" alt="Logo"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', inset: 0 }}
-                    onError={e => e.target.style.display = 'none'} />
-                 
-                </div>
                 <span className="pr-eyebrow">
                   <span className="pr-eyebrow-dot" />
                   Partner Portal
@@ -432,39 +515,113 @@ export default function Partner() {
             </div>
           )}
 
-          {/* ── ONBOARDING ── */}
+          {/* ── ONBOARDING STEPS ── */}
           {!data && !loading && !error && (
             <div className="pr-onboard">
               <div className="pr-onboard-glow" />
               <div style={{ position: 'relative', zIndex: 1 }}>
-                <span className="pr-eyebrow" style={{ marginBottom: 16, display: 'inline-flex' }}>
-                  <span className="pr-eyebrow-dot" /> Onboarding Process
-                </span>
-                <h2 className="pr-onboard-title">How to Become a <em>Partner?</em></h2>
-                <p className="pr-onboard-sub">
-                  Join India's most exclusive network of B2B tech distributors.
-                  Get your unique referral credentials and start earning today.
-                </p>
-                <div className="pr-contact-card">
-                  <div className="pr-contact-icon">
-                    <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
+
+                {/* heading */}
+                <div style={{ marginBottom: 36 }}>
+                  <span className="pr-eyebrow" style={{ display: 'inline-flex', marginBottom: 16 }}>
+                    <span className="pr-eyebrow-dot" /> Onboarding Process
+                  </span>
+                  <h2 className="pr-onboard-title">How to Become a <em>Partner?</em></h2>
+                  <p className="pr-onboard-sub">
+                    Join India's most exclusive B2B tech distribution network. Follow these simple steps and start earning commissions on every order.
+                  </p>
+                </div>
+
+                {/* steps */}
+                <div className="pr-steps">
+
+                  {/* step 1 */}
+                  <div className="pr-step">
+                    <div className="pr-step-left">
+                      <div className="pr-step-circle active">1</div>
+                      <div className="pr-step-line" />
+                    </div>
+                    <div className="pr-step-body">
+                      <div className="pr-step-tag">Get Started</div>
+                      <div className="pr-step-title">Create Your Account</div>
+                      <div className="pr-step-desc">
+                        Click the button below to visit our sign-up page. Fill in your business details — it takes less than 2 minutes. No documents needed at this stage.
+                      </div>
+                      <a
+                        href="/signup"
+                        className="pr-step-btn"
+                      >
+                        Sign Up Now
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                        </svg>
+                      </a>
+                    </div>
                   </div>
-                  <div>
-                    <div className="pr-contact-label">Direct Email</div>
-                    <div className="pr-contact-value">{CONFIG.SUPPORT_EMAIL}</div>
+
+                  {/* step 2 */}
+                  <div className="pr-step">
+                    <div className="pr-step-left">
+                      <div className="pr-step-circle">2</div>
+                      <div className="pr-step-line" />
+                    </div>
+                    <div className="pr-step-body">
+                      <div className="pr-step-tag">Activation</div>
+                      <div className="pr-step-title">Request Account Activation</div>
+                      <div className="pr-step-desc">
+                        Once registered, send us an email from your registered address. Our team will manually review and activate your partner account within 24 hours.
+                      </div>
+                      <div className="pr-step-contact">
+                        <div className="pr-contact-icon" style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0 }}>
+                          <svg width="16" height="16" fill="none" stroke="white" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="pr-contact-label">Email us at</div>
+                          <div className="pr-contact-value" style={{ fontSize: 14 }}>{CONFIG.SUPPORT_EMAIL}</div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* step 3 */}
+                  <div className="pr-step">
+                    <div className="pr-step-left">
+                      <div className="pr-step-circle">3</div>
+                      <div className="pr-step-line" />
+                    </div>
+                    <div className="pr-step-body">
+                      <div className="pr-step-tag">Verification</div>
+                      <div className="pr-step-title">Complete Your KYC</div>
+                      <div className="pr-step-desc">
+                        After activation, you'll be prompted to complete a quick KYC (Know Your Customer) process. Submit your GST number, business PAN, and address proof to unlock full ordering privileges.
+                      </div>
+                      <div className="pr-step-info">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ flexShrink: 0, marginTop: 1 }}>
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        KYC typically takes 1–2 business days to verify.
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* step 4 — final */}
+                  <div className="pr-step" style={{ marginBottom: 0 }}>
+                    <div className="pr-step-left">
+                      <div className="pr-step-circle done">✓</div>
+                    </div>
+                    <div className="pr-step-body" style={{ paddingBottom: 0 }}>
+                      <div className="pr-step-tag" style={{ background: 'rgba(5,150,105,0.1)', color: '#059669', borderColor: 'rgba(5,150,105,0.2)' }}>You're In!</div>
+                      <div className="pr-step-title">Start Ordering & Earning</div>
+                      <div className="pr-step-desc">
+                        Your account is fully activated. Browse the entire wholesale catalogue, place bulk orders at exclusive partner pricing, and earn commission on every referral — tracked right here on this dashboard.
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
-            </div>
-          )}
-
-          {!data && !loading && !error && (
-            <div className="pr-empty">
-              <div className="pr-empty-icon">🎟️</div>
-              <h3>Ready to check your earnings?</h3>
-              <p>Enter your partner coupon code above to access your performance data.</p>
             </div>
           )}
 
