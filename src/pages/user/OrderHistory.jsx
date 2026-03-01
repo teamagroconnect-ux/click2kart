@@ -90,6 +90,30 @@ export default function OrderHistory() {
                     </div>
                   </div>
                 ))}
+                {order.status === 'FULFILLED' && !order.feedbackRating && (
+                  <div className="pt-4 border-t">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Rate Delivery</div>
+                    <div className="flex items-center gap-2">
+                      {[1,2,3,4,5].map(star => (
+                        <button
+                          key={star}
+                          onClick={async () => {
+                            try {
+                              const { data } = await api.post(`/api/orders/${order._id}/feedback`, { rating: star })
+                              setOrders(prev => prev.map(o => o._id === order._id ? { ...o, feedbackRating: data.feedbackRating } : o))
+                            } catch {}
+                          }}
+                          className={`h-8 w-8 rounded-lg border ${star <= 3 ? 'border-gray-200' : 'border-emerald-200'} bg-white hover:bg-gray-50`}
+                          title={`${star} Star`}
+                        >
+                          <svg className={`w-4 h-4 ${star <= 3 ? 'text-gray-300' : 'text-emerald-500'}`} viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z" />
+                          </svg>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           ))}

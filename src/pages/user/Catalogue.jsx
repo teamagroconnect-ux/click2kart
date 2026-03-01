@@ -479,6 +479,8 @@ function ProductCard({ p, authed, addToCart, navigate }) {
   const discount = p.mrp && p.mrp > p.price
     ? Math.round(((Number(p.mrp) - Number(p.price)) / Number(p.mrp)) * 100)
     : 0
+  const [recOpen, setRecOpen] = useState(false)
+  const [recItems, setRecItems] = useState([])
 
   return (
     <div
@@ -555,7 +557,18 @@ function ProductCard({ p, authed, addToCart, navigate }) {
               )}
             </div>
             <button
-              onClick={e => { e.stopPropagation(); e.preventDefault(); if (authed) addToCart(p) }}
+              onClick={async e => { 
+                e.stopPropagation(); e.preventDefault(); 
+                if (!authed) return;
+                const ok = await addToCart(p)
+                if (ok) {
+                  try {
+                    const { data } = await api.get(`/api/recommendations/frequently-bought/${p._id}`)
+                    setRecItems(data || [])
+                    setRecOpen(true)
+                  } catch {}
+                }
+              }}
               disabled={!authed || p.stock <= 0}
               title={authed ? (p.stock > 0 ? 'Add to Cart' : 'Sold Out') : 'Login to add'}
               className="h-9 w-9 rounded-xl bg-[#1244ea] text-white flex items-center justify-center shadow-sm hover:bg-[#0d35c7] active:scale-95 disabled:opacity-40 transition-all flex-shrink-0"
@@ -581,6 +594,54 @@ function ProductCard({ p, authed, addToCart, navigate }) {
           </div>
         </div>
       </div>
+      {recOpen && recItems.length > 0 && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setRecOpen(false)} />
+          <div className="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl overflow-hidden shadow-2xl" style={{ maxHeight: '70vh' }}>
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="h-1 w-10 rounded-full bg-gray-200" />
+            </div>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+              <span className="text-sm font-black text-gray-900 uppercase tracking-widest">Recommended with this</span>
+              <button onClick={() => setRecOpen(false)}
+                className="h-8 w-8 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center">
+                <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto p-5 space-y-3" style={{ maxHeight: 'calc(70vh - 80px)' }}>
+              {recItems.map(fp => (
+                <div key={fp._id || fp.id} className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl p-3">
+                  <div className="h-12 w-12 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                    {fp.images && fp.images[0]?.url
+                      ? <img src={fp.images[0].url} alt={fp.name} className="h-full w-full object-contain" />
+                      : <span className="text-[10px] text-gray-400">📦</span>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-gray-900 truncate">{fp.name}</div>
+                    <div className="text-[11px] text-gray-500">{fp.price != null ? `₹${Number(fp.price).toLocaleString()}` : 'Login to view'}</div>
+                  </div>
+                  <button
+                    onClick={() => addToCart(fp)}
+                    className="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest"
+                  >
+                    Add
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="p-5">
+              <button
+                onClick={() => setRecOpen(false)}
+                className="w-full py-4 bg-gray-900 text-white rounded-2xl text-sm font-black uppercase tracking-widest"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

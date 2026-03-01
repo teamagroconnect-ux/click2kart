@@ -42,19 +42,11 @@ function StatItem({ n, t, delay }) {
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0)
-  const [reorder, setReorder] = useState([])
-  const authed = !!localStorage.getItem('token')
   useEffect(() => {
     const fn = () => setScrollY(window.scrollY)
     window.addEventListener('scroll', fn, { passive: true })
     return () => window.removeEventListener('scroll', fn)
   }, [])
-  useEffect(() => {
-    if (!authed) return
-    import('../../lib/api').then(({ default: api }) => {
-      api.get('/api/recommendations/reorder').then(({ data }) => setReorder(data || [])).catch(() => setReorder([]))
-    })
-  }, [authed])
 
   const line1 = CONFIG.HERO_TITLE_LINE1 || 'Wholesale with'
   const line2 = CONFIG.HERO_TITLE_LINE2 || 'Click2Kart'
@@ -600,31 +592,6 @@ export default function Home() {
           </div>
         </section>
 
-        {authed && reorder.length > 0 && (
-          <>
-            <div className="hm-divider" />
-            <section className="hm-features-section">
-              <div className="hm-section-label">For You</div>
-              <h2 className="hm-section-heading">Reorder <em>Your Items</em></h2>
-              <p className="hm-section-sub">Quickly repeat your regular wholesale purchases.</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-                {reorder.map((p) => (
-                  <Link key={p._id || p.id} to={`/products/${p._id || p.id}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:border-violet-200 transition-all">
-                    <div className="aspect-square bg-gray-50 flex items-center justify-center overflow-hidden p-4">
-                      {p.images && p.images[0]?.url
-                        ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
-                        : <span className="text-4xl text-gray-300">📦</span>}
-                    </div>
-                    <div className="p-3">
-                      <div className="text-sm font-bold text-gray-900 line-clamp-2">{p.name}</div>
-                      <div className="text-[11px] text-gray-500">{p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view'}</div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          </>
-        )}
 
         <div className="hm-divider" />
 

@@ -10,6 +10,7 @@ export default function ProductDetail(){
   const [p, setP] = useState(null)
   const [similar, setSimilar] = useState([])
   const [fbt, setFbt] = useState([])
+  const [recOpen, setRecOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [myRating, setMyRating] = useState(0)
   const [myComment, setMyComment] = useState('')
@@ -78,7 +79,18 @@ export default function ProductDetail(){
                   </div>
                   {authed && (
                     <button
-                      onClick={(e) => { e.preventDefault(); if (!authed) { navigate('/login'); return } addToCart(p) }}
+                    onClick={async (e) => { 
+                      e.preventDefault(); 
+                      if (!authed) { navigate('/login'); return } 
+                      const ok = await addToCart(p)
+                      if (ok) {
+                        try {
+                          const { data } = await api.get(`/api/recommendations/frequently-bought/${id}`)
+                          setFbt(data || [])
+                          setRecOpen(true)
+                        } catch {}
+                      }
+                    }}
                       disabled={!authed || p.stock <= 0}
                       title={authed ? (p.stock > 0 ? 'Add to Cart' : 'Sold Out') : 'Login to add'}
                       className="inline-flex items-center justify-center h-11 w-11 rounded-2xl bg-gray-900 text-white shadow-md hover:bg-gray-800 active:scale-95 disabled:opacity-40"
@@ -192,6 +204,54 @@ export default function ProductDetail(){
           </section>
         )}
       </div>
+      {recOpen && fbt.length > 0 && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setRecOpen(false)} />
+          <div className="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl overflow-hidden shadow-2xl" style={{ maxHeight: '70vh' }}>
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="h-1 w-10 rounded-full bg-gray-200" />
+            </div>
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
+              <span className="text-sm font-black text-gray-900 uppercase tracking-widest">Frequently Bought Together</span>
+              <button onClick={() => setRecOpen(false)}
+                className="h-8 w-8 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center">
+                <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="overflow-y-auto p-5 space-y-3" style={{ maxHeight: 'calc(70vh - 80px)' }}>
+              {fbt.map(fp => (
+                <div key={fp._id || fp.id} className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl p-3">
+                  <div className="h-12 w-12 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                    {fp.images && fp.images[0]?.url
+                      ? <img src={fp.images[0].url} alt={fp.name} className="h-full w-full object-contain" />
+                      : <span className="text-[10px] text-gray-400">📦</span>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-gray-900 truncate">{fp.name}</div>
+                    <div className="text-[11px] text-gray-500">{fp.price != null ? `₹${Number(fp.price).toLocaleString()}` : 'Login to view'}</div>
+                  </div>
+                  <button
+                    onClick={() => addToCart(fp)}
+                    className="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest"
+                  >
+                    Add
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="p-5">
+              <button
+                onClick={() => setRecOpen(false)}
+                className="w-full py-4 bg-gray-900 text-white rounded-2xl text-sm font-black uppercase tracking-widest"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {reviewOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6" onClick={()=>setReviewOpen(false)}>
           <div className="bg-white rounded-3xl p-6 w-full max-w-md space-y-4" onClick={(e)=>e.stopPropagation()}>
