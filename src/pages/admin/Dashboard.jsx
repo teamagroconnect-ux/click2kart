@@ -67,76 +67,63 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">Inventory Dashboard</h1>
-          <p className="text-xs text-gray-500">Amazon-style overview of stock, orders and billing.</p>
-        </div>
-        <div className="flex gap-2">
-          <Link to="/admin/products" className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded">Add product</Link>
-          <Link to="/admin/billing" className="px-3 py-1.5 text-xs border rounded">New bill</Link>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-sm text-gray-500">Welcome back! Here's an overview of your platform</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat title="Total products" value={inv.totalSkus} />
-        <Stat title="Units in stock" value={inv.totalUnits} />
-        <Stat title="Open orders" value={orders.open} accent="blue" />
-        <Stat title="Low / Out of stock" value={`${inv.lowStock} / ${inv.outOfStock}`} accent="red" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card iconBg="bg-blue-50" icon="📦" title="Total Products" value={stats?.totalProducts ?? inv.totalSkus} />
+        <Card iconBg="bg-emerald-50" icon="✅" title="Active Customers" value={stats?.totalCustomers ?? 0} />
+        <Card iconBg="bg-violet-50" icon="🧾" title="Total Bills" value={stats?.totalBills ?? 0} />
+        <Card iconBg="bg-green-50" icon="🧰" title="Units in Stock" value={inv.totalUnits} />
+        <Card iconBg="bg-amber-50" icon="⚠️" title="Low Stock Alerts" value={inv.lowStock} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold text-sm">Low stock products</h2>
-              <p className="text-xs text-gray-500">Below threshold and out-of-stock items.</p>
-            </div>
-            <Link to="/admin/products" className="text-xs text-blue-600">View all</Link>
+        <div className="bg-white border rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b">
+            <h2 className="font-semibold">Low Stock Products</h2>
           </div>
-          <div className="divide-y max-h-56 overflow-y-auto text-sm">
+          <div className="divide-y max-h-64 overflow-y-auto">
             {(stats?.lowStock || []).map(p => (
-              <div key={p._id} className="px-4 py-2 flex justify-between items-center">
+              <div key={p._id} className="px-6 py-3 flex items-center justify-between">
                 <div className="truncate">{p.name}</div>
-                <div className="text-red-600 font-medium">{p.stock}</div>
+                <span className="px-2 py-0.5 rounded-lg text-[11px] font-bold bg-red-50 text-red-700 border border-red-100">{p.stock}</span>
               </div>
             ))}
             {(!stats?.lowStock || stats.lowStock.length === 0) && (
-              <div className="px-4 py-3 text-gray-500 text-sm">No low stock items</div>
+              <div className="px-6 py-6 text-gray-500 text-sm">No low stock items</div>
             )}
           </div>
         </div>
 
-        <div className="bg-white border rounded-xl overflow-hidden">
-          <div className="px-4 py-3 border-b flex items-center justify-between">
+        <div className="bg-white border rounded-2xl overflow-hidden">
+          <div className="px-6 py-4 border-b flex items-center justify-between">
             <div>
-              <h2 className="font-semibold text-sm">Recent orders</h2>
-              <p className="text-xs text-gray-500">Today: {orders.today} • Total loaded: {orders.total}</p>
+              <h2 className="font-semibold">Recent Orders</h2>
+              <p className="text-xs text-gray-500">Today: {orders.today} • Loaded: {orders.total}</p>
             </div>
-            <Link to="/admin/orders" className="text-xs text-blue-600">View all</Link>
+            <Link to="/admin/orders" className="text-sm text-blue-600">View all</Link>
           </div>
-          <div className="divide-y max-h-56 overflow-y-auto text-sm">
+          <div className="divide-y max-h-64 overflow-y-auto">
             {orders.recent.map(o => (
-              <div key={o._id} className="px-4 py-2 flex justify-between items-center">
+              <div key={o._id} className="px-6 py-3 flex items-center justify-between">
                 <div className="truncate">
-                  <div className="font-medium">{o.customer?.name}</div>
-                  <div className="text-xs text-gray-500">
-                    {o.createdAt ? new Date(o.createdAt).toLocaleString() : ''} • ₹{o.totalEstimate}
-                  </div>
+                  <div className="font-medium text-gray-900">{o.customer?.name}</div>
+                  <div className="text-xs text-gray-500">{o.createdAt ? new Date(o.createdAt).toLocaleString() : ''} • ₹{o.totalEstimate}</div>
                 </div>
-                <span className={`px-2 py-0.5 rounded text-xs ${
-                  o.status === 'FULFILLED'
-                    ? 'bg-green-100 text-green-800'
-                    : o.status === 'CANCELLED'
-                    ? 'bg-red-100 text-red-800'
-                    : 'bg-blue-50 text-blue-700'
+                <span className={`px-2 py-0.5 rounded-lg text-[11px] font-bold ${
+                  o.status === 'FULFILLED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' :
+                  o.status === 'CANCELLED' ? 'bg-red-50 text-red-700 border border-red-100' :
+                  'bg-blue-50 text-blue-700 border border-blue-100'
                 }`}>
                   {o.status}
                 </span>
               </div>
             ))}
             {orders.recent.length === 0 && (
-              <div className="px-4 py-3 text-gray-500 text-sm">No orders yet</div>
+              <div className="px-6 py-6 text-gray-500 text-sm">No orders yet</div>
             )}
           </div>
         </div>
@@ -145,13 +132,16 @@ export default function Dashboard() {
   )
 }
 
-function Stat({ title, value, accent }) {
-  const accentClass =
-    accent === 'blue' ? 'text-blue-600' : accent === 'red' ? 'text-red-600' : 'text-gray-900'
+function Card({ icon, iconBg, title, value }) {
   return (
-    <div className="bg-white border rounded-xl p-4 shadow-sm">
-      <div className="text-gray-500 text-xs uppercase tracking-wide">{title}</div>
-      <div className={`text-2xl font-semibold mt-1 ${accentClass}`}>{value}</div>
+    <div className="bg-white border rounded-2xl p-5 flex items-center gap-4">
+      <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${iconBg}`}>
+        <span className="text-xl">{icon}</span>
+      </div>
+      <div className="flex-1">
+        <div className="text-[12px] text-gray-500 font-bold">{title}</div>
+        <div className="text-2xl font-bold text-gray-900">{value}</div>
+      </div>
     </div>
   )
 }
