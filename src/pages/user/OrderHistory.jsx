@@ -77,7 +77,7 @@ export default function OrderHistory() {
                       {item.image ? (
                         <img src={item.image} alt={item.name} className="w-full h-full object-contain" />
                       ) : (
-                        <span className="text-[10px] text-gray-400">No image</span>
+                        <div className="w-8 h-8 rounded-xl bg-gray-100 border border-gray-200"></div>
                       )}
                     </div>
                     <div className="flex-1 min-w-0">

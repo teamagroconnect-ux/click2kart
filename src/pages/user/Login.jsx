@@ -8,7 +8,7 @@ import logo from '../../click2kart.png'
 export default function Login() {
   const { notify } = useToast()
   const navigate = useNavigate()
-  const { setAuth } = useAuth()
+  const { setAuth, refreshProfile } = useAuth()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
@@ -21,6 +21,7 @@ export default function Login() {
     try {
       const { data } = await api.post('/api/auth/customer/login', formData)
       setAuth(data.token, { ...data.user, role: 'customer' })
+      try { await refreshProfile() } catch {}
       notify('Welcome back!', 'success')
       navigate('/')
     } catch (err) {

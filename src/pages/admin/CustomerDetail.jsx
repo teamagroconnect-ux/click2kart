@@ -75,8 +75,28 @@ export default function CustomerDetail() {
         </div>
       </div>
       <div className="bg-white border rounded-2xl p-4">
-        <div className="text-xs text-gray-500 uppercase font-bold">KYC Details</div>
-        <pre className="text-sm text-gray-800 mt-2 whitespace-pre-wrap">{JSON.stringify(user.kyc || {}, null, 2)}</pre>
+        <div className="text-xs text-gray-500 uppercase font-bold mb-3">KYC Details</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <KycItem label="Business Name" value={user.kyc?.businessName} />
+          <KycItem label="GSTIN" value={user.kyc?.gstin} />
+          <KycItem label="PAN" value={user.kyc?.pan} />
+          <KycItem label="Pincode" value={user.kyc?.pincode} />
+          <KycItem label="State" value={user.kyc?.state} />
+          <KycItem label="City" value={user.kyc?.city} />
+          <KycItem label="Address Line 1" value={user.kyc?.addressLine1} className="md:col-span-2" />
+          <KycItem label="Address Line 2" value={user.kyc?.addressLine2} className="md:col-span-2" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function KycItem({ label, value, className='' }) {
+  return (
+    <div className={className}>
+      <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{label}</div>
+      <div className={`px-3 py-2 rounded-2xl border text-sm font-bold ${value ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-gray-50 border-gray-100 text-gray-400'}`}>
+        {value || '—'}
       </div>
     </div>
   )

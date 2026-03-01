@@ -86,7 +86,10 @@ export default function Enquiry(){
     e.preventDefault()
     setLoading(true)
     try {
-      const { data } = await api.post('/api/orders', { items, paymentMethod })
+      const cleanItems = items
+        .filter(it => typeof it.productId === 'string' && it.productId.length >= 12)
+        .map(it => ({ productId: it.productId, quantity: Math.max(1, Number(it.quantity || 1)) }))
+      const { data } = await api.post('/api/orders', { items: cleanItems, paymentMethod })
       
       if (paymentMethod === 'RAZORPAY') {
         handleRazorpay(data.order, data.razorpayOrderId);
@@ -96,7 +99,14 @@ export default function Enquiry(){
         nav('/orders')
       }
     } catch (err) {
-      notify(err?.response?.data?.error || 'Failed to place order', 'error')
+      const code = err?.response?.data?.error
+      const message =
+        code === 'kyc_required' ? 'Please complete KYC to place orders' :
+        code === 'product_not_found' ? 'Some items are no longer available' :
+        code === 'insufficient_stock' ? 'Insufficient stock for one of the items' :
+        code === 'invalid_payment_method' ? 'Invalid payment method selected' :
+        'Failed to place order'
+      notify(message, 'error')
     } finally {
       setLoading(false)
     }

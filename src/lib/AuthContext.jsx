@@ -48,6 +48,7 @@ export function AuthProvider({ children }) {
         email: data.email,
         phone: data.phone,
         defaultAddress: data.defaultAddress,
+        isKycComplete: !!data.isKycComplete,
         role: 'customer'
       }
       setUser(nextUser)
@@ -65,4 +66,3 @@ export function AuthProvider({ children }) {
 }
 
 export const useAuth = () => useContext(AuthContext)
-

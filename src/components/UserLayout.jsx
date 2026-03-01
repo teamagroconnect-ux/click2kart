@@ -15,8 +15,8 @@ export default function UserLayout() {
   const bottomNavItems = [
     { to: '/', l: 'Home', i: (<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />) },
     { to: '/products', l: 'Browse', i: (<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />) },
-    { to: '/order', l: 'Order', i: (<path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />) },
-    { to: '/login', l: 'Profile', i: (<path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />) }
+    { to: '/orders', l: 'Orders', i: (<path d="M5 3h14a2 2 0 012 2v2H3V5a2 2 0 012-2zm16 6H3v8a2 2 0 002 2h14a2 2 0 002-2V9z" />) },
+    { to: user ? '/profile' : '/login', l: 'Profile', i: (<path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />) }
   ]
 
   const handleLogout = () => {
@@ -52,7 +52,6 @@ export default function UserLayout() {
               {[
                 { to: '/', label: 'Home' },
                 { to: '/products', label: 'Catalogue' },
-                { to: '/order', label: 'Order Online' },
                 { to: '/orders', label: 'My Orders' },
                 { to: '/partner', label: 'Partner Portal' }
               ].map((link) => (
@@ -93,8 +92,11 @@ export default function UserLayout() {
                 {user ? (
                   <div className="flex items-center gap-4">
                     <div className="flex flex-col items-end">
-                      <span className="text-[10px] font-black uppercase text-gray-900 leading-none">{user.name}</span>
-                      <span className="inline-flex items-center gap-2 mt-1 px-2.5 py-1 rounded-xl border border-violet-200 text-[9px] font-black uppercase tracking-widest text-violet-700 bg-violet-50">Click2Kart Business</span>
+                      <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-gray-200 bg-white shadow-sm text-[10px] font-black uppercase tracking-widest text-gray-900">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                        {user.name}
+                      </span>
+                      <span className="inline-flex items-center gap-2 mt-1 px-3 py-1 rounded-xl border border-violet-200 text-[9px] font-black uppercase tracking-widest text-violet-700 bg-violet-50">Click2Kart Business</span>
                     </div>
                     <button
                       onClick={handleLogout}
@@ -128,11 +130,11 @@ export default function UserLayout() {
       </header>
 
       <main className="flex-1 min-h-0 pb-20 lg:pb-0 animate-in fade-in duration-700">
-        {user && (
+        {user && user.isKycComplete === false && (
           <div className="max-w-7xl mx-auto px-6 md:px-10 mt-4">
-            <div className="rounded-2xl border border-violet-100 bg-violet-50 text-violet-800 px-4 py-3 text-[12px] font-bold flex items-center justify-between">
-              <div>Welcome, {user.name}. Keep your KYC updated for ordering.</div>
-              <Link to="/profile" className="px-3 py-1.5 rounded-lg bg-violet-600 text-white text-[10px] uppercase tracking-widest">Update KYC</Link>
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3 text-[12px] font-bold flex items-center justify-between">
+              <div>Complete your KYC to place orders.</div>
+              <Link to="/profile" className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-[10px] uppercase tracking-widest">Update KYC</Link>
             </div>
           </div>
         )}
