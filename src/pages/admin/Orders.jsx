@@ -11,6 +11,7 @@ export default function Orders(){
   const [expandedId, setExpandedId] = useState(null)
   const limit = 20
   const [loading, setLoading] = useState(false)
+  const [sendingId, setSendingId] = useState('')
 
   const load = async(p=1)=>{ 
     setLoading(true)
@@ -45,6 +46,17 @@ export default function Orders(){
   const update = async(id, s)=>{ await api.patch(`/api/orders/${id}/status`, { status: s }); load(page) }
   const approveCash = async(id)=>{ await api.patch(`/api/orders/${id}/approve-cash`); load(page) }
   const toggle = (id) => setExpandedId(expandedId === id ? null : id)
+  const sendInvoice = async (billId) => {
+    try {
+      setSendingId(billId)
+      await api.post(`/api/bills/${billId}/send-email`)
+      notify('Invoice email sent to customer', 'success')
+    } catch (err) {
+      notify(err?.response?.data?.error || 'Failed to send invoice email', 'error')
+    } finally {
+      setSendingId('')
+    }
+  }
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -157,6 +169,18 @@ export default function Orders(){
                                 title="View HTML Invoice"
                               >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7h18M3 12h18M3 17h18" /></svg>
+                              </button>
+                            )}
+                            {o.paymentStatus === 'PAID' && o.billId && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); sendInvoice(o.billId) }}
+                                disabled={sendingId === o.billId}
+                                className="p-2 text-violet-700 hover:bg-violet-50 rounded-xl transition-colors disabled:opacity-50"
+                                title="Send Invoice Email"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                </svg>
                               </button>
                             )}
                             <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
