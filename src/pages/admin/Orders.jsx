@@ -303,6 +303,17 @@ export default function Orders(){
                                       Approve Offline Payment
                                     </button>
                                   )}
+                                  {o.paymentMethod === 'COD_20' && o.paymentStatus === 'PARTIAL' && (
+                                    <button 
+                                      onClick={(e) => { 
+                                        e.stopPropagation(); 
+                                        api.patch(`/api/orders/${o._id}/finalize-cod`).then(()=>{ notify('COD finalized & bill generated','success'); load(page) }).catch(()=>notify('Finalize failed','error'))
+                                      }}
+                                      className="w-full bg-blue-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-0.5"
+                                    >
+                                      Finalize COD & Generate Bill
+                                    </button>
+                                  )}
 
                                   <div className="space-y-2">
                                     <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Update Order Status</div>

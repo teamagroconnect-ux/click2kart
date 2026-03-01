@@ -62,10 +62,10 @@ export default function Enquiry(){
     })()
   }, [])
 
-  const handleRazorpay = (orderData, razorpayOrderId) => {
+  const handleRazorpay = (orderData, razorpayOrderId, amountPaise) => {
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_placeholder",
-      amount: Math.round(cartTotal * 100),
+      amount: amountPaise ?? Math.round(cartTotal * 100),
       currency: "INR",
       name: "Click2Kart",
       description: "B2B Order Payment",
@@ -108,7 +108,9 @@ export default function Enquiry(){
       const { data } = await api.post('/api/orders', { items: cleanItems, paymentMethod })
       
       if (paymentMethod === 'RAZORPAY') {
-        handleRazorpay(data.order, data.razorpayOrderId);
+        handleRazorpay(data.order, data.razorpayOrderId, Math.round(cartTotal * 100));
+      } else if (paymentMethod === 'COD_20') {
+        handleRazorpay(data.order, data.razorpayOrderId, Math.round(cartTotal * 0.2 * 100));
       } else {
         notify('Order requested! Pending admin approval for cash payment.', 'success')
         clearCart()
@@ -162,11 +164,36 @@ export default function Enquiry(){
                 <div className="flex-1 min-w-0">
                   <div className="text-base font-black text-gray-900 truncate tracking-tight">{item.name}</div>
                   <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Qty: {item.quantity} • Unit: ₹{item.price}</div>
-                  {item.bulkQty > 0 && item.quantity < item.bulkQty && (
-                    <div className="mt-1 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100">
-                      Buy {item.bulkQty - item.quantity} more to save ₹{(item.bulkQty - item.quantity) * (item.bulkRed || 0)}
-                    </div>
-                  )}
+                  {(() => {
+                    const tiers = Array.isArray(item.bulkTiers) && item.bulkTiers.length
+                      ? item.bulkTiers.slice().sort((a,b)=>a.quantity-b.quantity)
+                      : (item.bulkQty > 0 ? [{ quantity: item.bulkQty, priceReduction: item.bulkRed || 0 }] : [])
+                    if (!tiers.length) return null
+                    const next = tiers.find(t => item.quantity < t.quantity)
+                    const maxQ = Math.max(item.quantity, tiers[tiers.length - 1].quantity)
+                    const pct = Math.min(100, Math.round((item.quantity / maxQ) * 100))
+                    return (
+                      <div className="mt-2 space-y-2">
+                        <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+                          <div className="h-2 bg-emerald-500" style={{ width: `${pct}%` }} />
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
+                          <div className="flex items-center gap-2">
+                            {tiers.map((t, idx) => (
+                              <div key={idx} className="flex items-center gap-1">
+                                <span className="h-1 w-1 rounded-full bg-gray-300"></span>
+                                <span>{t.quantity}+</span>
+                              </div>
+                            ))}
+                          </div>
+                          {next
+                            ? <div className="text-emerald-700">Add {next.quantity - item.quantity} more for extra ₹{Number(next.priceReduction).toLocaleString()}/unit off</div>
+                            : <div className="text-emerald-700">Max bulk savings applied</div>
+                          }
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
                 <div className="text-lg font-black text-gray-900">₹{item.price * item.quantity}</div>
               </div>
@@ -183,24 +210,24 @@ export default function Enquiry(){
       </div>
 
       <form onSubmit={submit} className="lg:col-span-7 bg-white border border-gray-50 p-8 md:p-12 rounded-[3rem] shadow-2xl space-y-10 animate-in fade-in slide-in-from-right-8 duration-1000">
-        <div className="space-y-8">
+        <div className="space-y-6">
           <div className="flex items-center gap-3">
             <span className="h-10 w-10 rounded-2xl bg-violet-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-violet-100 uppercase tracking-widest">01</span>
-            <h3 className="text-lg font-black tracking-tight text-gray-900 uppercase">Account Details</h3>
+            <h3 className="text-lg font-black tracking-tight text-gray-900 uppercase">Contact & Delivery</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Business Name</div>
+              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Name</div>
               <div className="text-sm font-bold text-gray-900 mt-1">{profile.name || '-'}</div>
             </div>
             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Contact Phone</div>
+              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Phone</div>
               <div className="text-sm font-bold text-gray-900 mt-1">{profile.phone || '-'}</div>
             </div>
-          </div>
-          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-            <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Business Email</div>
-            <div className="text-sm font-bold text-gray-900 mt-1">{profile.email || '-'}</div>
+            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Email</div>
+              <div className="text-sm font-bold text-gray-900 mt-1">{profile.email || '-'}</div>
+            </div>
           </div>
         </div>
 
@@ -232,14 +259,25 @@ export default function Enquiry(){
                 <span className="text-[10px] text-amber-600 font-black uppercase tracking-[0.2em] mt-2">Manual Approval Required</span>
               </div>
             </button>
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('COD_20')}
+              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${paymentMethod === 'COD_20' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
+            >
+              <span className="text-4xl">🚚</span>
+              <div className="flex flex-col">
+                <span className="text-base font-black uppercase tracking-widest text-gray-900 leading-none">Cash on Delivery</span>
+                <span className="text-[10px] text-blue-600 font-black uppercase tracking-[0.2em] mt-2">Pay 20% now • Rest on delivery</span>
+              </div>
+            </button>
           </div>
         </div>
 
         <button 
           disabled={loading}
-          className={`py-6 rounded-[2rem] w-full text-sm font-black uppercase tracking-widest transition-all mt-6 shadow-2xl ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-violet-600 hover:bg-violet-500 text-white shadow-violet-200 transform hover:-translate-y-2 active:scale-95'}`}
+          className={`py-6 rounded-[2rem] w-full text-sm font-black uppercase tracking-widest transition-all mt-6 shadow-2xl ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 hover:bg-black text-white shadow-gray-300 transform hover:-translate-y-2 active:scale-95'}`}
         >
-          {loading ? 'Processing...' : paymentMethod === 'RAZORPAY' ? 'Pay & Confirm Order' : 'Request Offline Order'}
+          {loading ? 'Processing...' : paymentMethod === 'RAZORPAY' ? 'Pay & Confirm Order' : paymentMethod === 'COD_20' ? 'Pay 20% & Confirm COD' : 'Request Offline Order'}
         </button>
       </form>
     </div>

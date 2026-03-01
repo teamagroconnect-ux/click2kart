@@ -334,6 +334,11 @@ export default function Products() {
               <button type="button" onClick={() => setEditing(null)} className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl text-sm font-black hover:bg-gray-200 transition-all uppercase tracking-widest">Cancel</button>
               <button className="flex-2 bg-gray-900 text-white py-4 px-12 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest">Save Changes</button>
             </div>
+
+            <div className="mt-8 border-t pt-6 space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Variants</h4>
+              <VariantManager product={editing} onChanged={() => { api.get(`/api/products/${editing._id}`).then(({data}) => setEditing({ ...editing, variants: data.variants||[] })) }} />
+            </div>
           </form>
         </div>
       )}
@@ -353,6 +358,81 @@ export default function Products() {
         </div>
       )}
     </>
+  )
+}
+
+function VariantManager({ product, onChanged }) {
+  const { notify } = useToast()
+  const [form, setForm] = useState({ color:'', ram:'', storage:'', capacity:'', price:'', mrp:'', stock:'', sku:'', images:'' })
+  const add = async (e) => {
+    e.preventDefault()
+    try {
+      const images = form.images.split(',').map(s=>s.trim()).filter(Boolean)
+      await api.post(`/api/products/${product._id}/variants`, {
+        attributes: { color: form.color, ram: form.ram, storage: form.storage, capacity: form.capacity },
+        price: Number(form.price||0),
+        mrp: form.mrp ? Number(form.mrp) : undefined,
+        stock: Number(form.stock||0),
+        sku: form.sku || undefined,
+        images
+      })
+      setForm({ color:'', ram:'', storage:'', capacity:'', price:'', mrp:'', stock:'', sku:'', images:'' })
+      notify('Variant added','success')
+      onChanged && onChanged()
+    } catch (err) {
+      notify(err?.response?.data?.error || 'Failed to add variant','error')
+    }
+  }
+  const toggleActive = async (v) => {
+    try {
+      await api.put(`/api/products/${product._id}/variants/${v._id}`, { isActive: !v.isActive })
+      notify('Variant updated','success')
+      onChanged && onChanged()
+    } catch { notify('Update failed','error') }
+  }
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="md:col-span-2 space-y-3">
+        {(product.variants || []).length === 0 && (
+          <div className="text-xs text-gray-500 italic">No variants added yet</div>
+        )}
+        {(product.variants || []).map(v => (
+          <div key={v._id} className="flex items-center justify-between gap-4 bg-white border border-gray-100 rounded-2xl p-4">
+            <div className="space-y-1">
+              <div className="text-sm font-black text-gray-900">{product.name}</div>
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                {['color','ram','storage','capacity'].map(k => v.attributes?.[k] ? `${k}: ${v.attributes[k]}` : '').filter(Boolean).join(' • ')}
+              </div>
+              <div className="text-xs font-bold text-gray-900">₹{(v.price ?? product.price).toLocaleString()} • SKU: {v.sku || '-'}</div>
+              <div className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black border ${v.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                {v.stock} IN STOCK
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => toggleActive(v)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${v.isActive ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                {v.isActive ? 'Active' : 'Inactive'}
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <form onSubmit={add} className="space-y-3">
+        <div className="grid grid-cols-2 gap-3">
+          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="Color" value={form.color} onChange={e=>setForm({...form,color:e.target.value})} />
+          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="RAM" value={form.ram} onChange={e=>setForm({...form,ram:e.target.value})} />
+          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="Storage" value={form.storage} onChange={e=>setForm({...form,storage:e.target.value})} />
+          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="Capacity" value={form.capacity} onChange={e=>setForm({...form,capacity:e.target.value})} />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="Price (₹)" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} />
+          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="MRP (₹)" value={form.mrp} onChange={e=>setForm({...form,mrp:e.target.value})} />
+          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="Stock" value={form.stock} onChange={e=>setForm({...form,stock:e.target.value})} />
+          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="SKU" value={form.sku} onChange={e=>setForm({...form,sku:e.target.value})} />
+        </div>
+        <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold w-full" placeholder="Images (comma URLs)" value={form.images} onChange={e=>setForm({...form,images:e.target.value})} />
+        <button className="w-full bg-blue-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest">Add Variant</button>
+      </form>
+    </div>
   )
 }
 
