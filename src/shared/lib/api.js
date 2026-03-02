@@ -13,9 +13,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err?.response?.status === 401) {
+    const s = err?.response?.status
+    const code = err?.response?.data?.error
+    if (s === 401 || code === 'invalid_token') {
+      try { sessionStorage.setItem('postLoginRedirect', location.pathname + location.search) } catch {}
       localStorage.removeItem('token')
       if (location.pathname.startsWith('/admin')) location.href = '/admin/login'
+      else location.href = '/login'
     }
     return Promise.reject(err)
   }

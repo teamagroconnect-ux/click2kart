@@ -14,11 +14,14 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     const s = err?.response?.status
-    if (s === 401 || s === 403) {
+    const code = err?.response?.data?.error
+    if (s === 401 || code === 'invalid_token') {
+      try { sessionStorage.setItem('postLoginRedirect', location.pathname + location.search) } catch {}
       localStorage.removeItem('token')
       if (location.pathname.startsWith('/admin')) location.href = '/admin/login'
       else location.href = '/login'
     }
+    // For 403, do not force logout. Let pages handle access errors gracefully.
     return Promise.reject(err)
   }
 )

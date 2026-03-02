@@ -66,7 +66,31 @@ export default function Enquiry(){
     })()
   }, [])
 
-  const handleRazorpay = (orderData, razorpayOrderId, amountPaise) => {
+  const ensureRazorpayLoaded = async () => {
+    if (window.Razorpay) return true
+    return new Promise((resolve, reject) => {
+      const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')
+      if (existing) {
+        existing.addEventListener('load', () => resolve(true), { once: true })
+        existing.addEventListener('error', () => reject(new Error('razorpay_load_failed')), { once: true })
+        return
+      }
+      const s = document.createElement('script')
+      s.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      s.async = true
+      s.onload = () => resolve(true)
+      s.onerror = () => reject(new Error('razorpay_load_failed'))
+      document.body.appendChild(s)
+    })
+  }
+
+  const handleRazorpay = async (orderData, razorpayOrderId, amountPaise) => {
+    try {
+      await ensureRazorpayLoaded()
+    } catch {
+      notify('Unable to load payment gateway. Please try again.', 'error')
+      return
+    }
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_placeholder",
       amount: amountPaise ?? Math.round(cartTotal * 100),
@@ -98,8 +122,12 @@ export default function Enquiry(){
         color: "#2563eb"
       }
     };
-    const rzp = new window.Razorpay(options);
-    rzp.open();
+    try {
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch {
+      notify('Payment initialization failed. Please retry.', 'error')
+    }
   }
 
   const submit = async (e)=>{

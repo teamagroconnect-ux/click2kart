@@ -12,7 +12,13 @@ export default function Login() {
     try {
       const { data } = await api.post('/api/auth/login', { email, password })
       localStorage.setItem('token', data.token)
-      location.href = '/admin'
+      const target = sessionStorage.getItem('postLoginRedirect')
+      if (target && target.startsWith('/admin')) {
+        sessionStorage.removeItem('postLoginRedirect')
+        location.href = target
+      } else {
+        location.href = '/admin'
+      }
     } catch (err) {
       setError(err?.response?.data?.error || 'login_failed')
     }
@@ -74,4 +80,3 @@ export default function Login() {
     </div>
   )
 }
-
