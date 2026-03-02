@@ -186,8 +186,11 @@ export default function InventoryPage() {
                     ) : <span className="text-[10px] text-gray-400">📦</span>}
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-semibold text-gray-900">{selected.name}</div>
+                        <div className="text-sm font-semibold text-gray-900">{selected.name}</div>
                     <div className="text-[11px] text-gray-500">Current stock: {selected.stock ?? 0}</div>
+                    {(selected.store || selected.section) && (
+                      <div className="text-[11px] text-gray-600">Location: {selected.store || '-'} {selected.section ? `• ${selected.section}` : ''}</div>
+                    )}
                   </div>
                   <button type="button" onClick={() => { setSelected(null); setQ('') }} className="px-3 py-1.5 rounded-lg bg-white border text-gray-600 hover:bg-gray-100 text-xs font-bold">Change</button>
                 </div>
@@ -238,20 +241,22 @@ export default function InventoryPage() {
                 <th className="px-4 py-3 text-left">Date</th>
                 <th className="px-4 py-3 text-left">Product</th>
                 <th className="px-4 py-3 text-left">Quantity</th>
+                <th className="px-4 py-3 text-left">Location</th>
                 <th className="px-4 py-3 text-left">Note</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
-                <tr><td colSpan="4" className="px-4 py-6 text-center text-gray-400">Loading...</td></tr>
+                <tr><td colSpan="5" className="px-4 py-6 text-center text-gray-400">Loading...</td></tr>
               ) : history.length === 0 ? (
-                <tr><td colSpan="4" className="px-4 py-6 text-center text-gray-400">No stock-in records yet</td></tr>
+                <tr><td colSpan="5" className="px-4 py-6 text-center text-gray-400">No stock-in records yet</td></tr>
               ) : (
                 history.map((h) => (
                   <tr key={h.id}>
                     <td className="px-4 py-3 text-gray-600">{new Date(h.createdAt).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}</td>
                     <td className="px-4 py-3 font-semibold text-gray-900">{h.productName || h.productId}</td>
                     <td className="px-4 py-3 text-emerald-700 font-bold">+{h.quantity}</td>
+                    <td className="px-4 py-3 text-gray-600">{h.store || '-'} {h.section ? `• ${h.section}` : ''}</td>
                     <td className="px-4 py-3 text-gray-600">{h.note || '—'}</td>
                   </tr>
                 ))

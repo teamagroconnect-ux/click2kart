@@ -3,6 +3,7 @@ import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import ConfirmModal from '../../components/ConfirmModal'
 import ImageUpload from '../../components/ImageUpload'
+import VariantQuickAdd from './VariantQuickAdd.jsx'
 
 export default function Products() {
   const { notify } = useToast()
@@ -10,10 +11,11 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', store:'', section:'', variants: [] })
   const [editing, setEditing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
   const [categories, setCategories] = useState([])
+  const [stores, setStores] = useState([])
   const limit = 10
   const [preview, setPreview] = useState('')
 
@@ -32,6 +34,9 @@ export default function Products() {
       setCategories((data || []).filter(c => c.isActive))
     }).catch(() => {})
   }, [])
+  useEffect(() => {
+    api.get('/api/stores').then(({ data }) => setStores(data || [])).catch(()=>{})
+  }, [])
 
   const create = async (e) => {
     e.preventDefault()
@@ -44,9 +49,17 @@ export default function Products() {
       mrp: form.mrp ? Number(form.mrp) : undefined,
       bulkDiscountQuantity: Number(form.bulkDiscountQuantity||0),
       bulkDiscountPriceReduction: Number(form.bulkDiscountPriceReduction||0),
-      images 
+      images,
+      variants: (form.variants || []).map(v => ({
+        attributes: { color: v.color || '', ram: v.ram || '', storage: v.storage || '', capacity: v.capacity || '' },
+        price: v.price ? Number(v.price) : undefined,
+        mrp: v.mrp ? Number(v.mrp) : undefined,
+        stock: v.stock ? Number(v.stock) : 0,
+        sku: v.sku || undefined,
+        images: (v.images || '').split(',').map(s=>s.trim()).filter(Boolean)
+      }))
     })
-    setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' }); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', store:'', section:'', variants: [] }); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -73,7 +86,9 @@ export default function Products() {
       mrp: editing.mrp ? Number(editing.mrp) : undefined,
       bulkDiscountQuantity: Number(editing.bulkDiscountQuantity||0),
       bulkDiscountPriceReduction: Number(editing.bulkDiscountPriceReduction||0),
-      images: (editing.images||'').split(',').map(s=>s.trim()).filter(Boolean)
+      images: (editing.images||'').split(',').map(s=>s.trim()).filter(Boolean),
+      store: editing.store || '',
+      section: editing.section || ''
     }
     await api.put(`/api/products/${editing._id}`, payload)
     setEditing(null); load(page); notify('Product updated','success')
@@ -210,7 +225,11 @@ export default function Products() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category</label>
-                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} required>
+                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.category} onChange={e => {
+                      const catName = e.target.value
+                      const cat = categories.find(c => c.name === catName)
+                      setForm({ ...form, category: catName, store: form.store || cat?.store || '', section: form.section || cat?.section || '' })
+                    }} required>
                       <option value="">Select...</option>
                       {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                     </select>
@@ -236,12 +255,44 @@ export default function Products() {
                     <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 50" value={form.bulkDiscountPriceReduction} onChange={e => setForm({ ...form, bulkDiscountPriceReduction: e.target.value })} />
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Store</label>
+                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.store} onChange={e => setForm({ ...form, store: e.target.value, section: '' })}>
+                      <option value="">Select store</option>
+                      {stores.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Section</label>
+                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.section} onChange={e => setForm({ ...form, section: e.target.value })}>
+                      <option value="">Select section</option>
+                      {(stores.find(s => s.name === form.store)?.sections || []).map(sec => <option key={sec} value={sec}>{sec}</option>)}
+                    </select>
+                  </div>
+                </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Images</label>
                   <div className="flex gap-2">
                     <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-[10px] font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Multiple URLs comma-separated" value={form.images} onChange={e => setForm({ ...form, images: e.target.value })} />
                     <ImageUpload onUploaded={url => setForm(f => ({ ...f, images: (f.images ? f.images + ', ' : '') + url }))} />
                   </div>
+                </div>
+                <div className="space-y-2 border rounded-2xl p-3">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Variants (optional)</div>
+                  {(form.variants || []).length > 0 && (
+                    <div className="divide-y border rounded-xl bg-gray-50">
+                      {form.variants.map((v, idx) => (
+                        <div key={idx} className="p-2 grid grid-cols-2 gap-2 text-[11px]">
+                          <div className="font-bold">{['color','ram','storage','capacity'].map(k => v[k] ? `${k}:${v[k]}` : '').filter(Boolean).join(' / ') || 'Variant'}</div>
+                          <div className="text-right">
+                            <button type="button" className="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-100" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>Remove</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <VariantQuickAdd onAdd={(v)=> setForm(f => ({ ...f, variants: [...f.variants, v] }))} />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
@@ -293,6 +344,20 @@ export default function Products() {
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Stock</label>
                 <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Stock" value={editing.stock} onChange={e => setEditing({ ...editing, stock: e.target.value })} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Store</label>
+                <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={editing.store || ''} onChange={e => setEditing({ ...editing, store: e.target.value, section: '' })}>
+                  <option value="">Select store</option>
+                  {stores.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Section</label>
+                <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={editing.section || ''} onChange={e => setEditing({ ...editing, section: e.target.value })}>
+                  <option value="">Select section</option>
+                  {(stores.find(s => s.name === (editing.store||''))?.sections || []).map(sec => <option key={sec} value={sec}>{sec}</option>)}
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>

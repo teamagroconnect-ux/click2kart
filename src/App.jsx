@@ -13,6 +13,7 @@ import CustomerDetail from './pages/admin/CustomerDetail.jsx'
 import AdminLayout from './components/AdminLayout.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import InventoryPage from './pages/admin/InventoryPage.jsx'
+import Stores from './pages/admin/Stores.jsx'
 import Home from './pages/user/Home.jsx'
 import Catalogue from './pages/user/Catalogue.jsx'
 import ProductDetail from './pages/user/ProductDetail.jsx'
@@ -50,6 +51,7 @@ export default function App() {
         <Route path="customers/:id" element={<CustomerDetail />} />
         <Route path="settings" element={<Settings />} />
         <Route path="inventory" element={<InventoryPage />} />
+        <Route path="stores" element={<Stores />} />
       </Route>
 
       <Route path="/" element={<UserLayout />}>

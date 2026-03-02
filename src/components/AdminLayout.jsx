@@ -206,6 +206,12 @@ export default function AdminLayout() {
                   Inventory
                 </>
               ))}
+              {link('/admin/stores', (
+                <>
+                  <Icon name="inv" />
+                  Stores
+                </>
+              ))}
               <div className="pt-6 mt-6 border-t border-gray-50">
                 <div className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-4 px-2">
                   System

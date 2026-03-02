@@ -4,23 +4,25 @@ import ImageUpload from '../../components/ImageUpload'
 
 export default function Categories(){
   const [items, setItems] = useState([])
-  const [form, setForm] = useState({ name:'', description:'', image:'', parentId:'' })
+  const [form, setForm] = useState({ name:'', description:'', image:'', store:'', section:'', parentId:'' })
   const [editing, setEditing] = useState(null)
+  const [stores, setStores] = useState([])
   const load = async () => { const {data} = await api.get('/api/categories'); setItems(data) }
   useEffect(()=>{ load() }, [])
+  useEffect(()=>{ api.get('/api/stores').then(({data})=>setStores(data||[])).catch(()=>{}) },[])
   const create = async (e) => { 
     e.preventDefault(); 
-    const payload = { name: form.name, description: form.description, image: form.image || undefined }
+    const payload = { name: form.name, description: form.description, image: form.image || undefined, store: form.store || undefined, section: form.section || undefined }
     if (form.parentId) payload.parentId = form.parentId
     await api.post('/api/categories', payload); 
-    setForm({ name:'', description:'', image:'', parentId:'' }); 
+    setForm({ name:'', description:'', image:'', store:'', section:'', parentId:'' }); 
     load() 
   }
   const toggle = async (c) => { await api.put(`/api/categories/${c._id}`, { isActive: !c.isActive }); load() }
   const update = async (e) => {
     e.preventDefault()
     if (!editing) return
-    await api.put(`/api/categories/${editing._id}`, { description: editing.description || '', image: editing.image || '' })
+    await api.put(`/api/categories/${editing._id}`, { description: editing.description || '', image: editing.image || '', store: editing.store || '', section: editing.section || '' })
     setEditing(null)
     load()
   }
@@ -71,6 +73,22 @@ export default function Categories(){
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
                 <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[100px]" placeholder="Briefly describe this category..." value={form.description} onChange={e=>setForm({...form, description:e.target.value})} />
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Store (optional)</label>
+                  <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" value={form.store} onChange={e=>setForm({...form, store:e.target.value, section:''})}>
+                    <option value="">Select store</option>
+                    {stores.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Section (optional)</label>
+                  <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" value={form.section} onChange={e=>setForm({...form, section:e.target.value})}>
+                    <option value="">Select section</option>
+                    {(stores.find(s => s.name === form.store)?.sections || []).map(sec => <option key={sec} value={sec}>{sec}</option>)}
+                  </select>
+                </div>
+              </div>
               <button className="w-full bg-gray-900 text-white py-4 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest">Create Category</button>
             </form>
           </div>
@@ -89,7 +107,10 @@ export default function Categories(){
                     <div className="space-y-1">
                     <div className="font-bold text-gray-900 capitalize text-lg tracking-tight">{c.name}</div>
                     {c.parent?.name && <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Parent: {c.parent.name}</div>}
-                    <div className="text-sm text-gray-500 font-medium">{c.description || 'No description provided.'}</div>
+                      <div className="text-sm text-gray-500 font-medium">{c.description || 'No description provided.'}</div>
+                      {(c.store || c.section) && (
+                        <div className="text-[11px] text-gray-600 font-bold">Location: {c.store || '-'} {c.section ? `• ${c.section}` : ''}</div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -146,6 +167,22 @@ export default function Categories(){
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
               <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[100px]" placeholder="Optional" value={editing.description || ''} onChange={e=>setEditing({...editing, description: e.target.value})} />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Store</label>
+                <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" value={editing.store || ''} onChange={e=>setEditing({...editing, store: e.target.value, section:''})}>
+                  <option value="">Select store</option>
+                  {stores.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Section</label>
+                <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" value={editing.section || ''} onChange={e=>setEditing({...editing, section: e.target.value})}>
+                  <option value="">Select section</option>
+                  {(stores.find(s => s.name === (editing.store||''))?.sections || []).map(sec => <option key={sec} value={sec}>{sec}</option>)}
+                </select>
+              </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <button type="button" onClick={()=>setEditing(null)} className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold">Cancel</button>
