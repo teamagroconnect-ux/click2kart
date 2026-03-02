@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CONFIG } from '../../shared/lib/config.js'
-import { useEffect } from 'react'
 import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
 
 function useCountUp(target, duration = 1800, start = false) {
