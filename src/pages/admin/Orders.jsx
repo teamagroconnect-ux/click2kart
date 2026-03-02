@@ -14,6 +14,8 @@ export default function Orders(){
   const limit = 20
   const [loading, setLoading] = useState(false)
   const [sendingId, setSendingId] = useState('')
+  const [shipOpen, setShipOpen] = useState(null)
+  const [shipForm, setShipForm] = useState({ provider:'', waybill:'', trackingUrl:'' })
 
   const load = async(p=1)=>{ 
     setLoading(true)
@@ -316,23 +318,56 @@ export default function Orders(){
                                   )}
 
                                   <div className="space-y-2">
-                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Update Order Status</div>
-                                    <div className="flex flex-wrap gap-2">
-                                      {['NEW', 'CONFIRMED', 'FULFILLED', 'CANCELLED'].map(s => (
-                                        <button
-                                          key={s}
-                                          onClick={(e) => { e.stopPropagation(); update(o._id, s); }}
-                                          className={`px-4 py-2 rounded-xl text-[10px] font-bold border transition-all ${
-                                            o.status === s
-                                              ? 'bg-gray-900 text-white border-gray-900 shadow-md transform scale-105'
-                                              : 'border-gray-100 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-                                          }`}
-                                        >
-                                          {s}
-                                        </button>
-                                      ))}
+                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Real-World Flow</div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <button
+                                        onClick={(e)=>{ e.stopPropagation(); update(o._id, 'CONFIRMED').then(()=>notify('Order confirmed','success')).catch(()=>notify('Failed to confirm','error')) }}
+                                        disabled={o.status==='CONFIRMED' || o.status==='FULFILLED' || o.status==='CANCELLED'}
+                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-gray-50 disabled:opacity-40"
+                                      >
+                                        Confirm
+                                      </button>
+                                      <button
+                                        onClick={(e)=>{ e.stopPropagation(); api.patch(`/api/orders/${o._id}/pack`).then(()=>{ notify('Marked as Packed','success'); load(page) }).catch(()=>notify('Failed to update','error')) }}
+                                        disabled={o.status==='CANCELLED' || o.status==='FULFILLED' || (o.status!=='CONFIRMED' && o.paymentMethod!=='CASH' && o.paymentMethod!=='RAZORPAY')}
+                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-gray-50 disabled:opacity-40"
+                                      >
+                                        Mark Packed
+                                      </button>
+                                      <button
+                                        onClick={(e)=>{ e.stopPropagation(); setShipOpen(o._id); setShipForm({ provider:o.shipping?.provider||'', waybill:o.shipping?.waybill||'', trackingUrl:o.shipping?.trackingUrl||'' }) }}
+                                        disabled={o.status==='CANCELLED' || o.status==='FULFILLED'}
+                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-gray-50 disabled:opacity-40"
+                                      >
+                                        Create Shipment
+                                      </button>
+                                      <button
+                                        onClick={(e)=>{ e.stopPropagation(); api.patch(`/api/orders/${o._id}/deliver`).then(()=>{ notify('Marked Delivered','success'); load(page) }).catch(()=>notify('Failed to update','error')) }}
+                                        disabled={o.status==='CANCELLED' || o.status==='FULFILLED'}
+                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-gray-50 disabled:opacity-40"
+                                      >
+                                        Mark Delivered
+                                      </button>
+                                      <button
+                                        onClick={(e)=>{ e.stopPropagation(); update(o._id, 'CANCELLED').then(()=>notify('Order cancelled','success')).catch(()=>notify('Failed to cancel','error')) }}
+                                        disabled={o.status==='FULFILLED' || o.status==='CANCELLED'}
+                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-gray-50 disabled:opacity-40 col-span-2"
+                                      >
+                                        Cancel Order
+                                      </button>
                                     </div>
                                   </div>
+                                  {(o.shipping?.provider || o.shipping?.status || o.shipping?.waybill) && (
+                                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                      <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Fulfillment</div>
+                                      <div className="text-[12px] text-gray-700 font-medium">
+                                        {o.shipping?.status || '—'} • {o.shipping?.provider || '—'} • {o.shipping?.waybill || '—'}
+                                      </div>
+                                      {o.shipping?.trackingUrl && (
+                                        <a href={o.shipping.trackingUrl} target="_blank" rel="noreferrer" className="text-[11px] text-blue-600 font-bold">Track</a>
+                                      )}
+                                    </div>
+                                  )}
                                   {o.notes && (
                                     <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100/50">
                                       <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">Notes</div>
@@ -354,5 +389,37 @@ export default function Orders(){
         </div>
       </div>
     </div>
+    {shipOpen && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={()=>setShipOpen(null)}>
+        <div onClick={(e)=>e.stopPropagation()} className="bg-white rounded-3xl p-6 w-full max-w-md border border-gray-100 shadow-xl space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="text-sm font-black uppercase tracking-widest text-gray-500">Create Shipment</div>
+            <button onClick={()=>setShipOpen(null)} className="h-8 w-8 rounded-lg bg-gray-50 border border-gray-100">
+              <svg className="w-4 h-4 m-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+          <div className="space-y-3">
+            <input className="w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm font-bold" placeholder="Provider (e.g., Delhivery, Bluedart)" value={shipForm.provider} onChange={e=>setShipForm({...shipForm, provider:e.target.value})} />
+            <input className="w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm font-bold" placeholder="Waybill / AWB" value={shipForm.waybill} onChange={e=>setShipForm({...shipForm, waybill:e.target.value})} />
+            <input className="w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm font-bold" placeholder="Tracking URL (optional)" value={shipForm.trackingUrl} onChange={e=>setShipForm({...shipForm, trackingUrl:e.target.value})} />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button onClick={()=>setShipOpen(null)} className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold">Cancel</button>
+            <button
+              onClick={async ()=> {
+                try {
+                  await api.patch(`/api/orders/${shipOpen}/ship`, shipForm)
+                  notify('Shipment created','success'); setShipOpen(null); setShipForm({ provider:'', waybill:'', trackingUrl:'' }); load(page)
+                } catch { notify('Failed to create shipment','error') }
+              }}
+              disabled={!shipForm.provider || !shipForm.waybill}
+              className="px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-bold disabled:opacity-40"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   )
 }

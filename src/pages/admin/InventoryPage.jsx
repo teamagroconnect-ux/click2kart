@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
+import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts'
 
 export default function InventoryPage() {
   const { notify } = useToast()
@@ -12,6 +13,7 @@ export default function InventoryPage() {
   const [submitting, setSubmitting] = useState(false)
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
+  const [summary, setSummary] = useState({ kpis: { totalSkus:0, totalUnits:0, lowStockCount:0, totalAdded30d:0 }, daily: [], topProducts: [], lowStock: [] })
 
   const canSubmit = selected && Number.isInteger(Number(qty)) && Number(qty) > 0
 
@@ -26,6 +28,16 @@ export default function InventoryPage() {
       }
     }
     load()
+  }, [])
+
+  useEffect(() => {
+    const loadSum = async () => {
+      try {
+        const { data } = await api.get('/api/inventory/summary', { params: { days: 30 } })
+        setSummary(data)
+      } catch {}
+    }
+    loadSum()
   }, [])
 
   useEffect(() => {
@@ -67,9 +79,67 @@ export default function InventoryPage() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="space-y-1">
         <h1 className="text-2xl font-bold text-gray-900">Inventory</h1>
-        <p className="text-sm text-gray-500">Log incoming stock and review stock-in history.</p>
+        <p className="text-sm text-gray-500">Log incoming stock and review analytics.</p>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+          <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total SKUs</div>
+          <div className="text-2xl font-black">{summary.kpis.totalSkus}</div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+          <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Units</div>
+          <div className="text-2xl font-black">{summary.kpis.totalUnits}</div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+          <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Low Stock</div>
+          <div className="text-2xl font-black">{summary.kpis.lowStockCount}</div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+          <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Stock-In (30d)</div>
+          <div className="text-2xl font-black">+{summary.kpis.totalAdded30d}</div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-semibold text-gray-700">Daily Stock-In (30 days)</div>
+          </div>
+          <div style={{ width: '100%', height: 260 }}>
+            <ResponsiveContainer>
+              <AreaChart data={summary.daily}>
+                <defs>
+                  <linearGradient id="c1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="#f3f4f6" />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Area type="monotone" dataKey="quantity" stroke="#2563eb" fillOpacity={1} fill="url(#c1)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+          <div className="text-sm font-semibold text-gray-700 mb-2">Top Stocked Products</div>
+          <div style={{ width: '100%', height: 260 }}>
+            <ResponsiveContainer>
+              <BarChart data={summary.topProducts}>
+                <CartesianGrid stroke="#f3f4f6" />
+                <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-30} textAnchor="end" height={60} />
+                <YAxis tick={{ fontSize: 11 }} />
+                <Tooltip />
+                <Bar dataKey="quantity" fill="#10b981" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
       <form onSubmit={submit} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
@@ -190,7 +260,23 @@ export default function InventoryPage() {
           </table>
         </div>
       </div>
+
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">Low Stock</h2>
+        </div>
+        <div className="divide-y">
+          {summary.lowStock.map(p => (
+            <div key={p.id} className="py-2 flex items-center justify-between">
+              <div className="text-sm font-semibold text-gray-800 truncate">{p.name}</div>
+              <div className="text-sm font-bold text-red-600">{p.stock}</div>
+            </div>
+          ))}
+          {summary.lowStock.length === 0 && (
+            <div className="py-3 text-gray-500 text-sm">No low stock items</div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
-
