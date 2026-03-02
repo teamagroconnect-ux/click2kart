@@ -67,6 +67,16 @@ const Icon = ({ name }) => (
         <circle cx="12" cy="7" r="4" />
       </svg>
     )}
+    {name === 'inv' && (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="7" />
+        <rect x="14" y="3" width="7" height="7" />
+        <rect x="3" y="14" width="7" height="7" />
+        <path d="M14 14h7v7h-7z" />
+        <path d="M17 17h1" />
+        <path d="M17 20h3" />
+      </svg>
+    )}
   </span>
 )
 
@@ -188,6 +198,12 @@ export default function AdminLayout() {
                 <>
                   <Icon name="cust" />
                   Customers
+                </>
+              ))}
+              {link('/admin/inventory', (
+                <>
+                  <Icon name="inv" />
+                  Inventory
                 </>
               ))}
               <div className="pt-6 mt-6 border-t border-gray-50">
