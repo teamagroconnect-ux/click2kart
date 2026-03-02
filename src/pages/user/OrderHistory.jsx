@@ -50,6 +50,19 @@ export default function OrderHistory() {
         <div className="space-y-6">
           {orders.map((order) => {
             const isExpanded = expandedId === order._id
+            const steps = ['Placed', 'Processing', 'Packed', 'Shipped', 'Delivered']
+            const statusIndex = (() => {
+              if (order.status === 'FULFILLED') return 4
+              if (order.shipping?.waybill) return 3
+              if (order.status === 'CONFIRMED') return 2
+              if (order.status === 'NEW' || order.status === 'PENDING_CASH_APPROVAL') return 1
+              return 0
+            })()
+            const eta = (() => {
+              const d = new Date(order.createdAt)
+              d.setDate(d.getDate() + 4)
+              return d
+            })()
             return (
             <div key={order._id} className={`bg-white border rounded-2xl overflow-hidden shadow-sm transition-all ${isExpanded ? 'ring-1 ring-violet-200 shadow-md' : 'hover:shadow-md'}`}>
               <div 
@@ -86,6 +99,29 @@ export default function OrderHistory() {
                 <div className="text-xs text-gray-400">ID: {order._id}</div>
               </div>
               <div className={`p-6 space-y-4 ${isExpanded ? '' : 'hidden md:block'}`}>
+                <div className="space-y-2">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Order Timeline</div>
+                  <div className="flex items-center justify-between">
+                    {steps.map((s, i) => (
+                      <div key={s} className="flex-1 flex flex-col items-center">
+                        <div className={`h-2 w-full ${i < steps.length-1 ? 'bg-gray-100 rounded-full mx-1' : ''}`}>
+                          {i < steps.length-1 && (
+                            <div className={`h-2 rounded-full ${i < statusIndex ? 'bg-violet-600' : 'bg-gray-100'}`} />
+                          )}
+                        </div>
+                        <div className={`mt-2 h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-black ${i <= statusIndex ? 'bg-violet-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                          {i+1}
+                        </div>
+                        <div className={`mt-1 text-[10px] font-bold uppercase tracking-widest ${i <= statusIndex ? 'text-violet-700' : 'text-gray-400'}`}>{s}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {statusIndex < 4 && (
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                      Estimated Delivery: {eta.toLocaleDateString('en-IN', { month: 'short', day: '2-digit' })}
+                    </div>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="p-3 rounded-xl bg-gray-50 border">
                     <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Customer</div>

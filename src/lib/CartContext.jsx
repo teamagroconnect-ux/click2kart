@@ -65,26 +65,31 @@ export function CartProvider({ children }) {
     syncServerCart()
   }, [token])
 
-  const addToCart = async (product) => {
+  const addToCart = async (product, variant) => {
     if (mode === 'guest') {
       let success = true
       setCart(prev => {
         const pid = product._id || product.id
-        const existing = prev.find(item => item._id === pid)
+        const vid = variant?._id || variant?.id || undefined
+        const existing = prev.find(item => item._id === pid && String(item.variantId||'') === String(vid||''))
         const currentQty = existing ? existing.quantity : 0
+        const available = vid ? (variant?.stock ?? 0) : (product.stock ?? 0)
 
-        if (currentQty + 1 > product.stock) {
-          notify(`Only ${product.stock} units available in stock`, 'error')
+        if (currentQty + 1 > available) {
+          notify(`Only ${available} units available in stock`, 'error')
           success = false
           return prev
         }
 
         if (existing) {
           return prev.map(item => 
-            item._id === pid ? { ...item, quantity: item.quantity + 1 } : item
+            (item._id === pid && String(item.variantId||'') === String(vid||'')) ? { ...item, quantity: item.quantity + 1 } : item
           )
         }
-        return [...prev, { ...product, _id: pid, quantity: 1 }]
+        const price = vid ? (variant?.price ?? product.price) : product.price
+        const image = vid ? (variant?.images?.[0] || product.images?.[0]) : product.images?.[0]
+        const attributes = variant?.attributes
+        return [...prev, { ...product, _id: pid, variantId: vid, attributes, price, image, quantity: 1, stock: available }]
       })
       return success
     }
@@ -92,6 +97,7 @@ export function CartProvider({ children }) {
     try {
       const { data } = await api.post('/api/cart/add', {
         productId: product._id,
+        variantId: variant?._id,
         quantity: 1
       })
       setCart(data.items || [])

@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CONFIG } from '../../shared/lib/config.js'
+import { useEffect } from 'react'
+import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
 
 function useCountUp(target, duration = 1800, start = false) {
   const [val, setVal] = useState(0)
@@ -46,6 +48,22 @@ export default function Home() {
     const fn = () => setScrollY(window.scrollY)
     window.addEventListener('scroll', fn, { passive: true })
     return () => window.removeEventListener('scroll', fn)
+  }, [])
+  useEffect(() => {
+    setSEO('Wholesale Electronics Supplier India | Click2Kart', 'Buy wholesale electronics like chargers, mobiles, accessories at best B2B prices. GST invoice, fast delivery across India.')
+    const cleanup = injectJsonLd({
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Click2Kart",
+      "url": location.origin,
+      "logo": (CONFIG.LOGO_URL || ""),
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+91-79788-80244",
+        "contactType": "customer service"
+      }
+    })
+    return cleanup
   }, [])
 
   const line1 = CONFIG.HERO_TITLE_LINE1 || 'Wholesale with'

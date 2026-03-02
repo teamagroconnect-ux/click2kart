@@ -13,13 +13,14 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err?.response?.status === 401) {
+    const s = err?.response?.status
+    if (s === 401 || s === 403) {
       localStorage.removeItem('token')
       if (location.pathname.startsWith('/admin')) location.href = '/admin/login'
+      else location.href = '/login'
     }
     return Promise.reject(err)
   }
 )
 
 export default api
-

@@ -13,10 +13,12 @@ export default function Enquiry(){
   const initialItems = cart.length > 0 
     ? cart.map(item => ({
         productId: item.productId || item._id,
+        variantId: item.variantId,
         quantity: item.quantity,
         name: item.name,
         price: item.price,
         image: item.image || item.images?.[0]?.url,
+        attributes: item.attributes,
         bulkQty: item.bulkDiscountQuantity || item.bulkQty || 0,
         bulkRed: item.bulkDiscountPriceReduction || item.bulkRed || 0
       }))
@@ -31,10 +33,12 @@ export default function Enquiry(){
     if (cart.length > 0) {
       setItems(cart.map(item => ({
         productId: item.productId || item._id,
+        variantId: item.variantId,
         quantity: item.quantity,
         name: item.name,
         price: item.price,
         image: item.image || item.images?.[0]?.url,
+        attributes: item.attributes,
         bulkQty: item.bulkDiscountQuantity || item.bulkQty || 0,
         bulkRed: item.bulkDiscountPriceReduction || item.bulkRed || 0
       })))
@@ -104,7 +108,7 @@ export default function Enquiry(){
     try {
       const cleanItems = items
         .filter(it => typeof it.productId === 'string' && it.productId.length >= 12)
-        .map(it => ({ productId: it.productId, quantity: Math.max(1, Number(it.quantity || 1)) }))
+        .map(it => ({ productId: it.productId, variantId: it.variantId, quantity: Math.max(1, Number(it.quantity || 1)) }))
       const { data } = await api.post('/api/orders', { items: cleanItems, paymentMethod })
       
       if (paymentMethod === 'RAZORPAY') {
@@ -163,7 +167,14 @@ export default function Enquiry(){
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-base font-black text-gray-900 truncate tracking-tight">{item.name}</div>
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Qty: {item.quantity} • Unit: ₹{item.price}</div>
+                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
+                    Qty: {item.quantity} • Unit: ₹{item.price}
+                    {item.attributes && (
+                      <span className="ml-2 text-gray-500">
+                        {Object.entries(item.attributes || {}).filter(([_,v])=>v).map(([k,v])=>`${k}: ${v}`).join(' • ')}
+                      </span>
+                    )}
+                  </div>
                   {(() => {
                     const tiers = Array.isArray(item.bulkTiers) && item.bulkTiers.length
                       ? item.bulkTiers.slice().sort((a,b)=>a.quantity-b.quantity)

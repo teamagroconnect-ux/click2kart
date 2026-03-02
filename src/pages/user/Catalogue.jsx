@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useCart, getStockStatus } from '../../lib/CartContext'
+import { setSEO } from '../../shared/lib/seo.js'
 
 export default function Catalogue() {
   const { addToCart } = useCart()
@@ -64,6 +65,11 @@ export default function Catalogue() {
     }
     return () => t && clearTimeout(t)
   }, [q])
+  useEffect(() => {
+    const baseTitle = 'Wholesale Catalogue | Click2Kart'
+    const title = category ? `${category} Wholesale Supplier | Click2Kart` : (q ? `Search: ${q} | Click2Kart` : baseTitle)
+    setSEO(title, 'Wholesale electronics catalogue with dynamic B2B pricing and GST billing.')
+  }, [q, category])
 
   const filteredSorted = useMemo(() => {
     let list = [...items]

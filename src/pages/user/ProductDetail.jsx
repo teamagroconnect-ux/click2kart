@@ -2,12 +2,18 @@ import React, { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useCart, getStockStatus } from '../../lib/CartContext'
+import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
 
 export default function ProductDetail(){
   const { id } = useParams()
   const navigate = useNavigate()
   const { addToCart } = useCart()
   const [p, setP] = useState(null)
+  const [selected, setSelected] = useState({ color: '', storage: '', ram: '' })
+  const [activeVariant, setActiveVariant] = useState(null)
+  const [activeImageIndex, setActiveImageIndex] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [zoom, setZoom] = useState({ on: false, x: 0, y: 0 })
   const [similar, setSimilar] = useState([])
   const [fbt, setFbt] = useState([])
   const [recOpen, setRecOpen] = useState(false)
@@ -20,6 +26,53 @@ export default function ProductDetail(){
     api.get(`/api/products/${id}/recommendations`).then(({data})=>setSimilar(data||[])).catch(()=>setSimilar([]))
     api.get(`/api/recommendations/frequently-bought/${id}`).then(({data})=>setFbt(data||[])).catch(()=>setFbt([]))
   }, [id])
+  useEffect(() => {
+    if (!p || !Array.isArray(p.variants) || p.variants.length === 0) { setActiveVariant(null); return }
+    const colors = [...new Set(p.variants.map(v => v.attributes?.color).filter(Boolean))]
+    const rams = [...new Set(p.variants.map(v => v.attributes?.ram).filter(Boolean))]
+    const storages = [...new Set(p.variants.map(v => v.attributes?.storage).filter(Boolean))]
+    setSelected(prev => ({
+      color: prev.color || colors[0] || '',
+      ram: prev.ram || rams[0] || '',
+      storage: prev.storage || storages[0] || ''
+    }))
+  }, [p])
+  useEffect(() => {
+    if (!p || !Array.isArray(p.variants) || p.variants.length === 0) { setActiveVariant(null); return }
+    const v = p.variants.find(v =>
+      (v.attributes?.color || '') === (selected.color || '') &&
+      (v.attributes?.ram || '') === (selected.ram || '') &&
+      (v.attributes?.storage || '') === (selected.storage || '')
+    ) || null
+    setActiveVariant(v)
+    setActiveImageIndex(0)
+  }, [selected, p])
+  useEffect(() => {
+    if (!p) return
+    const title = `${p.name} Wholesale Price | Click2Kart`
+    const desc = `Buy ${p.name} at wholesale B2B rates with GST invoice and fast delivery across India. Category: ${p.category || 'General'}.`
+    setSEO(title, desc)
+    const cleanup = injectJsonLd({
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      "name": p.name,
+      "image": (p.images || []).map(i => i.url).filter(Boolean),
+      "category": p.category || "General",
+      "offers": {
+        "@type": "Offer",
+        "priceCurrency": "INR",
+        "price": String(p.price || 0),
+        "availability": p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "url": `${location.origin}/products/${p._id}`
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": String(p.ratingAvg || 0),
+        "reviewCount": String(p.ratingCount || 0)
+      }
+    })
+    return cleanup
+  }, [p])
   if (!p) return <div className="p-10 text-center text-lg text-gray-500">Loading product details...</div>
   return (
     <div className="bg-white min-h-screen">
@@ -42,20 +95,69 @@ export default function ProductDetail(){
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 animate-in fade-in slide-in-from-bottom-8 duration-1000">
           <div className="space-y-6">
-            <div className="bg-gray-50/50 border border-gray-100 rounded-[3rem] overflow-hidden aspect-square flex items-center justify-center p-12 group hover:shadow-2xl transition-all duration-700">
-              {p.images && p.images.length>0
-                ? <img src={p.images[0].url} alt={p.name} className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110" />
-                : <div className="text-8xl">📦</div>}
-            </div>
-            {p.images && p.images.length > 1 && (
-              <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
-                {p.images.map((img, i) => (
-                  <div key={i} className="h-24 w-24 flex-shrink-0 bg-gray-50 border border-gray-100 rounded-2xl p-4 cursor-pointer hover:border-blue-500 transition-colors">
-                    <img src={img.url} className="w-full h-full object-contain" />
+            {(() => {
+              const imgs = (activeVariant?.images?.length ? activeVariant.images : (p.images || []))
+              const current = imgs[activeImageIndex]?.url || imgs[0]?.url
+              return (
+                <>
+                  <div
+                    className="relative bg-gray-50/50 border border-gray-100 rounded-[3rem] overflow-hidden aspect-square flex items-center justify-center p-0 group hover:shadow-2xl transition-all duration-700"
+                    onMouseEnter={() => setZoom(z => ({ ...z, on: true }))}
+                    onMouseLeave={() => setZoom({ on: false, x: 0, y: 0 })}
+                    onMouseMove={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      const x = ((e.clientX - rect.left) / rect.width) * 100
+                      const y = ((e.clientY - rect.top) / rect.height) * 100
+                      setZoom({ on: true, x, y })
+                    }}
+                    onClick={() => setLightboxOpen(true)}
+                    title="Click to view fullscreen"
+                  >
+                    {current ? (
+                      <>
+                        <img
+                          src={current}
+                          alt={p.name}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-contain transition-transform duration-700"
+                          style={{ padding: '3rem' }}
+                        />
+                        {zoom.on && (
+                          <div
+                            className="absolute inset-0 pointer-events-none hidden lg:block"
+                            style={{
+                              backgroundImage: `url('${current}')`,
+                              backgroundRepeat: 'no-repeat',
+                              backgroundSize: '200% 200%',
+                              backgroundPosition: `${zoom.x}% ${zoom.y}%`,
+                              opacity: 0.6,
+                              mixBlendMode: 'multiply'
+                            }}
+                          />
+                        )}
+                      </>
+                    ) : (
+                      <div className="text-8xl">📦</div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
+                  {imgs.length > 1 && (
+                    <div className="flex gap-3 overflow-x-auto pb-2 pt-2 custom-scrollbar">
+                      {imgs.map((img, i) => (
+                        <button
+                          key={i}
+                          onClick={() => { setActiveImageIndex(i) }}
+                          className={`h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0 bg-white border rounded-2xl p-2 transition-all ${i===activeImageIndex ? 'border-blue-500 ring-2 ring-blue-100' : 'border-gray-100 hover:border-blue-300'}`}
+                          title={`Image ${i+1}`}
+                        >
+                          <img src={img.url} alt={`${p.name} ${i+1}`} loading="lazy" decoding="async" className="w-full h-full object-contain" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )
+            })()}
           </div>
 
           <div className="space-y-10 py-4">
@@ -75,24 +177,29 @@ export default function ProductDetail(){
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-4xl font-black text-gray-900 tracking-tighter">
-                    {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'}
+                    {authed
+                      ? (activeVariant?.price != null
+                        ? `₹${Number(activeVariant.price).toLocaleString()}`
+                        : (p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'))
+                      : 'Login to view price'}
                   </div>
                   {authed && (
                     <button
-                    onClick={async (e) => { 
-                      e.preventDefault(); 
-                      if (!authed) { navigate('/login'); return } 
-                      const ok = await addToCart(p)
-                      if (ok) {
-                        try {
-                          const { data } = await api.get(`/api/recommendations/frequently-bought/${id}`)
-                          setFbt(data || [])
-                          setRecOpen(true)
-                        } catch {}
-                      }
-                    }}
-                      disabled={!authed || p.stock <= 0}
-                      title={authed ? (p.stock > 0 ? 'Add to Cart' : 'Sold Out') : 'Login to add'}
+                      onClick={async (e) => {
+                        e.preventDefault()
+                        if (!authed) { navigate('/login'); return }
+                        if (Array.isArray(p.variants) && p.variants.length > 0 && !activeVariant) return
+                        const ok = await addToCart(p, activeVariant || undefined)
+                        if (ok) {
+                          try {
+                            const { data } = await api.get(`/api/recommendations/frequently-bought/${id}`)
+                            setFbt(data || [])
+                            setRecOpen(true)
+                          } catch {}
+                        }
+                      }}
+                      disabled={!authed || ((activeVariant ? (activeVariant.stock || 0) : p.stock) <= 0)}
+                      title={authed ? ((activeVariant ? (activeVariant.stock || 0) : p.stock) > 0 ? 'Add to Cart' : 'Sold Out') : 'Login to add'}
                       className="inline-flex items-center justify-center h-11 w-11 rounded-2xl bg-gray-900 text-white shadow-md hover:bg-gray-800 active:scale-95 disabled:opacity-40"
                     >
                       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -104,6 +211,11 @@ export default function ProductDetail(){
                   )}
                 </div>
                 {authed && <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">Inclusive of all taxes</div>}
+                {p.minOrderQty > 0 && (
+                  <div className="text-[11px] font-black text-emerald-700 uppercase tracking-widest">
+                    Minimum Order: {p.minOrderQty} units
+                  </div>
+                )}
               </div>
             </div>
 
@@ -121,14 +233,47 @@ export default function ProductDetail(){
                 </div>
               </div>
             )}
+            {authed && Array.isArray(p.bulkTiers) && p.bulkTiers.length > 0 && (
+              <div className="bg-white border border-gray-100 rounded-2xl p-6">
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Bulk Pricing</div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-500">
+                      <th className="py-2">Quantity</th>
+                      <th className="py-2">Price/Unit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const tiers = p.bulkTiers.slice().sort((a,b) => a.quantity - b.quantity)
+                      return tiers.map((t, idx) => {
+                        const next = tiers[idx+1]
+                        const from = t.quantity
+                        const to = next ? (next.quantity - 1) : null
+                        const label = to ? `${from}-${to}` : `${from}+`
+                        const base = Number(activeVariant?.price ?? p.price ?? 0)
+                        const eff = Math.max(0, base - Number(t.priceReduction || 0))
+                        return (
+                          <tr key={idx} className="border-t">
+                            <td className="py-2 font-semibold text-gray-800">{label}</td>
+                            <td className="py-2 font-bold text-gray-900">₹{eff.toLocaleString()}</td>
+                          </tr>
+                        )
+                      })
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            )}
 
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 {(() => {
-                  const status = getStockStatus(p.stock)
+                  const stock = activeVariant ? (activeVariant.stock || 0) : p.stock
+                  const status = getStockStatus(stock)
                   return (
                     <div className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border ${status.bg} ${status.color} ${status.border}`}>
-                      <span className={`h-1.5 w-1.5 rounded-full ${p.stock > 0 ? (p.stock <= 5 ? 'bg-orange-500 animate-pulse' : 'bg-emerald-500') : 'bg-red-500'}`} />
+                      <span className={`h-1.5 w-1.5 rounded-full ${stock > 0 ? (stock <= 5 ? 'bg-orange-500 animate-pulse' : 'bg-emerald-500') : 'bg-red-500'}`} />
                       {status.text}
                     </div>
                   )
@@ -139,6 +284,51 @@ export default function ProductDetail(){
                 </div>
               </div>
             </div>
+
+            {Array.isArray(p.variants) && p.variants.length > 0 && (
+              <div className="space-y-6 pt-8 border-t border-gray-50">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Color</div>
+                    <div className="flex flex-wrap gap-2">
+                      {[...new Set(p.variants.map(v => v.attributes?.color).filter(Boolean))].map((c,i)=>(
+                        <button key={i}
+                          onClick={()=>setSelected(s=>({ ...s, color: c }))}
+                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black border ${selected.color===c ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200'}`}
+                        >{c}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Storage</div>
+                    <div className="flex flex-wrap gap-2">
+                      {[...new Set(p.variants.map(v => v.attributes?.storage).filter(Boolean))].map((s,i)=>(
+                        <button key={i}
+                          onClick={()=>setSelected(prev=>({ ...prev, storage: s }))}
+                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black border ${selected.storage===s ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200'}`}
+                        >{s}</button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">RAM</div>
+                    <div className="flex flex-wrap gap-2">
+                      {[...new Set(p.variants.map(v => v.attributes?.ram).filter(Boolean))].map((r,i)=>(
+                        <button key={i}
+                          onClick={()=>setSelected(prev=>({ ...prev, ram: r }))}
+                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black border ${selected.ram===r ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200'}`}
+                        >{r}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                {activeVariant && (
+                  <div className="text-[11px] font-bold text-gray-600">
+                    SKU: {activeVariant.sku || '-'}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="space-y-4 pt-8 border-t border-gray-50">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Product Narrative</h3>
@@ -172,14 +362,14 @@ export default function ProductDetail(){
               <button
                 onClick={() => {
                   if (!authed) { navigate('/login'); return }
-                  if (addToCart(p)) {
+                  if (addToCart(p, activeVariant || undefined)) {
                     navigate('/cart')
                   }
                 }}
-                disabled={!authed || p.stock <= 0}
+                disabled={!authed || ((activeVariant ? (activeVariant.stock || 0) : p.stock) <= 0)}
                 className="flex-2 bg-gray-900 text-white px-12 py-5 rounded-[2rem] text-sm font-black uppercase tracking-[0.2em] shadow-2xl hover:bg-gray-800 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-30 disabled:hover:translate-y-0 disabled:cursor-not-allowed"
               >
-                {authed ? (p.stock > 0 ? 'Secure Buy Now' : 'Sold Out') : 'Login to Buy'}
+                {authed ? ((activeVariant ? (activeVariant.stock || 0) : p.stock) > 0 ? 'Secure Buy Now' : 'Sold Out') : 'Login to Buy'}
               </button>
             </div>
             
@@ -204,6 +394,65 @@ export default function ProductDetail(){
           </section>
         )}
       </div>
+      {lightboxOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6" onClick={() => setLightboxOpen(false)}>
+          <div className="relative w-full max-w-5xl" onClick={e => e.stopPropagation()}>
+            {(() => {
+              const imgs = (activeVariant?.images?.length ? activeVariant.images : (p.images || []))
+              const current = imgs[activeImageIndex]?.url || imgs[0]?.url
+              return (
+                <>
+                  <img src={current} alt={p.name} className="w-full max-h-[70vh] object-contain rounded-2xl bg-white" />
+                  <button
+                    className="absolute top-3 right-3 h-10 w-10 rounded-xl bg-white/90 text-gray-700 flex items-center justify-center"
+                    onClick={() => setLightboxOpen(false)}
+                    title="Close"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <div className="mt-4 flex items-center justify-between">
+                    <button
+                      className="px-3 py-2 rounded-lg bg-white text-gray-700"
+                      onClick={() => setActiveImageIndex(i => Math.max(0, i - 1))}
+                      disabled={activeImageIndex <= 0}
+                    >
+                      Prev
+                    </button>
+                    <div className="flex gap-2 overflow-x-auto custom-scrollbar">
+                      {imgs.map((img, i) => (
+                        <button
+                          key={i}
+                          onClick={() => setActiveImageIndex(i)}
+                          className={`h-16 w-16 rounded-xl overflow-hidden border ${i===activeImageIndex ? 'border-blue-500' : 'border-transparent opacity-70'}`}
+                          title={`Image ${i+1}`}
+                        >
+                          <img src={img.url} alt={`${p.name} ${i+1}`} className="w-full h-full object-contain bg-white" />
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      className="px-3 py-2 rounded-lg bg-white text-gray-700"
+                      onClick={() => setActiveImageIndex(i => {
+                        const imgs = (activeVariant?.images?.length ? activeVariant.images : (p.images || []))
+                        const last = Math.max(0, imgs.length - 1)
+                        return Math.min(last, i + 1)
+                      })}
+                      disabled={(() => {
+                        const imgs = (activeVariant?.images?.length ? activeVariant.images : (p.images || []))
+                        return activeImageIndex >= imgs.length - 1
+                      })()}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+        </div>
+      )}
       {recOpen && fbt.length > 0 && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setRecOpen(false)} />
@@ -319,8 +568,8 @@ function RecGrid({ items }) {
                 )}
               </div>
               <button
-                onClick={e => { e.stopPropagation(); e.preventDefault(); if (authed) addToCart(p) }}
-                disabled={!authed || (p.stock != null && p.stock <= 0)}
+                onClick={e => { e.stopPropagation(); e.preventDefault(); if (!authed) return; if (Array.isArray(p.variants) && p.variants.length > 0) { navigate(`/products/${p._id || p.id}`); return; } addToCart(p) }}
+                disabled={!authed || ((Array.isArray(p.variants) && p.variants.length > 0) ? false : (p.stock != null && p.stock <= 0))}
                 className="h-9 w-9 rounded-xl bg-[#1244ea] text-white flex items-center justify-center shadow-sm hover:bg-[#0d35c7] active:scale-95 disabled:opacity-40 transition-all flex-shrink-0"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
