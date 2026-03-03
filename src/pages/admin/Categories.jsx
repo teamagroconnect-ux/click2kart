@@ -4,7 +4,7 @@ import ImageUpload from '../../components/ImageUpload'
 
 export default function Categories(){
   const [items, setItems] = useState([])
-  const [form, setForm] = useState({ name:'', description:'', image:'', store:'', section:'', parentId:'' })
+  const [form, setForm] = useState({ name:'', image:'', store:'', section:'', parentId:'' })
   const [editing, setEditing] = useState(null)
   const [stores, setStores] = useState([])
   const load = async () => { const {data} = await api.get('/api/categories'); setItems(data) }
@@ -12,17 +12,17 @@ export default function Categories(){
   useEffect(()=>{ api.get('/api/stores').then(({data})=>setStores(data||[])).catch(()=>{}) },[])
   const create = async (e) => { 
     e.preventDefault(); 
-    const payload = { name: form.name, description: form.description, image: form.image || undefined, store: form.store || undefined, section: form.section || undefined }
+    const payload = { name: form.name, image: form.image || undefined, store: form.store || undefined, section: form.section || undefined }
     if (form.parentId) payload.parentId = form.parentId
     await api.post('/api/categories', payload); 
-    setForm({ name:'', description:'', image:'', store:'', section:'', parentId:'' }); 
+    setForm({ name:'', image:'', store:'', section:'', parentId:'' }); 
     load() 
   }
   const toggle = async (c) => { await api.put(`/api/categories/${c._id}`, { isActive: !c.isActive }); load() }
   const update = async (e) => {
     e.preventDefault()
     if (!editing) return
-    await api.put(`/api/categories/${editing._id}`, { description: editing.description || '', image: editing.image || '', store: editing.store || '', section: editing.section || '' })
+    await api.put(`/api/categories/${editing._id}`, { image: editing.image || '', store: editing.store || '', section: editing.section || '' })
     setEditing(null)
     load()
   }
@@ -69,10 +69,6 @@ export default function Categories(){
                   </div>
                 )}
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
-                <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[100px]" placeholder="Briefly describe this category..." value={form.description} onChange={e=>setForm({...form, description:e.target.value})} />
-              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Store (optional)</label>
@@ -107,7 +103,6 @@ export default function Categories(){
                     <div className="space-y-1">
                     <div className="font-bold text-gray-900 capitalize text-lg tracking-tight">{c.name}</div>
                     {c.parent?.name && <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Parent: {c.parent.name}</div>}
-                      <div className="text-sm text-gray-500 font-medium">{c.description || 'No description provided.'}</div>
                       {(c.store || c.section) && (
                         <div className="text-[11px] text-gray-600 font-bold">Location: {c.store || '-'} {c.section ? `• ${c.section}` : ''}</div>
                       )}
@@ -165,8 +160,6 @@ export default function Categories(){
               )}
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
-              <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[100px]" placeholder="Optional" value={editing.description || ''} onChange={e=>setEditing({...editing, description: e.target.value})} />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">

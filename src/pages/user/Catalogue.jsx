@@ -251,7 +251,6 @@ export default function Catalogue() {
                       </div>
                       <div className="flex-1">
                         <div className="font-bold">{c.name}</div>
-                        {c.description && <div className="text-[10px] text-gray-400 truncate">{c.description}</div>}
                       </div>
                     </button>
                   ))}
@@ -504,6 +503,17 @@ function ProductCard({ p, authed, addToCart, navigate }) {
       setWished(!exists)
     } catch {}
   }
+  const shareLink = (e) => {
+    e.stopPropagation(); e.preventDefault()
+    const url = `${location.origin}/products/${p._id}`
+    const title = p.name
+    const text = 'Check this product on Click2Kart'
+    if (navigator.share) {
+      navigator.share({ title, text, url }).catch(()=>{})
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(url).catch(()=>{})
+    }
+  }
 
   return (
     <div
@@ -536,6 +546,17 @@ function ProductCard({ p, authed, addToCart, navigate }) {
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41 1.01 4.22 2.5C11.09 5.01 12.76 4 14.5 4 17 4 19 6 19 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+          </svg>
+        </button>
+        {/* Share */}
+        <button
+          onClick={shareLink}
+          title="Share"
+          className="absolute top-2 right-12 h-8 w-8 rounded-full bg-white shadow border border-gray-100 flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18 8a3 3 0 10-2.83-4H15a3 3 0 100 6 3 3 0 003-3zM6 14a3 3 0 10-2.83 4H3a3 3 0 100-6 3 3 0 003 3zm12 0a3 3 0 10-2.83 4H15a3 3 0 100-6 3 3 0 003 3z" opacity="0.2"/>
+            <path d="M7.5 13.1l8.9-4.6m-8.9 6.9l8.9 4.6" />
           </svg>
         </button>
       </div>
