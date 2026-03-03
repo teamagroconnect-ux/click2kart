@@ -189,7 +189,7 @@ export default function InventoryPage() {
                         <div className="text-sm font-semibold text-gray-900">{selected.name}</div>
                     <div className="text-[11px] text-gray-500">Current stock: {selected.stock ?? 0}</div>
                     {(selected.store || selected.section) && (
-                      <div className="text-[11px] text-gray-600">Location: {selected.store || '-'} {selected.section ? `• ${selected.section}` : ''}</div>
+                      <div className="text-[11px] text-gray-600">Location: {(selected.store || '-')}{selected.section ? `(${selected.section})` : ''}</div>
                     )}
                   </div>
                   <button type="button" onClick={() => { setSelected(null); setQ('') }} className="px-3 py-1.5 rounded-lg bg-white border text-gray-600 hover:bg-gray-100 text-xs font-bold">Change</button>
@@ -256,7 +256,7 @@ export default function InventoryPage() {
                     <td className="px-4 py-3 text-gray-600">{new Date(h.createdAt).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}</td>
                     <td className="px-4 py-3 font-semibold text-gray-900">{h.productName || h.productId}</td>
                     <td className="px-4 py-3 text-emerald-700 font-bold">+{h.quantity}</td>
-                    <td className="px-4 py-3 text-gray-600">{h.store || '-'} {h.section ? `• ${h.section}` : ''}</td>
+                    <td className="px-4 py-3 text-gray-600">{(h.store || '-')}{h.section ? `(${h.section})` : ''}</td>
                     <td className="px-4 py-3 text-gray-600">{h.note || '—'}</td>
                   </tr>
                 ))

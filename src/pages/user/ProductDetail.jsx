@@ -44,6 +44,19 @@ export default function ProductDetail(){
       (v.attributes?.ram || '') === (selected.ram || '') &&
       (v.attributes?.storage || '') === (selected.storage || '')
     ) || null
+    if (!v) {
+      const all = p.variants
+      const filteredByColor = all.filter(x => (x.attributes?.color || '') === (selected.color || '') || !selected.color)
+      const pick = filteredByColor[0] || all[0] || null
+      if (pick) {
+        setSelected({
+          color: pick.attributes?.color || '',
+          ram: pick.attributes?.ram || '',
+          storage: pick.attributes?.storage || ''
+        })
+        return
+      }
+    }
     setActiveVariant(v)
     setActiveImageIndex(0)
   }, [selected, p])
@@ -120,22 +133,9 @@ export default function ProductDetail(){
                           alt={p.name}
                           loading="lazy"
                           decoding="async"
-                          className="w-full h-full object-contain transition-transform duration-700"
-                          style={{ padding: '3rem' }}
+                          className="w-full h-full object-contain transition-transform duration-300"
+                          style={{ padding: '3rem', transform: zoom.on ? 'scale(1.6)' : 'scale(1)', transformOrigin: `${zoom.x}% ${zoom.y}%` }}
                         />
-                        {zoom.on && (
-                          <div
-                            className="absolute inset-0 pointer-events-none hidden lg:block"
-                            style={{
-                              backgroundImage: `url('${current}')`,
-                              backgroundRepeat: 'no-repeat',
-                              backgroundSize: '200% 200%',
-                              backgroundPosition: `${zoom.x}% ${zoom.y}%`,
-                              opacity: 0.6,
-                              mixBlendMode: 'multiply'
-                            }}
-                          />
-                        )}
                       </>
                     ) : (
                       <div className="text-8xl">📦</div>
@@ -291,34 +291,58 @@ export default function ProductDetail(){
                   <div>
                     <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Color</div>
                     <div className="flex flex-wrap gap-2">
-                      {[...new Set(p.variants.map(v => v.attributes?.color).filter(Boolean))].map((c,i)=>(
-                        <button key={i}
-                          onClick={()=>setSelected(s=>({ ...s, color: c }))}
-                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black border ${selected.color===c ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200'}`}
-                        >{c}</button>
-                      ))}
+                      {[...new Set(p.variants.map(v => v.attributes?.color).filter(Boolean))].map((c,i)=> {
+                        const enabled = p.variants.some(v =>
+                          (v.attributes?.color || '') === c &&
+                          ((selected.ram ? (v.attributes?.ram || '') === selected.ram : true)) &&
+                          ((selected.storage ? (v.attributes?.storage || '') === selected.storage : true))
+                        )
+                        return (
+                          <button key={i}
+                            disabled={!enabled}
+                            onClick={()=>enabled && setSelected(s=>({ ...s, color: c }))}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-colors ${selected.color===c ? 'bg-gray-900 text-white border-gray-900' : enabled ? 'bg-white text-gray-700 border-gray-200 hover:border-gray-400' : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'}`}
+                          >{c}</button>
+                        )
+                      })}
                     </div>
                   </div>
                   <div>
                     <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Storage</div>
                     <div className="flex flex-wrap gap-2">
-                      {[...new Set(p.variants.map(v => v.attributes?.storage).filter(Boolean))].map((s,i)=>(
-                        <button key={i}
-                          onClick={()=>setSelected(prev=>({ ...prev, storage: s }))}
-                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black border ${selected.storage===s ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200'}`}
-                        >{s}</button>
-                      ))}
+                      {[...new Set(p.variants.map(v => v.attributes?.storage).filter(Boolean))].map((s,i)=> {
+                        const enabled = p.variants.some(v =>
+                          (selected.color ? (v.attributes?.color || '') === selected.color : true) &&
+                          ((v.attributes?.storage || '') === s) &&
+                          (selected.ram ? (v.attributes?.ram || '') === selected.ram : true)
+                        )
+                        return (
+                          <button key={i}
+                            disabled={!enabled}
+                            onClick={()=>enabled && setSelected(prev=>({ ...prev, storage: s }))}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-colors ${selected.storage===s ? 'bg-gray-900 text-white border-gray-900' : enabled ? 'bg-white text-gray-700 border-gray-200 hover:border-gray-400' : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'}`}
+                          >{s}</button>
+                        )
+                      })}
                     </div>
                   </div>
                   <div>
                     <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">RAM</div>
                     <div className="flex flex-wrap gap-2">
-                      {[...new Set(p.variants.map(v => v.attributes?.ram).filter(Boolean))].map((r,i)=>(
-                        <button key={i}
-                          onClick={()=>setSelected(prev=>({ ...prev, ram: r }))}
-                          className={`px-3 py-1.5 rounded-xl text-[10px] font-black border ${selected.ram===r ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-200'}`}
-                        >{r}</button>
-                      ))}
+                      {[...new Set(p.variants.map(v => v.attributes?.ram).filter(Boolean))].map((r,i)=> {
+                        const enabled = p.variants.some(v =>
+                          (selected.color ? (v.attributes?.color || '') === selected.color : true) &&
+                          (selected.storage ? (v.attributes?.storage || '') === selected.storage : true) &&
+                          ((v.attributes?.ram || '') === r)
+                        )
+                        return (
+                          <button key={i}
+                            disabled={!enabled}
+                            onClick={()=>enabled && setSelected(prev=>({ ...prev, ram: r }))}
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black border transition-colors ${selected.ram===r ? 'bg-gray-900 text-white border-gray-900' : enabled ? 'bg-white text-gray-700 border-gray-200 hover:border-gray-400' : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'}`}
+                          >{r}</button>
+                        )
+                      })}
                     </div>
                   </div>
                 </div>

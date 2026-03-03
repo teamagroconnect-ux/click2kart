@@ -10,24 +10,55 @@ export default function Login() {
   const navigate = useNavigate()
   const { setAuth, refreshProfile } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState('password') // 'password' | 'otp'
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
+  const [otpSent, setOtpSent] = useState(false)
+  const [otp, setOtp] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
-    try {
-      const { data } = await api.post('/api/auth/customer/login', formData)
-      setAuth(data.token, { ...data.user, role: 'customer' })
-      try { await refreshProfile() } catch {}
-      notify('Welcome back!', 'success')
-      navigate('/')
-    } catch (err) {
-      notify(err?.response?.data?.error || 'Invalid email or password', 'error')
-    } finally {
-      setLoading(false)
+    if (mode === 'password') {
+      setLoading(true)
+      try {
+        const { data } = await api.post('/api/auth/customer/login', formData)
+        setAuth(data.token, { ...data.user, role: 'customer' })
+        try { await refreshProfile() } catch {}
+        notify('Welcome back!', 'success')
+        navigate('/')
+      } catch (err) {
+        notify(err?.response?.data?.error || 'Invalid email or password', 'error')
+      } finally {
+        setLoading(false)
+      }
+    } else {
+      if (!otpSent) {
+        setLoading(true)
+        try {
+          await api.post('/api/auth/customer/login-otp/send', { email: formData.email })
+          setOtpSent(true)
+          notify('OTP sent to your email', 'success')
+        } catch (err) {
+          notify(err?.response?.data?.error || 'Failed to send OTP', 'error')
+        } finally {
+          setLoading(false)
+        }
+      } else {
+        setLoading(true)
+        try {
+          const { data } = await api.post('/api/auth/customer/login-otp/verify', { email: formData.email, otp })
+          setAuth(data.token, { ...data.user, role: 'customer' })
+          try { await refreshProfile() } catch {}
+          notify('Logged in successfully', 'success')
+          navigate('/')
+        } catch (err) {
+          notify(err?.response?.data?.error || 'Invalid OTP', 'error')
+        } finally {
+          setLoading(false)
+        }
+      }
     }
   }
 
@@ -46,7 +77,12 @@ export default function Login() {
           <p className="text-sm text-gray-500 font-medium">Access your B2B dashboard and inventory.</p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <div className="flex gap-2 bg-gray-50 p-1 rounded-2xl">
+          <button onClick={()=>{setMode('password'); setOtpSent(false);}} className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest ${mode==='password'?'bg-white shadow border':'text-gray-600'}`} type="button">Password Login</button>
+          <button onClick={()=>{setMode('otp');}} className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest ${mode==='otp'?'bg-white shadow border':'text-gray-600'}`} type="button">OTP Login</button>
+        </div>
+
+        <form className="mt-4 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="group">
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Email Address</label>
@@ -60,23 +96,62 @@ export default function Login() {
                 onChange={handleChange}
               />
             </div>
-            <div className="group">
-              <div className="flex items-center justify-between ml-1 mb-1">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block">Password</label>
-                <Link to="/forgot-password" size="sm" className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700">
-                  Forgot?
-                </Link>
+            {mode==='password' ? (
+              <div className="group">
+                <div className="flex items-center justify-between ml-1 mb-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block">Password</label>
+                  <Link to="/forgot-password" size="sm" className="text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700">
+                    Forgot?
+                  </Link>
+                </div>
+                <input
+                  name="password"
+                  type="password"
+                  required
+                  className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleChange}
+                />
               </div>
-              <input
-                name="password"
-                type="password"
-                required
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-2 items-end">
+                <div className="col-span-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">{otpSent ? 'Enter OTP' : 'One-Time Password'}</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength="6"
+                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    placeholder={otpSent ? "123456" : "Will be sent to email"}
+                    value={otp}
+                    onChange={(e)=>setOtp(e.target.value)}
+                    disabled={!otpSent}
+                    required
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={async ()=>{
+                    setLoading(true)
+                    try {
+                      await api.post('/api/auth/customer/login-otp/send', { email: formData.email })
+                      setOtpSent(true)
+                      notify('OTP sent to your email', 'success')
+                    } catch (err) {
+                      notify(err?.response?.data?.error || 'Failed to send OTP', 'error')
+                    } finally {
+                      setLoading(false)
+                    }
+                  }}
+                  disabled={loading || !formData.email}
+                  className="h-12 px-4 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest disabled:opacity-40"
+                >
+                  {otpSent ? 'Resend OTP' : 'Send OTP'}
+                </button>
+              </div>
+            )}
           </div>
 
           <button
@@ -84,7 +159,7 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
           >
-            {loading ? 'Authenticating...' : 'Sign In'}
+            {loading ? 'Authenticating...' : (mode==='password' ? 'Sign In' : (otpSent ? 'Verify & Sign In' : 'Send OTP'))}
           </button>
 
           <p className="text-center text-xs text-gray-400 font-bold mt-6 uppercase tracking-widest">

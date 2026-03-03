@@ -11,7 +11,8 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', store:'', section:'', variants: [] })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [] })
+  const [hasVariants, setHasVariants] = useState(false)
   const [editing, setEditing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
   const [categories, setCategories] = useState([])
@@ -41,14 +42,16 @@ export default function Products() {
   const create = async (e) => {
     e.preventDefault()
     const images = form.images.split(',').map(s=>s.trim()).filter(Boolean)
+    const computedStock = hasVariants ? (form.variants || []).reduce((s,v)=> s + (Number(v.stock||0)), 0) : Number(form.stock)
     await api.post('/api/products', { 
       ...form, 
       price: Number(form.price), 
-      stock: Number(form.stock), 
+      stock: Number.isFinite(computedStock) ? computedStock : 0, 
       gst: Number(form.gst||0), 
       mrp: form.mrp ? Number(form.mrp) : undefined,
-      bulkDiscountQuantity: Number(form.bulkDiscountQuantity||0),
-      bulkDiscountPriceReduction: Number(form.bulkDiscountPriceReduction||0),
+      bulkDiscountQuantity: form.bulkTiers?.[0]?.quantity ? Number(form.bulkTiers[0].quantity) : Number(form.bulkDiscountQuantity||0),
+      bulkDiscountPriceReduction: form.bulkTiers?.[0]?.priceReduction ? Number(form.bulkTiers[0].priceReduction) : Number(form.bulkDiscountPriceReduction||0),
+      bulkTiers: (form.bulkTiers || []).map(t => ({ quantity: Number(t.quantity||0), priceReduction: Number(t.priceReduction||0) })),
       images,
       variants: (form.variants || []).map(v => ({
         attributes: { color: v.color || '', ram: v.ram || '', storage: v.storage || '', capacity: v.capacity || '' },
@@ -59,7 +62,7 @@ export default function Products() {
         images: (v.images || '').split(',').map(s=>s.trim()).filter(Boolean)
       }))
     })
-    setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', store:'', section:'', variants: [] }); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [] }); setHasVariants(false); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -71,7 +74,8 @@ export default function Products() {
     ...p, 
     images: (p.images||[]).map(i=>i.url||i).join(', '),
     bulkDiscountQuantity: p.bulkDiscountQuantity || '',
-    bulkDiscountPriceReduction: p.bulkDiscountPriceReduction || ''
+    bulkDiscountPriceReduction: p.bulkDiscountPriceReduction || '',
+    bulkTiers: Array.isArray(p.bulkTiers) ? p.bulkTiers.map(t => ({ quantity: t.quantity, priceReduction: t.priceReduction })) : []
   })
   const saveEdit = async (e) => {
     e.preventDefault()
@@ -84,8 +88,9 @@ export default function Products() {
       stock: Number(editing.stock),
       gst: Number(editing.gst||0),
       mrp: editing.mrp ? Number(editing.mrp) : undefined,
-      bulkDiscountQuantity: Number(editing.bulkDiscountQuantity||0),
-      bulkDiscountPriceReduction: Number(editing.bulkDiscountPriceReduction||0),
+      bulkDiscountQuantity: editing.bulkTiers?.[0]?.quantity ? Number(editing.bulkTiers[0].quantity) : Number(editing.bulkDiscountQuantity||0),
+      bulkDiscountPriceReduction: editing.bulkTiers?.[0]?.priceReduction ? Number(editing.bulkTiers[0].priceReduction) : Number(editing.bulkDiscountPriceReduction||0),
+      bulkTiers: (editing.bulkTiers || []).map(t => ({ quantity: Number(t.quantity||0), priceReduction: Number(t.priceReduction||0) })),
       images: (editing.images||'').split(',').map(s=>s.trim()).filter(Boolean),
       store: editing.store || '',
       section: editing.section || ''
@@ -144,20 +149,27 @@ export default function Products() {
                                   <span className="text-[10px] text-gray-400">No Img</span>
                                 )}
                               </div>
-                              <div className="min-w-0">
+                      <div className="min-w-0">
                                 <div className="font-bold text-gray-900 truncate max-w-[240px]">{p.name}</div>
-                                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.category || 'General'}</div>
+                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.category || 'General'}</div>
+                        {(p.store || p.section) && (
+                          <div className="text-[10px] text-gray-500 font-bold">{p.store || ''}{p.section ? `(${p.section})` : ''}</div>
+                        )}
                               </div>
                             </div>
                           </td>
                           <td className="px-6 py-4">
                             <div className="font-black text-gray-900">₹{p.price.toLocaleString()}</div>
                             <div className="text-[10px] text-gray-400 font-bold">{p.gst}% GST</div>
-                            {p.bulkDiscountQuantity > 0 && (
-                              <div className="mt-1 inline-flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100 uppercase tracking-tight">
-                                {p.bulkDiscountQuantity}+: -₹{p.bulkDiscountPriceReduction}
-                              </div>
-                            )}
+                    {((p.bulkTiers && p.bulkTiers.length > 0) || p.bulkDiscountQuantity > 0) && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {((p.bulkTiers && p.bulkTiers.length > 0) ? p.bulkTiers : [{ quantity: p.bulkDiscountQuantity, priceReduction: p.bulkDiscountPriceReduction }]).map((t, i) => (
+                          <div key={i} className="inline-flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100 uppercase tracking-tight">
+                            {t.quantity}+: -₹{t.priceReduction}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                           </td>
                           <td className="px-6 py-4">
                             <div className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black border ${p.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
@@ -219,7 +231,20 @@ export default function Products() {
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Stock</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} required />
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50" placeholder="50" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} disabled={hasVariants} required={!hasVariants} />
+                    {hasVariants && <div className="text-[10px] text-gray-400 font-bold">Auto-summed from variants</div>}
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Multi-Variant</label>
+                    <div className="flex items-center h-[46px]">
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input type="checkbox" className="sr-only" checked={hasVariants} onChange={e => setHasVariants(e.target.checked)} />
+                        <span className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${hasVariants ? 'bg-gray-900' : 'bg-gray-300'}`}>
+                          <span className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${hasVariants ? 'translate-x-5' : 'translate-x-0'}`} />
+                        </span>
+                        <span className="ml-2 text-[11px] font-bold text-gray-700">{hasVariants ? 'Enabled' : 'Disabled'}</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -245,15 +270,37 @@ export default function Products() {
                     <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12" value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Bulk Qty</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 10" value={form.bulkDiscountQuantity} onChange={e => setForm({ ...form, bulkDiscountQuantity: e.target.value })} />
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Bulk Qty</label>
+                      <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 10" value={form.bulkDiscountQuantity} onChange={e => setForm({ ...form, bulkDiscountQuantity: e.target.value })} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Reduction/Unit (₹)</label>
+                      <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 50" value={form.bulkDiscountPriceReduction} onChange={e => setForm({ ...form, bulkDiscountPriceReduction: e.target.value })} />
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Reduction/Unit (₹)</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 50" value={form.bulkDiscountPriceReduction} onChange={e => setForm({ ...form, bulkDiscountPriceReduction: e.target.value })} />
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => {
+                      const q = Number(form.bulkDiscountQuantity||0)
+                      const r = Number(form.bulkDiscountPriceReduction||0)
+                      if (Number.isFinite(q) && q > 0 && Number.isFinite(r) && r >= 0) {
+                        setForm(f => ({ ...f, bulkTiers: [...(f.bulkTiers||[]), { quantity: q, priceReduction: r }], bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' }))
+                      }
+                    }} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-[11px] font-black uppercase tracking-widest">Add Bulk Offer</button>
+                    <div className="text-[11px] text-gray-500">Add multiple bulk offers</div>
                   </div>
+                  {(form.bulkTiers || []).length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {form.bulkTiers.map((t, i) => (
+                        <div key={i} className="inline-flex items-center gap-2 text-[10px] font-black bg-gray-50 border rounded-xl px-2 py-1">
+                          <span className="text-gray-700">{t.quantity}+: -₹{t.priceReduction}</span>
+                          <button type="button" className="text-red-600" onClick={() => setForm(f => ({ ...f, bulkTiers: f.bulkTiers.filter((_, idx) => idx !== i) }))}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
@@ -278,22 +325,24 @@ export default function Products() {
                     <ImageUpload onUploaded={url => setForm(f => ({ ...f, images: (f.images ? f.images + ', ' : '') + url }))} />
                   </div>
                 </div>
-                <div className="space-y-2 border rounded-2xl p-3">
-                  <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Variants (optional)</div>
-                  {(form.variants || []).length > 0 && (
-                    <div className="divide-y border rounded-xl bg-gray-50">
-                      {form.variants.map((v, idx) => (
-                        <div key={idx} className="p-2 grid grid-cols-2 gap-2 text-[11px]">
-                          <div className="font-bold">{['color','ram','storage','capacity'].map(k => v[k] ? `${k}:${v[k]}` : '').filter(Boolean).join(' / ') || 'Variant'}</div>
-                          <div className="text-right">
-                            <button type="button" className="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-100" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>Remove</button>
+                {hasVariants && (
+                  <div className="space-y-2 border rounded-2xl p-3">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Variants</div>
+                    {(form.variants || []).length > 0 && (
+                      <div className="divide-y border rounded-xl bg-gray-50">
+                        {form.variants.map((v, idx) => (
+                          <div key={idx} className="p-2 grid grid-cols-2 gap-2 text-[11px]">
+                            <div className="font-bold">{['color','ram','storage','capacity'].map(k => v[k] ? `${k}:${v[k]}` : '').filter(Boolean).join(' / ') || 'Variant'}</div>
+                            <div className="text-right">
+                              <button type="button" className="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-100" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>Remove</button>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <VariantQuickAdd onAdd={(v)=> setForm(f => ({ ...f, variants: [...f.variants, v] }))} />
-                </div>
+                        ))}
+                      </div>
+                    )}
+                    <VariantQuickAdd onAdd={(v)=> setForm(f => ({ ...f, variants: [...f.variants, v] }))} />
+                  </div>
+                )}
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
                   <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px]" placeholder="Product details..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
@@ -363,13 +412,37 @@ export default function Products() {
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>
                 <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="GST %" value={editing.gst} onChange={e => setEditing({ ...editing, gst: e.target.value })} />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Bulk Qty</label>
-                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="10" value={editing.bulkDiscountQuantity} onChange={e => setEditing({ ...editing, bulkDiscountQuantity: e.target.value })} />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Reduction (₹)</label>
-                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={editing.bulkDiscountPriceReduction} onChange={e => setEditing({ ...editing, bulkDiscountPriceReduction: e.target.value })} />
+              <div className="space-y-2 md:col-span-2">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Bulk Qty</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="10" value={editing.bulkDiscountQuantity} onChange={e => setEditing({ ...editing, bulkDiscountQuantity: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Reduction (₹)</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={editing.bulkDiscountPriceReduction} onChange={e => setEditing({ ...editing, bulkDiscountPriceReduction: e.target.value })} />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button type="button" onClick={() => {
+                    const qv = Number(editing.bulkDiscountQuantity||0)
+                    const rv = Number(editing.bulkDiscountPriceReduction||0)
+                    if (Number.isFinite(qv) && qv > 0 && Number.isFinite(rv) && rv >= 0) {
+                      setEditing(ed => ({ ...ed, bulkTiers: [...(ed.bulkTiers||[]), { quantity: qv, priceReduction: rv }], bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' }))
+                    }
+                  }} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-[11px] font-black uppercase tracking-widest">Add Bulk Offer</button>
+                  <div className="text-[11px] text-gray-500">Manage multiple bulk offers</div>
+                </div>
+                {(editing.bulkTiers || []).length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {editing.bulkTiers.map((t, i) => (
+                      <div key={i} className="inline-flex items-center gap-2 text-[10px] font-black bg-gray-50 border rounded-xl px-2 py-1">
+                        <span className="text-gray-700">{t.quantity}+: -₹{t.priceReduction}</span>
+                        <button type="button" className="text-red-600" onClick={() => setEditing(ed => ({ ...ed, bulkTiers: ed.bulkTiers.filter((_, idx) => idx !== i) }))}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="space-y-1 md:col-span-2">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Images</label>
