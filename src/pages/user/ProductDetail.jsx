@@ -354,6 +354,20 @@ export default function ProductDetail(){
               </div>
             )}
 
+            {Array.isArray(p.highlights) && p.highlights.length > 0 && (
+              <div className="space-y-3 pt-8 border-t border-gray-50">
+                <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Product Highlights</div>
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {p.highlights.map((h,i)=>(
+                    <li key={i} className="flex items-start gap-2 text-sm text-gray-800">
+                      <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                      <span className="font-medium">{h}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <div className="space-y-4 pt-8 border-t border-gray-50">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Product Narrative</h3>
               <div className="relative overflow-hidden rounded-[2rem] border border-gray-100">

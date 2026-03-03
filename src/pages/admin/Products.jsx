@@ -11,7 +11,7 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [] })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [] })
   const [hasVariants, setHasVariants] = useState(false)
   const [editing, setEditing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -49,6 +49,7 @@ export default function Products() {
       stock: Number.isFinite(computedStock) ? computedStock : 0, 
       gst: Number(form.gst||0), 
       mrp: form.mrp ? Number(form.mrp) : undefined,
+      highlights: (form.highlights || []).map(h => String(h).trim()).filter(Boolean),
       bulkDiscountQuantity: form.bulkTiers?.[0]?.quantity ? Number(form.bulkTiers[0].quantity) : Number(form.bulkDiscountQuantity||0),
       bulkDiscountPriceReduction: form.bulkTiers?.[0]?.priceReduction ? Number(form.bulkTiers[0].priceReduction) : Number(form.bulkDiscountPriceReduction||0),
       bulkTiers: (form.bulkTiers || []).map(t => ({ quantity: Number(t.quantity||0), priceReduction: Number(t.priceReduction||0) })),
@@ -62,7 +63,7 @@ export default function Products() {
         images: (v.images || '').split(',').map(s=>s.trim()).filter(Boolean)
       }))
     })
-    setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [] }); setHasVariants(false); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [] }); setHasVariants(false); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -75,6 +76,8 @@ export default function Products() {
     images: (p.images||[]).map(i=>i.url||i).join(', '),
     bulkDiscountQuantity: p.bulkDiscountQuantity || '',
     bulkDiscountPriceReduction: p.bulkDiscountPriceReduction || '',
+    highlights: Array.isArray(p.highlights) ? p.highlights : [],
+    highlightInput: '',
     bulkTiers: Array.isArray(p.bulkTiers) ? p.bulkTiers.map(t => ({ quantity: t.quantity, priceReduction: t.priceReduction })) : []
   })
   const saveEdit = async (e) => {
@@ -88,6 +91,7 @@ export default function Products() {
       stock: Number(editing.stock),
       gst: Number(editing.gst||0),
       mrp: editing.mrp ? Number(editing.mrp) : undefined,
+      highlights: (editing.highlights || []).map(h => String(h).trim()).filter(Boolean),
       bulkDiscountQuantity: editing.bulkTiers?.[0]?.quantity ? Number(editing.bulkTiers[0].quantity) : Number(editing.bulkDiscountQuantity||0),
       bulkDiscountPriceReduction: editing.bulkTiers?.[0]?.priceReduction ? Number(editing.bulkTiers[0].priceReduction) : Number(editing.bulkDiscountPriceReduction||0),
       bulkTiers: (editing.bulkTiers || []).map(t => ({ quantity: Number(t.quantity||0), priceReduction: Number(t.priceReduction||0) })),
@@ -347,6 +351,23 @@ export default function Products() {
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
                   <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px]" placeholder="Product details..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
                 </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Highlights</label>
+                  <div className="flex gap-2">
+                    <input className="flex-1 bg-gray-50 rounded-2xl px-4 py-3 text-sm font-bold" placeholder="Add a highlight and press Add" value={form.highlightInput} onChange={e=>setForm({...form, highlightInput: e.target.value})} />
+                    <button type="button" onClick={()=>{ const h=(form.highlightInput||'').trim(); if(h){ setForm(f=>({ ...f, highlights:[...(f.highlights||[]), h], highlightInput:'' })) } }} className="px-4 py-3 rounded-2xl bg-gray-900 text-white text-sm font-bold">Add</button>
+                  </div>
+                  {(form.highlights||[]).length>0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {form.highlights.map((h,i)=>(
+                        <span key={i} className="px-3 py-1 rounded-xl bg-gray-50 border text-[11px] font-bold flex items-center gap-2">
+                          {h}
+                          <button type="button" className="text-red-600" onClick={()=>setForm(f=>({...f, highlights: f.highlights.filter((_,idx)=>idx!==i)}))}>✕</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <button className="w-full bg-gray-900 text-white py-4 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest">ADD TO INVENTORY</button>
               </form>
             </div>
@@ -465,6 +486,23 @@ export default function Products() {
               <div className="space-y-1 md:col-span-2">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
                 <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[100px]" placeholder="Description" value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Highlights</label>
+                <div className="flex gap-2">
+                  <input className="flex-1 bg-gray-50 rounded-2xl px-4 py-3 text-sm font-bold" placeholder="Add a highlight and press Add" value={editing.highlightInput || ''} onChange={e=>setEditing({...editing, highlightInput: e.target.value})} />
+                  <button type="button" onClick={()=>{ const h=(editing.highlightInput||'').trim(); if(h){ setEditing(ed=>({ ...ed, highlights:[...(ed.highlights||[]), h], highlightInput:'' })) } }} className="px-4 py-3 rounded-2xl bg-gray-900 text-white text-sm font-bold">Add</button>
+                </div>
+                {(editing.highlights||[]).length>0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {editing.highlights.map((h,i)=>(
+                      <span key={i} className="px-3 py-1 rounded-xl bg-gray-50 border text-[11px] font-bold flex items-center gap-2">
+                        {h}
+                        <button type="button" className="text-red-600" onClick={()=>setEditing(ed=>({...ed, highlights: ed.highlights.filter((_,idx)=>idx!==i)}))}>✕</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

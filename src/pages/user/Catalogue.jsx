@@ -151,7 +151,7 @@ export default function Catalogue() {
       <div className="hidden lg:block bg-white border-b border-gray-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between gap-6">
           <div>
-            <p className="text-[10px] font-black text-[#1244ea] uppercase tracking-[0.25em]">Our Collection</p>
+            <p className="text-[10px] font-black text-gray-900 uppercase tracking-[0.25em]">Our Collection</p>
             <h1 className="text-2xl font-black text-gray-900 tracking-tight leading-none mt-0.5">Explore Products</h1>
           </div>
           <div className="flex items-center gap-3 flex-1 max-w-2xl">
@@ -208,10 +208,10 @@ export default function Catalogue() {
                       key={opt.v}
                       onClick={() => setSort(opt.v)}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all text-left ${sort === opt.v
-                        ? 'bg-[#1244ea] text-white'
+                        ? 'bg-gray-900 text-white'
                         : 'text-gray-600 hover:bg-gray-50'}`}
                     >
-                      <span className={`h-2 w-2 rounded-full flex-shrink-0 ${sort === opt.v ? 'bg-blue-200' : 'bg-gray-200'}`}></span>
+                      <span className={`h-2 w-2 rounded-full flex-shrink-0 ${sort === opt.v ? 'bg-gray-300' : 'bg-gray-200'}`}></span>
                       {opt.l}
                     </button>
                   ))}
@@ -222,10 +222,10 @@ export default function Catalogue() {
               <div className="space-y-3">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Category</p>
                 <div className="space-y-1 max-h-[280px] overflow-y-auto pr-1">
-                  <button
+                    <button
                     onClick={() => setCategory('')}
                     className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all text-left ${category === ''
-                      ? 'bg-[#1244ea] text-white'
+                      ? 'bg-gray-900 text-white'
                       : 'text-gray-600 hover:bg-gray-50'}`}
                   >
                     <div className="h-10 w-10 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
@@ -241,7 +241,7 @@ export default function Catalogue() {
                       key={c._id}
                       onClick={() => setCategory(c.name)}
                       className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all text-left capitalize ${category === c.name
-                        ? 'bg-[#1244ea] text-white'
+                        ? 'bg-gray-900 text-white'
                         : 'text-gray-600 hover:bg-gray-50'}`}
                     >
                       <div className="h-10 w-10 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
@@ -323,7 +323,7 @@ export default function Catalogue() {
             <div className="hidden lg:flex items-center justify-between mb-4">
               <p className="text-sm font-bold text-gray-500">
                 <span className="text-gray-900 font-black">{total}</span> products found
-                {category && <span className="ml-1 text-[#1244ea]">in <span className="capitalize">{category}</span></span>}
+                {category && <span className="ml-1 text-gray-900">in <span className="capitalize">{category}</span></span>}
               </p>
               <p className="text-xs font-bold text-gray-400">Page {page} of {totalPages}</p>
             </div>
@@ -383,8 +383,8 @@ export default function Catalogue() {
                       key={p}
                       onClick={() => load(p)}
                       className={`h-10 w-10 rounded-xl text-xs font-black transition-all shadow-sm ${p === page
-                        ? 'bg-[#1244ea] text-white border border-[#1244ea]'
-                        : 'bg-white border border-gray-200 text-gray-600 hover:border-[#1244ea] hover:text-[#1244ea]'}`}
+                        ? 'bg-gray-900 text-white border border-gray-900'
+                        : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-900 hover:text-gray-900'}`}
                     >
                       {p}
                     </button>
@@ -393,7 +393,7 @@ export default function Catalogue() {
                 <button
                   onClick={() => load(page + 1)}
                   disabled={page * limit >= total}
-                  className="h-10 w-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 hover:border-[#1244ea] hover:text-[#1244ea] transition-all shadow-sm"
+                  className="h-10 w-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 disabled:opacity-30 hover:border-gray-900 hover:text-gray-900 transition-all shadow-sm"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
@@ -487,6 +487,23 @@ function ProductCard({ p, authed, addToCart, navigate }) {
     : 0
   const [recOpen, setRecOpen] = useState(false)
   const [recItems, setRecItems] = useState([])
+  const [wished, setWished] = useState(() => {
+    try {
+      const arr = JSON.parse(localStorage.getItem('wishlist') || '[]')
+      return arr.includes(p._id)
+    } catch { return false }
+  })
+
+  const toggleWish = (e) => {
+    e.stopPropagation(); e.preventDefault()
+    try {
+      const arr = JSON.parse(localStorage.getItem('wishlist') || '[]')
+      const exists = arr.includes(p._id)
+      const next = exists ? arr.filter(id => id !== p._id) : [...arr, p._id]
+      localStorage.setItem('wishlist', JSON.stringify(next))
+      setWished(!exists)
+    } catch {}
+  }
 
   return (
     <div
@@ -513,8 +530,9 @@ function ProductCard({ p, authed, addToCart, navigate }) {
         )}
         {/* Wishlist */}
         <button
-          onClick={e => { e.stopPropagation(); e.preventDefault() }}
-          className="absolute top-2 right-2 h-8 w-8 rounded-full bg-white shadow border border-gray-100 flex items-center justify-center text-gray-300 hover:text-rose-500 transition-colors"
+          onClick={toggleWish}
+          title={wished ? 'Remove from Wishlist' : 'Add to Wishlist'}
+          className={`absolute top-2 right-2 h-8 w-8 rounded-full bg-white shadow border border-gray-100 flex items-center justify-center transition-colors ${wished ? 'text-rose-500' : 'text-gray-300 hover:text-rose-500'}`}
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 6 4 4 6.5 4c1.74 0 3.41 1.01 4.22 2.5C11.09 5.01 12.76 4 14.5 4 17 4 19 6 19 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
