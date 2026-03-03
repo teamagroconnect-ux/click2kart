@@ -52,7 +52,7 @@ export default function OrderHistory() {
             const isExpanded = expandedId === order._id
             const steps = ['Placed', 'Processing', 'Packed', 'Shipped', 'Delivered']
             const statusIndex = (() => {
-              if (order.status === 'FULFILLED') return 4
+              if (order.status === 'FULFILLED' || order.status === 'DELIVERED') return 4
               if (order.shipping?.waybill) return 3
               if (order.status === 'CONFIRMED') return 2
               if (order.status === 'NEW' || order.status === 'PENDING_CASH_APPROVAL') return 1

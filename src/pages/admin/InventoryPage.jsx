@@ -14,6 +14,7 @@ export default function InventoryPage() {
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState({ kpis: { totalSkus:0, totalUnits:0, lowStockCount:0, totalAdded30d:0 }, daily: [], topProducts: [], lowStock: [] })
+  const [overview, setOverview] = useState([])
 
   const canSubmit = selected && Number.isInteger(Number(qty)) && Number(qty) > 0
 
@@ -38,6 +39,16 @@ export default function InventoryPage() {
       } catch {}
     }
     loadSum()
+  }, [])
+
+  useEffect(() => {
+    const run = async () => {
+      try {
+        const { data } = await api.get('/api/inventory/overview')
+        setOverview(data.items || [])
+      } catch {}
+    }
+    run()
   }, [])
 
   useEffect(() => {
@@ -139,6 +150,39 @@ export default function InventoryPage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">Product Stock Overview</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
+              <tr>
+                <th className="px-4 py-3 text-left">Product</th>
+                <th className="px-4 py-3 text-left">Total</th>
+                <th className="px-4 py-3 text-left">Reserved</th>
+                <th className="px-4 py-3 text-left">Available</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {overview.map(o => (
+                <tr key={o.id}>
+                  <td className="px-4 py-3 font-semibold text-gray-900">{o.name}</td>
+                  <td className="px-4 py-3 text-gray-800">{o.total}</td>
+                  <td className="px-4 py-3 text-gray-800">{o.reserved}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-lg text-[11px] font-bold border ${o.low ? 'bg-red-50 text-red-700 border-red-100' : 'bg-emerald-50 text-emerald-700 border-emerald-100'}`}>
+                      {o.available}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {overview.length === 0 && (<tr><td colSpan="4" className="px-4 py-6 text-center text-gray-400">No products</td></tr>)}
+            </tbody>
+          </table>
         </div>
       </div>
 

@@ -3,11 +3,13 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useCart, getStockStatus } from '../../lib/CartContext'
 import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
+import { useToast } from '../../components/Toast'
 
 export default function ProductDetail(){
   const { id } = useParams()
   const navigate = useNavigate()
   const { addToCart } = useCart()
+  const { notify } = useToast()
   const [p, setP] = useState(null)
   const [selected, setSelected] = useState({ color: '', storage: '', ram: '' })
   const [activeVariant, setActiveVariant] = useState(null)
@@ -15,7 +17,7 @@ export default function ProductDetail(){
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [zoom, setZoom] = useState({ on: false, x: 0, y: 0 })
   const [similar, setSimilar] = useState([])
-  const [fbt, setFbt] = useState([])
+  const [rec, setRec] = useState(null)
   const [recOpen, setRecOpen] = useState(false)
   const [reviewOpen, setReviewOpen] = useState(false)
   const [myRating, setMyRating] = useState(0)
@@ -24,7 +26,6 @@ export default function ProductDetail(){
   useEffect(()=>{ 
     api.get(`/api/products/${id}`).then(({data})=>setP(data)) 
     api.get(`/api/products/${id}/recommendations`).then(({data})=>setSimilar(data||[])).catch(()=>setSimilar([]))
-    api.get(`/api/recommendations/frequently-bought/${id}`).then(({data})=>setFbt(data||[])).catch(()=>setFbt([]))
   }, [id])
   useEffect(() => {
     if (!p || !Array.isArray(p.variants) || p.variants.length === 0) { setActiveVariant(null); return }
@@ -192,9 +193,10 @@ export default function ProductDetail(){
                         const ok = await addToCart(p, activeVariant || undefined)
                         if (ok) {
                           try {
-                            const { data } = await api.get(`/api/recommendations/frequently-bought/${id}`)
-                            setFbt(data || [])
-                            setRecOpen(true)
+                            const { data } = await api.get(`/api/products/recommend`, { params: { productId: id } })
+                            const item = data?.items?.[0] || null
+                            setRec(item)
+                            if (item) setRecOpen(true)
                           } catch {}
                         }
                       }}
@@ -486,7 +488,7 @@ export default function ProductDetail(){
           </div>
         </div>
       )}
-      {recOpen && fbt.length > 0 && (
+      {recOpen && rec && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setRecOpen(false)} />
           <div className="absolute bottom-0 inset-x-0 bg-white rounded-t-3xl overflow-hidden shadow-2xl" style={{ maxHeight: '70vh' }}>
@@ -494,7 +496,7 @@ export default function ProductDetail(){
               <div className="h-1 w-10 rounded-full bg-gray-200" />
             </div>
             <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100">
-              <span className="text-sm font-black text-gray-900 uppercase tracking-widest">Frequently Bought Together</span>
+              <span className="text-sm font-black text-gray-900 uppercase tracking-widest">Recommended For You</span>
               <button onClick={() => setRecOpen(false)}
                 className="h-8 w-8 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center">
                 <svg className="w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -503,33 +505,33 @@ export default function ProductDetail(){
               </button>
             </div>
             <div className="overflow-y-auto p-5 space-y-3" style={{ maxHeight: 'calc(70vh - 80px)' }}>
-              {fbt.map(fp => (
-                <div key={fp._id || fp.id} className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl p-3">
-                  <div className="h-12 w-12 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
-                    {fp.images && fp.images[0]?.url
-                      ? <img src={fp.images[0].url} alt={fp.name} className="h-full w-full object-contain" />
-                      : <span className="text-[10px] text-gray-400">📦</span>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-xs font-bold text-gray-900 truncate">{fp.name}</div>
-                    <div className="text-[11px] text-gray-500">{fp.price != null ? `₹${Number(fp.price).toLocaleString()}` : 'Login to view'}</div>
-                  </div>
-                  <button
-                    onClick={() => addToCart(fp)}
-                    className="px-3 py-1.5 rounded-lg bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest"
-                  >
-                    Add
-                  </button>
+              <div className="flex items-center gap-3 bg-white border border-gray-100 rounded-xl p-3">
+                <div className="h-12 w-12 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  {rec.images && rec.images[0]?.url
+                    ? <img src={rec.images[0].url} alt={rec.name} className="h-full w-full object-contain" />
+                    : <span className="text-[10px] text-gray-400">📦</span>}
                 </div>
-              ))}
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-bold text-gray-900 truncate">{rec.name}</div>
+                  <div className="text-[11px] text-gray-500">{rec.price != null ? `₹${Number(rec.price).toLocaleString()}` : 'Login to view'}</div>
+                </div>
+              </div>
             </div>
             <div className="p-5">
-              <button
-                onClick={() => setRecOpen(false)}
-                className="w-full py-4 bg-gray-900 text-white rounded-2xl text-sm font-black uppercase tracking-widest"
-              >
-                Continue
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={async () => { await addToCart(rec); setRecOpen(false) }}
+                  className="flex-1 py-4 bg-gray-900 text-white rounded-2xl text-sm font-black uppercase tracking-widest"
+                >
+                  Add This Also
+                </button>
+                <button
+                  onClick={() => setRecOpen(false)}
+                  className="flex-1 py-4 bg-gray-100 text-gray-700 rounded-2xl text-sm font-black uppercase tracking-widest"
+                >
+                  Skip For Now
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -567,6 +569,31 @@ export default function ProductDetail(){
           </div>
         </div>
       )}
+      {/* Floating Share Button */}
+      <button
+        onClick={async (e) => {
+          e.preventDefault();
+          try {
+            if (navigator.share) {
+              await navigator.share({ title: p.name, text: p.description || p.name, url: window.location.href });
+              return;
+            }
+          } catch {}
+          try {
+            await navigator.clipboard.writeText(window.location.href);
+            notify('Product link copied', 'success');
+          } catch {
+            notify('Copy failed', 'error');
+          }
+        }}
+        title="Share"
+        className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-[#1244ea] text-white shadow-2xl flex items-center justify-center hover:bg-[#0d35c7] active:scale-95"
+      >
+        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M18 8a3 3 0 10-2.83-4H15a3 3 0 100 6 3 3 0 003-3zM6 14a3 3 0 10-2.83 4H3a3 3 0 100-6 3 3 0 003 3zm12 0a3 3 0 10-2.83 4H15a3 3 0 100-6 3 3 0 003 3z" opacity="0.2"/>
+          <path d="M7.5 13.1l8.9-4.6m-8.9 6.9l8.9 4.6" />
+        </svg>
+      </button>
     </div>
   )
 }

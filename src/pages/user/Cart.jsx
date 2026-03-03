@@ -96,30 +96,30 @@ export default function Cart() {
                 const maxQ = Math.max(item.quantity, tiers[tiers.length - 1].quantity)
                 const pct = Math.min(100, Math.round((item.quantity / maxQ) * 100))
                 return (
-                  <div className="mt-3 space-y-2">
-                    <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+                  <div className="mt-3 space-y-2 rounded-xl border border-emerald-100 bg-emerald-50 p-3">
+                    <div className="w-full h-2 rounded-full bg-white overflow-hidden">
                       <div className="h-2 bg-emerald-500" style={{ width: `${pct}%` }} />
                     </div>
-                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
-                      <div className="flex items-center gap-2">
-                        {tiers.map((t, idx) => (
-                          <div key={idx} className="flex items-center gap-1">
-                            <span className="h-1 w-1 rounded-full bg-gray-300"></span>
-                            <span>{t.quantity}+</span>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-emerald-700">
                       {next ? (() => {
                         const delta = next.quantity - item.quantity
                         const perUnitOff = Number(next.priceReduction || 0)
                         const effectiveUnit = Math.max(0, Number(item.price || 0) - perUnitOff)
                         const estSave = perUnitOff * (item.quantity + delta)
                         return (
-                          <div className="text-emerald-700">
-                            Add {delta} more to pay ₹{effectiveUnit.toLocaleString()}/unit • save approx ₹{estSave.toLocaleString()}
-                          </div>
+                          <>
+                            <div>
+                              Add {delta} more to get ₹{effectiveUnit.toLocaleString()}/unit • save approx ₹{estSave.toLocaleString()}
+                            </div>
+                            <button
+                              onClick={() => updateQuantity((item.productId || item._id), next.quantity)}
+                              className="ml-3 px-3 py-1.5 rounded-lg bg-emerald-600 text-white text-[10px]"
+                            >
+                              Add {delta} More
+                            </button>
+                          </>
                         )
-                      })() : <div className="text-emerald-700">Max bulk savings applied</div>}
+                      })() : <div>Max bulk savings applied</div>}
                     </div>
                   </div>
                 )

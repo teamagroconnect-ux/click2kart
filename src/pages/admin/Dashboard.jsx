@@ -6,18 +6,21 @@ export default function Dashboard() {
   const [stats, setStats] = useState(null)
   const [inv, setInv] = useState({ totalSkus: 0, totalUnits: 0, outOfStock: 0, lowStock: 0 })
   const [orders, setOrders] = useState({ total: 0, open: 0, today: 0, recent: [] })
+  const [revenue, setRevenue] = useState({ totalRevenue: 0, thisMonthRevenue: 0, pendingOrders: 0, topProducts: [], topBuyers: [] })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
       setLoading(true)
       try {
-        const [statsRes, productsRes, ordersRes] = await Promise.all([
+        const [statsRes, productsRes, ordersRes, revenueRes] = await Promise.all([
           api.get('/api/admin/stats'),
           api.get('/api/products', { params: { page: 1, limit: 5000 } }).catch(() => ({ data: { items: [] } })),
-          api.get('/api/orders', { params: { page: 1, limit: 50 } }).catch(() => ({ data: { items: [] } }))
+          api.get('/api/orders', { params: { page: 1, limit: 50 } }).catch(() => ({ data: { items: [] } })),
+          api.get('/api/admin/revenue/summary').catch(() => ({ data: { totalRevenue: 0, thisMonthRevenue: 0, pendingOrders: 0, topProducts: [], topBuyers: [] } }))
         ])
         setStats(statsRes.data)
+        setRevenue(revenueRes.data)
 
         const products = productsRes.data?.items || []
         const totalSkus = products.length
@@ -83,6 +86,57 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card iconBg="bg-blue-50" icon="🛒" title="New Order Requests" value={stats?.newOrders ?? 0} />
         <Card iconBg="bg-purple-50" icon="💼" title="Cash Approvals Pending" value={stats?.pendingCash ?? 0} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-white border rounded-2xl p-5">
+          <div className="text-[12px] text-gray-500 font-bold mb-1">Total Revenue</div>
+          <div className="text-3xl font-black text-gray-900">₹{Math.round(revenue.totalRevenue).toLocaleString()}</div>
+          <div className="mt-3 text-[12px] text-gray-500 font-bold mb-1">This Month</div>
+          <div className="text-xl font-black text-emerald-700">₹{Math.round(revenue.thisMonthRevenue).toLocaleString()}</div>
+          <div className="mt-3 text-[12px] text-gray-500 font-bold mb-1">Pending Orders</div>
+          <div className="text-lg font-black text-amber-600">{revenue.pendingOrders}</div>
+        </div>
+        <div className="bg-white border rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="font-semibold text-gray-800">Top 5 Products</div>
+          </div>
+          <div className="divide-y max-h-64 overflow-y-auto">
+            {revenue.topProducts.map((p, idx) => (
+              <div key={idx} className="py-2 flex items-center justify-between">
+                <div className="truncate text-sm font-semibold text-gray-800">{p.name}</div>
+                <div className="text-right">
+                  <div className="text-xs text-gray-500">₹{Math.round(p.revenue).toLocaleString()}</div>
+                  <div className="text-[11px] text-gray-400">Qty {p.quantity}</div>
+                </div>
+              </div>
+            ))}
+            {revenue.topProducts.length === 0 && (
+              <div className="py-4 text-gray-500 text-sm">No data</div>
+            )}
+          </div>
+        </div>
+        <div className="bg-white border rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-2">
+            <div className="font-semibold text-gray-800">Top 5 Buyers</div>
+          </div>
+          <div className="divide-y max-h-64 overflow-y-auto">
+            {revenue.topBuyers.map((b, idx) => (
+              <div key={idx} className="py-2 flex items-center justify-between">
+                <div className="truncate">
+                  <div className="text-sm font-semibold text-gray-800">{b.name || b.phone}</div>
+                  <div className="text-[11px] text-gray-400">{b.phone}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs text-gray-500">₹{Math.round(b.total).toLocaleString()}</div>
+                </div>
+              </div>
+            ))}
+            {revenue.topBuyers.length === 0 && (
+              <div className="py-4 text-gray-500 text-sm">No data</div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
