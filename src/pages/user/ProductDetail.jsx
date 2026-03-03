@@ -22,6 +22,7 @@ export default function ProductDetail(){
   const [reviewOpen, setReviewOpen] = useState(false)
   const [myRating, setMyRating] = useState(0)
   const [myComment, setMyComment] = useState('')
+  const [qty, setQty] = useState(1)
   const authed = !!localStorage.getItem('token')
   useEffect(()=>{ 
     api.get(`/api/products/${id}`).then(({data})=>setP(data)) 
@@ -88,6 +89,15 @@ export default function ProductDetail(){
     return cleanup
   }, [p])
   if (!p) return <div className="p-10 text-center text-lg text-gray-500">Loading product details...</div>
+  const basePrice = Number(activeVariant?.price ?? p.price ?? 0)
+  const sortedTiersDesc = Array.isArray(p?.bulkTiers) ? p.bulkTiers.slice().sort((a,b)=>b.quantity-a.quantity) : []
+  const sortedTiersAsc = Array.isArray(p?.bulkTiers) ? p.bulkTiers.slice().sort((a,b)=>a.quantity-b.quantity) : []
+  const minTierQty = sortedTiersAsc.length > 0 ? Math.max(1, Number(sortedTiersAsc[0].quantity||1)) : (p?.bulkDiscountQuantity || 1)
+  let effectiveUnitPrice = basePrice
+  const hitTier = sortedTiersDesc.find(t => qty >= Number(t.quantity||0))
+  if (hitTier) effectiveUnitPrice = Math.max(0, basePrice - Number(hitTier.priceReduction||0))
+  else if (p?.bulkDiscountQuantity > 0 && qty >= Number(p.bulkDiscountQuantity)) effectiveUnitPrice = Math.max(0, basePrice - Number(p.bulkDiscountPriceReduction||0))
+  const savingsTotal = Math.max(0, (basePrice - effectiveUnitPrice)) * qty
   return (
     <div className="bg-white min-h-screen">
       <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-12">
@@ -178,11 +188,7 @@ export default function ProductDetail(){
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="text-4xl font-black text-gray-900 tracking-tighter">
-                    {authed
-                      ? (activeVariant?.price != null
-                        ? `₹${Number(activeVariant.price).toLocaleString()}`
-                        : (p.price != null ? `₹${Number(p.price).toLocaleString()}` : 'Login to view price'))
-                      : 'Login to view price'}
+                    {authed ? `₹${effectiveUnitPrice.toLocaleString()}/u` : 'Login to view price'}
                   </div>
                   {authed && (
                     <button
@@ -190,7 +196,9 @@ export default function ProductDetail(){
                         e.preventDefault()
                         if (!authed) { navigate('/login'); return }
                         if (Array.isArray(p.variants) && p.variants.length > 0 && !activeVariant) return
-                        const ok = await addToCart(p, activeVariant || undefined)
+                        const minTier = (Array.isArray(p?.bulkTiers) && p.bulkTiers.length>0) ? Math.max(1, Number(p.bulkTiers.slice().sort((a,b)=>a.quantity-b.quantity)[0].quantity||1)) : (p?.bulkDiscountQuantity || 1)
+                        const q = Math.max(minTier, 1)
+                    const ok = await addToCart({ ...p, minOrderQty: Math.max(minTierQty, qty) }, activeVariant || undefined)
                         if (ok) {
                           try {
                             const { data } = await api.get(`/api/products/recommend`, { params: { productId: id } })
@@ -200,8 +208,8 @@ export default function ProductDetail(){
                           } catch {}
                         }
                       }}
-                      disabled={!authed || ((activeVariant ? (activeVariant.stock || 0) : p.stock) <= 0)}
-                      title={authed ? ((activeVariant ? (activeVariant.stock || 0) : p.stock) > 0 ? 'Add to Cart' : 'Sold Out') : 'Login to add'}
+                      disabled={!authed || ((activeVariant ? (activeVariant.stock || 0) : p.stock) <= 0) || (sortedTiersAsc.length>0 && qty < minTierQty)}
+                      title={authed ? ((sortedTiersAsc.length>0 && qty < minTierQty) ? `Minimum order quantity is ${minTierQty} units` : ((activeVariant ? (activeVariant.stock || 0) : p.stock) > 0 ? 'Add to Cart' : 'Sold Out')) : 'Login to add'}
                       className="inline-flex items-center justify-center h-11 w-11 rounded-2xl bg-gray-900 text-white shadow-md hover:bg-gray-800 active:scale-95 disabled:opacity-40"
                     >
                       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -212,6 +220,18 @@ export default function ProductDetail(){
                     </button>
                   )}
                 </div>
+                {authed && (
+                  <div className="flex items-center gap-3">
+                    <div className="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white border border-gray-100">
+                      <button onClick={() => setQty(q => Math.max(1, q-1))} className="h-6 w-6 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center">−</button>
+                      <span className="w-8 text-center text-sm font-black">{qty}</span>
+                      <button onClick={() => setQty(q => q+1)} className="h-6 w-6 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center">+</button>
+                    </div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-emerald-600">
+                      {savingsTotal > 0 ? `You save ₹${savingsTotal.toLocaleString()} on this selection` : (sortedTiersAsc.length>0 && qty < minTierQty ? `Minimum order quantity is ${minTierQty}` : '')}
+                    </div>
+                  </div>
+                )}
                 {authed && <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">Inclusive of all taxes</div>}
               </div>
             </div>
@@ -238,6 +258,7 @@ export default function ProductDetail(){
                     <tr className="text-left text-gray-500">
                       <th className="py-2">Quantity</th>
                       <th className="py-2">Price/Unit</th>
+                      <th className="py-2">Savings/unit</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -250,10 +271,12 @@ export default function ProductDetail(){
                         const label = to ? `${from}-${to}` : `${from}+`
                         const base = Number(activeVariant?.price ?? p.price ?? 0)
                         const eff = Math.max(0, base - Number(t.priceReduction || 0))
+                        const perSave = Math.max(0, base - eff)
                         return (
                           <tr key={idx} className="border-t">
                             <td className="py-2 font-semibold text-gray-800">{label}</td>
                             <td className="py-2 font-bold text-gray-900">₹{eff.toLocaleString()}</td>
+                            <td className="py-2 font-bold text-emerald-700">₹{perSave.toLocaleString()}</td>
                           </tr>
                         )
                       })

@@ -18,6 +18,8 @@ api.interceptors.response.use(
     if (s === 401 || code === 'invalid_token') {
       try { sessionStorage.setItem('postLoginRedirect', location.pathname + location.search) } catch {}
       localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      localStorage.removeItem('userPhone')
       if (location.pathname.startsWith('/admin')) location.href = '/admin/login'
       else location.href = '/login'
     }
