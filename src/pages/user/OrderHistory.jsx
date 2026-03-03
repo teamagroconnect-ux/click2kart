@@ -79,6 +79,10 @@ export default function OrderHistory() {
                     <div className="font-semibold">₹{order.totalEstimate}</div>
                   </div>
                   <div>
+                    <div className="text-gray-500 uppercase font-bold text-[10px] tracking-widest">Items</div>
+                    <div className="font-semibold">{order.items.length}</div>
+                  </div>
+                  <div>
                     <div className="text-gray-500 uppercase font-bold text-[10px] tracking-widest">Status</div>
                     {(() => {
                       const displayStatus = order.status === 'PENDING_CASH_APPROVAL' ? 'NEW' : order.status
@@ -89,16 +93,18 @@ export default function OrderHistory() {
                       return <div className={`font-bold ${cls}`}>{displayStatus}</div>
                     })()}
                   </div>
-                  <div>
-                    <div className="text-gray-500 uppercase font-bold text-[10px] tracking-widest">Payment</div>
-                    <div className="font-bold text-gray-700">
-                      {order.paymentMethod === 'CASH' ? '💼 Offline' : '💳 Online'}
+                  {order.shippingAddress?.line1 && (
+                    <div className="hidden md:block">
+                      <div className="text-gray-500 uppercase font-bold text-[10px] tracking-widest">Deliver To</div>
+                      <div className="font-semibold max-w-[220px] truncate text-gray-700">
+                        {order.shippingAddress.line1}{order.shippingAddress.line2 ? `, ${order.shippingAddress.line2}` : ''}, {order.shippingAddress.city}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
                 <div className="text-xs text-gray-400">ID: {order._id}</div>
               </div>
-              <div className={`p-6 space-y-4 ${isExpanded ? '' : 'hidden md:block'}`}>
+              <div className={`p-6 space-y-4 ${isExpanded ? '' : 'hidden'}`}>
                 <div className="space-y-2">
                   <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Order Timeline</div>
                   <div className="flex items-center justify-between">
@@ -135,6 +141,18 @@ export default function OrderHistory() {
                     {order.billId && <div className="text-xs text-gray-500">Bill ID: {order.billId}</div>}
                     <div className="text-xs text-gray-500">Created: {fmtIST(order.createdAt)}</div>
                     <div className="text-xs text-gray-500">Updated: {fmtIST(order.updatedAt)}</div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-gray-50 border">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Delivery Address</div>
+                    {order.shippingAddress?.line1 ? (
+                      <div className="text-xs text-gray-700">
+                        <div className="font-semibold">{order.shippingAddress.line1}</div>
+                        {order.shippingAddress.line2 && <div>{order.shippingAddress.line2}</div>}
+                        <div>{order.shippingAddress.city}, {order.shippingAddress.state} - {order.shippingAddress.pincode}</div>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-500">Address provided at checkout.</div>
+                    )}
                   </div>
                 </div>
                 {order.items.map((item, idx) => (

@@ -74,8 +74,10 @@ export function CartProvider({ children }) {
         const existing = prev.find(item => item._id === pid && String(item.variantId||'') === String(vid||''))
         const currentQty = existing ? existing.quantity : 0
         const available = vid ? (variant?.stock ?? 0) : (product.stock ?? 0)
+        const minQty = Math.max(1, Number(product.minOrderQty || 0))
+        const addQty = existing ? 1 : Math.max(1, minQty)
 
-        if (currentQty + 1 > available) {
+        if (currentQty + addQty > available) {
           notify(`Only ${available} units available in stock`, 'error')
           success = false
           return prev
@@ -83,22 +85,23 @@ export function CartProvider({ children }) {
 
         if (existing) {
           return prev.map(item => 
-            (item._id === pid && String(item.variantId||'') === String(vid||'')) ? { ...item, quantity: item.quantity + 1 } : item
+            (item._id === pid && String(item.variantId||'') === String(vid||'')) ? { ...item, quantity: item.quantity + addQty } : item
           )
         }
         const price = vid ? (variant?.price ?? product.price) : product.price
         const image = vid ? (variant?.images?.[0] || product.images?.[0]) : product.images?.[0]
         const attributes = variant?.attributes
-        return [...prev, { ...product, _id: pid, variantId: vid, attributes, price, image, quantity: 1, stock: available }]
+        return [...prev, { ...product, _id: pid, variantId: vid, attributes, price, image, quantity: addQty, stock: available, minOrderQty: minQty }]
       })
       return success
     }
 
     try {
+      const minQty = Math.max(1, Number(product.minOrderQty || 0))
       const { data } = await api.post('/api/cart/add', {
         productId: product._id,
         variantId: variant?._id,
-        quantity: 1
+        quantity: Math.max(1, minQty)
       })
       setCart(data.items || [])
       notify('Added to cart', 'success')
@@ -131,13 +134,15 @@ export function CartProvider({ children }) {
       setCart(prev => {
         const item = prev.find(x => x._id === productId)
         if (!item) return prev
+        const minQty = Math.max(1, Number(item.minOrderQty || 0))
+        const nextQty = Math.max(minQty, quantity)
 
-        if (quantity > item.stock) {
+        if (nextQty > item.stock) {
           notify(`Only ${item.stock} units available in stock`, 'error')
           return prev
         }
 
-        return prev.map(x => x._id === productId ? { ...x, quantity } : x)
+        return prev.map(x => x._id === productId ? { ...x, quantity: nextQty } : x)
       })
       return
     }

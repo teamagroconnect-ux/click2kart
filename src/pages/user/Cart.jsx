@@ -69,7 +69,8 @@ export default function Cart() {
                   <div className="flex items-center border rounded-lg overflow-hidden">
                     <button
                       onClick={() => updateQuantity((item.productId || item._id), item.quantity - 1)}
-                      className="px-3 py-1 bg-gray-50 hover:bg-gray-100 text-gray-600"
+                      disabled={item.quantity <= Math.max(1, Number(item.minOrderQty || 0))}
+                      className="px-3 py-1 bg-gray-50 hover:bg-gray-100 text-gray-600 disabled:opacity-40"
                     >
                       -
                     </button>
@@ -108,10 +109,17 @@ export default function Cart() {
                           </div>
                         ))}
                       </div>
-                      {next
-                        ? <div className="text-emerald-700">Add {next.quantity - item.quantity} more for extra ₹{Number(next.priceReduction).toLocaleString()}/unit off</div>
-                        : <div className="text-emerald-700">Max bulk savings applied</div>
-                      }
+                      {next ? (() => {
+                        const delta = next.quantity - item.quantity
+                        const perUnitOff = Number(next.priceReduction || 0)
+                        const effectiveUnit = Math.max(0, Number(item.price || 0) - perUnitOff)
+                        const estSave = perUnitOff * (item.quantity + delta)
+                        return (
+                          <div className="text-emerald-700">
+                            Add {delta} more to pay ₹{effectiveUnit.toLocaleString()}/unit • save approx ₹{estSave.toLocaleString()}
+                          </div>
+                        )
+                      })() : <div className="text-emerald-700">Max bulk savings applied</div>}
                     </div>
                   </div>
                 )

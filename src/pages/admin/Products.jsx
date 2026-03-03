@@ -11,7 +11,7 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [] })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [] })
   const [hasVariants, setHasVariants] = useState(false)
   const [editing, setEditing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -49,6 +49,7 @@ export default function Products() {
       stock: Number.isFinite(computedStock) ? computedStock : 0, 
       gst: Number(form.gst||0), 
       mrp: form.mrp ? Number(form.mrp) : undefined,
+      minOrderQty: Number(form.minOrderQty || 0),
       highlights: (form.highlights || []).map(h => String(h).trim()).filter(Boolean),
       bulkDiscountQuantity: form.bulkTiers?.[0]?.quantity ? Number(form.bulkTiers[0].quantity) : Number(form.bulkDiscountQuantity||0),
       bulkDiscountPriceReduction: form.bulkTiers?.[0]?.priceReduction ? Number(form.bulkTiers[0].priceReduction) : Number(form.bulkDiscountPriceReduction||0),
@@ -63,7 +64,7 @@ export default function Products() {
         images: (v.images || '').split(',').map(s=>s.trim()).filter(Boolean)
       }))
     })
-    setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [] }); setHasVariants(false); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [] }); setHasVariants(false); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -76,6 +77,7 @@ export default function Products() {
     images: (p.images||[]).map(i=>i.url||i).join(', '),
     bulkDiscountQuantity: p.bulkDiscountQuantity || '',
     bulkDiscountPriceReduction: p.bulkDiscountPriceReduction || '',
+    minOrderQty: p.minOrderQty || '',
     highlights: Array.isArray(p.highlights) ? p.highlights : [],
     highlightInput: '',
     bulkTiers: Array.isArray(p.bulkTiers) ? p.bulkTiers.map(t => ({ quantity: t.quantity, priceReduction: t.priceReduction })) : []
@@ -91,6 +93,7 @@ export default function Products() {
       stock: Number(editing.stock),
       gst: Number(editing.gst||0),
       mrp: editing.mrp ? Number(editing.mrp) : undefined,
+      minOrderQty: Number(editing.minOrderQty || 0),
       highlights: (editing.highlights || []).map(h => String(h).trim()).filter(Boolean),
       bulkDiscountQuantity: editing.bulkTiers?.[0]?.quantity ? Number(editing.bulkTiers[0].quantity) : Number(editing.bulkDiscountQuantity||0),
       bulkDiscountPriceReduction: editing.bulkTiers?.[0]?.priceReduction ? Number(editing.bulkTiers[0].priceReduction) : Number(editing.bulkDiscountPriceReduction||0),
@@ -273,6 +276,10 @@ export default function Products() {
                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>
                     <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12" value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} />
                   </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Min Order Qty</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 5" value={form.minOrderQty} onChange={e => setForm({ ...form, minOrderQty: e.target.value })} />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <div className="grid grid-cols-2 gap-3">
@@ -432,6 +439,10 @@ export default function Products() {
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>
                 <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="GST %" value={editing.gst} onChange={e => setEditing({ ...editing, gst: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Min Order Qty</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 5" value={editing.minOrderQty || ''} onChange={e => setEditing({ ...editing, minOrderQty: e.target.value })} />
               </div>
               <div className="space-y-2 md:col-span-2">
                 <div className="grid grid-cols-2 gap-3">

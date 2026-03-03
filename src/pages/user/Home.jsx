@@ -43,6 +43,7 @@ function StatItem({ n, t, delay }) {
 
 export default function Home() {
   const [scrollY, setScrollY] = useState(0)
+  const [cats, setCats] = useState([])
   useEffect(() => {
     const fn = () => setScrollY(window.scrollY)
     window.addEventListener('scroll', fn, { passive: true })
@@ -67,6 +68,11 @@ export default function Home() {
 
   const line1 = CONFIG.HERO_TITLE_LINE1 || 'Wholesale with'
   const line2 = CONFIG.HERO_TITLE_LINE2 || 'Click2Kart'
+
+  useEffect(() => {
+    fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/public/categories')
+      .then(r => r.json()).then(setCats).catch(()=>setCats([]))
+  }, [])
 
   return (
     <>
@@ -564,6 +570,26 @@ export default function Home() {
             <span>Scroll</span>
           </div>
         </section>
+
+        {/* ── FEATURED CATEGORIES STRIP ── */}
+        {cats.length > 0 && (
+          <>
+            <div className="hm-divider" />
+            <section className="hm-features-section" style={{ paddingTop: 48, paddingBottom: 24 }}>
+              <div className="hm-section-label">Featured Categories</div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                {cats.slice(0,6).map((c) => (
+                  <Link key={c._id} to={`/products?category=${encodeURIComponent(c.name)}`} className="group bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md transition-all flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center">
+                      {c.image ? <img src={c.image} alt={c.name} className="h-full w-full object-contain" /> : <span className="text-[10px] text-gray-400">📦</span>}
+                    </div>
+                    <div className="text-sm font-bold text-gray-900 capitalize group-hover:text-violet-600 transition-colors">{c.name}</div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          </>
+        )}
 
         {/* ── STATS BAND ── */}
         <section className="hm-stats-section">

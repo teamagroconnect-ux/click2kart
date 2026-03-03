@@ -211,11 +211,6 @@ export default function ProductDetail(){
                   )}
                 </div>
                 {authed && <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">Inclusive of all taxes</div>}
-                {p.minOrderQty > 0 && (
-                  <div className="text-[11px] font-black text-emerald-700 uppercase tracking-widest">
-                    Minimum Order: {p.minOrderQty} units
-                  </div>
-                )}
               </div>
             </div>
 
