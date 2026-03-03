@@ -33,17 +33,13 @@ export default function UserLayout() {
         <div className="max-w-7xl mx-auto px-6 md:px-10">
           <div className="flex items-center justify-between h-20 gap-8">
             <div className="flex items-center gap-6">
-              <Link to="/" className="flex items-center gap-3 group">
+              <Link to="/" className="flex items-center group">
                 <div className="h-14 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 transition-all group-hover:scale-110 p-1 overflow-hidden">
                   <img
                     src={logo}
                     alt="Click2Kart"
                     className="h-full w-auto object-contain"
                   />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-xl font-black tracking-tighter text-gray-900 leading-none group-hover:text-violet-600 transition-colors">{CONFIG.BRAND_NAME}</span>
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] mt-1 hidden xs:block">B2B Wholesale</span>
                 </div>
               </Link>
             </div>

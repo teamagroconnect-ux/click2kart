@@ -422,10 +422,10 @@ export default function ProductDetail(){
             <RecGrid items={similar} />
           </section>
         )}
-        {fbt.length > 0 && (
+        {rec && (
           <section className="space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Frequently Bought Together</h3>
-            <RecGrid items={fbt} />
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Recommended For You</h3>
+            <RecGrid items={[rec]} />
           </section>
         )}
       </div>
