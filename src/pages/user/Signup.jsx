@@ -2,11 +2,13 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
+import { useAuth } from '../../lib/AuthContext'
 import logo from '../../click2kart.png'
 
 export default function Signup() {
   const { notify } = useToast()
   const navigate = useNavigate()
+  const { setAuth, refreshProfile } = useAuth()
   const [step, setStep] = useState(1) // 1: Details, 2: OTP
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -35,12 +37,16 @@ export default function Signup() {
     e.preventDefault()
     setLoading(true)
     try {
-      await api.post('/api/auth/customer/verify-otp', {
+      const { data } = await api.post('/api/auth/customer/verify-otp', {
         email: formData.email,
         otp
       })
-      notify('Application submitted. We will approve your account shortly.', 'success')
-      navigate('/login')
+      if (data?.token) {
+        setAuth(data.token, { ...data.user, role: 'customer' })
+        try { await refreshProfile() } catch {}
+      }
+      notify('Application submitted. You are logged in.', 'success')
+      navigate('/')
     } catch (err) {
       notify(err?.response?.data?.error || 'Invalid OTP', 'error')
     } finally {

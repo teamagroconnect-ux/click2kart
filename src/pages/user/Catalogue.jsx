@@ -88,7 +88,7 @@ export default function Catalogue() {
   const totalPages = Math.max(1, Math.ceil(total / limit))
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-white min-h-screen">
 
       {/* ── STICKY TOP SEARCH BAR (mobile) ── */}
       <div className="lg:hidden sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
@@ -502,13 +502,13 @@ function ProductCard({ p, authed, addToCart, navigate }) {
         </div>
         {/* Badges */}
         {discount > 0 && authed && (
-          <div className="absolute top-2 left-2 bg-[#e8140a] text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow">
+          <div className="absolute top-2 left-2 bg-[#1244ea] text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm">
             {discount}% OFF
           </div>
         )}
         {authed && p.bulkDiscountQuantity > 0 && (
-          <div className="absolute top-2 left-2 bg-gradient-to-r from-orange-500 to-amber-400 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow">
-            BULK
+          <div className="absolute bottom-2 left-2 bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-sm">
+            BULK OFFER
           </div>
         )}
         {/* Wishlist */}
