@@ -29,6 +29,14 @@ export default function ProductDetail(){
     api.get(`/api/products/${id}/recommendations`).then(({data})=>setSimilar(data||[])).catch(()=>setSimilar([]))
   }, [id])
   useEffect(() => {
+    api.get(`/api/products/recommend`, { params: { productId: id } })
+      .then(({ data }) => {
+        const item = data?.items?.[0] || data?.item || null
+        setRec(item)
+      })
+      .catch(() => setRec(null))
+  }, [id])
+  useEffect(() => {
     if (!p || !Array.isArray(p.variants) || p.variants.length === 0) { setActiveVariant(null); return }
     const colors = [...new Set(p.variants.map(v => v.attributes?.color).filter(Boolean))]
     const rams = [...new Set(p.variants.map(v => v.attributes?.ram).filter(Boolean))]
@@ -418,10 +426,16 @@ export default function ProductDetail(){
 
             <div className="pt-10 flex flex-col sm:flex-row gap-4">
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (!authed) { navigate('/login'); return }
-                  if (addToCart(p, activeVariant || undefined)) {
-                    navigate('/cart')
+                  const ok = await addToCart(p, activeVariant || undefined)
+                  if (ok) {
+                    try {
+                      const { data } = await api.get(`/api/products/recommend`, { params: { productId: id } })
+                      const item = data?.items?.[0] || null
+                      setRec(item)
+                      if (item) setRecOpen(true)
+                    } catch {}
                   }
                 }}
                 disabled={!authed || ((activeVariant ? (activeVariant.stock || 0) : p.stock) <= 0)}
@@ -592,31 +606,7 @@ export default function ProductDetail(){
           </div>
         </div>
       )}
-      {/* Floating Share Button */}
-      <button
-        onClick={async (e) => {
-          e.preventDefault();
-          try {
-            if (navigator.share) {
-              await navigator.share({ title: p.name, text: p.description || p.name, url: window.location.href });
-              return;
-            }
-          } catch {}
-          try {
-            await navigator.clipboard.writeText(window.location.href);
-            notify('Product link copied', 'success');
-          } catch {
-            notify('Copy failed', 'error');
-          }
-        }}
-        title="Share"
-        className="fixed bottom-5 right-5 z-50 h-14 w-14 rounded-full bg-[#1244ea] text-white shadow-2xl flex items-center justify-center hover:bg-[#0d35c7] active:scale-95"
-      >
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M18 8a3 3 0 10-2.83-4H15a3 3 0 100 6 3 3 0 003-3zM6 14a3 3 0 10-2.83 4H3a3 3 0 100-6 3 3 0 003 3zm12 0a3 3 0 10-2.83 4H15a3 3 0 100-6 3 3 0 003 3z" opacity="0.2"/>
-          <path d="M7.5 13.1l8.9-4.6m-8.9 6.9l8.9 4.6" />
-        </svg>
-      </button>
+      
     </div>
   )
 }
