@@ -48,8 +48,9 @@ export default function Enquiry(){
     setSvc(prev => ({ ...prev, loading: true, error: '' }))
     try {
       const { data } = await api.get('/api/shipping/delhivery/serviceability', { params: { pincode: pin } })
-      const { start, end } = computeEtaRange()
-      setSvc({ loading: false, available: !!data.delivery_available, cod: !!data.cod_available, etaStart: start, etaEnd: end, error: '' })
+      const etaStart = data?.etaStart ? new Date(data.etaStart) : computeEtaRange().start
+      const etaEnd = data?.etaEnd ? new Date(data.etaEnd) : computeEtaRange().end
+      setSvc({ loading: false, available: !!data.delivery_available, cod: !!data.cod_available, etaStart, etaEnd, error: '' })
     } catch {
       const { start, end } = computeEtaRange()
       setSvc({ loading: false, available: null, cod: null, etaStart: start, etaEnd: end, error: 'failed' })
@@ -326,43 +327,26 @@ export default function Enquiry(){
             </div>
             <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
               <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Serviceability</div>
-              <div className={`rounded-xl border px-3 py-2 text-[11px] font-bold ${svc.loading ? 'border-gray-100 bg-gray-50 text-gray-500' : (svc.available ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : (svc.available === false ? 'border-red-200 bg-red-50 text-red-700' : 'border-amber-200 bg-amber-50 text-amber-700'))}`}>
+              <div className={`rounded-xl border px-3 py-2 text-[11px] font-bold ${svc.loading ? 'border-gray-100 bg-gray-50 text-gray-500' : (svc.available ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700')}`}>
                 {svc.loading
                   ? 'Checking your pincode…'
                   : (
                     <>
                       <div className="flex items-center justify-between">
-                        <span>{svc.available === true ? 'Service available' : (svc.available === false ? 'Service not available' : 'Status unknown')}</span>
+                        <span>{svc.available ? 'Service available' : 'Service not available'}</span>
                         <span className="text-gray-500">PIN {String(profile?.kyc?.pincode || '').trim() || '—'}</span>
                       </div>
-                      {svc.available && (
-                        <div className="mt-1 text-[10px]">
-                          {svc.cod ? 'COD available' : 'COD not available'} • {(() => {
-                            const fmt = (d) => d ? d.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' }) : '-'
-                            return <>ETA: {fmt(svc.etaStart)} – {fmt(svc.etaEnd)}</>
-                          })()}
-                        </div>
-                      )}
+                      <div className="mt-1 text-[10px]">
+                        {svc.available ? (svc.cod ? 'COD available' : 'COD not available') : '—'} • {(() => {
+                          const fmt = (d) => d ? new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' }) : '-'
+                          return <>ETA: {fmt(svc.etaStart)} – {fmt(svc.etaEnd)}</>
+                        })()}
+                      </div>
                     </>
                   )
                 }
               </div>
-              <div className="flex items-center gap-2 mt-2">
-                <button
-                  type="button"
-                  onClick={() => loadServiceability(String(profile?.kyc?.pincode || '').trim())}
-                  className="px-3 py-2 rounded-xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest"
-                >
-                  Refresh
-                </button>
-                <button
-                  type="button"
-                  onClick={() => nav('/profile')}
-                  className="px-3 py-2 rounded-xl bg-white border text-[10px] font-black uppercase tracking-widest"
-                >
-                  Edit KYC
-                </button>
-              </div>
+              {/* Removed action buttons for a cleaner, professional look */}
             </div>
           </div>
         </div>
