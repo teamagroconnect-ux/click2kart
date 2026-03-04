@@ -26,9 +26,35 @@ export default function Enquiry(){
     : (loc.state?.productId ? [{ productId: loc.state.productId, quantity: 1, name: loc.state.name }] : [])
 
   const [items, setItems] = useState(initialItems)
-  const [profile, setProfile] = useState({ name: '', phone: '', email: '' })
+  const [profile, setProfile] = useState({ name: '', phone: '', email: '', kyc: {} })
+  const [svc, setSvc] = useState({ loading: true, available: null, cod: null, etaStart: null, etaEnd: null, error: '' })
   const [paymentMethod, setPaymentMethod] = useState('RAZORPAY')
   const [loading, setLoading] = useState(false)
+
+  const computeEtaRange = () => {
+    const addDays = (d, n) => {
+      const x = new Date(d.getTime())
+      for (let i = 0; i < n; i++) {
+        x.setDate(x.getDate() + 1)
+      }
+      return x
+    }
+    const today = new Date()
+    return { start: addDays(today, 3), end: addDays(today, 6) }
+  }
+
+  const loadServiceability = async (pin) => {
+    if (!pin) { setSvc({ loading: false, available: null, cod: null, etaStart: null, etaEnd: null, error: 'no_pin' }); return }
+    setSvc(prev => ({ ...prev, loading: true, error: '' }))
+    try {
+      const { data } = await api.get('/api/shipping/delhivery/serviceability', { params: { pincode: pin } })
+      const { start, end } = computeEtaRange()
+      setSvc({ loading: false, available: !!data.delivery_available, cod: !!data.cod_available, etaStart: start, etaEnd: end, error: '' })
+    } catch {
+      const { start, end } = computeEtaRange()
+      setSvc({ loading: false, available: null, cod: null, etaStart: start, etaEnd: end, error: 'failed' })
+    }
+  }
 
   useEffect(() => {
     if (cart.length > 0) {
@@ -60,7 +86,10 @@ export default function Enquiry(){
           nav('/profile')
           return
         }
-        setProfile({ name: data.name || '', phone: data.phone || '', email: data.email || '' })
+        const prof = { name: data.name || '', phone: data.phone || '', email: data.email || '', kyc: data.kyc || {} }
+        setProfile(prof)
+        const pin = String(prof?.kyc?.pincode || '').trim()
+        if (pin) loadServiceability(pin)
       } catch {
         nav('/login')
       }
@@ -135,6 +164,16 @@ export default function Enquiry(){
     e.preventDefault()
     if (cartTotal < minAmount) {
       notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`, 'error')
+      return
+    }
+    try {
+      const pin = String(profile?.kyc?.pincode || '').trim()
+      if (!pin) { notify('Please add delivery pincode in KYC', 'error'); nav('/profile'); return }
+      const { data: svc } = await api.get('/api/shipping/delhivery/serviceability', { params: { pincode: pin } })
+      if (!svc?.delivery_available) { notify('Delivery not available for your pincode', 'error'); return }
+      if (paymentMethod === 'COD_20' && !svc?.cod_available) { notify('COD not available for your pincode', 'error'); return }
+    } catch {
+      notify('Unable to verify serviceability right now', 'error')
       return
     }
     setLoading(true)
@@ -273,6 +312,57 @@ export default function Enquiry(){
             <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
               <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Email</div>
               <div className="text-sm font-bold text-gray-900 mt-1">{profile.email || '-'}</div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 md:col-span-2">
+              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Delivery Address</div>
+              <div className="text-sm font-bold text-gray-900 mt-1">
+                {profile?.kyc?.addressLine1 || '-'}{profile?.kyc?.addressLine2 ? `, ${profile.kyc.addressLine2}` : ''}
+              </div>
+              <div className="text-xs text-gray-500">
+                {(profile?.kyc?.city || '-')}, {(profile?.kyc?.state || '-')} - {(profile?.kyc?.pincode || '-')}
+              </div>
+            </div>
+            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Serviceability</div>
+              <div className={`rounded-xl border px-3 py-2 text-[11px] font-bold ${svc.loading ? 'border-gray-100 bg-gray-50 text-gray-500' : (svc.available ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : (svc.available === false ? 'border-red-200 bg-red-50 text-red-700' : 'border-amber-200 bg-amber-50 text-amber-700'))}`}>
+                {svc.loading
+                  ? 'Checking your pincode…'
+                  : (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span>{svc.available === true ? 'Service available' : (svc.available === false ? 'Service not available' : 'Status unknown')}</span>
+                        <span className="text-gray-500">PIN {String(profile?.kyc?.pincode || '').trim() || '—'}</span>
+                      </div>
+                      {svc.available && (
+                        <div className="mt-1 text-[10px]">
+                          {svc.cod ? 'COD available' : 'COD not available'} • {(() => {
+                            const fmt = (d) => d ? d.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' }) : '-'
+                            return <>ETA: {fmt(svc.etaStart)} – {fmt(svc.etaEnd)}</>
+                          })()}
+                        </div>
+                      )}
+                    </>
+                  )
+                }
+              </div>
+              <div className="flex items-center gap-2 mt-2">
+                <button
+                  type="button"
+                  onClick={() => loadServiceability(String(profile?.kyc?.pincode || '').trim())}
+                  className="px-3 py-2 rounded-xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest"
+                >
+                  Refresh
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nav('/profile')}
+                  className="px-3 py-2 rounded-xl bg-white border text-[10px] font-black uppercase tracking-widest"
+                >
+                  Edit KYC
+                </button>
+              </div>
             </div>
           </div>
         </div>
