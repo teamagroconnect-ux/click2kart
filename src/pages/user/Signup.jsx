@@ -41,12 +41,8 @@ export default function Signup() {
         email: formData.email,
         otp
       })
-      if (data?.token) {
-        setAuth(data.token, { ...data.user, role: 'customer' })
-        try { await refreshProfile() } catch {}
-      }
-      notify('Application submitted. You are logged in.', 'success')
-      navigate('/')
+      notify('Application submitted. Your account will be activated by admin.', 'success')
+      navigate('/login')
     } catch (err) {
       notify(err?.response?.data?.error || 'Invalid OTP', 'error')
     } finally {

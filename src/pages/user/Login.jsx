@@ -29,7 +29,11 @@ export default function Login() {
         notify('Welcome back!', 'success')
         navigate('/')
       } catch (err) {
-        notify(err?.response?.data?.error || 'Invalid email or password', 'error')
+        const code = err?.response?.data?.error
+        const msg = code === 'account_pending_approval'
+          ? 'Your account is pending approval by admin'
+          : (code === 'user_not_found' ? 'No account found for this email' : (err?.response?.data?.error || 'Invalid email or password'))
+        notify(msg, 'error')
       } finally {
         setLoading(false)
       }
@@ -54,7 +58,11 @@ export default function Login() {
           notify('Logged in successfully', 'success')
           navigate('/')
         } catch (err) {
-          notify(err?.response?.data?.error || 'Invalid OTP', 'error')
+          const code = err?.response?.data?.error
+          const msg = code === 'account_pending_approval'
+            ? 'Your account is pending approval by admin'
+            : (code === 'user_not_found' ? 'No account found for this email' : (err?.response?.data?.error || 'Invalid OTP'))
+          notify(msg, 'error')
         } finally {
           setLoading(false)
         }
