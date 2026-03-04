@@ -88,6 +88,51 @@ export default function Billing(){
     }
   }
   
+  function CustomerEmailLookup({ onPick }) {
+    const [q, setQ] = useState('')
+    const [list, setList] = useState([])
+    const [loading, setLoading] = useState(false)
+    useEffect(() => {
+      const s = q.trim()
+      if (s.length < 3) { setList([]); return }
+      setLoading(true)
+      api.get('/api/admin/customers', { params: { q: s } })
+        .then(({ data }) => {
+          const arr = data.items || data || []
+          setList(arr)
+          const match = arr.find(c => (c.email || '').toLowerCase() === s.toLowerCase())
+          if (match && onPick) onPick(match)
+        })
+        .catch(() => setList([]))
+        .finally(() => setLoading(false))
+    }, [q])
+    return (
+      <div className="space-y-2">
+        <input
+          className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-3 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          placeholder="Enter customer email"
+          value={q}
+          onChange={e=>setQ(e.target.value)}
+        />
+        {loading && <div className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Searching...</div>}
+        {!loading && list.length > 0 && (
+          <div className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
+            {list.map(c => (
+              <button
+                key={c._id}
+                onClick={()=>onPick && onPick(c)}
+                className="w-full text-left px-4 py-2 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors"
+              >
+                <div className="text-sm font-black text-gray-900">{c.name}</div>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{c.email || 'No email'}</div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+  
   function CustomerLookup({ onPick }) {
     const [q, setQ] = useState('')
     const [list, setList] = useState([])
@@ -214,11 +259,17 @@ export default function Billing(){
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Find Customer</div>
-              <CustomerLookup onPick={(c)=>setCustomer({ name:c.name, phone:c.phone, email:c.email, address:c.address })} />
+              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Customer Email</div>
+              <CustomerEmailLookup onPick={(c)=>setCustomer({ name:c.name, phone:c.phone, email:c.email, address:c.address })} />
             </div>
-            <input className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="Customer Name" value={customer.name} onChange={e=>setCustomer({...customer, name:e.target.value})} />
-            <input className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all" placeholder="Phone Number" value={customer.phone} onChange={e=>setCustomer({...customer, phone:e.target.value})} />
+            {customer.email && (
+              <div className="space-y-1">
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Selected Customer</div>
+                <div className="text-sm font-black text-gray-900">{customer.name || '-'}</div>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{customer.email}</div>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{customer.phone || '-'}</div>
+              </div>
+            )}
             
             <div className="space-y-3 pt-4">
               <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Order Summary</h4>

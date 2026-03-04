@@ -7,6 +7,7 @@ export default function Cart() {
   const { cart, removeFromCart, updateQuantity, cartTotal, addToCart } = useCart()
   const navigate = useNavigate()
   const [suggestions, setSuggestions] = useState([])
+  const minAmount = Number(import.meta.env.VITE_MIN_ORDER_AMOUNT || 5000)
   const getBulkTiers = (item) => {
     if (Array.isArray(item.bulkTiers) && item.bulkTiers.length) return item.bulkTiers.slice().sort((a,b) => a.quantity - b.quantity)
     if (item.bulkDiscountQuantity > 0) return [{ quantity: item.bulkDiscountQuantity, priceReduction: item.bulkDiscountPriceReduction || 0 }]
@@ -181,9 +182,10 @@ export default function Cart() {
           </div>
           <button
             onClick={() => navigate('/order')}
-            className="w-full bg-blue-600 text-white py-4 rounded-xl text-lg font-bold shadow-lg hover:bg-blue-700 transition-colors"
+            disabled={cartTotal < minAmount}
+            className={`w-full py-4 rounded-xl text-lg font-bold shadow-lg transition-colors ${cartTotal < minAmount ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
           >
-            Checkout
+            {cartTotal < minAmount ? `Minimum order ₹${minAmount.toLocaleString()}` : 'Checkout'}
           </button>
           <p className="text-xs text-center text-gray-500">
             Secure checkout powered by Click2Kart

@@ -9,6 +9,7 @@ export default function Enquiry(){
   const nav = useNavigate()
   const loc = useLocation()
   const { cart, clearCart, cartTotal } = useCart()
+  const minAmount = Number(import.meta.env.VITE_MIN_ORDER_AMOUNT || 5000)
   
   const initialItems = cart.length > 0 
     ? cart.map(item => ({
@@ -132,6 +133,10 @@ export default function Enquiry(){
 
   const submit = async (e)=>{
     e.preventDefault()
+    if (cartTotal < minAmount) {
+      notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`, 'error')
+      return
+    }
     setLoading(true)
     try {
       const cleanItems = items
@@ -150,10 +155,12 @@ export default function Enquiry(){
       }
     } catch (err) {
       const code = err?.response?.data?.error
+      const serverMin = Number(err?.response?.data?.minAmount || minAmount)
       const message =
         code === 'kyc_required' ? 'Please complete KYC to place orders' :
         code === 'product_not_found' ? 'Some items are no longer available' :
         code === 'insufficient_stock' ? 'Insufficient stock for one of the items' :
+        code === 'min_order_not_met' ? `Minimum order amount is ₹${serverMin.toLocaleString()}` :
         code === 'invalid_payment_method' ? 'Invalid payment method selected' :
         'Failed to place order'
       notify(message, 'error')
@@ -313,10 +320,10 @@ export default function Enquiry(){
         </div>
 
         <button 
-          disabled={loading}
+          disabled={loading || cartTotal < minAmount}
           className={`py-6 rounded-[2rem] w-full text-sm font-black uppercase tracking-widest transition-all mt-6 shadow-2xl ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 hover:bg-black text-white shadow-gray-300 transform hover:-translate-y-2 active:scale-95'}`}
         >
-          {loading ? 'Processing...' : paymentMethod === 'RAZORPAY' ? 'Pay & Confirm Order' : paymentMethod === 'COD_20' ? 'Pay 20% & Confirm COD' : 'Request Offline Order'}
+          {loading ? 'Processing...' : (cartTotal < minAmount ? `Minimum order ₹${minAmount.toLocaleString()}` : (paymentMethod === 'RAZORPAY' ? 'Pay & Confirm Order' : paymentMethod === 'COD_20' ? 'Pay 20% & Confirm COD' : 'Request Offline Order'))}
         </button>
       </form>
     </div>
