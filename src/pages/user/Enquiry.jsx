@@ -28,6 +28,7 @@ export default function Enquiry(){
   const [items, setItems] = useState(initialItems)
   const [profile, setProfile] = useState({ name: '', phone: '', email: '', kyc: {} })
   const [svc, setSvc] = useState({ loading: true, available: null, cod: null, etaStart: null, etaEnd: null, error: '' })
+  const [ship, setShip] = useState({ loading: false, amount: 0, discount: 0, final: 0 })
   const [paymentMethod, setPaymentMethod] = useState('RAZORPAY')
   const [loading, setLoading] = useState(false)
 
@@ -47,10 +48,25 @@ export default function Enquiry(){
     if (!pin) { setSvc({ loading: false, available: null, cod: null, etaStart: null, etaEnd: null, error: 'no_pin' }); return }
     setSvc(prev => ({ ...prev, loading: true, error: '' }))
     try {
-      const { data } = await api.get('/api/shipping/delhivery/serviceability', { params: { pincode: pin } })
+      const { data } = await api.get('/api/shipping/check-pincode', { params: { pincode: pin } })
       const etaStart = data?.etaStart ? new Date(data.etaStart) : computeEtaRange().start
       const etaEnd = data?.etaEnd ? new Date(data.etaEnd) : computeEtaRange().end
       setSvc({ loading: false, available: !!data.delivery_available, cod: !!data.cod_available, etaStart, etaEnd, error: '' })
+      if (data.delivery_available) {
+        setShip(s => ({ ...s, loading: true }))
+        try {
+          const { data: calc } = await api.post('/api/shipping/calculate', {
+            destination_pin: pin,
+            weight: 1,
+            order_amount: cartTotal
+          })
+          setShip({ loading: false, amount: calc?.shipping ?? calc?.amount ?? 85, discount: calc?.discount ?? 85, final: calc?.final ?? 0 })
+        } catch {
+          setShip({ loading: false, amount: 85, discount: 85, final: 0 })
+        }
+      } else {
+        setShip({ loading: false, amount: 0, discount: 0, final: 0 })
+      }
     } catch {
       const { start, end } = computeEtaRange()
       setSvc({ loading: false, available: null, cod: null, etaStart: start, etaEnd: end, error: 'failed' })
@@ -170,7 +186,7 @@ export default function Enquiry(){
     try {
       const pin = String(profile?.kyc?.pincode || '').trim()
       if (!pin) { notify('Please add delivery pincode in KYC', 'error'); nav('/profile'); return }
-      const { data: svc } = await api.get('/api/shipping/delhivery/serviceability', { params: { pincode: pin } })
+      const { data: svc } = await api.get('/api/shipping/check-pincode', { params: { pincode: pin } })
       if (!svc?.delivery_available) { notify('Delivery not available for your pincode', 'error'); return }
       if (paymentMethod === 'COD_20' && !svc?.cod_available) { notify('COD not available for your pincode', 'error'); return }
     } catch {
@@ -342,6 +358,11 @@ export default function Enquiry(){
                             const fmt = (d) => d ? new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' }) : '-'
                             return <>ETA: {fmt(svc.etaStart)} – {fmt(svc.etaEnd)}</>
                           })()}
+                        </div>
+                      )}
+                      {svc.available && (
+                        <div className="mt-1 text-[10px] font-black text-emerald-700">
+                          {ship.loading ? 'Calculating shipping…' : (ship.final === 0 ? 'FREE DELIVERY' : `Shipping: ₹${ship.final} (₹${ship.discount} off)`) }
                         </div>
                       )}
                     </>
