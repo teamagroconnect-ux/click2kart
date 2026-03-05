@@ -336,12 +336,14 @@ export default function Enquiry(){
                         <span>{svc.available ? 'Service available' : 'Service not available'}</span>
                         <span className="text-gray-500">PIN {String(profile?.kyc?.pincode || '').trim() || '—'}</span>
                       </div>
-                      <div className="mt-1 text-[10px]">
-                        {svc.available ? (svc.cod ? 'COD available' : 'COD not available') : '—'} • {(() => {
-                          const fmt = (d) => d ? new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' }) : '-'
-                          return <>ETA: {fmt(svc.etaStart)} – {fmt(svc.etaEnd)}</>
-                        })()}
-                      </div>
+                      {svc.available && (
+                        <div className="mt-1 text-[10px]">
+                          {svc.cod ? 'COD available' : 'COD not available'} • {(() => {
+                            const fmt = (d) => d ? new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' }) : '-'
+                            return <>ETA: {fmt(svc.etaStart)} – {fmt(svc.etaEnd)}</>
+                          })()}
+                        </div>
+                      )}
                     </>
                   )
                 }
@@ -360,7 +362,8 @@ export default function Enquiry(){
             <button
               type="button"
               onClick={() => setPaymentMethod('RAZORPAY')}
-              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${paymentMethod === 'RAZORPAY' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
+              disabled={!svc.available}
+              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${!svc.available ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'RAZORPAY' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
             >
               <span className="text-4xl">💳</span>
               <div className="flex flex-col">
@@ -371,7 +374,8 @@ export default function Enquiry(){
             <button
               type="button"
               onClick={() => setPaymentMethod('CASH')}
-              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${paymentMethod === 'CASH' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
+              disabled={!svc.available}
+              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${!svc.available ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'CASH' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
             >
               <span className="text-4xl">💼</span>
               <div className="flex flex-col">
@@ -382,22 +386,23 @@ export default function Enquiry(){
             <button
               type="button"
               onClick={() => setPaymentMethod('COD_20')}
-              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${paymentMethod === 'COD_20' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'}`}
+              disabled={!svc.available || !svc.cod}
+              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${(!svc.available || !svc.cod) ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'COD_20' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
             >
               <span className="text-4xl">🚚</span>
               <div className="flex flex-col">
                 <span className="text-base font-black uppercase tracking-widest text-gray-900 leading-none">Cash on Delivery</span>
-                <span className="text-[10px] text-blue-600 font-black uppercase tracking-[0.2em] mt-2">Pay 20% now • Rest on delivery</span>
+                <span className={`text-[10px] font-black uppercase tracking-[0.2em] mt-2 ${svc.cod ? 'text-blue-600' : 'text-gray-400'}`}>{svc.cod ? 'Pay 20% now • Rest on delivery' : 'COD not available'}</span>
               </div>
             </button>
           </div>
         </div>
 
         <button 
-          disabled={loading || cartTotal < minAmount}
+          disabled={loading || cartTotal < minAmount || !svc.available}
           className={`py-6 rounded-[2rem] w-full text-sm font-black uppercase tracking-widest transition-all mt-6 shadow-2xl ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 hover:bg-black text-white shadow-gray-300 transform hover:-translate-y-2 active:scale-95'}`}
         >
-          {loading ? 'Processing...' : (cartTotal < minAmount ? `Minimum order ₹${minAmount.toLocaleString()}` : (paymentMethod === 'RAZORPAY' ? 'Pay & Confirm Order' : paymentMethod === 'COD_20' ? 'Pay 20% & Confirm COD' : 'Request Offline Order'))}
+          {loading ? 'Processing...' : (!svc.available ? 'Service not available for your pincode' : (cartTotal < minAmount ? `Minimum order ₹${minAmount.toLocaleString()}` : (paymentMethod === 'RAZORPAY' ? 'Pay & Confirm Order' : paymentMethod === 'COD_20' ? 'Pay 20% & Confirm COD' : 'Request Offline Order')))}
         </button>
       </form>
     </div>
