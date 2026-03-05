@@ -31,6 +31,7 @@ export default function Enquiry(){
   const [ship, setShip] = useState({ loading: false, amount: 0, discount: 0, final: 0 })
   const [paymentMethod, setPaymentMethod] = useState('RAZORPAY')
   const [loading, setLoading] = useState(false)
+  const allowTest = String(import.meta.env.VITE_ALLOW_TEST_PAYMENT_ANY_PIN || '0') === '1'
 
   const computeEtaRange = () => {
     const addDays = (d, n) => {
@@ -183,15 +184,17 @@ export default function Enquiry(){
       notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`, 'error')
       return
     }
-    try {
-      const pin = String(profile?.kyc?.pincode || '').trim()
-      if (!pin) { notify('Please add delivery pincode in KYC', 'error'); nav('/profile'); return }
-      const { data: svc } = await api.get('/api/shipping/check-pincode', { params: { pincode: pin } })
-      if (!svc?.delivery_available) { notify('Delivery not available for your pincode', 'error'); return }
-      if (paymentMethod === 'COD_20' && !svc?.cod_available) { notify('COD not available for your pincode', 'error'); return }
-    } catch {
-      notify('Unable to verify serviceability right now', 'error')
-      return
+    if (!allowTest) {
+      try {
+        const pin = String(profile?.kyc?.pincode || '').trim()
+        if (!pin) { notify('Please add delivery pincode in KYC', 'error'); nav('/profile'); return }
+        const { data: svc } = await api.get('/api/shipping/check-pincode', { params: { pincode: pin } })
+        if (!svc?.delivery_available) { notify('Delivery not available for your pincode', 'error'); return }
+        if (paymentMethod === 'COD_20' && !svc?.cod_available) { notify('COD not available for your pincode', 'error'); return }
+      } catch {
+        notify('Unable to verify serviceability right now', 'error')
+        return
+      }
     }
     setLoading(true)
     try {
@@ -383,8 +386,8 @@ export default function Enquiry(){
             <button
               type="button"
               onClick={() => setPaymentMethod('RAZORPAY')}
-              disabled={!svc.available}
-              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${!svc.available ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'RAZORPAY' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
+              disabled={!allowTest && !svc.available}
+              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${(!allowTest && !svc.available) ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'RAZORPAY' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
             >
               <span className="text-4xl">💳</span>
               <div className="flex flex-col">
@@ -395,8 +398,8 @@ export default function Enquiry(){
             <button
               type="button"
               onClick={() => setPaymentMethod('CASH')}
-              disabled={!svc.available}
-              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${!svc.available ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'CASH' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
+              disabled={!allowTest && !svc.available}
+              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${(!allowTest && !svc.available) ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'CASH' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
             >
               <span className="text-4xl">💼</span>
               <div className="flex flex-col">
@@ -407,8 +410,8 @@ export default function Enquiry(){
             <button
               type="button"
               onClick={() => setPaymentMethod('COD_20')}
-              disabled={!svc.available || !svc.cod}
-              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${(!svc.available || !svc.cod) ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'COD_20' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
+              disabled={!allowTest && (!svc.available || !svc.cod)}
+              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${(!allowTest && (!svc.available || !svc.cod)) ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'COD_20' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
             >
               <span className="text-4xl">🚚</span>
               <div className="flex flex-col">
@@ -420,10 +423,10 @@ export default function Enquiry(){
         </div>
 
         <button 
-          disabled={loading || cartTotal < minAmount || !svc.available}
+          disabled={loading || cartTotal < minAmount || (!allowTest && !svc.available)}
           className={`py-6 rounded-[2rem] w-full text-sm font-black uppercase tracking-widest transition-all mt-6 shadow-2xl ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 hover:bg-black text-white shadow-gray-300 transform hover:-translate-y-2 active:scale-95'}`}
         >
-          {loading ? 'Processing...' : (!svc.available ? 'Service not available for your pincode' : (cartTotal < minAmount ? `Minimum order ₹${minAmount.toLocaleString()}` : (paymentMethod === 'RAZORPAY' ? 'Pay & Confirm Order' : paymentMethod === 'COD_20' ? 'Pay 20% & Confirm COD' : 'Request Offline Order')))}
+          {loading ? 'Processing...' : ((!allowTest && !svc.available) ? 'Service not available for your pincode' : (cartTotal < minAmount ? `Minimum order ₹${minAmount.toLocaleString()}` : (paymentMethod === 'RAZORPAY' ? 'Pay & Confirm Order' : paymentMethod === 'COD_20' ? 'Pay 20% & Confirm COD' : 'Request Offline Order')))}
         </button>
       </form>
     </div>
