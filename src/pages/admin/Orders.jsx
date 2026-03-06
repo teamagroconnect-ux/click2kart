@@ -17,10 +17,77 @@ export default function Orders(){
   const [shipOpen, setShipOpen] = useState(null)
   const [shipForm, setShipForm] = useState({ provider:'', waybill:'', trackingUrl:'' })
 
+  // Delhivery LTL state
+  const [delhiveryLabelOpen, setDelhiveryLabelOpen] = useState(null)
+  const [labelSize, setLabelSize] = useState('std')
+  const [pickupOpen, setPickupOpen] = useState(null)
+  const [pickupForm, setPickupForm] = useState({ client_warehouse:'', pickup_date:'', start_time:'09:00:00', expected_package_count:1 })
+  const [lrnForm, setLrnForm] = useState({ orderId: null, lrn: '' })
+  const [lrnOpen, setLrnOpen] = useState(null)
+
   const load = async(p=1)=>{ 
     setLoading(true)
     try { const {data}=await api.get('/api/orders',{params:{status:status||undefined,page:p,limit}}); setItems(data.items||[]); setPage(p) }
     finally { setLoading(false) }
+  }
+
+  // Delhivery LTL actions
+  const cancelDelhiveryShipment = async (id) => {
+    if (!window.confirm('Are you sure you want to cancel this Delhivery shipment?')) return
+    try {
+      await api.delete(`/api/orders/${id}/delhivery/cancel`)
+      notify('Shipment cancelled successfully', 'success')
+      load(page)
+    } catch (err) {
+      notify(err.response?.data?.error || 'Failed to cancel shipment', 'error')
+    }
+  }
+
+  const getDelhiveryLabels = async (id, size) => {
+    try {
+      const { data } = await api.get(`/api/orders/${id}/delhivery/labels`, { params: { size } })
+      if (data && data.length > 0) {
+        data.forEach(url => window.open(url, '_blank'))
+        notify('Labels generated successfully', 'success')
+      } else {
+        notify('No label URLs returned', 'warning')
+      }
+    } catch (err) {
+      notify(err.response?.data?.error || 'Failed to get labels', 'error')
+    }
+  }
+
+  const createDelhiveryPickup = async (id) => {
+    try {
+      await api.post(`/api/orders/${id}/delhivery/pickup`, pickupForm)
+      notify('Pickup request created successfully', 'success')
+      setPickupOpen(null)
+      load(page)
+    } catch (err) {
+      notify(err.response?.data?.error || 'Failed to create pickup request', 'error')
+    }
+  }
+
+  const cancelDelhiveryPickup = async (id) => {
+    if (!window.confirm('Are you sure you want to cancel this pickup request?')) return
+    try {
+      await api.delete(`/api/orders/${id}/delhivery/pickup`)
+      notify('Pickup request cancelled successfully', 'success')
+      load(page)
+    } catch (err) {
+      notify(err.response?.data?.error || 'Failed to cancel pickup', 'error')
+    }
+  }
+
+  const saveLrn = async () => {
+    try {
+      await api.patch(`/api/orders/${lrnForm.orderId}/status`, { lrn: lrnForm.lrn })
+      notify('LRN saved successfully', 'success')
+      setLrnOpen(null)
+      load(page)
+    } catch (err) {
+      notify('Failed to save LRN', 'error')
+    }
   }
 
   useEffect(() => {
@@ -371,6 +438,59 @@ export default function Orders(){
                                       </button>
                                     </div>
                                   </div>
+
+                                  {/* Delhivery LTL Actions */}
+                                  <div className="space-y-2 pt-2 border-t border-gray-100">
+                                    <div className="text-[9px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
+                                      <span className="w-4 h-px bg-indigo-200" />
+                                      Delhivery LTL Shipping
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <button
+                                        onClick={(e)=>{ e.stopPropagation(); setLrnForm({ orderId: o._id, lrn: o.lrn || '' }); setLrnOpen(o._id) }}
+                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+                                      >
+                                        {o.lrn ? 'Update LRN' : 'Add LRN'}
+                                      </button>
+                                      
+                                      <button
+                                        onClick={(e)=>{ e.stopPropagation(); setDelhiveryLabelOpen(o._id) }}
+                                        disabled={!o.lrn}
+                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors disabled:opacity-40"
+                                      >
+                                        Generate Labels
+                                      </button>
+
+                                      {!o.pickup_id ? (
+                                        <button
+                                          onClick={(e)=>{ e.stopPropagation(); setPickupOpen(o._id); setPickupForm({...pickupForm, pickup_date: new Date().toISOString().split('T')[0]}) }}
+                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+                                        >
+                                          Request Pickup
+                                        </button>
+                                      ) : (
+                                        <button
+                                          onClick={(e)=>{ e.stopPropagation(); cancelDelhiveryPickup(o._id) }}
+                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors"
+                                        >
+                                          Cancel Pickup
+                                        </button>
+                                      )}
+
+                                      <button
+                                        onClick={(e)=>{ e.stopPropagation(); cancelDelhiveryShipment(o._id) }}
+                                        disabled={!o.lrn}
+                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-rose-50 text-rose-700 hover:bg-rose-100 transition-colors disabled:opacity-40"
+                                      >
+                                        Cancel Shipment
+                                      </button>
+                                    </div>
+                                    {o.lrn && (
+                                      <div className="text-[10px] font-bold text-indigo-600 bg-indigo-50/50 px-3 py-1.5 rounded-lg border border-indigo-100">
+                                        LRN: {o.lrn} {o.pickup_id && `• Pickup: ${o.pickup_id}`}
+                                      </div>
+                                    )}
+                                  </div>
                                   {(o.shipping?.provider || o.shipping?.status || o.shipping?.waybill) && (
                                     <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
                                       <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Fulfillment</div>
@@ -430,6 +550,123 @@ export default function Orders(){
               className="px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-bold disabled:opacity-40"
             >
               Save
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Delhivery LRN Modal */}
+    {lrnOpen && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={()=>setLrnOpen(null)}>
+        <div onClick={(e)=>e.stopPropagation()} className="bg-white rounded-3xl p-6 w-full max-w-md border border-gray-100 shadow-xl space-y-4">
+          <div className="text-sm font-black uppercase tracking-widest text-indigo-600">Enter Delhivery LRN</div>
+          <input 
+            className="w-full bg-gray-50 border rounded-xl px-4 py-3 text-sm font-bold" 
+            placeholder="LR Number (e.g., 220110457)" 
+            value={lrnForm.lrn} 
+            onChange={e=>setLrnForm({...lrnForm, lrn: e.target.value})} 
+          />
+          <div className="flex justify-end gap-2">
+            <button onClick={()=>setLrnOpen(null)} className="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 text-sm font-bold">Cancel</button>
+            <button onClick={saveLrn} className="px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-bold">Save LRN</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Delhivery Label Modal */}
+    {delhiveryLabelOpen && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={()=>setDelhiveryLabelOpen(null)}>
+        <div onClick={(e)=>e.stopPropagation()} className="bg-white rounded-3xl p-6 w-full max-w-md border border-gray-100 shadow-xl space-y-4">
+          <div className="text-sm font-black uppercase tracking-widest text-indigo-600">Select Label Size</div>
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              {v:'std', l:'Standard (3"x2")'},
+              {v:'sm', l:'Small (4"x2")'},
+              {v:'md', l:'Medium (4"x2.5")'},
+              {v:'a4', l:'A4 Sheet'}
+            ].map(s => (
+              <button 
+                key={s.v}
+                onClick={()=>setLabelSize(s.v)}
+                className={`px-4 py-3 rounded-xl text-xs font-bold border transition-all ${labelSize === s.v ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-gray-50 text-gray-700 border-gray-200'}`}
+              >
+                {s.l}
+              </button>
+            ))}
+          </div>
+          <button 
+            onClick={()=> { getDelhiveryLabels(delhiveryLabelOpen, labelSize); setDelhiveryLabelOpen(null) }}
+            className="w-full bg-indigo-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest"
+          >
+            Download Labels
+          </button>
+        </div>
+      </div>
+    )}
+
+    {/* Delhivery Pickup Modal */}
+    {pickupOpen && (
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={()=>setPickupOpen(null)}>
+        <div onClick={(e)=>e.stopPropagation()} className="bg-white rounded-3xl p-8 w-full max-w-lg border border-gray-100 shadow-2xl space-y-6">
+          <div>
+            <h3 className="text-lg font-black text-gray-900">Request Delhivery Pickup</h3>
+            <p className="text-xs text-gray-500 font-medium">Schedule a pickup for your manifested shipments.</p>
+          </div>
+          
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Warehouse Name</label>
+              <input 
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500" 
+                placeholder="e.g., Main Warehouse" 
+                value={pickupForm.client_warehouse} 
+                onChange={e=>setPickupForm({...pickupForm, client_warehouse: e.target.value})} 
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pickup Date</label>
+                <input 
+                  type="date"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500" 
+                  value={pickupForm.pickup_date} 
+                  onChange={e=>setPickupForm({...pickupForm, pickup_date: e.target.value})} 
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Start Time</label>
+                <input 
+                  type="time"
+                  step="1"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500" 
+                  value={pickupForm.start_time} 
+                  onChange={e=>setPickupForm({...pickupForm, start_time: e.target.value})} 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Expected Package Count</label>
+              <input 
+                type="number"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-indigo-500" 
+                value={pickupForm.expected_package_count} 
+                onChange={e=>setPickupForm({...pickupForm, expected_package_count: e.target.value})} 
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button onClick={()=>setPickupOpen(null)} className="flex-1 py-4 rounded-2xl bg-gray-100 text-gray-700 text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all">Cancel</button>
+            <button 
+              onClick={()=>createDelhiveryPickup(pickupOpen)} 
+              disabled={!pickupForm.client_warehouse || !pickupForm.pickup_date}
+              className="flex-1 py-4 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-indigo-100 hover:bg-indigo-500 transition-all disabled:opacity-40"
+            >
+              Request Pickup
             </button>
           </div>
         </div>
