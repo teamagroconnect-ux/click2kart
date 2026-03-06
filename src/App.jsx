@@ -27,6 +27,7 @@ import ResetPassword from './pages/user/ResetPassword.jsx'
 import OrderHistory from './pages/user/OrderHistory.jsx'
 import Cart from './pages/user/Cart.jsx'
 import Profile from './pages/user/Profile.jsx'
+import ManualPayment from './pages/user/ManualPayment.jsx'
 
 export default function App() {
   return (
@@ -67,6 +68,7 @@ export default function App() {
         <Route path="orders" element={<OrderHistory />} />
         <Route path="profile" element={<Profile />} />
         <Route path="cart" element={<Cart />} />
+        <Route path="manual-payment" element={<ManualPayment />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

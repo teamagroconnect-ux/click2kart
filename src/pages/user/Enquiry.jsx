@@ -505,7 +505,19 @@ export default function Enquiry(){
           disabled={loading || cartTotal < minAmount || !svc.available}
           className={`py-6 rounded-[2rem] w-full text-sm font-black uppercase tracking-widest transition-all mt-6 shadow-2xl ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 hover:bg-black text-white shadow-gray-300 transform hover:-translate-y-2 active:scale-95'}`}
         >
-          {loading ? 'Processing...' : (!svc.available ? 'Service not available for your pincode' : (cartTotal < minAmount ? `Minimum order ₹${minAmount.toLocaleString()}` : (paymentMethod === 'RAZORPAY' ? 'Pay & Confirm Order' : paymentMethod === 'COD_20' ? 'Pay 20% & Confirm COD' : 'Request Offline Order')))}
+          {loading ? 'Processing...' : (
+            !svc.available
+              ? 'Service not available for your pincode'
+              : cartTotal < minAmount
+                ? `Minimum order ₹${minAmount.toLocaleString()}`
+                : paymentMethod === 'RAZORPAY'
+                  ? 'Pay & Confirm Order'
+                  : paymentMethod === 'MANUAL'
+                    ? 'Proceed to Manual Payment'
+                    : paymentMethod === 'COD'
+                      ? (codAdvMethod === 'RAZORPAY' ? 'Pay 20% & Confirm COD' : 'Submit UTR for COD Advance')
+                      : 'Continue'
+          )}
         </button>
       </form>
     </div>
