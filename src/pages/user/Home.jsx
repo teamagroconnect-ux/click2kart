@@ -72,6 +72,15 @@ export default function Home() {
   const line2 = CONFIG.HERO_TITLE_LINE2 || 'Click2Kart'
 
   useEffect(() => {
+    setSEO('Click2Kart | India\'s Premier B2B Tech Hub', 'Direct wholesale access to top-tier electronics. GST compliant billing, bulk-only pricing, and Pan-India logistics for modern enterprises.')
+    injectJsonLd({
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Click2Kart",
+      "url": window.location.origin,
+      "logo": window.location.origin + "/click2kart.png",
+      "description": "India's Premier B2B Tech Hub for electronics wholesale."
+    })
     api.get('/api/public/categories').then(({ data }) => setCats(data || [])).catch(() => setCats([]))
     api.get('/api/recommendations/trending').then(({ data }) => setRecs(data || [])).catch(() => setRecs([]))
   }, [])

@@ -34,12 +34,16 @@ export default function UserLayout() {
           <div className="flex items-center justify-between h-20 gap-8">
             <div className="flex items-center gap-6">
               <Link to="/" className="flex items-center group">
-                <div className="h-14 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 transition-all group-hover:scale-110 p-1 overflow-hidden">
+                <div className="h-14 w-14 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 transition-all group-hover:scale-110 p-2 overflow-hidden">
                   <img
                     src={logo}
                     alt="Click2Kart"
-                    className="h-full w-auto object-contain"
+                    className="h-full w-full object-contain"
                   />
+                </div>
+                <div className="hidden md:flex flex-col ml-3">
+                  <span className="text-lg font-black tracking-tighter text-gray-900 leading-none">CLICK2<span className="text-indigo-600">KART</span></span>
+                  <span className="text-[8px] font-black uppercase tracking-[0.3em] text-gray-400 mt-1">B2B Electronics</span>
                 </div>
               </Link>
             </div>
