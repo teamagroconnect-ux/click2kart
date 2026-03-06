@@ -21,7 +21,7 @@ export default function Orders(){
   const [delhiveryLabelOpen, setDelhiveryLabelOpen] = useState(null)
   const [labelSize, setLabelSize] = useState('std')
   const [pickupOpen, setPickupOpen] = useState(null)
-  const [pickupForm, setPickupForm] = useState({ client_warehouse:'', pickup_date:'', start_time:'09:00:00', expected_package_count:1 })
+  const [pickupForm, setPickupForm] = useState({ client_warehouse:'Click2kart Main', pickup_date:'', start_time:'09:00:00', expected_package_count:1 })
   const [lrnForm, setLrnForm] = useState({ orderId: null, lrn: '' })
   const [lrnOpen, setLrnOpen] = useState(null)
 
@@ -64,7 +64,10 @@ export default function Orders(){
       setPickupOpen(null)
       load(page)
     } catch (err) {
-      notify(err.response?.data?.error || 'Failed to create pickup request', 'error')
+      const errorMsg = err.response?.data?.error || 'Failed to create pickup request';
+      const details = err.response?.data?.details;
+      console.error("Pickup Error Details:", details);
+      notify(`${errorMsg} ${details ? JSON.stringify(details) : ''}`, 'error')
     }
   }
 
@@ -87,6 +90,19 @@ export default function Orders(){
       load(page)
     } catch (err) {
       notify('Failed to save LRN', 'error')
+    }
+  }
+
+  const createStandardShipment = async (id) => {
+    try {
+      notify('Creating Delhivery standard shipment...', 'info')
+      const { data } = await api.post(`/api/orders/${id}/delhivery/standard-shipment`)
+      if (data.success) {
+        notify('Delhivery shipment created successfully', 'success')
+        load(page)
+      }
+    } catch (err) {
+      notify(err.response?.data?.error || 'Failed to create standard shipment', 'error')
     }
   }
 
@@ -440,11 +456,46 @@ export default function Orders(){
                                     </div>
                                   </div>
 
+                                  {/* Shipping Integrated Actions */}
+                                  <div className="space-y-3 pt-2 border-t border-gray-100">
+                                    <div className="flex items-center justify-between">
+                                      <div className="text-[9px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                                        <span className="w-4 h-px bg-blue-200" />
+                                        Delhivery Standard (B2C)
+                                      </div>
+                                      {o.shipping?.provider === 'DELHIVERY' && o.shipping?.waybill && (
+                                        <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase border border-emerald-100">Active</span>
+                                      )}
+                                    </div>
+                                    
+                                    <div className="grid grid-cols-1 gap-2">
+                                      {!o.shipping?.waybill ? (
+                                        <button
+                                          onClick={(e)=>{ e.stopPropagation(); createStandardShipment(o._id) }}
+                                          disabled={!['CONFIRMED', 'PACKED', 'SHIPPED'].includes(o.status)}
+                                          className="w-full bg-blue-600 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-blue-500 transition-all disabled:opacity-40"
+                                        >
+                                          🚀 Create Standard Shipment
+                                        </button>
+                                      ) : (
+                                        <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between">
+                                          <div>
+                                            <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Waybill</div>
+                                            <div className="text-xs font-bold text-blue-700">{o.shipping.waybill}</div>
+                                          </div>
+                                          {o.shipping.trackingUrl && (
+                                            <a href={o.shipping.trackingUrl} target="_blank" rel="noreferrer" className="px-3 py-1.5 bg-blue-600 text-white text-[9px] font-black uppercase rounded-lg shadow-sm">Track</a>
+                                          )}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
                                   {/* Delhivery LTL Actions */}
-                                  <div className="space-y-2 pt-2 border-t border-gray-100">
+                                  <div className="space-y-2 pt-2 border-t border-gray-100 opacity-75">
                                     <div className="text-[9px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
                                       <span className="w-4 h-px bg-indigo-200" />
-                                      Delhivery LTL Shipping
+                                      Delhivery LTL (B2B - Activation Pending)
                                     </div>
                                     <div className="grid grid-cols-2 gap-2">
                                       <button
@@ -492,17 +543,16 @@ export default function Orders(){
                                       </div>
                                     )}
                                   </div>
-                                  {(o.shipping?.provider || o.shipping?.status || o.shipping?.waybill) && (
-                                    <div className="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                      <div className="text-[9px] font-black uppercase tracking-widest text-gray-400 mb-1">Fulfillment</div>
-                                      <div className="text-[12px] text-gray-700 font-medium">
-                                        {o.shipping?.status || '—'} • {o.shipping?.provider || '—'} • {o.shipping?.waybill || '—'}
-                                      </div>
-                                      {o.shipping?.trackingUrl && (
-                                        <a href={o.shipping.trackingUrl} target="_blank" rel="noreferrer" className="text-[11px] text-blue-600 font-bold">Track</a>
-                                      )}
-                                    </div>
-                                  )}
+
+                                  <div className="pt-2 border-t border-gray-100">
+                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2">Other Options</div>
+                                    <button
+                                      onClick={(e)=>{ e.stopPropagation(); setShipOpen(o._id); setShipForm({ provider:o.shipping?.provider||'', waybill:o.shipping?.waybill||'', trackingUrl:o.shipping?.trackingUrl||'' }) }}
+                                      className="w-full px-4 py-2 rounded-xl text-[10px] font-bold border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition-all"
+                                    >
+                                      Manual Dispatch / Other Courier
+                                    </button>
+                                  </div>
                                   {o.notes && (
                                     <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100/50">
                                       <div className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1">Notes</div>
