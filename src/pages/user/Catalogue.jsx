@@ -22,6 +22,8 @@ export default function Catalogue() {
   const [maxPrice, setMaxPrice] = useState('')
   const [loading, setLoading] = useState(false)
   const [searchFocused, setSearchFocused] = useState(false)
+  const [recOpen, setRecOpen] = useState(false)
+  const [recItems, setRecItems] = useState([])
   const location = useLocation()
   const limit = 12
   const searchRef = useRef(null)
@@ -876,36 +878,47 @@ function ProductCard({ p, authed, addToCart, navigate, index }) {
         </div>
       </div>
 
-      {/* Recommendations Modal */}
+      {/* Recommendations Modal (Flipkart Style) */}
       {recOpen && recItems.length > 0 && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setRecOpen(false)} />
-          <div className="relative bg-white rounded-[2rem] overflow-hidden shadow-2xl w-full max-w-lg animate-zoom-in">
-            <div className="bg-indigo-600 p-6 text-white relative">
-              <button onClick={() => setRecOpen(false)} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-all">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[8px]" onClick={() => setRecOpen(false)} />
+          <div className="relative bg-white/90 backdrop-blur-xl rounded-[2.5rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(124,58,237,0.25)] w-full max-w-lg animate-zoom-in border border-white/20">
+            <div className="bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 p-8 text-white relative overflow-hidden">
+              {/* Decorative background element */}
+              <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
+              <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-400/20 rounded-full blur-2xl" />
+              
+              <button onClick={() => setRecOpen(false)} className="absolute top-6 right-6 h-10 w-10 rounded-2xl bg-white/10 flex items-center justify-center hover:bg-white/20 hover:rotate-90 transition-all duration-300 backdrop-blur-md border border-white/10">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">Frequently Bought Together</p>
-              <h3 className="text-xl font-black tracking-tight">Complete Your Collection</h3>
+              <div className="relative z-10">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-100 mb-2">Smart Recommendations</p>
+                <h3 className="text-2xl font-black tracking-tight leading-none">Frequently Bought <span className="text-purple-200">Together</span></h3>
+              </div>
             </div>
             
-            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <div className="p-6 sm:p-8 space-y-5 max-h-[55vh] overflow-y-auto custom-scrollbar bg-white/50">
               {recItems.map((fp, idx) => (
                 <div 
                   key={fp._id || fp.id} 
-                  className="flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl p-4 hover:border-indigo-200 transition-all group animate-fade-in-up"
+                  className="flex items-center gap-5 p-5 rounded-[1.5rem] bg-white border border-gray-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 group animate-fade-in-up"
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
-                  <div className="h-16 w-16 rounded-xl bg-white border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  <div className="h-20 w-20 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0 p-3 group-hover:bg-white transition-colors">
                     {fp.images && fp.images[0]?.url
                       ? <img src={fp.images[0].url} alt={fp.name} className="h-full w-full object-contain p-2 group-hover:scale-110 transition-transform duration-500" />
-                      : <span className="text-xl text-gray-400">📦</span>}
+                      : <span className="text-2xl text-gray-400">📦</span>}
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-gray-900 truncate">{fp.name}</div>
-                    <div className="text-indigo-600 font-black text-sm mt-1">
-                      {fp.price != null ? `₹${Number(fp.price).toLocaleString()}` : 'Login to view'}
+                    <div className="text-sm font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">{fp.name}</div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="text-indigo-600 font-black text-base">
+                        {fp.price != null ? `₹${Number(fp.price).toLocaleString()}` : 'Login'}
+                      </div>
+                      {fp.mrp > fp.price && (
+                        <div className="text-[10px] text-gray-400 line-through font-medium">₹{Number(fp.mrp).toLocaleString()}</div>
+                      )}
                     </div>
                   </div>
                   
@@ -915,7 +928,7 @@ function ProductCard({ p, authed, addToCart, navigate, index }) {
                       setRecItems(prev => prev.filter(i => i._id !== fp._id))
                       if (recItems.length <= 1) setRecOpen(false)
                     }}
-                    className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-md hover:shadow-lg hover:bg-indigo-700 transition-all"
+                    className="h-12 px-6 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 transition-all duration-300"
                   >
                     Add
                   </button>
@@ -923,12 +936,12 @@ function ProductCard({ p, authed, addToCart, navigate, index }) {
               ))}
             </div>
             
-            <div className="p-6 border-t border-gray-100 flex gap-3">
-              <button onClick={() => setRecOpen(false)} className="flex-1 py-4 rounded-2xl bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-100 transition-all">
+            <div className="p-8 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row gap-4">
+              <button onClick={() => setRecOpen(false)} className="flex-1 py-4 rounded-2xl bg-white border border-gray-200 text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-100 hover:border-gray-300 transition-all duration-300">
                 Skip For Now
               </button>
-              <Link to="/cart" className="flex-1 py-4 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] text-center hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
-                Go to Cart
+              <Link to="/cart" className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-[10px] font-black uppercase tracking-[0.2em] text-center hover:shadow-xl hover:shadow-indigo-500/30 active:scale-95 transition-all duration-300">
+                View My Cart →
               </Link>
             </div>
           </div>

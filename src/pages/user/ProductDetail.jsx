@@ -85,6 +85,9 @@ export default function ProductDetail() {
     })
     // Fetch similar products for the bottom section
     api.get(`/api/recommendations/similar/${id}`).then(({data})=>setSimilar(data||[])).catch(()=>setSimilar([]))
+    
+    // Pre-fetch frequently bought products for recommendation section
+    api.get(`/api/recommendations/frequently-bought/${id}?limit=6`).then(({data}) => setRecItems(data || [])).catch(() => setRecItems([]))
   }, [id])
   useEffect(() => {
     if (!p||!Array.isArray(p.variants)||!p.variants.length) { setActiveVariant(null); return }
@@ -834,14 +837,45 @@ export default function ProductDetail() {
         </div>
 
         {/* ── BELOW SECTIONS ── */}
-        {(similar.length > 0) && (
-          <div className="pd-below">
+        <div className="pd-below">
+          {/* Recommended Section (Horizontal Scroll) */}
+          {recItems.length > 0 && (
+            <div className="pd-below-section">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <div className="pd-below-label" style={{ marginBottom: 4 }}>You Might Also Like</div>
+                  <h3 className="text-xl font-black text-gray-900 tracking-tight">Recommended For You</h3>
+                </div>
+                <Link to="/products" className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:translate-x-1 transition-transform flex items-center gap-2">
+                  View All <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m4-4H3"/></svg>
+                </Link>
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-6 -mx-4 px-4 scrollbar-hide custom-scrollbar">
+                {recItems.map((item) => (
+                  <div key={item._id} onClick={() => navigate(`/product/${item._id}`)} className="flex-shrink-0 w-[200px] group cursor-pointer">
+                    <div className="aspect-square rounded-2xl bg-white border border-gray-100 p-4 mb-3 group-hover:shadow-xl group-hover:border-indigo-100 transition-all duration-500 overflow-hidden">
+                      {item.images?.[0]?.url 
+                        ? <img src={item.images[0].url} alt={item.name} className="h-full w-full object-contain group-hover:scale-110 transition-transform duration-500" />
+                        : <div className="h-full w-full flex items-center justify-center text-3xl">📦</div>}
+                    </div>
+                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 truncate">{item.category}</div>
+                    <h4 className="text-sm font-bold text-gray-900 line-clamp-1 group-hover:text-indigo-600 transition-colors">{item.name}</h4>
+                    <div className="text-indigo-600 font-black text-sm mt-1">
+                      {authed ? `₹${Number(item.price).toLocaleString()}` : 'Login to view'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {similar.length > 0 && (
             <div className="pd-below-section">
               <div className="pd-below-label">Similar Products</div>
               <RecGrid items={similar} authed={authed} onAdd={addToCart}/>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* ── LIGHTBOX ── */}
         {lightbox && (

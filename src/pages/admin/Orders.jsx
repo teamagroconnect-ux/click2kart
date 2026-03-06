@@ -299,12 +299,25 @@ export default function Orders(){
                                   </div>
 
                                   {o.paymentMethod === 'CASH' && o.status === 'PENDING_CASH_APPROVAL' && (
-                                    <button 
-                                      onClick={(e) => { e.stopPropagation(); approveCash(o._id); }}
-                                      className="w-full bg-emerald-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 hover:bg-emerald-500 transition-all transform hover:-translate-y-0.5"
-                                    >
-                                      Approve Offline Payment
-                                    </button>
+                                    <div className="space-y-3">
+                                      <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 text-[11px] text-amber-700 font-medium">
+                                        User has requested an Offline/Manual Payment. Please verify the payment before approving.
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-3">
+                                        <button 
+                                          onClick={(e) => { e.stopPropagation(); approveCash(o._id); }}
+                                          className="bg-emerald-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 hover:bg-emerald-500 transition-all transform hover:-translate-y-0.5"
+                                        >
+                                          Approve & Confirm
+                                        </button>
+                                        <button 
+                                          onClick={(e) => { e.stopPropagation(); update(o._id, 'CANCELLED'); }}
+                                          className="bg-red-50 text-red-600 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all"
+                                        >
+                                          Decline & Cancel
+                                        </button>
+                                      </div>
+                                    </div>
                                   )}
                                   {o.paymentMethod === 'COD_20' && o.paymentStatus === 'PARTIAL' && (
                                     <button 
