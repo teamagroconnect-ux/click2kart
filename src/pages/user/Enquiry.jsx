@@ -229,8 +229,9 @@ export default function Enquiry(){
         code === 'invalid_payment_method' ? 'Invalid payment method selected' :
         code === 'service_unavailable' ? 'Delivery not available for your pincode' :
         code === 'cod_unavailable' ? 'COD not available for your pincode' :
-        code === 'payment_initiation_failed' ? 'Payment initialization failed. Please retry.' :
-        'Failed to place order'
+        code === 'payment_initiation_failed' ? 'Payment gateway error. Please try again.' :
+        code === 'delhivery_not_configured' ? 'Shipping configuration is incomplete. Please contact support.' :
+        'Failed to place order. If amount is deducted, please contact support with your payment ID.'
       notify(message, 'error')
     } finally {
       setLoading(false)
