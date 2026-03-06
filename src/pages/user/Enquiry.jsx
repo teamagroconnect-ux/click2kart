@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import api from '../../lib/api'
 import { useCart } from '../../lib/CartContext'
 import { useToast } from '../../components/Toast'
+import logo from '../../click2kart.png'
 
 export default function Enquiry(){
   const { notify } = useToast()
@@ -168,6 +169,7 @@ export default function Enquiry(){
       currency: "INR",
       name: "Click2Kart",
       description: "B2B Order Payment",
+      image: logo,
       order_id: razorpayOrderId,
       handler: async function (response) {
         try {
@@ -226,6 +228,16 @@ export default function Enquiry(){
       if (visibleTotal < minAmount) {
         notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`, 'error')
         setLoading(false)
+        return
+      }
+      if (paymentMethod === 'MANUAL') {
+        setLoading(false)
+        nav('/manual-payment', { state: { items: cleanItems, amount: visibleTotal } })
+        return
+      }
+      if (paymentMethod === 'COD_20_MANUAL') {
+        setLoading(false)
+        nav('/manual-payment', { state: { items: cleanItems, amount: Math.round(visibleTotal * 0.2), cod20: true } })
         return
       }
       const { data } = await api.post('/api/orders', { items: cleanItems, paymentMethod })
@@ -445,6 +457,18 @@ export default function Enquiry(){
             </button>
             <button
               type="button"
+              onClick={() => setPaymentMethod('MANUAL')}
+              disabled={!svc.available}
+              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${!svc.available ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'MANUAL' ? 'border-emerald-600 bg-emerald-50 shadow-xl shadow-emerald-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
+            >
+              <span className="text-4xl">📱</span>
+              <div className="flex flex-col">
+                <span className="text-base font-black uppercase tracking-widest text-gray-900 leading-none">Manual Payment (UPI/Bank)</span>
+                <span className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.2em] mt-2">Submit UTR for approval</span>
+              </div>
+            </button>
+            <button
+              type="button"
               onClick={() => setPaymentMethod('COD_20')}
               disabled={!svc.available || !svc.cod}
               className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${(!svc.available || !svc.cod) ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'COD_20' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
@@ -453,6 +477,18 @@ export default function Enquiry(){
               <div className="flex flex-col">
                 <span className="text-base font-black uppercase tracking-widest text-gray-900 leading-none">Cash on Delivery</span>
                 <span className={`text-[10px] font-black uppercase tracking-[0.2em] mt-2 ${svc.cod ? 'text-blue-600' : 'text-gray-400'}`}>{svc.cod ? 'Pay 20% now • Rest on delivery' : 'COD not available'}</span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPaymentMethod('COD_20_MANUAL')}
+              disabled={!svc.available || !svc.cod}
+              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${(!svc.available || !svc.cod) ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'COD_20_MANUAL' ? 'border-emerald-600 bg-emerald-50 shadow-xl shadow-emerald-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
+            >
+              <span className="text-4xl">🧾</span>
+              <div className="flex flex-col">
+                <span className="text-base font-black uppercase tracking-widest text-gray-900 leading-none">COD (20% via UPI/Bank)</span>
+                <span className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.2em] mt-2">Submit UTR for approval</span>
               </div>
             </button>
           </div>
