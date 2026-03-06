@@ -110,6 +110,12 @@ export default function Products() {
 
   return (
     <>
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
+      `}</style>
       <div className="space-y-8 max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -398,124 +404,133 @@ export default function Products() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6 max-h-[60vh] overflow-y-auto pr-4 custom-scrollbar">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Product Name</label>
-                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Name" value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} required />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Product Name</label>
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="Name" value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} required />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Price (₹)</label>
-                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Price" value={editing.price} onChange={e => setEditing({ ...editing, price: e.target.value })} required />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Price (₹)</label>
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="Price" value={editing.price} onChange={e => setEditing({ ...editing, price: e.target.value })} required />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category</label>
-                <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={editing.category || ''} onChange={e => setEditing({ ...editing, category: e.target.value })} required>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">MRP (₹)</label>
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="1099" value={editing.mrp || ''} onChange={e => setEditing({ ...editing, mrp: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Category</label>
+                <select className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none appearance-none" value={editing.category || ''} onChange={e => setEditing({ ...editing, category: e.target.value })} required>
                   <option value="">Select category</option>
                   {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Subcategory (optional)</label>
-                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Subcategory" value={editing.subcategory || ''} onChange={e => setEditing({ ...editing, subcategory: e.target.value })} />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Subcategory</label>
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="Subcategory" value={editing.subcategory || ''} onChange={e => setEditing({ ...editing, subcategory: e.target.value })} />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Stock</label>
-                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Stock" value={editing.stock} onChange={e => setEditing({ ...editing, stock: e.target.value })} required />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Stock</label>
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="Stock" value={editing.stock} onChange={e => setEditing({ ...editing, stock: e.target.value })} required />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Store</label>
-                <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={editing.store || ''} onChange={e => setEditing({ ...editing, store: e.target.value, section: '' })}>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Store</label>
+                <select className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none appearance-none" value={editing.store || ''} onChange={e => setEditing({ ...editing, store: e.target.value, section: '' })}>
                   <option value="">Select store</option>
                   {stores.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Section</label>
-                <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={editing.section || ''} onChange={e => setEditing({ ...editing, section: e.target.value })}>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Section</label>
+                <select className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none appearance-none" value={editing.section || ''} onChange={e => setEditing({ ...editing, section: e.target.value })}>
                   <option value="">Select section</option>
                   {(stores.find(s => s.name === (editing.store||''))?.sections || []).map(sec => <option key={sec} value={sec}>{sec}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>
-                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="GST %" value={editing.gst} onChange={e => setEditing({ ...editing, gst: e.target.value })} />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">GST %</label>
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="GST %" value={editing.gst} onChange={e => setEditing({ ...editing, gst: e.target.value })} />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Min Order Qty</label>
-                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 5" value={editing.minOrderQty || ''} onChange={e => setEditing({ ...editing, minOrderQty: e.target.value })} />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Min Order Qty</label>
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 5" value={editing.minOrderQty || ''} onChange={e => setEditing({ ...editing, minOrderQty: e.target.value })} />
               </div>
-              <div className="space-y-2 md:col-span-2">
+              
+              <div className="space-y-4 md:col-span-2 bg-gray-50/50 p-4 rounded-3xl border border-gray-100">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Bulk Pricing Tiers</label>
+                  <div className="text-[10px] font-bold text-blue-600">Multiple discounts based on Qty</div>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Bulk Qty</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="10" value={editing.bulkDiscountQuantity} onChange={e => setEditing({ ...editing, bulkDiscountQuantity: e.target.value })} />
+                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Target Qty</label>
+                    <input className="w-full bg-white border-none rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="10" value={editing.bulkDiscountQuantity} onChange={e => setEditing({ ...editing, bulkDiscountQuantity: e.target.value })} />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Reduction (₹)</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={editing.bulkDiscountPriceReduction} onChange={e => setEditing({ ...editing, bulkDiscountPriceReduction: e.target.value })} />
+                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Price Off (₹)</label>
+                    <input className="w-full bg-white border-none rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={editing.bulkDiscountPriceReduction} onChange={e => setEditing({ ...editing, bulkDiscountPriceReduction: e.target.value })} />
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <button type="button" onClick={() => {
-                    const qv = Number(editing.bulkDiscountQuantity||0)
-                    const rv = Number(editing.bulkDiscountPriceReduction||0)
-                    if (Number.isFinite(qv) && qv > 0 && Number.isFinite(rv) && rv >= 0) {
-                      setEditing(ed => ({ ...ed, bulkTiers: [...(ed.bulkTiers||[]), { quantity: qv, priceReduction: rv }], bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' }))
-                    }
-                  }} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-[11px] font-black uppercase tracking-widest">Add Bulk Offer</button>
-                  <div className="text-[11px] text-gray-500">Manage multiple bulk offers</div>
-                </div>
+                <button type="button" onClick={() => {
+                  const qv = Number(editing.bulkDiscountQuantity||0)
+                  const rv = Number(editing.bulkDiscountPriceReduction||0)
+                  if (Number.isFinite(qv) && qv > 0 && Number.isFinite(rv) && rv >= 0) {
+                    setEditing(ed => ({ ...ed, bulkTiers: [...(ed.bulkTiers||[]), { quantity: qv, priceReduction: rv }], bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' }))
+                  }
+                }} className="w-full py-2.5 rounded-xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-sm">Add Discount Tier</button>
+                
                 {(editing.bulkTiers || []).length > 0 && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 pt-2">
                     {editing.bulkTiers.map((t, i) => (
-                      <div key={i} className="inline-flex items-center gap-2 text-[10px] font-black bg-gray-50 border rounded-xl px-2 py-1">
-                        <span className="text-gray-700">{t.quantity}+: -₹{t.priceReduction}</span>
-                        <button type="button" className="text-red-600" onClick={() => setEditing(ed => ({ ...ed, bulkTiers: ed.bulkTiers.filter((_, idx) => idx !== i) }))}>✕</button>
+                      <div key={i} className="inline-flex items-center gap-2 text-[10px] font-black bg-white border border-gray-100 rounded-xl px-3 py-1.5 shadow-sm">
+                        <span className="text-gray-700">{t.quantity}+ units: -₹{t.priceReduction}</span>
+                        <button type="button" className="text-red-600 hover:scale-110 transition-transform" onClick={() => setEditing(ed => ({ ...ed, bulkTiers: ed.bulkTiers.filter((_, idx) => idx !== i) }))}>✕</button>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Images</label>
+
+              <div className="space-y-1 md:col-span-3">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Product Images (URLs)</label>
                 <div className="flex gap-2">
-                  <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-[10px] font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Multiple URLs comma-separated" value={editing.images} onChange={e => setEditing({ ...editing, images: e.target.value })} />
+                  <input className="flex-1 bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-[10px] font-bold transition-all outline-none" placeholder="Paste image URLs separated by comma" value={editing.images} onChange={e => setEditing({ ...editing, images: e.target.value })} />
                   <ImageUpload onUploaded={url => setEditing(f => ({ ...f, images: (f.images ? f.images + ', ' : '') + url }))} />
                 </div>
-                <div className="grid grid-cols-2 gap-3 mt-2">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">MRP (₹)</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-[10px] font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="1099" value={editing.mrp || ''} onChange={e => setEditing({ ...editing, mrp: e.target.value })} />
-                  </div>
-                </div>
-                <div className="flex gap-2 flex-wrap mt-2">
+                <div className="flex gap-3 flex-wrap mt-3">
                   {(editing.images || '').split(',').map(s => s.trim()).filter(Boolean).map((url, i) => (
-                    <img key={i} src={url} className="h-12 w-12 object-contain bg-gray-50 border rounded-xl p-1" />
+                    <div key={i} className="group relative">
+                      <img src={url} className="h-16 w-16 object-contain bg-gray-50 border-2 border-gray-100 rounded-2xl p-1 transition-all group-hover:border-blue-200" />
+                      <button type="button" onClick={() => {
+                        const imgs = editing.images.split(',').map(s=>s.trim()).filter(Boolean);
+                        setEditing({ ...editing, images: imgs.filter((_,idx)=>idx!==i).join(', ') })
+                      }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">✕</button>
+                    </div>
                   ))}
                 </div>
               </div>
-              <div className="space-y-1 md:col-span-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
-                <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[100px]" placeholder="Description" value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} />
+
+              <div className="space-y-1 md:col-span-3">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Description</label>
+                <textarea className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-medium transition-all outline-none min-h-[120px]" placeholder="Detailed product specifications..." value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} />
               </div>
-              <div className="space-y-2 md:col-span-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Highlights</label>
+
+              <div className="space-y-4 md:col-span-3">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Highlights</label>
                 <div className="flex gap-2">
-                  <input className="flex-1 bg-gray-50 rounded-2xl px-4 py-3 text-sm font-bold" placeholder="Add a highlight and press Add" value={editing.highlightInput || ''} onChange={e=>setEditing({...editing, highlightInput: e.target.value})} />
-                  <button type="button" onClick={()=>{ const h=(editing.highlightInput||'').trim(); if(h){ setEditing(ed=>({ ...ed, highlights:[...(ed.highlights||[]), h], highlightInput:'' })) } }} className="px-4 py-3 rounded-2xl bg-gray-900 text-white text-sm font-bold">Add</button>
+                  <input className="flex-1 bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="Key feature..." value={editing.highlightInput || ''} onChange={e=>setEditing({...editing, highlightInput: e.target.value})} />
+                  <button type="button" onClick={()=>{ const h=(editing.highlightInput||'').trim(); if(h){ setEditing(ed=>({ ...ed, highlights:[...(ed.highlights||[]), h], highlightInput:'' })) } }} className="px-6 py-3 rounded-2xl bg-gray-900 text-white text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all">Add</button>
                 </div>
                 {(editing.highlights||[]).length>0 && (
                   <div className="flex flex-wrap gap-2">
                     {editing.highlights.map((h,i)=>(
-                      <span key={i} className="px-3 py-1 rounded-xl bg-gray-50 border text-[11px] font-bold flex items-center gap-2">
+                      <span key={i} className="px-4 py-2 rounded-2xl bg-white border-2 border-gray-50 text-[11px] font-bold text-gray-700 flex items-center gap-3 shadow-sm">
                         {h}
-                        <button type="button" className="text-red-600" onClick={()=>setEditing(ed=>({...ed, highlights: ed.highlights.filter((_,idx)=>idx!==i)}))}>✕</button>
+                        <button type="button" className="text-red-500 hover:scale-125 transition-transform" onClick={() => setEditing(ed => ({ ...ed, highlights: ed.highlights.filter((_,idx)=>idx!==i)}))}>✕</button>
                       </span>
                     ))}
                   </div>
                 )}
               </div>
-            </div>
 
             <div className="flex gap-3 pt-4">
               <button type="button" onClick={() => setEditing(null)} className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl text-sm font-black hover:bg-gray-200 transition-all uppercase tracking-widest">Cancel</button>

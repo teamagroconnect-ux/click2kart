@@ -66,7 +66,7 @@ export default function Signup() {
           </h2>
           <p className="text-sm text-gray-500 font-medium">
             {step === 1 
-              ? 'Join 500+ businesses sourcing premium tech.' 
+              ? 'Join 500+ businesses sourcing Click2kart.' 
               : `We've sent a 4-digit code to ${formData.email}`}
           </p>
         </div>

@@ -19,13 +19,14 @@ export default function Enquiry() {
         quantity:  item.quantity,
         name:      item.name,
         price:     item.price,
+        mrp:       item.mrp || item.price,
         image:     item.image || item.images?.[0]?.url,
         attributes: item.attributes,
         bulkQty:   item.bulkDiscountQuantity || item.bulkQty || 0,
         bulkRed:   item.bulkDiscountPriceReduction || item.bulkRed || 0,
         bulkTiers: item.bulkTiers,
       }))
-    : (loc.state?.productId ? [{ productId: loc.state.productId, quantity: 1, name: loc.state.name }] : [])
+    : (loc.state?.productId ? [{ productId: loc.state.productId, quantity: 1, name: loc.state.name, mrp: loc.state.mrp || loc.state.price, price: loc.state.price }] : [])
 
   const [items,          setItems]          = useState(initialItems)
   const [profile,        setProfile]        = useState({ name:'', phone:'', email:'', kyc:{} })
@@ -66,7 +67,7 @@ export default function Enquiry() {
   useEffect(() => {
     if (cart.length > 0) setItems(cart.map(item => ({
       productId: item.productId||item._id, variantId: item.variantId, quantity: item.quantity,
-      name: item.name, price: item.price, image: item.image||item.images?.[0]?.url,
+      name: item.name, price: item.price, mrp: item.mrp || item.price, image: item.image||item.images?.[0]?.url,
       attributes: item.attributes, bulkQty: item.bulkDiscountQuantity||item.bulkQty||0,
       bulkRed: item.bulkDiscountPriceReduction||item.bulkRed||0, bulkTiers: item.bulkTiers,
     })))
@@ -140,7 +141,7 @@ export default function Enquiry() {
       if (!pin) { notify('Please add delivery pincode in KYC','error'); nav('/profile'); return }
       const { data:sv } = await api.get('/api/shipping/check-pincode',{ params:{ pincode:pin } })
       if (!sv?.delivery_available) { notify('Delivery not available for your pincode','error'); return }
-      if (paymentMethod==='COD_20'&&!sv?.cod_available) { notify('COD not available for your pincode','error'); return }
+      if (paymentMethod==='COD'&&!sv?.cod_available) { notify('COD not available for your pincode','error'); return }
     } catch { notify('Unable to verify serviceability right now','error'); return }
     setLoading(true)
     try {
@@ -179,6 +180,10 @@ export default function Enquiry() {
 
   const visibleTotal = computedVisibleTotal(items)
   const minLeft      = Math.max(0, minAmount - visibleTotal)
+  
+  const mrpTotal     = items.reduce((s, it) => s + Number(it.mrp || it.price || 0) * Math.max(1, Number(it.quantity || 1)), 0)
+  const bulkSavings  = Math.max(0, mrpTotal - visibleTotal)
+  const totalSavings = bulkSavings + (ship.amount || 0)
 
   /* ── EMPTY ── */
   if (items.length === 0) return (
@@ -311,7 +316,7 @@ export default function Enquiry() {
         <div className="eq-empty-box">
           <div className="eq-empty-ico">🛒</div>
           <div className="eq-empty-h">Your Cart Awaits</div>
-          <p className="eq-empty-p">Start your B2B journey with premium products and exclusive bulk discounts.</p>
+          <p className="eq-empty-p">Start your B2B journey with quality products and exclusive bulk discounts.</p>
           <Link to="/products" className="eq-empty-btn">
             Explore Collection
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -932,78 +937,124 @@ export default function Enquiry() {
         /* Address & Serviceability */
         .eq-addr-row {
           display: grid;
-          grid-template-columns: 1fr auto;
-          gap: 12px;
+          grid-template-columns: 1fr;
+          gap: 16px;
           align-items: start;
         }
 
+        @media (min-width: 768px) {
+          .eq-addr-row {
+            grid-template-columns: 1fr 300px;
+          }
+        }
+
         .eq-addr-cell {
-          background: rgba(255, 255, 255, 0.6);
-          backdrop-filter: blur(4px);
-          border: 1px solid rgba(124, 58, 237, 0.1);
-          border-radius: 16px;
-          padding: 16px;
+          background: white;
+          border: 1.5px solid rgba(124, 58, 237, 0.1);
+          border-radius: 24px;
+          padding: 24px;
+          box-shadow: var(--shadow-sm);
+          transition: all 0.3s ease;
+        }
+
+        .eq-addr-cell:hover {
+          border-color: var(--primary-light);
+          box-shadow: var(--shadow-md);
         }
 
         .eq-addr-line {
-          font-size: 14px;
-          font-weight: 700;
+          font-size: 15px;
+          font-weight: 800;
           color: #1e1b2e;
-          line-height: 1.5;
-          margin-bottom: 4px;
+          line-height: 1.6;
+          margin-bottom: 8px;
         }
 
         .eq-addr-sub {
-          font-size: 12px;
+          font-size: 13px;
           color: #6b7280;
-          font-weight: 500;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
 
-        /* Serviceability Badge */
+        /* Serviceability Badge - Premium */
         .eq-svc-badge {
           display: flex;
-          gap: 12px;
-          padding: 16px;
-          border-radius: 16px;
-          min-width: 240px;
-          background: rgba(255, 255, 255, 0.6);
-          backdrop-filter: blur(4px);
-          border: 1px solid rgba(124, 58, 237, 0.1);
-          transition: all 0.2s ease;
+          flex-direction: column;
+          gap: 16px;
+          padding: 24px;
+          border-radius: 24px;
+          background: white;
+          border: 1.5px solid rgba(124, 58, 237, 0.1);
+          box-shadow: var(--shadow-sm);
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .eq-svc-badge::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 4px;
+          height: 100%;
+          background: #c4b5fd;
         }
 
         .eq-svc-badge.avail {
-          background: rgba(5, 150, 105, 0.08);
           border-color: rgba(5, 150, 105, 0.2);
+          background: linear-gradient(135deg, rgba(5, 150, 105, 0.03), white);
+        }
+
+        .eq-svc-badge.avail::before {
+          background: var(--secondary);
         }
 
         .eq-svc-badge.unavail {
-          background: rgba(220, 38, 38, 0.08);
-          border-color: rgba(220, 38, 38, 0.15);
+          border-color: rgba(220, 38, 38, 0.2);
+          background: linear-gradient(135deg, rgba(220, 38, 38, 0.03), white);
+        }
+
+        .eq-svc-badge.unavail::before {
+          background: #ef4444;
+        }
+
+        .eq-svc-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
 
         .eq-svc-dot {
-          width: 10px;
-          height: 10px;
+          width: 12px;
+          height: 12px;
           border-radius: 50%;
-          margin-top: 3px;
           position: relative;
         }
 
-        .eq-svc-dot::after {
-          content: '';
-          position: absolute;
-          inset: -4px;
-          border-radius: 50%;
-          background: inherit;
-          opacity: 0.3;
-          animation: pulse 2s ease infinite;
+        .eq-svc-main {
+          font-size: 14px;
+          font-weight: 800;
+          letter-spacing: -0.01em;
         }
 
-        .eq-svc-main {
-          font-size: 13px;
-          font-weight: 700;
-          margin-bottom: 4px;
+        @media (max-width: 768px) {
+          .eq-svc-badge {
+            padding: 20px;
+            margin-top: 8px;
+          }
+          .eq-svc-main {
+            font-size: 13px;
+          }
+          .eq-info-cell {
+            padding: 12px;
+          }
+          .eq-info-val {
+            font-size: 13px;
+          }
         }
 
         .eq-svc-main.green { color: var(--secondary); }
@@ -1098,8 +1149,20 @@ export default function Enquiry() {
         }
 
         .eq-pay-opt:disabled {
-          opacity: 0.5;
+          opacity: 0.7;
           cursor: not-allowed;
+          background: rgba(243, 244, 246, 0.5);
+          border-color: #e5e7eb;
+        }
+
+        .eq-pay-lock {
+          font-size: 14px;
+          opacity: 0.5;
+        }
+
+        .disabled-opt:hover {
+          transform: none !important;
+          box-shadow: none !important;
         }
 
         .eq-pay-ico {
@@ -1382,7 +1445,7 @@ export default function Enquiry() {
               <div className="eq-summary-head">
                 <div className="eq-summary-title">Order Summary</div>
                 <div className="eq-summary-sub">
-                  {items.length} premium item{items.length !== 1 ? 's' : ''}
+                  {items.length} item{items.length !== 1 ? 's' : ''}
                 </div>
               </div>
 
@@ -1473,17 +1536,34 @@ export default function Enquiry() {
                     <span className="eq-sumrow-label-icon">🚚</span>
                     Shipping
                   </span>
-                  <span className="eq-sumrow-val green">
+                  <span className="eq-sumrow-val">
                     {ship.loading ? (
                       <span className="eq-shimmer">...</span>
-                    ) : ship.final === 0 ? (
-                      'FREE DELIVERY'
                     ) : (
-                      `₹${ship.final}`
+                      <>
+                        {ship.amount > 0 && (
+                          <span style={{ textDecoration: 'line-through', color: '#9ca3af', marginRight: 8 }}>
+                            ₹{ship.amount.toLocaleString()}
+                          </span>
+                        )}
+                        <span className="green">FREE DELIVERY</span>
+                      </>
                     )}
                   </span>
                 </div>
                 
+                {bulkSavings > 0 && (
+                  <div className="eq-sumrow">
+                    <span className="eq-sumrow-label">
+                      <span className="eq-sumrow-label-icon">🎉</span>
+                      Bulk Savings
+                    </span>
+                    <span className="eq-sumrow-val green">
+                      -₹{bulkSavings.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
                 <div className="eq-sumrow">
                   <span className="eq-sumrow-label">
                     <span className="eq-sumrow-label-icon">📋</span>
@@ -1499,6 +1579,25 @@ export default function Enquiry() {
                   <span className="eq-total-val">₹{visibleTotal.toLocaleString()}</span>
                 </div>
 
+                {totalSavings > 0 && (
+                  <div style={{
+                    marginTop: 12,
+                    padding: '10px 14px',
+                    background: 'rgba(5, 150, 105, 0.08)',
+                    border: '1px dashed rgba(5, 150, 105, 0.3)',
+                    borderRadius: 12,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    animation: 'eqPulse 2s ease infinite'
+                  }}>
+                    <span style={{ fontSize: 18 }}>💰</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#059669' }}>
+                      You saved ₹{totalSavings.toLocaleString()} on this order!
+                    </span>
+                  </div>
+                )}
+
                 {minLeft > 0 && (
                   <div className="eq-min-alert">
                     <span className="eq-min-alert-icon">⚠️</span>
@@ -1510,7 +1609,7 @@ export default function Enquiry() {
               </div>
             </div>
 
-            {/* ── REST OF THE FORM (unchanged but with premium styling) ── */}
+            {/* ── REST OF THE FORM (unchanged but with updated styling) ── */}
             <div className="eq-form-card">
               <form onSubmit={submit}>
                 <div className="eq-form-body">
@@ -1523,43 +1622,53 @@ export default function Enquiry() {
 
                   <div className="eq-profile-grid">
                     <div className="eq-info-cell">
-                      <div className="eq-info-label">Name</div>
-                      <div className="eq-info-val">{profile.name || '—'}</div>
+                      <div className="eq-info-label">Contact Person</div>
+                      <div className="eq-info-val">
+                        <span style={{ marginRight: 8 }}>👤</span>
+                        {profile.name || '—'}
+                      </div>
                     </div>
                     <div className="eq-info-cell">
-                      <div className="eq-info-label">Phone</div>
-                      <div className="eq-info-val">{profile.phone || '—'}</div>
+                      <div className="eq-info-label">Phone Number</div>
+                      <div className="eq-info-val">
+                        <span style={{ marginRight: 8 }}>📞</span>
+                        {profile.phone || '—'}
+                      </div>
                     </div>
                     <div className="eq-info-cell">
-                      <div className="eq-info-label">Email</div>
-                      <div className="eq-info-val">{profile.email || '—'}</div>
+                      <div className="eq-info-label">Email Address</div>
+                      <div className="eq-info-val">
+                        <span style={{ marginRight: 8 }}>✉️</span>
+                        {profile.email || '—'}
+                      </div>
                     </div>
                   </div>
 
                   <div className="eq-addr-row">
                     <div className="eq-addr-cell">
-                      <div className="eq-info-label">Delivery Address</div>
+                      <div className="eq-info-label">Delivery Destination</div>
                       <div className="eq-addr-line">
                         {profile?.kyc?.addressLine1 || '—'}
                         {profile?.kyc?.addressLine2 ? `, ${profile.kyc.addressLine2}` : ''}
                       </div>
                       <div className="eq-addr-sub">
+                        <span>📍</span>
                         {profile?.kyc?.city || '—'}, {profile?.kyc?.state || '—'} — {profile?.kyc?.pincode || '—'}
                       </div>
                     </div>
 
                     <div className={`eq-svc-badge ${svc.loading ? '' : svc.available ? 'avail' : 'unavail'}`}>
-                      <span 
-                        className="eq-svc-dot" 
-                        style={{ 
-                          background: svc.loading 
-                            ? '#c4b5fd' 
-                            : svc.available 
-                              ? '#059669' 
-                              : '#ef4444' 
-                        }} 
-                      />
-                      <div>
+                      <div className="eq-svc-header">
+                        <span 
+                          className="eq-svc-dot" 
+                          style={{ 
+                            background: svc.loading 
+                              ? '#c4b5fd' 
+                              : svc.available 
+                                ? '#059669' 
+                                : '#ef4444' 
+                          }} 
+                        />
                         <div className={`eq-svc-main ${svc.loading ? 'gray' : svc.available ? 'green' : 'red'}`}>
                           {svc.loading 
                             ? 'Checking serviceability…' 
@@ -1567,24 +1676,31 @@ export default function Enquiry() {
                               ? `PIN ${String(profile?.kyc?.pincode || '').trim()} · Serviceable` 
                               : 'Delivery Unavailable'}
                         </div>
-                        
-                        {!svc.loading && svc.available && (
-                          <>
-                            <div className="eq-svc-detail">
-                              {svc.cod ? '✓ COD Available' : '✗ COD Unavailable'}
-                              <br />
-                              ETA: {fmtDate(svc.etaStart)} – {fmtDate(svc.etaEnd)}
-                            </div>
-                            <div className="eq-svc-free">
-                              {ship.loading 
-                                ? 'Calculating…' 
-                                : ship.final === 0 
-                                  ? '🎉 FREE DELIVERY' 
-                                  : `Shipping: ₹${ship.final}`}
-                            </div>
-                          </>
-                        )}
                       </div>
+                      
+                      {!svc.loading && svc.available && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          <div className="eq-svc-detail">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                              <span style={{ fontSize: 14 }}>{svc.cod ? '✅' : '❌'}</span>
+                              <span style={{ fontWeight: 700, color: svc.cod ? '#059669' : '#6b7280' }}>
+                                {svc.cod ? 'Cash on Delivery Available' : 'COD Not Available'}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 14 }}>🕒</span>
+                              <span>Expected Delivery: {fmtDate(svc.etaStart)} – {fmtDate(svc.etaEnd)}</span>
+                            </div>
+                          </div>
+                          <div className="eq-svc-free">
+                            {ship.loading 
+                              ? 'Calculating…' 
+                              : ship.final === 0 
+                                ? '🎉 FREE DELIVERY APPLIED' 
+                                : `Shipping Fee: ₹${ship.final}`}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -1635,19 +1751,27 @@ export default function Enquiry() {
                     <button
                       type="button"
                       disabled={!svc.available || !svc.cod}
-                      className={`eq-pay-opt ${paymentMethod === 'COD' ? 'active-blue' : ''}`}
+                      className={`eq-pay-opt ${paymentMethod === 'COD' ? 'active-blue' : ''} ${(!svc.available || !svc.cod) ? 'disabled-opt' : ''}`}
                       onClick={() => setPaymentMethod('COD')}
                     >
-                      <div className="eq-pay-ico blue">🚚</div>
+                      <div className="eq-pay-ico blue">
+                        {svc.cod ? '🚚' : '🚫'}
+                      </div>
                       <div className="eq-pay-info">
-                        <div className="eq-pay-name">Cash on Delivery</div>
+                        <div className="eq-pay-name" style={{ color: (!svc.available || !svc.cod) ? '#9ca3af' : '#1e1b2e' }}>
+                          Cash on Delivery
+                        </div>
                         <div className={`eq-pay-desc ${svc.cod ? 'blue' : 'gray'}`}>
-                          {svc.cod ? 'Pay 20% now · Rest on delivery' : 'COD Unavailable'}
+                          {svc.cod ? 'Pay 20% now · Rest on delivery' : 'Not available for this location'}
                         </div>
                       </div>
-                      <div className="eq-pay-radio">
-                        <div className="eq-pay-radio-dot" />
-                      </div>
+                      {svc.available && svc.cod ? (
+                        <div className="eq-pay-radio">
+                          <div className="eq-pay-radio-dot" />
+                        </div>
+                      ) : (
+                        <div className="eq-pay-lock">🔒</div>
+                      )}
                     </button>
 
                     {paymentMethod === 'COD' && (

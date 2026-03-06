@@ -68,10 +68,10 @@ export default function Catalogue() {
   }, [q])
 
   useEffect(() => {
-    const baseTitle = 'Luxury B2B Collection | Click2Kart'
-    const title = category ? `${category} · Premium Wholesale | Click2Kart` : (q ? `Search: ${q} | Click2Kart` : baseTitle)
-    setSEO(title, 'Discover premium wholesale electronics with exclusive B2B pricing, GST billing, and bulk discounts.')
-  }, [q, category])
+      const baseTitle = 'B2B Collection | Click2Kart'
+      const title = category ? `${category} · Wholesale | Click2Kart` : (q ? `Search: ${q} | Click2Kart` : baseTitle)
+      setSEO(title, 'Discover quality wholesale electronics with exclusive B2B pricing, GST billing, and bulk discounts.')
+    }, [q, category])
 
   const filteredSorted = useMemo(() => {
     let list = [...items]
@@ -124,7 +124,7 @@ export default function Catalogue() {
             <input
               ref={searchRef}
               className="w-full bg-white/90 backdrop-blur border border-indigo-100 text-gray-900 placeholder-gray-400 text-sm rounded-2xl pl-12 pr-12 py-4 outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-300 transition-all shadow-md"
-              placeholder="Search luxury products..."
+              placeholder="Search products..."
               value={q}
               onChange={e => setQ(e.target.value)}
               onFocus={() => { setSearchFocused(true); q.trim().length >= 2 && setShowSug(true) }}
@@ -191,7 +191,7 @@ export default function Catalogue() {
               <input
                 ref={searchRef}
                 className="w-full bg-white/90 backdrop-blur border border-indigo-100 text-gray-900 text-sm rounded-2xl pl-14 pr-14 py-4 outline-none focus:ring-4 focus:ring-indigo-500/20 focus:border-indigo-300 transition-all shadow-md"
-                placeholder="Search luxury products, brands, collections..."
+                placeholder="Search products, brands, collections..."
                 value={q}
                 onChange={e => setQ(e.target.value)}
                 onFocus={() => q.trim().length >= 2 && setShowSug(true)}
@@ -405,7 +405,7 @@ export default function Catalogue() {
           {/* ── PREMIUM PRODUCT GRID ── */}
           <main className="p-4 sm:p-6 lg:p-8">
 
-            {/* Mobile: premium sort + filter bar */}
+            {/* Mobile: sort + filter bar */}
             <div className="lg:hidden flex items-center gap-3 mb-6">
               <button
                 onClick={() => setFiltersOpen(true)}
@@ -446,11 +446,11 @@ export default function Catalogue() {
               </div>
             </div>
 
-            {/* Desktop premium result count */}
+            {/* Desktop result count */}
             <div className="hidden lg:flex items-center justify-between mb-8">
               <p className="text-sm font-medium text-gray-500">
                 <span className="text-2xl font-black text-indigo-600 mr-2">{total}</span>
-                premium products found
+                products found
                 {category && (
                   <span className="ml-2">
                     in <span className="font-bold text-gray-900 capitalize bg-indigo-50 px-3 py-1.5 rounded-full text-sm">{category}</span>
@@ -690,7 +690,7 @@ function ProductCard({ p, authed, addToCart, navigate, index }) {
     e.stopPropagation(); e.preventDefault()
     const url = `${window.location.origin}/products/${p._id}`
     const title = p.name
-    const text = 'Check this premium product on Click2Kart'
+    const text = 'Check this product on Click2Kart'
     if (navigator.share) {
       navigator.share({ title, text, url }).catch(()=>{})
     } else if (navigator.clipboard) {

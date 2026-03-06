@@ -78,7 +78,11 @@ export default function ProductDetail() {
   const authed = !!localStorage.getItem('token')
 
   useEffect(() => {
-    api.get(`/api/products/${id}`).then(({data})=>setP(data))
+    api.get(`/api/products/${id}`).then(({data})=>{
+      setP(data)
+      const moq = Math.max(1, Number(data.minOrderQty || 0))
+      setQty(moq)
+    })
     api.get(`/api/products/${id}/recommendations`).then(({data})=>setSimilar(data||[])).catch(()=>setSimilar([]))
   }, [id])
   useEffect(() => {
@@ -721,7 +725,7 @@ export default function ProductDetail() {
                   {/* qty */}
                   <div className="pd-qty-row">
                     <div className="pd-qty-ctrl">
-                      <button className="pd-qty-btn" onClick={()=>setQty(q=>Math.max(1,q-1))}>−</button>
+                      <button className="pd-qty-btn" onClick={()=>setQty(q=>Math.max(Number(p.minOrderQty || 1), q - 1))}>−</button>
                       <div className="pd-qty-val">{qty}</div>
                       <button className="pd-qty-btn" onClick={()=>setQty(q=>q+1)}>+</button>
                     </div>

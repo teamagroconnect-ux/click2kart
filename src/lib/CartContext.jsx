@@ -172,7 +172,23 @@ export function CartProvider({ children }) {
   }
 
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
-  const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0)
+  const cartTotal = cart.reduce((total, item) => {
+    let p = Number(item.price || 0)
+    const qty = Math.max(1, Number(item.quantity || 1))
+    
+    // Apply bulk pricing
+    if (Array.isArray(item.bulkTiers) && item.bulkTiers.length) {
+      const tiers = item.bulkTiers.slice().sort((a, b) => Number(a.quantity || 0) - Number(b.quantity || 0))
+      const app = tiers.filter(t => qty >= Number(t.quantity || 0)).pop()
+      if (app) p = Math.max(0, p - Number(app.priceReduction ?? app.price_reduction ?? 0))
+    } else if (Number(item.bulkDiscountQuantity || item.bulkQty) > 0) {
+      if (qty >= Number(item.bulkDiscountQuantity || item.bulkQty)) {
+        p = Math.max(0, p - Number(item.bulkDiscountPriceReduction || item.bulkRed || 0))
+      }
+    }
+    
+    return total + (p * qty)
+  }, 0)
 
   return (
     <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal }}>

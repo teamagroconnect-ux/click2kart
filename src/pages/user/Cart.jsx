@@ -349,7 +349,7 @@ export default function Cart() {
                         <div className="ct-qty-ctrl">
                           <button className="ct-qty-btn"
                             disabled={item.quantity <= Math.max(1, Number(item.minOrderQty||0))}
-                            onClick={() => updateQuantity(item.productId||item._id, item.quantity-1)}>−</button>
+                            onClick={() => updateQuantity(item.productId||item._id, Math.max(Number(item.minOrderQty||1), item.quantity-1))}>−</button>
                           <div className="ct-qty-val">{item.quantity}</div>
                           <button className="ct-qty-btn"
                             onClick={() => updateQuantity(item.productId||item._id, item.quantity+1)}>+</button>
@@ -459,7 +459,10 @@ export default function Cart() {
                 )}
                 <div className="ct-summary-row">
                   <span className="ct-summary-label">Shipping</span>
-                  <span className="ct-summary-val free">FREE</span>
+                  <span className="ct-summary-val">
+                    <span style={{ textDecoration: 'line-through', color: '#9ca3af', marginRight: 8 }}>₹85</span>
+                    <span className="free">FREE</span>
+                  </span>
                 </div>
                 <div className="ct-summary-row">
                   <span className="ct-summary-label">GST</span>
@@ -475,12 +478,12 @@ export default function Cart() {
               </div>
 
               {/* savings badge */}
-              {bulkDiscount > 0 && (
+              {(bulkDiscount > 0 || true) && (
                 <div className="ct-savings-badge">
                   <div className="ct-savings-ico">🎉</div>
                   <div>
-                    <div className="ct-savings-text">You're saving ₹{bulkDiscount.toLocaleString()}</div>
-                    <div className="ct-savings-sub">Bulk discount applied on this order</div>
+                    <div className="ct-savings-text">You're saving ₹{(bulkDiscount + 85).toLocaleString()}</div>
+                    <div className="ct-savings-sub">Bulk discount + Free Delivery applied</div>
                   </div>
                 </div>
               )}
