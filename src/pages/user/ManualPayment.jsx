@@ -24,7 +24,7 @@ export default function ManualPayment() {
 
   const submit = async (e) => {
     e.preventDefault()
-    if (!items.length) { nav('/products'); return }
+    if (!items.length) { nav('/order'); return }
     if (!form.amountPaid || Number(form.amountPaid) <= 0) { notify('Enter valid amount', 'error'); return }
     if (!form.utr || form.utr.trim().length < 6) { notify('Enter valid UTR/Txn ID', 'error'); return }
     try {
@@ -49,8 +49,8 @@ export default function ManualPayment() {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-widest border border-emerald-100">
             Secure Transaction
           </div>
-          <h1 className="mt-3 text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900">Add Money to Wallet</h1>
-          <div className="text-sm text-gray-500 mt-1">Top up securely via UPI payment</div>
+          <h1 className="mt-3 text-2xl md:text-3xl font-extrabold tracking-tight text-gray-900">Order Payment via UPI</h1>
+          <div className="text-sm text-gray-500 mt-1">Submit your UPI payment details for verification</div>
         </div>
 
         <div className="p-6 md:p-8">
