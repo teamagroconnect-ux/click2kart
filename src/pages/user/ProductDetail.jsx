@@ -106,9 +106,14 @@ export default function ProductDetail(){
   if (hitTier) effectiveUnitPrice = Math.max(0, basePrice - Number(hitTier.priceReduction||0))
   else if (p?.bulkDiscountQuantity > 0 && qty >= Number(p.bulkDiscountQuantity)) effectiveUnitPrice = Math.max(0, basePrice - Number(p.bulkDiscountPriceReduction||0))
   const savingsTotal = Math.max(0, (basePrice - effectiveUnitPrice)) * qty
+  const mrp = Number(activeVariant?.mrp ?? p.mrp ?? 0)
+  const unitSave = mrp > 0 ? Math.max(0, mrp - effectiveUnitPrice) : Math.max(0, basePrice - effectiveUnitPrice)
+  const isBestseller = (p.ratingCount || 0) >= 50
+  const isHotDeal = (mrp > 0 ? ((mrp - (p.price || 0)) / mrp) * 100 : 0) >= 20
   return (
     <div className="bg-white min-h-screen">
       <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-12">
+        <header className="flex items-center justify-between border-b border-gray-50 pb-8 animate-in fade-in slide-in-from-top-4 duration-700">
         <header className="flex items-center justify-between border-b border-gray-50 pb-8 animate-in fade-in slide-in-from-top-4 duration-700">
           <button 
             onClick={() => navigate(-1)} 
@@ -195,8 +200,20 @@ export default function ProductDetail(){
                   <div className="text-xs font-bold text-gray-500">({p.ratingCount || 0})</div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="text-4xl font-black text-gray-900 tracking-tighter">
-                    {authed ? `₹${effectiveUnitPrice.toLocaleString()}/u` : 'Login to view price'}
+                  <div className="flex flex-col">
+                    <div className="text-4xl font-black text-gray-900 tracking-tighter">
+                      {authed ? `₹${effectiveUnitPrice.toLocaleString()}/u` : 'Login to view price'}
+                    </div>
+                    {authed && (
+                      <div className="flex items-center gap-3 mt-1">
+                        {mrp > 0 && (
+                          <>
+                            <div className="text-sm font-bold text-gray-500 line-through">MRP ₹{mrp.toLocaleString()}</div>
+                            <div className="text-sm font-black text-emerald-700">You save ₹{unitSave.toLocaleString()} per unit</div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                   {authed && (
                     <button
@@ -240,7 +257,15 @@ export default function ProductDetail(){
                     </div>
                   </div>
                 )}
-                {authed && <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">Inclusive of all taxes</div>}
+                {authed && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">Inclusive of all taxes</div>
+                    <div className="text-[10px] font-bold text-gray-700 uppercase tracking-widest bg-amber-50 px-3 py-1 rounded-lg border border-amber-100">Fast Dispatch</div>
+                    <div className="text-[10px] font-bold text-gray-700 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-lg border border-emerald-100">Verified Seller</div>
+                    {isBestseller && <div className="text-[10px] font-bold text-white uppercase tracking-widest bg-pink-600 px-3 py-1 rounded-lg">Bestseller</div>}
+                    {isHotDeal && <div className="text-[10px] font-bold text-white uppercase tracking-widest bg-red-600 px-3 py-1 rounded-lg">Hot Deal</div>}
+                  </div>
+                )}
               </div>
             </div>
 

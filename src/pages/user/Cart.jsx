@@ -14,6 +14,28 @@ export default function Cart() {
     return []
   }
   const getNextTier = (qty, tiers) => tiers.find(t => qty < t.quantity) || null
+  const unitPrice = (it) => {
+    let p = Number(it.price || 0)
+    const qty = Math.max(1, Number(it.quantity || 1))
+    const tiers = getBulkTiers(it)
+    if (tiers.length) {
+      const applicable = tiers.filter(t => qty >= Number(t.quantity || 0)).pop()
+      if (applicable) p = Math.max(0, p - Number(applicable.priceReduction || 0))
+    }
+    return p
+  }
+  const lineTotal = (it) => unitPrice(it) * Math.max(1, Number(it.quantity || 1))
+  const mrpTotal = cart.reduce((sum, it) => sum + Number(it.mrp || it.price || 0) * Math.max(1, Number(it.quantity || 1)), 0)
+  const effTotal = cart.reduce((sum, it) => sum + lineTotal(it), 0)
+  const bulkDiscount = Math.max(0, mrpTotal - effTotal)
+  const shipping = 0
+  const gst = 0
+  const totalPayable = effTotal + shipping + gst
+  const etaText = (() => {
+    const now = new Date()
+    const eta = new Date(now.getTime()); eta.setDate(eta.getDate() + 4)
+    return eta.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })
+  })()
 
   useEffect(() => {
     const first = cart[0];
@@ -39,7 +61,7 @@ export default function Cart() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-10">
+    <div className="max-w-6xl mx-auto p-4 md:p-10 relative">
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Shopping Cart</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2 space-y-4">
@@ -55,7 +77,7 @@ export default function Cart() {
               <div className="flex-1 min-w-0">
                 <h3 className="text-base font-bold text-gray-900 truncate">{item.name}</h3>
                 <div className="flex items-center gap-2 mt-1">
-                  <p className="text-sm text-gray-500">₹{item.price.toLocaleString()}</p>
+                  <p className="text-sm text-gray-500">Unit ₹{unitPrice(item).toLocaleString()}</p>
                   {(() => {
                     const status = getStockStatus(item.stock)
                     if (item.stock > 20) return null
@@ -66,6 +88,7 @@ export default function Cart() {
                     )
                   })()}
                 </div>
+                <div className="text-xs text-gray-500">Delivery by {etaText} • Free Delivery</div>
                 <div className="flex items-center gap-3 mt-2">
                   <div className="flex items-center border rounded-lg overflow-hidden">
                     <button
@@ -88,6 +111,12 @@ export default function Cart() {
                     className="text-sm text-red-600 hover:text-red-500 font-medium"
                   >
                     Remove
+                  </button>
+                  <button
+                    onClick={() => { try { const saved = JSON.parse(localStorage.getItem('saved') || '[]'); localStorage.setItem('saved', JSON.stringify([...saved, item])); removeFromCart((item.productId || item._id)) } catch {} }}
+                    className="text-sm text-gray-600 hover:text-gray-900 font-medium"
+                  >
+                    Save for later
                   </button>
                 </div>
               {(() => {
@@ -127,7 +156,7 @@ export default function Cart() {
               })()}
               </div>
               <div className="text-right">
-                <p className="text-lg font-bold text-gray-900">₹{item.price * item.quantity}</p>
+                <p className="text-lg font-bold text-gray-900">₹{lineTotal(item).toLocaleString()}</p>
                 {item.bulkDiscountQuantity > 0 && item.quantity < item.bulkDiscountQuantity && (
                   <div className="mt-1 text-[10px] text-emerald-700 font-black uppercase tracking-widest">
                     Add {item.bulkDiscountQuantity - item.quantity} more to unlock bulk savings
@@ -166,32 +195,45 @@ export default function Cart() {
 
         <div className="bg-white p-6 rounded-xl border shadow-sm h-fit space-y-6">
           <h2 className="text-xl font-bold text-gray-900">Order Summary</h2>
-          <div className="space-y-2 border-b pb-4">
-            <div className="flex justify-between text-gray-600">
-              <span>Subtotal</span>
-              <span>₹{cartTotal}</span>
-            </div>
-            <div className="flex justify-between text-gray-600">
-              <span>Shipping</span>
-              <span className="text-emerald-600 font-medium">Free</span>
-            </div>
+          <div className="space-y-2">
+            <div className="flex justify-between text-gray-600"><span>MRP Total</span><span className="font-bold">₹{mrpTotal.toLocaleString()}</span></div>
+            <div className="flex justify-between text-emerald-700"><span>Bulk Discount</span><span className="font-bold">−₹{bulkDiscount.toLocaleString()}</span></div>
+            <div className="flex justify-between text-gray-600"><span>Shipping</span><span className="font-bold">{shipping === 0 ? 'FREE' : `₹${shipping}`}</span></div>
+            <div className="flex justify-between text-gray-600"><span>GST</span><span className="font-bold">₹{gst.toLocaleString()}</span></div>
+            <div className="border-t pt-2 flex justify-between text-xl font-bold text-gray-900"><span>Total</span><span>₹{totalPayable.toLocaleString()}</span></div>
           </div>
-          <div className="flex justify-between text-xl font-bold text-gray-900">
-            <span>Total</span>
-            <span>₹{cartTotal}</span>
-          </div>
+          {bulkDiscount > 0 && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs font-bold px-3 py-2">
+              You saved ₹{bulkDiscount.toLocaleString()} on this order
+            </div>
+          )}
           <button
             onClick={() => navigate('/order')}
-            disabled={cartTotal < minAmount}
-            className={`w-full py-4 rounded-xl text-lg font-bold shadow-lg transition-colors ${cartTotal < minAmount ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+            disabled={totalPayable < minAmount}
+            className={`w-full py-4 rounded-xl text-lg font-bold shadow-lg transition-colors ${totalPayable < minAmount ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
           >
-            {cartTotal < minAmount ? `Minimum order ₹${minAmount.toLocaleString()}` : 'Checkout'}
+            {totalPayable < minAmount ? `Minimum order ₹${minAmount.toLocaleString()}` : 'Checkout'}
           </button>
           <p className="text-xs text-center text-gray-500">
             Secure checkout powered by Click2Kart
           </p>
         </div>
       </div>
+      {cart.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40">
+          <div className="max-w-6xl mx-auto px-4 md:px-10 pb-4">
+            <div className="bg-white/95 backdrop-blur rounded-2xl border border-gray-200 shadow-2xl px-4 py-3 flex items-center justify-between">
+              <div className="text-lg font-black text-gray-900">₹{totalPayable.toLocaleString()}</div>
+              <button
+                onClick={() => navigate('/order')}
+                className="px-6 py-3 rounded-xl bg-gray-900 text-white text-xs font-black uppercase tracking-widest hover:bg-black active:scale-95"
+              >
+                Place Order
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
