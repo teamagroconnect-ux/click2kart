@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useToast } from '../../components/Toast'
+import { useCart } from '../../lib/CartContext'
 import api from '../../lib/api'
 
 export default function ManualPayment() {
   const nav        = useNavigate()
   const { notify } = useToast()
+  const { clearCart } = useCart()
   const loc        = useLocation()
 
   const items         = Array.isArray(loc.state?.items) ? loc.state.items : []
@@ -40,7 +42,8 @@ export default function ManualPayment() {
         note: note.trim(),
         codAdvance20: cod20
       })
-      notify('Payment details submitted. Awaiting verification.','success')
+      notify('Payment details submitted. Awaiting verification.', 'success')
+      clearCart()
       nav('/orders')
     } catch { notify('Failed to submit payment details','error') }
     finally { setSubmitting(false) }
