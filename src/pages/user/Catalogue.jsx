@@ -828,8 +828,10 @@ function ProductCard({ p, authed, addToCart, navigate, index }) {
                 if (ok) {
                   try {
                     const { data } = await api.get(`/api/recommendations/frequently-bought/${p._id}`)
-                    setRecItems(data || [])
-                    setRecOpen(true)
+                    // Double check filtering current product out
+                    const filtered = (data || []).filter(item => (item._id || item.id) !== p._id)
+                    setRecItems(filtered)
+                    if (filtered.length > 0) setRecOpen(true)
                   } catch {}
                 }
               }}
@@ -897,43 +899,55 @@ function ProductCard({ p, authed, addToCart, navigate, index }) {
               </div>
             </div>
             
-            <div className="p-6 sm:p-8 space-y-5 max-h-[55vh] overflow-y-auto custom-scrollbar bg-white/50">
-              {recItems.map((fp, idx) => (
-                <div 
-                  key={fp._id || fp.id} 
-                  className="flex items-center gap-5 p-5 rounded-[1.5rem] bg-white border border-gray-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 group animate-fade-in-up"
-                  style={{ animationDelay: `${idx * 100}ms` }}
-                >
-                  <div className="h-20 w-20 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0 p-3 group-hover:bg-white transition-colors">
-                    {fp.images && fp.images[0]?.url
-                      ? <img src={fp.images[0].url} alt={fp.name} className="h-full w-full object-contain p-2 group-hover:scale-110 transition-transform duration-500" />
-                      : <span className="text-2xl text-gray-400">📦</span>}
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-gray-900 truncate group-hover:text-indigo-600 transition-colors">{fp.name}</div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="text-indigo-600 font-black text-base">
-                        {fp.price != null ? `₹${Number(fp.price).toLocaleString()}` : 'Login'}
+            <div className="p-6 sm:p-8 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar bg-gray-50/30">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {recItems.map((fp, idx) => (
+                  <div 
+                    key={fp._id || fp.id} 
+                    className="bg-white rounded-[2rem] border border-gray-100 p-5 hover:shadow-2xl hover:border-indigo-100 transition-all duration-500 group animate-fade-in-up relative overflow-hidden"
+                    style={{ animationDelay: `${idx * 150}ms` }}
+                  >
+                    {/* Subtle background glow */}
+                    <div className="absolute -top-10 -right-10 w-24 h-24 bg-indigo-50 rounded-full blur-2xl group-hover:bg-indigo-100/50 transition-colors" />
+                    
+                    <div className="aspect-square w-full rounded-2xl bg-gray-50 border border-gray-50 overflow-hidden flex items-center justify-center mb-4 p-4 group-hover:bg-white transition-colors relative z-10">
+                      {fp.images && (fp.images[0]?.url || fp.images[0])
+                        ? <img src={fp.images[0]?.url || fp.images[0]} alt={fp.name} className="h-full w-full object-contain group-hover:scale-110 transition-transform duration-700" />
+                        : <span className="text-3xl text-gray-300">📦</span>}
+                    </div>
+                    
+                    <div className="relative z-10 space-y-2">
+                      <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest truncate">{fp.category || 'General'}</div>
+                      <div className="text-sm font-bold text-gray-900 line-clamp-1 group-hover:text-indigo-600 transition-colors h-5">{fp.name}</div>
+                      
+                      <div className="flex items-center justify-between gap-2 pt-2">
+                        <div>
+                          <div className="text-lg font-black text-indigo-600">
+                            {fp.price != null ? `₹${Number(fp.price).toLocaleString()}` : 'Login'}
+                          </div>
+                          {fp.mrp > fp.price && (
+                            <div className="text-[10px] text-gray-400 line-through">₹{Number(fp.mrp).toLocaleString()}</div>
+                          )}
+                        </div>
+                        
+                        <button
+                          onClick={async () => {
+                            await addToCart(fp)
+                            const updated = recItems.filter(i => (i._id || i.id) !== (fp._id || fp.id))
+                            setRecItems(updated)
+                            if (updated.length === 0) setRecOpen(false)
+                          }}
+                          className="h-10 w-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-90 transition-all"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                            <path d="M12 4v16m8-8H4" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </button>
                       </div>
-                      {fp.mrp > fp.price && (
-                        <div className="text-[10px] text-gray-400 line-through font-medium">₹{Number(fp.mrp).toLocaleString()}</div>
-                      )}
                     </div>
                   </div>
-                  
-                  <button
-                    onClick={async () => {
-                      await addToCart(fp)
-                      setRecItems(prev => prev.filter(i => i._id !== fp._id))
-                      if (recItems.length <= 1) setRecOpen(false)
-                    }}
-                    className="h-12 px-6 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 transition-all duration-300"
-                  >
-                    Add
-                  </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
             
             <div className="p-8 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row gap-4">
