@@ -131,6 +131,30 @@ export default function Enquiry(){
     })
   }
 
+  const unitPrice = (it) => {
+    let p = Number(it.price || 0)
+    const qty = Math.max(1, Number(it.quantity || 1))
+    if (Array.isArray(it.bulkTiers) && it.bulkTiers.length) {
+      const tiers = it.bulkTiers.slice().sort((a, b) => Number(a.quantity || 0) - Number(b.quantity || 0))
+      const applicable = tiers.filter(t => qty >= Number(t.quantity || 0)).pop()
+      if (applicable) {
+        const off = Number(applicable.priceReduction ?? applicable.price_reduction ?? 0)
+        p = Math.max(0, p - off)
+      }
+    } else if (Number(it.bulkQty || it.bulkDiscountQuantity) > 0) {
+      const off = Number(it.bulkRed || it.bulkDiscountPriceReduction || 0)
+      if (qty >= Number(it.bulkQty || it.bulkDiscountQuantity)) {
+        p = Math.max(0, p - off)
+      }
+    }
+    return p
+  }
+  const lineTotal = (it) => unitPrice(it) * Math.max(1, Number(it.quantity || 1))
+  const computedVisibleTotal = (arr) =>
+    arr
+      .filter(it => typeof it.productId === 'string' && it.productId.length >= 12)
+      .reduce((sum, it) => sum + lineTotal(it), 0)
+
   const handleRazorpay = async (orderData, razorpayOrderId, amountPaise) => {
     try {
       await ensureRazorpayLoaded()
@@ -198,9 +222,7 @@ export default function Enquiry(){
       const cleanItems = items
         .filter(it => typeof it.productId === 'string' && it.productId.length >= 12)
         .map(it => ({ productId: it.productId, variantId: it.variantId, quantity: Math.max(1, Number(it.quantity || 1)) }))
-      const visibleTotal = items
-        .filter(it => typeof it.productId === 'string' && it.productId.length >= 12)
-        .reduce((sum, it) => sum + Number(it.price || 0) * Math.max(1, Number(it.quantity || 1)), 0)
+      const visibleTotal = computedVisibleTotal(items)
       if (visibleTotal < minAmount) {
         notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`, 'error')
         setLoading(false)
@@ -272,7 +294,7 @@ export default function Enquiry(){
                 <div className="flex-1 min-w-0">
                   <div className="text-base font-black text-gray-900 truncate tracking-tight">{item.name}</div>
                   <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
-                    Qty: {item.quantity} • Unit: ₹{item.price}
+                    Qty: {item.quantity} • Unit: ₹{unitPrice(item)}
                     {item.attributes && (
                       <span className="ml-2 text-gray-500">
                         {Object.entries(item.attributes || {}).filter(([_,v])=>v).map(([k,v])=>`${k}: ${v}`).join(' • ')}
@@ -310,7 +332,7 @@ export default function Enquiry(){
                     )
                   })()}
                 </div>
-                <div className="text-lg font-black text-gray-900">₹{item.price * item.quantity}</div>
+                <div className="text-lg font-black text-gray-900">₹{lineTotal(item)}</div>
               </div>
             ))}
           </div>
