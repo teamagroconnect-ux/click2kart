@@ -5,521 +5,1716 @@ import { useCart } from '../../lib/CartContext'
 import { useToast } from '../../components/Toast'
 import logo from '../../click2kart.png'
 
-export default function Enquiry(){
-  const { notify } = useToast()
-  const nav = useNavigate()
-  const loc = useLocation()
+export default function Enquiry() {
+  const { notify }  = useToast()
+  const nav         = useNavigate()
+  const loc         = useLocation()
   const { cart, clearCart, cartTotal } = useCart()
-  const minAmount = Number(import.meta.env.VITE_MIN_ORDER_AMOUNT || 5000)
-  
-  const initialItems = cart.length > 0 
+  const minAmount   = Number(import.meta.env.VITE_MIN_ORDER_AMOUNT || 5000)
+
+  const initialItems = cart.length > 0
     ? cart.map(item => ({
         productId: item.productId || item._id,
         variantId: item.variantId,
-        quantity: item.quantity,
-        name: item.name,
-        price: item.price,
-        image: item.image || item.images?.[0]?.url,
+        quantity:  item.quantity,
+        name:      item.name,
+        price:     item.price,
+        image:     item.image || item.images?.[0]?.url,
         attributes: item.attributes,
-        bulkQty: item.bulkDiscountQuantity || item.bulkQty || 0,
-        bulkRed: item.bulkDiscountPriceReduction || item.bulkRed || 0
+        bulkQty:   item.bulkDiscountQuantity || item.bulkQty || 0,
+        bulkRed:   item.bulkDiscountPriceReduction || item.bulkRed || 0,
+        bulkTiers: item.bulkTiers,
       }))
     : (loc.state?.productId ? [{ productId: loc.state.productId, quantity: 1, name: loc.state.name }] : [])
 
-  const [items, setItems] = useState(initialItems)
-  const [profile, setProfile] = useState({ name: '', phone: '', email: '', kyc: {} })
-  const [svc, setSvc] = useState({ loading: true, available: null, cod: null, etaStart: null, etaEnd: null, error: '' })
-  const [ship, setShip] = useState({ loading: false, amount: 0, discount: 0, final: 0 })
-  const [paymentMethod, setPaymentMethod] = useState('RAZORPAY')
-  const [codAdvMethod, setCodAdvMethod] = useState('RAZORPAY')
-  const [loading, setLoading] = useState(false)
+  const [items,          setItems]          = useState(initialItems)
+  const [profile,        setProfile]        = useState({ name:'', phone:'', email:'', kyc:{} })
+  const [svc,            setSvc]            = useState({ loading:true, available:null, cod:null, etaStart:null, etaEnd:null, error:'' })
+  const [ship,           setShip]           = useState({ loading:false, amount:0, discount:0, final:0 })
+  const [paymentMethod,  setPaymentMethod]  = useState('RAZORPAY')
+  const [codAdvMethod,   setCodAdvMethod]   = useState('RAZORPAY')
+  const [loading,        setLoading]        = useState(false)
 
+  /* ── helpers ── */
   const computeEtaRange = () => {
-    const addDays = (d, n) => {
-      const x = new Date(d.getTime())
-      for (let i = 0; i < n; i++) {
-        x.setDate(x.getDate() + 1)
-      }
-      return x
-    }
-    const today = new Date()
-    return { start: addDays(today, 3), end: addDays(today, 6) }
+    const add = (d,n) => { const x=new Date(d); for(let i=0;i<n;i++) x.setDate(x.getDate()+1); return x }
+    const t = new Date(); return { start: add(t,3), end: add(t,6) }
   }
+  const fmtDate = (d) => d ? new Date(d).toLocaleDateString('en-IN',{ weekday:'short', day:'2-digit', month:'short' }) : '—'
 
   const loadServiceability = async (pin) => {
-    if (!pin) { setSvc({ loading: false, available: null, cod: null, etaStart: null, etaEnd: null, error: 'no_pin' }); return }
-    setSvc(prev => ({ ...prev, loading: true, error: '' }))
+    if (!pin) { setSvc({ loading:false, available:null, cod:null, etaStart:null, etaEnd:null, error:'no_pin' }); return }
+    setSvc(p => ({ ...p, loading:true, error:'' }))
     try {
-      const { data } = await api.get('/api/shipping/check-pincode', { params: { pincode: pin } })
+      const { data } = await api.get('/api/shipping/check-pincode', { params:{ pincode:pin } })
       const etaStart = data?.etaStart ? new Date(data.etaStart) : computeEtaRange().start
-      const etaEnd = data?.etaEnd ? new Date(data.etaEnd) : computeEtaRange().end
-      setSvc({ loading: false, available: !!data.delivery_available, cod: !!data.cod_available, etaStart, etaEnd, error: '' })
+      const etaEnd   = data?.etaEnd   ? new Date(data.etaEnd)   : computeEtaRange().end
+      setSvc({ loading:false, available:!!data.delivery_available, cod:!!data.cod_available, etaStart, etaEnd, error:'' })
       if (data.delivery_available) {
-        setShip(s => ({ ...s, loading: true }))
+        setShip(s => ({ ...s, loading:true }))
         try {
-          const { data: calc } = await api.post('/api/shipping/calculate', {
-            destination_pin: pin,
-            weight: 1,
-            order_amount: cartTotal
-          })
-          setShip({ loading: false, amount: calc?.shipping ?? calc?.amount ?? 85, discount: calc?.discount ?? 85, final: calc?.final ?? 0 })
-        } catch {
-          setShip({ loading: false, amount: 85, discount: 85, final: 0 })
-        }
-      } else {
-        setShip({ loading: false, amount: 0, discount: 0, final: 0 })
-      }
+          const { data:calc } = await api.post('/api/shipping/calculate', { destination_pin:pin, weight:1, order_amount:cartTotal })
+          setShip({ loading:false, amount:calc?.shipping??calc?.amount??85, discount:calc?.discount??85, final:calc?.final??0 })
+        } catch { setShip({ loading:false, amount:85, discount:85, final:0 }) }
+      } else { setShip({ loading:false, amount:0, discount:0, final:0 }) }
     } catch {
       const { start, end } = computeEtaRange()
-      setSvc({ loading: false, available: null, cod: null, etaStart: start, etaEnd: end, error: 'failed' })
+      setSvc({ loading:false, available:null, cod:null, etaStart:start, etaEnd:end, error:'failed' })
     }
   }
 
   useEffect(() => {
-    if (cart.length > 0) {
-      setItems(cart.map(item => ({
-        productId: item.productId || item._id,
-        variantId: item.variantId,
-        quantity: item.quantity,
-        name: item.name,
-        price: item.price,
-        image: item.image || item.images?.[0]?.url,
-        attributes: item.attributes,
-        bulkQty: item.bulkDiscountQuantity || item.bulkQty || 0,
-        bulkRed: item.bulkDiscountPriceReduction || item.bulkRed || 0
-      })))
-    }
+    if (cart.length > 0) setItems(cart.map(item => ({
+      productId: item.productId||item._id, variantId: item.variantId, quantity: item.quantity,
+      name: item.name, price: item.price, image: item.image||item.images?.[0]?.url,
+      attributes: item.attributes, bulkQty: item.bulkDiscountQuantity||item.bulkQty||0,
+      bulkRed: item.bulkDiscountPriceReduction||item.bulkRed||0, bulkTiers: item.bulkTiers,
+    })))
   }, [cart])
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    if (!token) { 
-      nav('/login')
-      return
-    }
+    if (!localStorage.getItem('token')) { nav('/login'); return }
     ;(async () => {
       try {
         const { data } = await api.get('/api/user/me')
-        if (!data.isKycComplete) {
-          notify('Complete your KYC to place orders', 'error')
-          nav('/profile')
-          return
-        }
-        const prof = { name: data.name || '', phone: data.phone || '', email: data.email || '', kyc: data.kyc || {} }
+        if (!data.isKycComplete) { notify('Complete your KYC to place orders','error'); nav('/profile'); return }
+        const prof = { name:data.name||'', phone:data.phone||'', email:data.email||'', kyc:data.kyc||{} }
         setProfile(prof)
-        const pin = String(prof?.kyc?.pincode || '').trim()
+        const pin = String(prof?.kyc?.pincode||'').trim()
         if (pin) loadServiceability(pin)
-      } catch {
-        nav('/login')
-      }
+      } catch { nav('/login') }
     })()
   }, [])
 
   const ensureRazorpayLoaded = async () => {
     if (window.Razorpay) return true
-    return new Promise((resolve, reject) => {
-      const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')
-      if (existing) {
-        existing.addEventListener('load', () => resolve(true), { once: true })
-        existing.addEventListener('error', () => reject(new Error('razorpay_load_failed')), { once: true })
-        return
-      }
+    return new Promise((res,rej) => {
+      const ex = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]')
+      if (ex) { ex.addEventListener('load',()=>res(true),{once:true}); ex.addEventListener('error',()=>rej(new Error('razorpay_load_failed')),{once:true}); return }
       const s = document.createElement('script')
-      s.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      s.async = true
-      s.onload = () => resolve(true)
-      s.onerror = () => reject(new Error('razorpay_load_failed'))
+      s.src='https://checkout.razorpay.com/v1/checkout.js'; s.async=true
+      s.onload=()=>res(true); s.onerror=()=>rej(new Error('razorpay_load_failed'))
       document.body.appendChild(s)
     })
   }
 
   const unitPrice = (it) => {
-    let p = Number(it.price || 0)
-    const qty = Math.max(1, Number(it.quantity || 1))
-    if (Array.isArray(it.bulkTiers) && it.bulkTiers.length) {
-      const tiers = it.bulkTiers.slice().sort((a, b) => Number(a.quantity || 0) - Number(b.quantity || 0))
-      const applicable = tiers.filter(t => qty >= Number(t.quantity || 0)).pop()
-      if (applicable) {
-        const off = Number(applicable.priceReduction ?? applicable.price_reduction ?? 0)
-        p = Math.max(0, p - off)
-      }
-    } else if (Number(it.bulkQty || it.bulkDiscountQuantity) > 0) {
-      const off = Number(it.bulkRed || it.bulkDiscountPriceReduction || 0)
-      if (qty >= Number(it.bulkQty || it.bulkDiscountQuantity)) {
-        p = Math.max(0, p - off)
-      }
+    let p = Number(it.price||0)
+    const qty = Math.max(1, Number(it.quantity||1))
+    if (Array.isArray(it.bulkTiers)&&it.bulkTiers.length) {
+      const tiers = it.bulkTiers.slice().sort((a,b)=>Number(a.quantity||0)-Number(b.quantity||0))
+      const app = tiers.filter(t=>qty>=Number(t.quantity||0)).pop()
+      if (app) p = Math.max(0, p - Number(app.priceReduction??app.price_reduction??0))
+    } else if (Number(it.bulkQty||it.bulkDiscountQuantity)>0) {
+      if (qty >= Number(it.bulkQty||it.bulkDiscountQuantity)) p = Math.max(0, p - Number(it.bulkRed||it.bulkDiscountPriceReduction||0))
     }
     return p
   }
-  const lineTotal = (it) => unitPrice(it) * Math.max(1, Number(it.quantity || 1))
-  const computedVisibleTotal = (arr) =>
-    arr
-      .filter(it => typeof it.productId === 'string' && it.productId.length >= 12)
-      .reduce((sum, it) => sum + lineTotal(it), 0)
+  const lineTotal = (it) => unitPrice(it) * Math.max(1, Number(it.quantity||1))
+  const computedVisibleTotal = (arr) => arr.filter(it=>typeof it.productId==='string'&&it.productId.length>=12).reduce((s,it)=>s+lineTotal(it),0)
 
   const handleRazorpay = async ({ items, paymentMethod, razorpayOrderId, amountPaise }) => {
-    try {
-      await ensureRazorpayLoaded()
-    } catch {
-      notify('Unable to load payment gateway. Please try again.', 'error')
-      return
-    }
+    try { await ensureRazorpayLoaded() } catch { notify('Unable to load payment gateway. Please try again.','error'); return }
     const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_placeholder",
-      amount: amountPaise,
-      currency: "INR",
-      name: "Click2Kart",
-      description: "B2B Order Payment",
-      image: logo,
-      order_id: razorpayOrderId,
-      handler: async function (response) {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID||"rzp_test_placeholder",
+      amount: amountPaise, currency:"INR", name:"Click2Kart", description:"B2B Order Payment",
+      image: logo, order_id: razorpayOrderId,
+      handler: async (response) => {
         try {
-          await api.post('/api/orders/create-after-verify', {
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-            items,
-            paymentMethod
-          });
-          notify('Payment Successful!', 'success');
-          clearCart();
-          nav('/orders');
-        } catch (err) {
-          notify('Payment verification failed', 'error');
-        }
+          await api.post('/api/orders/create-after-verify', { razorpay_order_id:response.razorpay_order_id, razorpay_payment_id:response.razorpay_payment_id, razorpay_signature:response.razorpay_signature, items, paymentMethod })
+          notify('Payment Successful!','success'); clearCart(); nav('/orders')
+        } catch { notify('Payment verification failed','error') }
       },
-      prefill: {
-        name: profile.name,
-        email: profile.email,
-        contact: profile.phone
-      },
-      theme: {
-        color: "#2563eb"
-      }
-    };
-    try {
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch {
-      notify('Payment initialization failed. Please retry.', 'error')
+      prefill: { name:profile.name, email:profile.email, contact:profile.phone },
+      theme: { color:"#7c3aed" }
     }
+    try { const rzp = new window.Razorpay(options); rzp.open() }
+    catch { notify('Payment initialization failed. Please retry.','error') }
   }
 
-  const submit = async (e)=>{
+  const submit = async (e) => {
     e.preventDefault()
-    if (cartTotal < minAmount) {
-      notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`, 'error')
-      return
-    }
+    if (cartTotal < minAmount) { notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`,'error'); return }
     try {
-      const pin = String(profile?.kyc?.pincode || '').trim()
-      if (!pin) { notify('Please add delivery pincode in KYC', 'error'); nav('/profile'); return }
-      const { data: svc } = await api.get('/api/shipping/check-pincode', { params: { pincode: pin } })
-      if (!svc?.delivery_available) { notify('Delivery not available for your pincode', 'error'); return }
-      if (paymentMethod === 'COD_20' && !svc?.cod_available) { notify('COD not available for your pincode', 'error'); return }
-    } catch {
-      notify('Unable to verify serviceability right now', 'error')
-      return
-    }
+      const pin = String(profile?.kyc?.pincode||'').trim()
+      if (!pin) { notify('Please add delivery pincode in KYC','error'); nav('/profile'); return }
+      const { data:sv } = await api.get('/api/shipping/check-pincode',{ params:{ pincode:pin } })
+      if (!sv?.delivery_available) { notify('Delivery not available for your pincode','error'); return }
+      if (paymentMethod==='COD_20'&&!sv?.cod_available) { notify('COD not available for your pincode','error'); return }
+    } catch { notify('Unable to verify serviceability right now','error'); return }
     setLoading(true)
     try {
-      const cleanItems = items
-        .filter(it => typeof it.productId === 'string' && it.productId.length >= 12)
-        .map(it => ({ productId: it.productId, variantId: it.variantId, quantity: Math.max(1, Number(it.quantity || 1)) }))
+      const cleanItems = items.filter(it=>typeof it.productId==='string'&&it.productId.length>=12).map(it=>({ productId:it.productId, variantId:it.variantId, quantity:Math.max(1,Number(it.quantity||1)) }))
       const visibleTotal = computedVisibleTotal(items)
-      if (visibleTotal < minAmount) {
-        notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`, 'error')
-        setLoading(false)
-        return
-      }
-      if (paymentMethod === 'MANUAL') {
-        setLoading(false)
-        nav('/manual-payment', { state: { items: cleanItems, amount: visibleTotal } })
-        return
-      }
-      if (paymentMethod === 'RAZORPAY') {
-        try {
-          const { data } = await api.post('/api/orders/prepare-payment', { items: cleanItems, paymentMethod: 'RAZORPAY' })
-          await handleRazorpay({ items: cleanItems, paymentMethod: 'RAZORPAY', razorpayOrderId: data.razorpayOrderId, amountPaise: data.amountPaise })
-        } catch {
-          notify('Payment initialization failed. Please retry.', 'error')
-        }
-      } else if (paymentMethod === 'COD') {
-        if (codAdvMethod === 'MANUAL') {
-          setLoading(false)
-          nav('/manual-payment', { state: { items: cleanItems, amount: Math.round(visibleTotal * 0.2), cod20: true } })
-          return
-        }
-        try {
-          const { data } = await api.post('/api/orders/prepare-payment', { items: cleanItems, paymentMethod: 'COD_20' })
-          await handleRazorpay({ items: cleanItems, paymentMethod: 'COD_20', razorpayOrderId: data.razorpayOrderId, amountPaise: data.amountPaise })
-        } catch {
-          notify('Payment initialization failed. Please retry.', 'error')
-        }
+      if (visibleTotal < minAmount) { notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`,'error'); setLoading(false); return }
+      if (paymentMethod==='MANUAL') { setLoading(false); nav('/manual-payment',{ state:{ items:cleanItems, amount:visibleTotal } }); return }
+      if (paymentMethod==='RAZORPAY') {
+        try { const { data } = await api.post('/api/orders/prepare-payment',{ items:cleanItems, paymentMethod:'RAZORPAY' }); await handleRazorpay({ items:cleanItems, paymentMethod:'RAZORPAY', razorpayOrderId:data.razorpayOrderId, amountPaise:data.amountPaise }) }
+        catch { notify('Payment initialization failed. Please retry.','error') }
+      } else if (paymentMethod==='COD') {
+        if (codAdvMethod==='MANUAL') { setLoading(false); nav('/manual-payment',{ state:{ items:cleanItems, amount:Math.round(visibleTotal*0.2), cod20:true } }); return }
+        try { const { data } = await api.post('/api/orders/prepare-payment',{ items:cleanItems, paymentMethod:'COD_20' }); await handleRazorpay({ items:cleanItems, paymentMethod:'COD_20', razorpayOrderId:data.razorpayOrderId, amountPaise:data.amountPaise }) }
+        catch { notify('Payment initialization failed. Please retry.','error') }
       }
     } catch (err) {
       const code = err?.response?.data?.error
-      const lower = typeof code === 'string' ? code.toLowerCase() : ''
-      const serverMin = Number(err?.response?.data?.minAmount || minAmount)
+      const lower = typeof code==='string' ? code.toLowerCase() : ''
+      const serverMin = Number(err?.response?.data?.minAmount||minAmount)
       const message =
-        code === 'kyc_required' ? 'Please complete KYC to place orders' :
-        code === 'product_not_found' ? 'Some items are no longer available' :
-        code === 'insufficient_stock' || lower.includes('insufficient stock') ? 'Insufficient stock for one of the items' :
-        code === 'min_order_not_met' ? `Minimum order amount is ₹${serverMin.toLocaleString()}` :
-        code === 'invalid_payment_method' ? 'Invalid payment method selected' :
-        code === 'service_unavailable' ? 'Delivery not available for your pincode' :
-        code === 'cod_unavailable' ? 'COD not available for your pincode' :
-        code === 'razorpay_not_configured' ? 'Payment gateway configuration missing. Please contact support.' :
-        code === 'invalid_amount' ? 'Invalid payable amount. Please refresh and try again.' :
-        code === 'payment_initiation_failed' ? 'Payment gateway error. Please try again.' :
-        code === 'delhivery_not_configured' ? 'Shipping configuration is incomplete. Please contact support.' :
+        code==='kyc_required'                                   ? 'Please complete KYC to place orders' :
+        code==='product_not_found'                              ? 'Some items are no longer available' :
+        code==='insufficient_stock'||lower.includes('insufficient stock') ? 'Insufficient stock for one of the items' :
+        code==='min_order_not_met'                              ? `Minimum order amount is ₹${serverMin.toLocaleString()}` :
+        code==='invalid_payment_method'                         ? 'Invalid payment method selected' :
+        code==='service_unavailable'                            ? 'Delivery not available for your pincode' :
+        code==='cod_unavailable'                                ? 'COD not available for your pincode' :
+        code==='razorpay_not_configured'                        ? 'Payment gateway configuration missing. Please contact support.' :
+        code==='invalid_amount'                                 ? 'Invalid payable amount. Please refresh and try again.' :
+        code==='payment_initiation_failed'                      ? 'Payment gateway error. Please try again.' :
+        code==='delhivery_not_configured'                       ? 'Shipping configuration is incomplete. Please contact support.' :
         'Failed to place order. If amount is deducted, please contact support with your payment ID.'
-      notify(message, 'error')
-    } finally {
-      setLoading(false)
-    }
+      notify(message,'error')
+    } finally { setLoading(false) }
   }
 
-  if (items.length === 0) {
-    return (
-      <div className="max-w-xl mx-auto p-20 text-center space-y-8 animate-in fade-in zoom-in duration-700">
-        <div className="h-24 w-24 bg-violet-50 rounded-[2rem] flex items-center justify-center text-4xl mx-auto shadow-inner">🛒</div>
-        <div className="space-y-2">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tight">Your cart is empty</h2>
-          <p className="text-gray-500 font-medium">Add some products to your cart before placing an order.</p>
+  const visibleTotal = computedVisibleTotal(items)
+  const minLeft      = Math.max(0, minAmount - visibleTotal)
+
+  /* ── EMPTY ── */
+  if (items.length === 0) return (
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        .eq-empty {
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          background: linear-gradient(135deg, #faf8ff 0%, #f5f0ff 100%);
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          isolation: isolate;
+        }
+
+        .eq-empty::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 20% 50%, rgba(124, 58, 237, 0.03) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 50%, rgba(124, 58, 237, 0.03) 0%, transparent 50%);
+          pointer-events: none;
+        }
+
+        .eq-empty-box {
+          background: rgba(255, 255, 255, 0.85);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          border: 1px solid rgba(124, 58, 237, 0.15);
+          border-radius: 32px;
+          padding: 64px 48px;
+          text-align: center;
+          max-width: 440px;
+          width: 90%;
+          position: relative;
+          box-shadow: 
+            0 25px 50px -12px rgba(124, 58, 237, 0.25),
+            inset 0 1px 1px rgba(255, 255, 255, 0.8);
+        }
+
+        .eq-empty-ico {
+          width: 96px;
+          height: 96px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #7c3aed10, #8b5cf610);
+          border: 2px solid rgba(124, 58, 237, 0.2);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 42px;
+          margin: 0 auto 24px;
+          position: relative;
+        }
+
+        .eq-empty-ico::before {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+          opacity: 0.1;
+          z-index: -1;
+        }
+
+        .eq-empty-h {
+          font-family: 'Playfair Display', serif;
+          font-size: 36px;
+          font-weight: 900;
+          background: linear-gradient(135deg, #1e1b2e, #2d2a44);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin-bottom: 12px;
+          letter-spacing: -0.02em;
+        }
+
+        .eq-empty-p {
+          font-size: 15px;
+          color: #6b7280;
+          margin-bottom: 32px;
+          line-height: 1.6;
+        }
+
+        .eq-empty-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 12px;
+          background: #7c3aed;
+          color: white;
+          padding: 16px 32px;
+          border-radius: 16px;
+          font-size: 12px;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          text-decoration: none;
+          box-shadow: 
+            0 10px 20px -5px rgba(124, 58, 237, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .eq-empty-btn::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          transition: left 0.5s ease;
+        }
+
+        .eq-empty-btn:hover::before {
+          left: 100%;
+        }
+
+        .eq-empty-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 
+            0 20px 30px -8px rgba(124, 58, 237, 0.5),
+            0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+        }
+      `}</style>
+      <div className="eq-empty">
+        <div className="eq-empty-box">
+          <div className="eq-empty-ico">🛒</div>
+          <div className="eq-empty-h">Your Cart Awaits</div>
+          <p className="eq-empty-p">Start your B2B journey with premium products and exclusive bulk discounts.</p>
+          <Link to="/products" className="eq-empty-btn">
+            Explore Collection
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+            </svg>
+          </Link>
         </div>
-        <Link to="/products" className="inline-flex items-center px-10 py-4 bg-violet-600 text-white rounded-2xl text-xs font-black uppercase tracking-widest shadow-xl shadow-violet-100 hover:bg-violet-500 transition-all active:scale-95">Browse Inventory</Link>
       </div>
-    )
-  }
+    </>
+  )
+
+  /* ── MAIN ── */
+  const payIsReady = !loading && visibleTotal >= minAmount && svc.available
 
   return (
-    <div className="max-w-7xl mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-12 gap-12">
-      <div className="lg:col-span-5 space-y-8">
-        <div className="space-y-2">
-          <h2 className="text-3xl font-black text-gray-900 tracking-tight">Order Summary</h2>
-          <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">Review your wholesale selection</p>
-        </div>
-        <div className="bg-white border border-gray-100 rounded-[3rem] overflow-hidden shadow-2xl">
-          <div className="p-8 space-y-6 max-h-[500px] overflow-y-auto custom-scrollbar">
-            {items.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-6 group">
-                <div className="w-16 h-16 bg-gray-50 rounded-2xl border border-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  {item.image ? (
-                    <img src={item.image} alt="" className="w-full h-full object-contain" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-xl bg-gray-100 border border-gray-200"></div>
-                  )}
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+        :root {
+          --primary: #7c3aed;
+          --primary-dark: #6d28d9;
+          --primary-light: #8b5cf6;
+          --secondary: #059669;
+          --accent: #2563eb;
+          --bg-gradient: linear-gradient(135deg, #faf8ff 0%, #f5f0ff 100%);
+          --glass-bg: rgba(255, 255, 255, 0.85);
+          --glass-border: rgba(124, 58, 237, 0.15);
+          --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+          --shadow-md: 0 10px 25px -5px rgba(124, 58, 237, 0.1), 0 8px 10px -6px rgba(124, 58, 237, 0.02);
+          --shadow-lg: 0 25px 50px -12px rgba(124, 58, 237, 0.25);
+          --shadow-inner: inset 0 1px 1px rgba(255, 255, 255, 0.8);
+        }
+
+        .eq-root {
+          font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+          background: var(--bg-gradient);
+          min-height: 100vh;
+          color: #1e1b2e;
+          position: relative;
+          isolation: isolate;
+          padding-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        .eq-root::before {
+          content: '';
+          position: fixed;
+          inset: 0;
+          background: 
+            radial-gradient(circle at 20% 30%, rgba(124, 58, 237, 0.03) 0%, transparent 40%),
+            radial-gradient(circle at 80% 70%, rgba(124, 58, 237, 0.03) 0%, transparent 40%);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .eq-blob {
+          position: fixed;
+          top: -200px;
+          right: -200px;
+          width: 600px;
+          height: 600px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
+          filter: blur(60px);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .eq-blob-2 {
+          position: fixed;
+          bottom: -200px;
+          left: -200px;
+          width: 500px;
+          height: 500px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(5, 150, 105, 0.06) 0%, transparent 70%);
+          filter: blur(60px);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        .eq-wrap {
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 48px 24px 80px;
+          position: relative;
+          z-index: 2;
+        }
+
+        /* Premium Header */
+        .eq-hd {
+          margin-bottom: 48px;
+          animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .eq-eyebrow {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+          padding: 6px 16px 6px 12px;
+          border-radius: 100px;
+          background: rgba(124, 58, 237, 0.08);
+          border: 1px solid rgba(124, 58, 237, 0.15);
+          backdrop-filter: blur(4px);
+          margin-bottom: 16px;
+        }
+
+        .eq-edot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: var(--primary);
+          box-shadow: 0 0 10px var(--primary);
+          animation: pulse 2s ease infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .eq-eyebrow-text {
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: var(--primary);
+        }
+
+        .eq-h1 {
+          font-family: 'Playfair Display', serif;
+          font-size: clamp(42px, 6vw, 64px);
+          font-weight: 900;
+          background: linear-gradient(135deg, #1e1b2e 0%, #2d2a44 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          letter-spacing: -0.02em;
+          line-height: 1.1;
+          margin-bottom: 8px;
+        }
+
+        .eq-h1 span {
+          background: linear-gradient(135deg, var(--primary), var(--primary-light));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .eq-sub {
+          font-size: 15px;
+          color: #6b7280;
+          font-weight: 400;
+        }
+
+        /* Main Grid */
+        .eq-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 32px;
+        }
+
+        @media (min-width: 1024px) {
+          .eq-grid {
+            grid-template-columns: 440px 1fr;
+            align-items: start;
+            gap: 32px;
+          }
+        }
+
+        /* ===== PREMIUM ORDER SUMMARY ===== */
+        .eq-summary {
+          background: var(--glass-bg);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid var(--glass-border);
+          border-radius: 32px;
+          overflow: hidden;
+          box-shadow: var(--shadow-lg), var(--shadow-inner);
+          position: sticky;
+          top: 100px;
+          animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .eq-summary:hover {
+          box-shadow: 0 30px 60px -15px rgba(124, 58, 237, 0.3), var(--shadow-inner);
+        }
+
+        /* Premium Header with Gradient */
+        .eq-summary-head {
+          padding: 28px 28px 20px;
+          border-bottom: 1px solid rgba(124, 58, 237, 0.1);
+          background: linear-gradient(180deg, rgba(124, 58, 237, 0.02) 0%, transparent 100%);
+        }
+
+        .eq-summary-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 26px;
+          font-weight: 900;
+          background: linear-gradient(135deg, #1e1b2e, #2d2a44);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          letter-spacing: -0.01em;
+          margin-bottom: 4px;
+        }
+
+        .eq-summary-sub {
+          font-size: 13px;
+          font-weight: 500;
+          color: #6b7280;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .eq-summary-sub::before {
+          content: '';
+          width: 4px;
+          height: 4px;
+          border-radius: 50%;
+          background: var(--primary);
+          opacity: 0.5;
+        }
+
+        /* Items List - Premium Scrollbar */
+        .eq-items-list {
+          padding: 20px 24px;
+          max-height: 420px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .eq-items-list::-webkit-scrollbar {
+          width: 4px;
+        }
+
+        .eq-items-list::-webkit-scrollbar-track {
+          background: rgba(124, 58, 237, 0.05);
+          border-radius: 4px;
+        }
+
+        .eq-items-list::-webkit-scrollbar-thumb {
+          background: rgba(124, 58, 237, 0.2);
+          border-radius: 4px;
+          transition: background 0.2s ease;
+        }
+
+        .eq-items-list::-webkit-scrollbar-thumb:hover {
+          background: rgba(124, 58, 237, 0.3);
+        }
+
+        /* Premium Item Card */
+        .eq-item {
+          display: flex;
+          gap: 16px;
+          padding: 12px;
+          border-radius: 20px;
+          background: rgba(255, 255, 255, 0.5);
+          backdrop-filter: blur(4px);
+          border: 1px solid rgba(124, 58, 237, 0.08);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          animation: fadeIn 0.5s ease;
+        }
+
+        .eq-item:hover {
+          background: white;
+          border-color: rgba(124, 58, 237, 0.15);
+          transform: translateX(4px);
+          box-shadow: var(--shadow-sm);
+        }
+
+        .eq-item-img {
+          width: 64px;
+          height: 64px;
+          border-radius: 16px;
+          background: linear-gradient(135deg, #f9f7ff, #f5f0ff);
+          border: 1px solid rgba(124, 58, 237, 0.12);
+          overflow: hidden;
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: var(--shadow-sm);
+        }
+
+        .eq-item-img img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          padding: 6px;
+          transition: transform 0.3s ease;
+        }
+
+        .eq-item:hover .eq-item-img img {
+          transform: scale(1.05);
+        }
+
+        .eq-item-content {
+          flex: 1;
+          min-width: 0;
+        }
+
+        .eq-item-name {
+          font-size: 14px;
+          font-weight: 700;
+          color: #1e1b2e;
+          line-height: 1.4;
+          margin-bottom: 4px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .eq-item-meta {
+          font-size: 12px;
+          font-weight: 500;
+          color: #6b7280;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          flex-wrap: wrap;
+        }
+
+        .eq-item-meta-badge {
+          background: rgba(124, 58, 237, 0.08);
+          padding: 2px 8px;
+          border-radius: 20px;
+          font-size: 10px;
+          font-weight: 600;
+          color: var(--primary);
+          border: 1px solid rgba(124, 58, 237, 0.15);
+        }
+
+        /* Premium Bulk Tier Indicator */
+        .eq-tier-container {
+          margin-top: 8px;
+          padding: 8px 10px;
+          background: linear-gradient(135deg, rgba(5, 150, 105, 0.04), rgba(5, 150, 105, 0.02));
+          border-radius: 12px;
+          border: 1px solid rgba(5, 150, 105, 0.1);
+        }
+
+        .eq-tier-bar {
+          height: 4px;
+          background: rgba(5, 150, 105, 0.1);
+          border-radius: 100px;
+          overflow: hidden;
+          margin-bottom: 6px;
+        }
+
+        .eq-tier-fill {
+          height: 4px;
+          background: linear-gradient(90deg, var(--secondary), #10b981);
+          border-radius: 100px;
+          position: relative;
+          animation: fillWidth 0.6s ease;
+        }
+
+        @keyframes fillWidth {
+          from { width: 0; }
+          to { width: var(--target-width); }
+        }
+
+        .eq-tier-fill::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          right: 0;
+          width: 8px;
+          height: 4px;
+          background: white;
+          border-radius: 50%;
+          filter: blur(2px);
+        }
+
+        .eq-tier-hint {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 11px;
+        }
+
+        .eq-tier-hint-next {
+          font-weight: 700;
+          color: var(--secondary);
+        }
+
+        .eq-tier-hint-current {
+          font-weight: 600;
+          color: #1e1b2e;
+          background: rgba(5, 150, 105, 0.1);
+          padding: 2px 8px;
+          border-radius: 20px;
+        }
+
+        .eq-item-price {
+          font-family: 'Playfair Display', serif;
+          font-size: 20px;
+          font-weight: 900;
+          background: linear-gradient(135deg, var(--primary), var(--primary-light));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          flex-shrink: 0;
+          margin-left: auto;
+          padding-left: 12px;
+        }
+
+        /* Premium Summary Footer */
+        .eq-summary-footer {
+          padding: 24px 28px 28px;
+          border-top: 1px solid rgba(124, 58, 237, 0.1);
+          background: linear-gradient(180deg, transparent, rgba(124, 58, 237, 0.02));
+        }
+
+        .eq-sumrow {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 14px;
+          padding: 6px 0;
+        }
+
+        .eq-sumrow-label {
+          color: #6b7280;
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .eq-sumrow-label-icon {
+          width: 16px;
+          height: 16px;
+          border-radius: 50%;
+          background: rgba(124, 58, 237, 0.1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          color: var(--primary);
+        }
+
+        .eq-sumrow-val {
+          font-weight: 700;
+          color: #1e1b2e;
+        }
+
+        .eq-sumrow-val.green {
+          color: var(--secondary);
+          background: rgba(5, 150, 105, 0.1);
+          padding: 2px 10px;
+          border-radius: 20px;
+          font-size: 13px;
+        }
+
+        .eq-sum-divider {
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.2), transparent);
+          margin: 16px 0;
+        }
+
+        .eq-total-row {
+          display: flex;
+          align-items: baseline;
+          justify-content: space-between;
+          margin-top: 8px;
+        }
+
+        .eq-total-label {
+          font-size: 13px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.15em;
+          color: #6b7280;
+        }
+
+        .eq-total-val {
+          font-family: 'Playfair Display', serif;
+          font-size: 36px;
+          font-weight: 900;
+          background: linear-gradient(135deg, var(--primary), var(--primary-light));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          line-height: 1;
+        }
+
+        /* Minimum Order Alert - Premium */
+        .eq-min-alert {
+          margin-top: 16px;
+          padding: 14px 16px;
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.04));
+          border: 1px solid rgba(245, 158, 11, 0.2);
+          border-radius: 16px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          backdrop-filter: blur(4px);
+        }
+
+        .eq-min-alert-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 12px;
+          background: rgba(245, 158, 11, 0.15);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 16px;
+        }
+
+        .eq-min-alert-text {
+          flex: 1;
+          font-size: 13px;
+          font-weight: 600;
+          color: #b45309;
+        }
+
+        .eq-min-alert-amount {
+          font-weight: 800;
+          font-size: 16px;
+          color: #b45309;
+        }
+
+        /* Right Form Card */
+        .eq-form-card {
+          background: var(--glass-bg);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border: 1px solid var(--glass-border);
+          border-radius: 32px;
+          overflow: hidden;
+          box-shadow: var(--shadow-lg), var(--shadow-inner);
+          animation: slideUp 0.6s 0.1s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .eq-form-body {
+          padding: 32px;
+        }
+
+        @media (max-width: 480px) {
+          .eq-form-body { padding: 24px; }
+        }
+
+        /* Step Headers */
+        .eq-step-head {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+
+        .eq-step-num {
+          width: 44px;
+          height: 44px;
+          border-radius: 16px;
+          background: linear-gradient(135deg, var(--primary), var(--primary-light));
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 14px;
+          font-weight: 800;
+          letter-spacing: 0.1em;
+          box-shadow: 
+            0 8px 16px -4px rgba(124, 58, 237, 0.3),
+            inset 0 1px 1px rgba(255, 255, 255, 0.3);
+        }
+
+        .eq-step-title {
+          font-family: 'Playfair Display', serif;
+          font-size: 24px;
+          font-weight: 900;
+          background: linear-gradient(135deg, #1e1b2e, #2d2a44);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        /* Profile Info Grid */
+        .eq-profile-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+          gap: 12px;
+          margin-bottom: 20px;
+        }
+
+        .eq-info-cell {
+          background: rgba(255, 255, 255, 0.6);
+          backdrop-filter: blur(4px);
+          border: 1px solid rgba(124, 58, 237, 0.1);
+          border-radius: 16px;
+          padding: 14px 16px;
+          transition: all 0.2s ease;
+        }
+
+        .eq-info-cell:hover {
+          background: white;
+          border-color: rgba(124, 58, 237, 0.2);
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-sm);
+        }
+
+        .eq-info-label {
+          font-size: 9px;
+          font-weight: 700;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: #9ca3af;
+          margin-bottom: 6px;
+        }
+
+        .eq-info-val {
+          font-size: 14px;
+          font-weight: 700;
+          color: #1e1b2e;
+        }
+
+        /* Address & Serviceability */
+        .eq-addr-row {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 12px;
+          align-items: start;
+        }
+
+        .eq-addr-cell {
+          background: rgba(255, 255, 255, 0.6);
+          backdrop-filter: blur(4px);
+          border: 1px solid rgba(124, 58, 237, 0.1);
+          border-radius: 16px;
+          padding: 16px;
+        }
+
+        .eq-addr-line {
+          font-size: 14px;
+          font-weight: 700;
+          color: #1e1b2e;
+          line-height: 1.5;
+          margin-bottom: 4px;
+        }
+
+        .eq-addr-sub {
+          font-size: 12px;
+          color: #6b7280;
+          font-weight: 500;
+        }
+
+        /* Serviceability Badge */
+        .eq-svc-badge {
+          display: flex;
+          gap: 12px;
+          padding: 16px;
+          border-radius: 16px;
+          min-width: 240px;
+          background: rgba(255, 255, 255, 0.6);
+          backdrop-filter: blur(4px);
+          border: 1px solid rgba(124, 58, 237, 0.1);
+          transition: all 0.2s ease;
+        }
+
+        .eq-svc-badge.avail {
+          background: rgba(5, 150, 105, 0.08);
+          border-color: rgba(5, 150, 105, 0.2);
+        }
+
+        .eq-svc-badge.unavail {
+          background: rgba(220, 38, 38, 0.08);
+          border-color: rgba(220, 38, 38, 0.15);
+        }
+
+        .eq-svc-dot {
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          margin-top: 3px;
+          position: relative;
+        }
+
+        .eq-svc-dot::after {
+          content: '';
+          position: absolute;
+          inset: -4px;
+          border-radius: 50%;
+          background: inherit;
+          opacity: 0.3;
+          animation: pulse 2s ease infinite;
+        }
+
+        .eq-svc-main {
+          font-size: 13px;
+          font-weight: 700;
+          margin-bottom: 4px;
+        }
+
+        .eq-svc-main.green { color: var(--secondary); }
+        .eq-svc-main.red { color: #dc2626; }
+        .eq-svc-main.gray { color: #6b7280; }
+
+        .eq-svc-detail {
+          font-size: 11px;
+          color: #6b7280;
+          font-weight: 500;
+          line-height: 1.5;
+        }
+
+        .eq-svc-free {
+          font-size: 12px;
+          font-weight: 700;
+          color: var(--secondary);
+          margin-top: 6px;
+          padding: 2px 8px;
+          background: rgba(5, 150, 105, 0.1);
+          border-radius: 20px;
+          display: inline-block;
+        }
+
+        /* Section Divider */
+        .eq-section-div {
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.2), transparent);
+          margin: 32px 0;
+        }
+
+        /* Premium Payment Options */
+        .eq-pay-options {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .eq-pay-opt {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 20px;
+          border-radius: 20px;
+          border: 1.5px solid rgba(124, 58, 237, 0.12);
+          background: white;
+          cursor: pointer;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          text-align: left;
+          width: 100%;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .eq-pay-opt::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(135deg, rgba(124, 58, 237, 0.02), transparent);
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        .eq-pay-opt:hover:not(:disabled) {
+          border-color: var(--primary);
+          transform: translateY(-2px);
+          box-shadow: 0 12px 24px -8px rgba(124, 58, 237, 0.2);
+        }
+
+        .eq-pay-opt:hover::before {
+          opacity: 1;
+        }
+
+        .eq-pay-opt.active-violet {
+          border-color: var(--primary);
+          background: linear-gradient(135deg, rgba(124, 58, 237, 0.04), rgba(124, 58, 237, 0.02));
+          box-shadow: 0 8px 20px -6px rgba(124, 58, 237, 0.2);
+        }
+
+        .eq-pay-opt.active-green {
+          border-color: var(--secondary);
+          background: linear-gradient(135deg, rgba(5, 150, 105, 0.04), rgba(5, 150, 105, 0.02));
+        }
+
+        .eq-pay-opt.active-blue {
+          border-color: var(--accent);
+          background: linear-gradient(135deg, rgba(37, 99, 235, 0.04), rgba(37, 99, 235, 0.02));
+        }
+
+        .eq-pay-opt:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .eq-pay-ico {
+          width: 52px;
+          height: 52px;
+          border-radius: 18px;
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          position: relative;
+          z-index: 1;
+        }
+
+        .eq-pay-ico.violet {
+          background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(124, 58, 237, 0.08));
+          color: var(--primary);
+        }
+
+        .eq-pay-ico.green {
+          background: linear-gradient(135deg, rgba(5, 150, 105, 0.12), rgba(5, 150, 105, 0.08));
+          color: var(--secondary);
+        }
+
+        .eq-pay-ico.blue {
+          background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(37, 99, 235, 0.08));
+          color: var(--accent);
+        }
+
+        .eq-pay-info {
+          flex: 1;
+          position: relative;
+          z-index: 1;
+        }
+
+        .eq-pay-name {
+          font-size: 16px;
+          font-weight: 700;
+          color: #1e1b2e;
+          margin-bottom: 4px;
+        }
+
+        .eq-pay-desc {
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+
+        .eq-pay-desc.violet { color: var(--primary); }
+        .eq-pay-desc.green { color: var(--secondary); }
+        .eq-pay-desc.blue { color: var(--accent); }
+
+        .eq-pay-radio {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          border: 2px solid rgba(124, 58, 237, 0.2);
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+          position: relative;
+          z-index: 1;
+        }
+
+        .eq-pay-opt.active-violet .eq-pay-radio,
+        .eq-pay-opt.active-green .eq-pay-radio,
+        .eq-pay-opt.active-blue .eq-pay-radio {
+          border-color: var(--primary);
+        }
+
+        .eq-pay-radio-dot {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background: var(--primary);
+          transform: scale(0);
+          transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .eq-pay-opt.active-violet .eq-pay-radio-dot,
+        .eq-pay-opt.active-green .eq-pay-radio-dot,
+        .eq-pay-opt.active-blue .eq-pay-radio-dot {
+          transform: scale(1);
+        }
+
+        /* COD Sub-method */
+        .eq-cod-sub {
+          margin-top: 8px;
+          margin-left: 72px;
+          display: inline-flex;
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(4px);
+          border: 1px solid rgba(124, 58, 237, 0.15);
+          border-radius: 14px;
+          padding: 4px;
+          gap: 4px;
+        }
+
+        .eq-cod-sub-btn {
+          padding: 8px 16px;
+          border-radius: 12px;
+          border: none;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          cursor: pointer;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          transition: all 0.2s ease;
+        }
+
+        .eq-cod-sub-btn.active {
+          background: linear-gradient(135deg, var(--primary), var(--primary-light));
+          color: white;
+          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        .eq-cod-sub-btn.inactive {
+          background: transparent;
+          color: #9ca3af;
+        }
+
+        .eq-cod-sub-btn.inactive:hover {
+          color: var(--primary);
+          background: rgba(124, 58, 237, 0.05);
+        }
+
+        /* Premium Submit Button */
+        .eq-submit {
+          width: 100%;
+          padding: 20px;
+          border-radius: 20px;
+          border: none;
+          font-size: 14px;
+          font-weight: 700;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          cursor: pointer;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          margin-top: 28px;
+          position: relative;
+          overflow: hidden;
+        }
+
+        .eq-submit::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          transition: left 0.5s ease;
+        }
+
+        .eq-submit.ready {
+          background: linear-gradient(135deg, var(--primary), var(--primary-light));
+          color: white;
+          box-shadow: 
+            0 15px 30px -8px rgba(124, 58, 237, 0.4),
+            inset 0 1px 1px rgba(255, 255, 255, 0.3);
+        }
+
+        .eq-submit.ready:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 25px 40px -12px rgba(124, 58, 237, 0.5);
+        }
+
+        .eq-submit.ready:hover::before {
+          left: 100%;
+        }
+
+        .eq-submit.ready:active {
+          transform: translateY(-1px);
+        }
+
+        .eq-submit.blocked {
+          background: linear-gradient(135deg, #e5e7eb, #d1d5db);
+          color: #9ca3af;
+          cursor: not-allowed;
+          box-shadow: none;
+        }
+
+        /* Spinner */
+        .eq-spin {
+          width: 16px;
+          height: 16px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-top-color: white;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* Secure Note */
+        .eq-secure {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          font-size: 12px;
+          color: #9ca3af;
+          margin-top: 20px;
+          font-weight: 500;
+          padding: 12px;
+          background: rgba(255, 255, 255, 0.5);
+          border-radius: 100px;
+          backdrop-filter: blur(4px);
+        }
+
+        /* Animations */
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes shimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
+        }
+
+        /* Loading Skeleton Animation */
+        .eq-shimmer {
+          background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.05), transparent);
+          background-size: 1000px 100%;
+          animation: shimmer 2s infinite;
+        }
+      `}</style>
+
+      <div className="eq-root">
+        <div className="eq-blob" />
+        <div className="eq-blob-2" />
+        <div className="eq-wrap">
+
+          {/* Premium Page Header */}
+          <div className="eq-hd">
+            <div className="eq-eyebrow">
+              <span className="eq-edot" />
+              <span className="eq-eyebrow-text">Secure Checkout</span>
+            </div>
+            <h1 className="eq-h1">
+              Complete Your <span>Order</span>
+            </h1>
+            <p className="eq-sub">
+              Premium B2B checkout with exclusive bulk discounts
+            </p>
+          </div>
+
+          <div className="eq-grid">
+
+            {/* ── PREMIUM ORDER SUMMARY ── */}
+            <div className="eq-summary">
+              <div className="eq-summary-head">
+                <div className="eq-summary-title">Order Summary</div>
+                <div className="eq-summary-sub">
+                  {items.length} premium item{items.length !== 1 ? 's' : ''}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-base font-black text-gray-900 truncate tracking-tight">{item.name}</div>
-                  <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
-                    Qty: {item.quantity} • Unit: ₹{unitPrice(item)}
-                    {item.attributes && (
-                      <span className="ml-2 text-gray-500">
-                        {Object.entries(item.attributes || {}).filter(([_,v])=>v).map(([k,v])=>`${k}: ${v}`).join(' • ')}
-                      </span>
-                    )}
-                  </div>
-                  {(() => {
-                    const tiers = Array.isArray(item.bulkTiers) && item.bulkTiers.length
-                      ? item.bulkTiers.slice().sort((a,b)=>a.quantity-b.quantity)
-                      : (item.bulkQty > 0 ? [{ quantity: item.bulkQty, priceReduction: item.bulkRed || 0 }] : [])
-                    if (!tiers.length) return null
-                    const next = tiers.find(t => item.quantity < t.quantity)
-                    const maxQ = Math.max(item.quantity, tiers[tiers.length - 1].quantity)
-                    const pct = Math.min(100, Math.round((item.quantity / maxQ) * 100))
-                    return (
-                      <div className="mt-2 space-y-2">
-                        <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
-                          <div className="h-2 bg-emerald-500" style={{ width: `${pct}%` }} />
+              </div>
+
+              <div className="eq-items-list">
+                {items.map((item, idx) => {
+                  const tiers = Array.isArray(item.bulkTiers) && item.bulkTiers.length
+                    ? item.bulkTiers.slice().sort((a, b) => a.quantity - b.quantity)
+                    : (item.bulkQty > 0 ? [{ quantity: item.bulkQty, priceReduction: item.bulkRed || 0 }] : [])
+                  
+                  const next = tiers.find(t => item.quantity < t.quantity)
+                  const maxQ = tiers.length ? Math.max(item.quantity, tiers[tiers.length - 1].quantity) : item.quantity
+                  const pct = tiers.length ? Math.min(100, Math.round((item.quantity / maxQ) * 100)) : 100
+                  
+                  const attrs = Object.entries(item.attributes || {})
+                    .filter(([, v]) => v)
+                    .map(([k, v]) => `${k}: ${v}`)
+                    .join(' · ')
+
+                  return (
+                    <div key={idx} className="eq-item">
+                      <div className="eq-item-img">
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} />
+                        ) : (
+                          <span style={{ fontSize: 24, opacity: 0.3 }}>📦</span>
+                        )}
+                      </div>
+                      
+                      <div className="eq-item-content">
+                        <div className="eq-item-name">{item.name}</div>
+                        
+                        <div className="eq-item-meta">
+                          <span>Qty: {item.quantity}</span>
+                          <span>·</span>
+                          <span>₹{unitPrice(item).toLocaleString()}/unit</span>
+                          {attrs && (
+                            <>
+                              <span>·</span>
+                              <span className="eq-item-meta-badge">{attrs}</span>
+                            </>
+                          )}
                         </div>
-                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-gray-400">
-                          <div className="flex items-center gap-2">
-                            {tiers.map((t, idx) => (
-                              <div key={idx} className="flex items-center gap-1">
-                                <span className="h-1 w-1 rounded-full bg-gray-300"></span>
-                                <span>{t.quantity}+</span>
-                              </div>
-                            ))}
+
+                        {tiers.length > 0 && (
+                          <div className="eq-tier-container">
+                            <div className="eq-tier-bar">
+                              <div 
+                                className="eq-tier-fill" 
+                                style={{ 
+                                  width: `${pct}%`,
+                                  ['--target-width']: `${pct}%`
+                                }}
+                              />
+                            </div>
+                            <div className="eq-tier-hint">
+                              <span className="eq-tier-hint-current">
+                                {pct}% to max discount
+                              </span>
+                              {next && (
+                                <span className="eq-tier-hint-next">
+                                  +{next.quantity - item.quantity} more → -₹{Number(next.priceReduction).toLocaleString()}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          {next
-                            ? <div className="text-emerald-700">Add {next.quantity - item.quantity} more for extra ₹{Number(next.priceReduction).toLocaleString()}/unit off</div>
-                            : <div className="text-emerald-700">Max bulk savings applied</div>
-                          }
+                        )}
+                      </div>
+
+                      <div className="eq-item-price">
+                        ₹{lineTotal(item).toLocaleString()}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              <div className="eq-summary-footer">
+                <div className="eq-sumrow">
+                  <span className="eq-sumrow-label">
+                    <span className="eq-sumrow-label-icon">🛒</span>
+                    Subtotal
+                  </span>
+                  <span className="eq-sumrow-val">₹{visibleTotal.toLocaleString()}</span>
+                </div>
+                
+                <div className="eq-sumrow">
+                  <span className="eq-sumrow-label">
+                    <span className="eq-sumrow-label-icon">🚚</span>
+                    Shipping
+                  </span>
+                  <span className="eq-sumrow-val green">
+                    {ship.loading ? (
+                      <span className="eq-shimmer">...</span>
+                    ) : ship.final === 0 ? (
+                      'FREE DELIVERY'
+                    ) : (
+                      `₹${ship.final}`
+                    )}
+                  </span>
+                </div>
+                
+                <div className="eq-sumrow">
+                  <span className="eq-sumrow-label">
+                    <span className="eq-sumrow-label-icon">📋</span>
+                    GST
+                  </span>
+                  <span className="eq-sumrow-val">Included</span>
+                </div>
+
+                <div className="eq-sum-divider" />
+
+                <div className="eq-total-row">
+                  <span className="eq-total-label">Total Payable</span>
+                  <span className="eq-total-val">₹{visibleTotal.toLocaleString()}</span>
+                </div>
+
+                {minLeft > 0 && (
+                  <div className="eq-min-alert">
+                    <span className="eq-min-alert-icon">⚠️</span>
+                    <span className="eq-min-alert-text">
+                      Add <span className="eq-min-alert-amount">₹{minLeft.toLocaleString()}</span> more to reach minimum order
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ── REST OF THE FORM (unchanged but with premium styling) ── */}
+            <div className="eq-form-card">
+              <form onSubmit={submit}>
+                <div className="eq-form-body">
+
+                  {/* STEP 1: Contact & Delivery */}
+                  <div className="eq-step-head">
+                    <div className="eq-step-num">01</div>
+                    <div className="eq-step-title">Contact & Delivery</div>
+                  </div>
+
+                  <div className="eq-profile-grid">
+                    <div className="eq-info-cell">
+                      <div className="eq-info-label">Name</div>
+                      <div className="eq-info-val">{profile.name || '—'}</div>
+                    </div>
+                    <div className="eq-info-cell">
+                      <div className="eq-info-label">Phone</div>
+                      <div className="eq-info-val">{profile.phone || '—'}</div>
+                    </div>
+                    <div className="eq-info-cell">
+                      <div className="eq-info-label">Email</div>
+                      <div className="eq-info-val">{profile.email || '—'}</div>
+                    </div>
+                  </div>
+
+                  <div className="eq-addr-row">
+                    <div className="eq-addr-cell">
+                      <div className="eq-info-label">Delivery Address</div>
+                      <div className="eq-addr-line">
+                        {profile?.kyc?.addressLine1 || '—'}
+                        {profile?.kyc?.addressLine2 ? `, ${profile.kyc.addressLine2}` : ''}
+                      </div>
+                      <div className="eq-addr-sub">
+                        {profile?.kyc?.city || '—'}, {profile?.kyc?.state || '—'} — {profile?.kyc?.pincode || '—'}
+                      </div>
+                    </div>
+
+                    <div className={`eq-svc-badge ${svc.loading ? '' : svc.available ? 'avail' : 'unavail'}`}>
+                      <span 
+                        className="eq-svc-dot" 
+                        style={{ 
+                          background: svc.loading 
+                            ? '#c4b5fd' 
+                            : svc.available 
+                              ? '#059669' 
+                              : '#ef4444' 
+                        }} 
+                      />
+                      <div>
+                        <div className={`eq-svc-main ${svc.loading ? 'gray' : svc.available ? 'green' : 'red'}`}>
+                          {svc.loading 
+                            ? 'Checking serviceability…' 
+                            : svc.available 
+                              ? `PIN ${String(profile?.kyc?.pincode || '').trim()} · Serviceable` 
+                              : 'Delivery Unavailable'}
+                        </div>
+                        
+                        {!svc.loading && svc.available && (
+                          <>
+                            <div className="eq-svc-detail">
+                              {svc.cod ? '✓ COD Available' : '✗ COD Unavailable'}
+                              <br />
+                              ETA: {fmtDate(svc.etaStart)} – {fmtDate(svc.etaEnd)}
+                            </div>
+                            <div className="eq-svc-free">
+                              {ship.loading 
+                                ? 'Calculating…' 
+                                : ship.final === 0 
+                                  ? '🎉 FREE DELIVERY' 
+                                  : `Shipping: ₹${ship.final}`}
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="eq-section-div" />
+
+                  {/* STEP 2: Payment */}
+                  <div className="eq-step-head">
+                    <div className="eq-step-num">02</div>
+                    <div className="eq-step-title">Payment Method</div>
+                  </div>
+
+                  <div className="eq-pay-options">
+                    {/* Razorpay */}
+                    <button
+                      type="button"
+                      disabled={!svc.available}
+                      className={`eq-pay-opt ${paymentMethod === 'RAZORPAY' ? 'active-violet' : ''}`}
+                      onClick={() => setPaymentMethod('RAZORPAY')}
+                    >
+                      <div className="eq-pay-ico violet">💳</div>
+                      <div className="eq-pay-info">
+                        <div className="eq-pay-name">Razorpay</div>
+                        <div className="eq-pay-desc violet">Online Payment · Auto Confirmation</div>
+                      </div>
+                      <div className="eq-pay-radio">
+                        <div className="eq-pay-radio-dot" />
+                      </div>
+                    </button>
+
+                    {/* Manual */}
+                    <button
+                      type="button"
+                      disabled={!svc.available}
+                      className={`eq-pay-opt ${paymentMethod === 'MANUAL' ? 'active-green' : ''}`}
+                      onClick={() => setPaymentMethod('MANUAL')}
+                    >
+                      <div className="eq-pay-ico green">📱</div>
+                      <div className="eq-pay-info">
+                        <div className="eq-pay-name">Manual Payment</div>
+                        <div className="eq-pay-desc green">UPI / Bank Transfer · Manual Approval</div>
+                      </div>
+                      <div className="eq-pay-radio">
+                        <div className="eq-pay-radio-dot" />
+                      </div>
+                    </button>
+
+                    {/* COD */}
+                    <button
+                      type="button"
+                      disabled={!svc.available || !svc.cod}
+                      className={`eq-pay-opt ${paymentMethod === 'COD' ? 'active-blue' : ''}`}
+                      onClick={() => setPaymentMethod('COD')}
+                    >
+                      <div className="eq-pay-ico blue">🚚</div>
+                      <div className="eq-pay-info">
+                        <div className="eq-pay-name">Cash on Delivery</div>
+                        <div className={`eq-pay-desc ${svc.cod ? 'blue' : 'gray'}`}>
+                          {svc.cod ? 'Pay 20% now · Rest on delivery' : 'COD Unavailable'}
                         </div>
                       </div>
-                    )
-                  })()}
+                      <div className="eq-pay-radio">
+                        <div className="eq-pay-radio-dot" />
+                      </div>
+                    </button>
+
+                    {paymentMethod === 'COD' && (
+                      <div className="eq-cod-sub">
+                        <button
+                          type="button"
+                          className={`eq-cod-sub-btn ${codAdvMethod === 'RAZORPAY' ? 'active' : 'inactive'}`}
+                          onClick={() => setCodAdvMethod('RAZORPAY')}
+                        >
+                          Pay 20% via Razorpay
+                        </button>
+                        <button
+                          type="button"
+                          className={`eq-cod-sub-btn ${codAdvMethod === 'MANUAL' ? 'active' : 'inactive'}`}
+                          onClick={() => setCodAdvMethod('MANUAL')}
+                        >
+                          Pay 20% via UPI/Bank
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Premium Submit Button */}
+                  <button
+                    type="submit"
+                    className={`eq-submit ${payIsReady ? 'ready' : 'blocked'}`}
+                    disabled={!payIsReady}
+                  >
+                    {loading ? (
+                      <>
+                        <div className="eq-spin" />
+                        Processing Order...
+                      </>
+                    ) : !svc.available ? (
+                      'Delivery Not Available'
+                    ) : visibleTotal < minAmount ? (
+                      `Add ₹${minLeft.toLocaleString()} more`
+                    ) : paymentMethod === 'RAZORPAY' ? (
+                      <>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        Pay & Confirm Order
+                      </>
+                    ) : paymentMethod === 'MANUAL' ? (
+                      'Proceed to Manual Payment →'
+                    ) : codAdvMethod === 'RAZORPAY' ? (
+                      'Pay 20% Advance & Confirm COD'
+                    ) : (
+                      'Submit UTR for COD Advance'
+                    )}
+                  </button>
+
+                  <div className="eq-secure">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Secure checkout · 256-bit SSL encrypted
+                  </div>
+
                 </div>
-                <div className="text-lg font-black text-gray-900">₹{lineTotal(item)}</div>
-              </div>
-            ))}
-          </div>
-          <div className="bg-violet-600 p-8 flex justify-between items-center text-white">
-            <div className="space-y-1">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-200">Total Payable</span>
-              <div className="text-3xl font-black tracking-tighter">₹{cartTotal.toLocaleString()}</div>
+              </form>
             </div>
-            <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center text-xl">📦</div>
+
           </div>
         </div>
       </div>
-
-      <form onSubmit={submit} className="lg:col-span-7 bg-white border border-gray-50 p-8 md:p-12 rounded-[3rem] shadow-2xl space-y-10 animate-in fade-in slide-in-from-right-8 duration-1000">
-        <div className="space-y-6">
-          <div className="flex items-center gap-3">
-            <span className="h-10 w-10 rounded-2xl bg-violet-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-violet-100 uppercase tracking-widest">01</span>
-            <h3 className="text-lg font-black tracking-tight text-gray-900 uppercase">Contact & Delivery</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Name</div>
-              <div className="text-sm font-bold text-gray-900 mt-1">{profile.name || '-'}</div>
-            </div>
-            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Phone</div>
-              <div className="text-sm font-bold text-gray-900 mt-1">{profile.phone || '-'}</div>
-            </div>
-            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
-              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Email</div>
-              <div className="text-sm font-bold text-gray-900 mt-1">{profile.email || '-'}</div>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 md:col-span-2">
-              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Delivery Address</div>
-              <div className="text-sm font-bold text-gray-900 mt-1">
-                {profile?.kyc?.addressLine1 || '-'}{profile?.kyc?.addressLine2 ? `, ${profile.kyc.addressLine2}` : ''}
-              </div>
-              <div className="text-xs text-gray-500">
-                {(profile?.kyc?.city || '-')}, {(profile?.kyc?.state || '-')} - {(profile?.kyc?.pincode || '-')}
-              </div>
-            </div>
-            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Serviceability</div>
-              <div className={`rounded-xl border px-3 py-2 text-[11px] font-bold ${svc.loading ? 'border-gray-100 bg-gray-50 text-gray-500' : (svc.available ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700')}`}>
-                {svc.loading
-                  ? 'Checking your pincode…'
-                  : (
-                    <>
-                      <div className="flex items-center justify-between">
-                        <span>
-                          {svc.available
-                            ? <>Service available <span className="mx-1">•</span> PIN {String(profile?.kyc?.pincode || '').trim() || '—'}</>
-                            : 'Service not available'
-                          }
-                        </span>
-                      </div>
-                      {svc.available && (
-                        <div className="mt-1 text-[10px]">
-                          {svc.cod ? 'COD available' : 'COD not available'} • {(() => {
-                            const fmt = (d) => d ? new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' }) : '-'
-                            return <>ETA: {fmt(svc.etaStart)} – {fmt(svc.etaEnd)}</>
-                          })()}
-                        </div>
-                      )}
-                      {svc.available && (
-                        <div className="mt-1 text-[10px] font-black text-emerald-700">
-                          {ship.loading ? 'Calculating shipping…' : (ship.final === 0 ? 'FREE DELIVERY' : `Shipping: ₹${ship.final} (₹${ship.discount} off)`) }
-                        </div>
-                      )}
-                    </>
-                  )
-                }
-              </div>
-              {/* Removed action buttons for a cleaner, professional look */}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6 pt-10 border-t border-gray-100">
-          <div className="flex items-center gap-3">
-            <span className="h-10 w-10 rounded-2xl bg-violet-600 flex items-center justify-center text-xs font-black text-white shadow-xl shadow-violet-100 uppercase tracking-widest">02</span>
-            <h3 className="text-lg font-black tracking-tight text-gray-900 uppercase">Payment Method</h3>
-          </div>
-          <div className="grid grid-cols-1 gap-4">
-            <button
-              type="button"
-              onClick={() => setPaymentMethod('RAZORPAY')}
-              disabled={!svc.available}
-              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${!svc.available ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'RAZORPAY' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
-            >
-              <span className="text-4xl">💳</span>
-              <div className="flex flex-col">
-                <span className="text-base font-black uppercase tracking-widest text-gray-900 leading-none">Razorpay</span>
-                <span className="text-[10px] text-violet-600 font-black uppercase tracking-[0.2em] mt-2">Online Payment (Auto Confirmation)</span>
-              </div>
-            </button>
-            {false && (
-              <button type="button" />
-            )}
-            <button
-              type="button"
-              onClick={() => setPaymentMethod('MANUAL')}
-              disabled={!svc.available}
-              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${!svc.available ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'MANUAL' ? 'border-emerald-600 bg-emerald-50 shadow-xl shadow-emerald-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
-            >
-              <span className="text-4xl">📱</span>
-              <div className="flex flex-col">
-                <span className="text-base font-black uppercase tracking-widest text-gray-900 leading-none">Manual Payment (UPI/Bank)</span>
-                <span className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.2em] mt-2">Submit UTR for approval</span>
-              </div>
-            </button>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod('COD')}
-              disabled={!svc.available || !svc.cod}
-              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${(!svc.available || !svc.cod) ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'COD' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
-            >
-              <span className="text-4xl">🚚</span>
-              <div className="flex flex-col">
-                <span className="text-base font-black uppercase tracking-widest text-gray-900 leading-none">Cash on Delivery</span>
-                <span className={`text-[10px] font-black uppercase tracking-[0.2em] mt-2 ${svc.cod ? 'text-blue-600' : 'text-gray-400'}`}>{svc.cod ? 'Pay 20% now • Rest on delivery' : 'COD not available'}</span>
-              </div>
-            </button>
-            {paymentMethod === 'COD' && (
-              <div className="pl-4">
-                <div className="inline-flex items-center gap-2 bg-white border border-gray-100 rounded-2xl p-2">
-                  <button
-                    type="button"
-                    onClick={()=>setCodAdvMethod('RAZORPAY')}
-                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${codAdvMethod==='RAZORPAY' ? 'bg-violet-600 text-white border-violet-600' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300'}`}
-                  >
-                    Pay 20% via Razorpay
-                  </button>
-                  <button
-                    type="button"
-                    onClick={()=>setCodAdvMethod('MANUAL')}
-                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${codAdvMethod==='MANUAL' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300'}`}
-                  >
-                    Pay 20% via UPI/Bank
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <button 
-          disabled={loading || cartTotal < minAmount || !svc.available}
-          className={`py-6 rounded-[2rem] w-full text-sm font-black uppercase tracking-widest transition-all mt-6 shadow-2xl ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gray-900 hover:bg-black text-white shadow-gray-300 transform hover:-translate-y-2 active:scale-95'}`}
-        >
-          {loading ? 'Processing...' : (
-            !svc.available
-              ? 'Service not available for your pincode'
-              : cartTotal < minAmount
-                ? `Minimum order ₹${minAmount.toLocaleString()}`
-                : paymentMethod === 'RAZORPAY'
-                  ? 'Pay & Confirm Order'
-                  : paymentMethod === 'MANUAL'
-                    ? 'Proceed to Manual Payment'
-                    : paymentMethod === 'COD'
-                      ? (codAdvMethod === 'RAZORPAY' ? 'Pay 20% & Confirm COD' : 'Submit UTR for COD Advance')
-                      : 'Continue'
-          )}
-        </button>
-      </form>
-    </div>
+    </>
   )
 }
