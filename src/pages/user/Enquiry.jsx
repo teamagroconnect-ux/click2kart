@@ -269,6 +269,8 @@ export default function Enquiry(){
         code === 'invalid_payment_method' ? 'Invalid payment method selected' :
         code === 'service_unavailable' ? 'Delivery not available for your pincode' :
         code === 'cod_unavailable' ? 'COD not available for your pincode' :
+        code === 'razorpay_not_configured' ? 'Payment gateway configuration missing. Please contact support.' :
+        code === 'invalid_amount' ? 'Invalid payable amount. Please refresh and try again.' :
         code === 'payment_initiation_failed' ? 'Payment gateway error. Please try again.' :
         code === 'delhivery_not_configured' ? 'Shipping configuration is incomplete. Please contact support.' :
         'Failed to place order. If amount is deducted, please contact support with your payment ID.'
