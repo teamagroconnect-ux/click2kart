@@ -87,9 +87,10 @@ export default function AdminLayout() {
     localStorage.removeItem('token')
     navigate('/admin/login')
   }
-  const link = (to, label) => (
+  const link = (to, label, end = false) => (
     <NavLink
       to={to}
+      end={end}
       onClick={() => setOpen(false)}
       className={({ isActive }) =>
         [
@@ -106,6 +107,12 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 selection:bg-blue-100 selection:text-blue-900">
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+      `}</style>
       <div className="flex h-20 items-center justify-between border-b border-gray-100 bg-white/80 backdrop-blur-md px-6 md:px-10 sticky top-0 z-30">
         <div className="flex items-center gap-4">
           <button
@@ -142,22 +149,14 @@ export default function AdminLayout() {
             open ? 'fixed inset-0 z-40 bg-white pt-20' : 'hidden'
           } md:block sticky top-20 h-[calc(100vh-5rem)]`}
         >
-          <div className="h-full flex flex-col p-6">
-            <div className="mb-8 px-2">
-              <div className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-2">
-                Navigation
-              </div>
-              <div className="text-xs text-gray-500 font-medium leading-relaxed">
-                Manage your store inventory, customers and finances.
-              </div>
-            </div>
-            <nav className="flex-1 space-y-2">
+          <div className="h-full flex flex-col p-6 overflow-hidden">
+            <nav className="flex-1 space-y-2 overflow-y-auto pr-2 custom-scrollbar">
               {link('/admin', (
                 <>
                   <Icon name="dash" />
                   Dashboard
                 </>
-              ))}
+              ), true)}
               {link('/admin/products', (
                 <>
                   <Icon name="prod" />

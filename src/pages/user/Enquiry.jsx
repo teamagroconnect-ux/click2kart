@@ -944,7 +944,7 @@ export default function Enquiry() {
 
         @media (min-width: 768px) {
           .eq-addr-row {
-            grid-template-columns: 1fr 300px;
+            grid-template-columns: 320px 1fr;
           }
         }
 
@@ -1424,23 +1424,23 @@ export default function Enquiry() {
         <div className="eq-blob-2" />
         <div className="eq-wrap">
 
-          {/* Premium Page Header */}
+          {/* Page Header */}
           <div className="eq-hd">
             <div className="eq-eyebrow">
               <span className="eq-edot" />
               <span className="eq-eyebrow-text">Secure Checkout</span>
             </div>
             <h1 className="eq-h1">
-              Complete Your <span>Order</span>
+              Complete Your <span>Order</span> in this page
             </h1>
-            <p className="eq-sub">
-              Premium B2B checkout with exclusive bulk discounts
+            <p className="eq-header-sub">
+              B2B checkout with exclusive bulk discounts
             </p>
           </div>
 
           <div className="eq-grid">
 
-            {/* ── PREMIUM ORDER SUMMARY ── */}
+            {/* ── ORDER SUMMARY ── */}
             <div className="eq-summary">
               <div className="eq-summary-head">
                 <div className="eq-summary-title">Order Summary</div>
@@ -1525,12 +1525,24 @@ export default function Enquiry() {
               <div className="eq-summary-footer">
                 <div className="eq-sumrow">
                   <span className="eq-sumrow-label">
-                    <span className="eq-sumrow-label-icon">🛒</span>
-                    Subtotal
+                    <span className="eq-sumrow-label-icon">💰</span>
+                    MRP Total
                   </span>
-                  <span className="eq-sumrow-val">₹{visibleTotal.toLocaleString()}</span>
+                  <span className="eq-sumrow-val">₹{mrpTotal.toLocaleString()}</span>
                 </div>
-                
+
+                {bulkSavings > 0 && (
+                  <div className="eq-sumrow">
+                    <span className="eq-sumrow-label">
+                      <span className="eq-sumrow-label-icon">🎉</span>
+                      Bulk Discount
+                    </span>
+                    <span className="eq-sumrow-val green">
+                      -₹{bulkSavings.toLocaleString()}
+                    </span>
+                  </div>
+                )}
+
                 <div className="eq-sumrow">
                   <span className="eq-sumrow-label">
                     <span className="eq-sumrow-label-icon">🚚</span>
@@ -1546,23 +1558,11 @@ export default function Enquiry() {
                             ₹{ship.amount.toLocaleString()}
                           </span>
                         )}
-                        <span className="green">FREE DELIVERY</span>
+                        <span className="green">FREE</span>
                       </>
                     )}
                   </span>
                 </div>
-                
-                {bulkSavings > 0 && (
-                  <div className="eq-sumrow">
-                    <span className="eq-sumrow-label">
-                      <span className="eq-sumrow-label-icon">🎉</span>
-                      Bulk Savings
-                    </span>
-                    <span className="eq-sumrow-val green">
-                      -₹{bulkSavings.toLocaleString()}
-                    </span>
-                  </div>
-                )}
 
                 <div className="eq-sumrow">
                   <span className="eq-sumrow-label">
@@ -1645,18 +1645,6 @@ export default function Enquiry() {
                   </div>
 
                   <div className="eq-addr-row">
-                    <div className="eq-addr-cell">
-                      <div className="eq-info-label">Delivery Destination</div>
-                      <div className="eq-addr-line">
-                        {profile?.kyc?.addressLine1 || '—'}
-                        {profile?.kyc?.addressLine2 ? `, ${profile.kyc.addressLine2}` : ''}
-                      </div>
-                      <div className="eq-addr-sub">
-                        <span>📍</span>
-                        {profile?.kyc?.city || '—'}, {profile?.kyc?.state || '—'} — {profile?.kyc?.pincode || '—'}
-                      </div>
-                    </div>
-
                     <div className={`eq-svc-badge ${svc.loading ? '' : svc.available ? 'avail' : 'unavail'}`}>
                       <div className="eq-svc-header">
                         <span 
@@ -1701,6 +1689,18 @@ export default function Enquiry() {
                           </div>
                         </div>
                       )}
+                    </div>
+
+                    <div className="eq-addr-cell">
+                      <div className="eq-info-label">Delivery Destination</div>
+                      <div className="eq-addr-line">
+                        {profile?.kyc?.addressLine1 || '—'}
+                        {profile?.kyc?.addressLine2 ? `, ${profile.kyc.addressLine2}` : ''}
+                      </div>
+                      <div className="eq-addr-sub">
+                        <span>📍</span>
+                        {profile?.kyc?.city || '—'}, {profile?.kyc?.state || '—'} — {profile?.kyc?.pincode || '—'}
+                      </div>
                     </div>
                   </div>
 

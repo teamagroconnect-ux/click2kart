@@ -179,9 +179,9 @@ export default function Catalogue() {
       <div className="hidden lg:block bg-white/70 backdrop-blur-xl border-b border-white/20 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-8 py-6 flex items-center justify-between gap-8">
           <div className="relative">
-            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em]">Luxury Collection</p>
+            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.3em]">B2B Collection</p>
             <h1 className="text-3xl font-black text-gray-900 tracking-tight mt-1">
-              Premium <span className="text-indigo-600">Products</span>
+              Wholesale <span className="text-indigo-600">Products</span>
             </h1>
             <div className="absolute -top-2 -right-4 w-12 h-12 bg-indigo-100 rounded-full blur-2xl opacity-60" />
           </div>
@@ -333,7 +333,7 @@ export default function Catalogue() {
                         <div className={`text-[10px] mt-1 ${
                           category === c.name ? 'text-indigo-200' : 'text-gray-400'
                         }`}>
-                          Premium collection
+                          Quality collection
                         </div>
                       </div>
                       {category === c.name && (
@@ -887,48 +887,44 @@ function ProductCard({ p, authed, addToCart, navigate, index }) {
 
       {/* Recommendations Modal */}
       {recOpen && recItems.length > 0 && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setRecOpen(false)} />
-          <div className="absolute bottom-0 inset-x-0 bg-white/95 backdrop-blur-xl rounded-t-3xl overflow-hidden shadow-2xl" style={{ maxHeight: '70vh' }}>
-            <div className="flex justify-center pt-4 pb-2">
-              <div className="h-1.5 w-12 rounded-full bg-indigo-200" />
-            </div>
-            
-            <div className="flex items-center justify-between px-6 py-4 border-b border-indigo-100">
-              <span className="text-sm font-black text-indigo-600 uppercase tracking-widest">
-                Frequently Bought Together
-              </span>
-              <button onClick={() => setRecOpen(false)}
-                className="h-10 w-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
-                <svg className="w-5 h-5 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M6 18L18 6M6 6l12 12" strokeWidth="2" />
-                </svg>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setRecOpen(false)} />
+          <div className="relative bg-white rounded-[2rem] overflow-hidden shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-300">
+            <div className="bg-indigo-600 p-6 text-white relative">
+              <button onClick={() => setRecOpen(false)} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-all">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">Frequently Bought Together</p>
+              <h3 className="text-xl font-black tracking-tight">Complete Your Collection</h3>
             </div>
             
-            <div className="overflow-y-auto p-6 space-y-4" style={{ maxHeight: 'calc(70vh - 120px)' }}>
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
               {recItems.map((fp, idx) => (
                 <div 
                   key={fp._id || fp.id} 
-                  className="flex items-center gap-4 bg-white border border-indigo-100 rounded-xl p-4 hover:shadow-md transition-all animate-fade-in-up"
+                  className="flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-2xl p-4 hover:border-indigo-200 transition-all group animate-fade-in-up"
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
-                  <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  <div className="h-16 w-16 rounded-xl bg-white border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
                     {fp.images && fp.images[0]?.url
-                      ? <img src={fp.images[0].url} alt={fp.name} className="h-full w-full object-contain p-2" />
+                      ? <img src={fp.images[0].url} alt={fp.name} className="h-full w-full object-contain p-2 group-hover:scale-110 transition-transform duration-500" />
                       : <span className="text-xl text-gray-400">📦</span>}
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-bold text-gray-900 truncate">{fp.name}</div>
-                    <div className="text-xs text-gray-500 mt-1">
+                    <div className="text-indigo-600 font-black text-sm mt-1">
                       {fp.price != null ? `₹${Number(fp.price).toLocaleString()}` : 'Login to view'}
                     </div>
                   </div>
                   
                   <button
-                    onClick={() => addToCart(fp)}
-                    className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-xs font-black uppercase tracking-widest shadow-md hover:shadow-lg hover:scale-105 transition-all"
+                    onClick={async () => {
+                      await addToCart(fp)
+                      setRecItems(prev => prev.filter(i => i._id !== fp._id))
+                      if (recItems.length <= 1) setRecOpen(false)
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest shadow-md hover:shadow-lg hover:bg-indigo-700 transition-all"
                   >
                     Add
                   </button>
@@ -936,13 +932,13 @@ function ProductCard({ p, authed, addToCart, navigate, index }) {
               ))}
             </div>
             
-            <div className="p-6">
-              <button
-                onClick={() => setRecOpen(false)}
-                className="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white rounded-2xl text-sm font-black uppercase tracking-widest shadow-lg hover:shadow-xl transition-all"
-              >
-                Continue Shopping
+            <div className="p-6 border-t border-gray-100 flex gap-3">
+              <button onClick={() => setRecOpen(false)} className="flex-1 py-4 rounded-2xl bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-100 transition-all">
+                Skip For Now
               </button>
+              <Link to="/cart" className="flex-1 py-4 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] text-center hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
+                Go to Cart
+              </Link>
             </div>
           </div>
         </div>

@@ -44,6 +44,7 @@ function StatItem({ n, t, delay }) {
 export default function Home() {
   const [scrollY, setScrollY] = useState(0)
   const [cats, setCats] = useState([])
+  const [recs, setRecs] = useState([])
   useEffect(() => {
     const fn = () => setScrollY(window.scrollY)
     window.addEventListener('scroll', fn, { passive: true })
@@ -70,8 +71,11 @@ export default function Home() {
   const line2 = CONFIG.HERO_TITLE_LINE2 || 'Click2Kart'
 
   useEffect(() => {
-    fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/public/categories')
+    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+    fetch(apiBase + '/api/public/categories')
       .then(r => r.json()).then(setCats).catch(()=>setCats([]))
+    fetch(apiBase + '/api/public/products/recommendations')
+      .then(r => r.json()).then(setRecs).catch(()=>setRecs([]))
   }, [])
 
   return (
@@ -528,7 +532,7 @@ export default function Home() {
         <section className="hm-hero">
           <div className="hm-eyebrow">
             <span className="hm-eyebrow-dot" />
-            India's Premier B2B Tech Hub
+            India's Trusted B2B Tech Hub
           </div>
 
           <h1 className="hm-title">
@@ -591,13 +595,51 @@ export default function Home() {
           </>
         )}
 
+        {/* ── RECOMMENDED PRODUCTS ── */}
+        {recs.length > 0 && (
+          <section className="hm-features-section" style={{ paddingTop: 24 }}>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <div className="hm-section-label">Trending Now</div>
+                <h2 className="text-3xl font-black text-gray-900 tracking-tight">Top <span className="text-violet-600">Picks</span></h2>
+              </div>
+              <Link to="/products" className="text-xs font-black uppercase tracking-widest text-violet-600 hover:translate-x-1 transition-transform flex items-center gap-2">
+                View All <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {recs.slice(0, 10).map((p) => (
+                <Link key={p._id} to={`/product/${p._id}`} className="group bg-white border border-gray-100 rounded-3xl p-4 hover:shadow-xl transition-all relative overflow-hidden">
+                  <div className="h-40 w-full rounded-2xl bg-gray-50 border border-gray-50 overflow-hidden mb-4 p-4 flex items-center justify-center relative">
+                    {p.images?.[0]?.url 
+                      ? <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain group-hover:scale-110 transition-transform duration-500" />
+                      : <span className="text-2xl text-gray-300">📦</span>}
+                    {p.bulkDiscountQuantity > 0 && (
+                      <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-green-500 text-white text-[8px] font-black uppercase tracking-widest">Bulk Off</div>
+                    )}
+                  </div>
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 truncate">{p.category}</div>
+                  <div className="text-sm font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-violet-600 transition-colors h-10">{p.name}</div>
+                  <div className="flex items-center justify-between mt-auto">
+                    <div className="text-sm font-black text-gray-900">₹{Number(p.price).toLocaleString()}</div>
+                    <div className="h-8 w-8 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-violet-600 group-hover:text-white transition-all">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* ── STATS BAND ── */}
         <section className="hm-stats-section">
           <div className="hm-stats-inner">
             {[
               { n: '500+', t: 'Active Partners',       delay: 0   },
               { n: '10+',  t: 'Crore Sales Generated', delay: 100 },
-              { n: '50+',  t: 'Premium Brands',        delay: 200 },
+              { n: '50+',  t: 'Top Brands',        delay: 200 },
               { n: '24',   t: 'Hr B2B Support',        delay: 300 },
             ].map((s, i) => (
               <StatItem key={i} n={s.n} t={s.t} delay={s.delay} />

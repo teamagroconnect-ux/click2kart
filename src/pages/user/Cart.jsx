@@ -209,7 +209,16 @@ export default function Cart() {
         .ct-summary-label{color:#6b7280;font-weight:500;}
         .ct-summary-val{font-weight:700;color:#1e1b2e;}
         .ct-summary-val.green{color:#059669;}
-        .ct-summary-val.free{color:#059669;}
+        .ct-summary-val.free{color:#059669;font-weight:900;}
+
+        @media(max-width:480px){
+          .ct-summary-row { font-size: 11px; }
+          .ct-summary-total-val { font-size: 26px; }
+          .ct-summary-title { font-size: 20px; }
+          .ct-savings-badge { padding: 10px; }
+          .ct-savings-text { font-size: 11px; }
+          .ct-savings-sub { font-size: 9px; }
+        }
 
         .ct-summary-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(139,92,246,.15),transparent);margin:12px 0;}
 

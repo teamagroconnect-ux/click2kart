@@ -872,38 +872,42 @@ export default function ProductDetail() {
           </div>
         )}
 
-        {/* ── REC SHEET (mobile) ── */}
+        {/* ── REC SHEET ── */}
         {recOpen && rec && (
-          <div className="pd-rec-sheet">
-            <div className="pd-rec-backdrop" onClick={()=>setRecOpen(false)}/>
-            <div className="pd-rec-panel">
-              <div className="pd-rec-handle"><div className="pd-rec-pill"/></div>
-              <div className="pd-rec-head">
-                <span className="pd-rec-title">Recommended For You</span>
-                <button onClick={()=>setRecOpen(false)} style={{ width:30,height:30,borderRadius:8,background:'#f5f3ff',border:'1px solid rgba(139,92,246,.15)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center' }}>
-                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setRecOpen(false)} />
+            <div className="relative bg-white rounded-[2rem] overflow-hidden shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-300">
+              <div className="bg-indigo-600 p-6 text-white relative">
+                <button onClick={() => setRecOpen(false)} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-all">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">Recommended For You</p>
+                <h3 className="text-xl font-black tracking-tight">Complete Your Purchase</h3>
               </div>
-              <div style={{ padding:16, overflowY:'auto', flex:1 }}>
-                <div style={{ display:'flex',alignItems:'center',gap:12,background:'#f9f7ff',border:'1px solid rgba(139,92,246,.1)',borderRadius:12,padding:14 }}>
-                  <div style={{ width:52,height:52,borderRadius:10,background:'white',border:'1px solid rgba(139,92,246,.1)',overflow:'hidden',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center' }}>
-                    {rec.images?.[0]?.url ? <img src={rec.images[0].url} alt={rec.name} style={{width:'100%',height:'100%',objectFit:'contain'}}/> : <span style={{fontSize:20}}>📦</span>}
+              
+              <div className="p-8">
+                <div className="flex items-center gap-5 p-5 rounded-2xl bg-gray-50 border border-gray-100 hover:border-indigo-200 transition-all group">
+                  <div className="h-20 w-20 rounded-xl bg-white border border-gray-100 overflow-hidden flex-shrink-0 p-2">
+                    {rec.images?.[0]?.url 
+                      ? <img src={rec.images[0].url} alt={rec.name} className="h-full w-full object-contain group-hover:scale-110 transition-transform duration-500" /> 
+                      : <span className="text-2xl text-gray-400">📦</span>}
                   </div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:13,fontWeight:700,color:'#1e1b2e',marginBottom:4,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap' }}>{rec.name}</div>
-                    <div style={{ fontSize:14,fontWeight:800,color:'#7c3aed' }}>{rec.price!=null?`₹${Number(rec.price).toLocaleString()}`:'Login'}</div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-bold text-gray-900 truncate">{rec.name}</h4>
+                    <p className="text-indigo-600 font-black text-lg mt-1">₹{Number(rec.price).toLocaleString()}</p>
                   </div>
                 </div>
-              </div>
-              <div style={{ padding:'12px 16px 20px',display:'flex',gap:10 }}>
-                <button onClick={async()=>{await addToCart(rec);setRecOpen(false)}}
-                  style={{ flex:1,padding:'13px 0',borderRadius:12,background:'#7c3aed',color:'white',border:'none',fontSize:11,fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',cursor:'pointer',fontFamily:'DM Sans,sans-serif',boxShadow:'0 4px 14px rgba(124,58,237,.25)' }}>
-                  Add This Also
-                </button>
-                <button onClick={()=>setRecOpen(false)}
-                  style={{ flex:1,padding:'13px 0',borderRadius:12,background:'#f5f3ff',color:'#6b7280',border:'1px solid rgba(139,92,246,.15)',fontSize:11,fontWeight:700,letterSpacing:'.12em',textTransform:'uppercase',cursor:'pointer',fontFamily:'DM Sans,sans-serif' }}>
-                  Skip For Now
-                </button>
+
+                <div className="mt-8 space-y-3">
+                  <button onClick={async () => { await addToCart(rec); setRecOpen(false) }}
+                    className="w-full py-4 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
+                    Add This Also
+                  </button>
+                  <button onClick={() => setRecOpen(false)}
+                    className="w-full py-4 rounded-2xl bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-100 transition-all">
+                    Skip For Now
+                  </button>
+                </div>
               </div>
             </div>
           </div>
