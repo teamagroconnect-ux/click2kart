@@ -664,47 +664,4 @@ export default function ProductDetail(){
   )
 }
 
-function RecGrid({ items, authed, onAdd }) {
-  return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-      {items.map((p) => (
-        <Link
-          key={p._id || p.id}
-          className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col cursor-pointer border border-gray-100 hover:border-blue-100"
-          to={`/products/${p._id || p.id}`}
-        >
-          <div className="relative bg-gray-50">
-            <div className="aspect-square flex items-center justify-center overflow-hidden p-4">
-              {p.images && p.images.length > 0
-                ? <img src={p.images[0].url || p.images[0]} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
-                : <div className="text-5xl opacity-30">📦</div>}
-            </div>
-          </div>
-          <div className="p-3 flex-1 flex flex-col">
-            <div className="text-sm font-bold text-gray-900 line-clamp-2 leading-tight hover:text-[#1244ea] transition-colors mb-2">
-              {p.name}
-            </div>
-            <div className="mt-auto flex items-center justify-between">
-              <div className="text-base font-black text-gray-900 leading-none">
-                {authed && p.price != null ? `₹${Number(p.price).toLocaleString()}` : (
-                  <span className="text-gray-400">Login to view</span>
-                )}
-              </div>
-              <button
-                onClick={e => { e.preventDefault(); if (!authed) return; if (Array.isArray(p.variants) && p.variants.length > 0) return; onAdd(p) }}
-                disabled={!authed || ((Array.isArray(p.variants) && p.variants.length > 0) ? false : (p.stock != null && p.stock <= 0))}
-                className="h-9 w-9 rounded-xl bg-[#1244ea] text-white flex items-center justify-center shadow-sm hover:bg-[#0d35c7] active:scale-95 disabled:opacity-40 transition-all flex-shrink-0"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M7 6h13l-1.2 7H9.2L7 6Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="10" cy="19" r="1.4" fill="currentColor" />
-                  <circle cx="17" cy="19" r="1.4" fill="currentColor" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </Link>
-      ))}
-    </div>
-  )
-}
+ 
