@@ -461,13 +461,13 @@ export default function ProductDetail(){
         {similar.length > 0 && (
           <section className="space-y-4">
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Similar Products</h3>
-            <RecGrid items={similar} />
+            <RecGrid items={similar} authed={authed} onAdd={addToCart} />
           </section>
         )}
         {rec && (
           <section className="space-y-4">
             <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Recommended For You</h3>
-            <RecGrid items={[rec]} />
+            <RecGrid items={[rec]} authed={authed} onAdd={addToCart} />
           </section>
         )}
       </div>
@@ -616,17 +616,14 @@ export default function ProductDetail(){
   )
 }
 
-function RecGrid({ items }) {
-  const navigate = useNavigate()
-  const authed = !!localStorage.getItem('token')
-  const { addToCart } = useCart()
+function RecGrid({ items, authed, onAdd }) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
       {items.map((p) => (
-        <div
+        <Link
           key={p._id || p.id}
           className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col cursor-pointer border border-gray-100 hover:border-blue-100"
-          onClick={() => navigate(`/products/${p._id || p.id}`)}
+          to={`/products/${p._id || p.id}`}
         >
           <div className="relative bg-gray-50">
             <div className="aspect-square flex items-center justify-center overflow-hidden p-4">
@@ -646,7 +643,7 @@ function RecGrid({ items }) {
                 )}
               </div>
               <button
-                onClick={e => { e.stopPropagation(); e.preventDefault(); if (!authed) return; if (Array.isArray(p.variants) && p.variants.length > 0) { navigate(`/products/${p._id || p.id}`); return; } addToCart(p) }}
+                onClick={e => { e.preventDefault(); if (!authed) return; if (Array.isArray(p.variants) && p.variants.length > 0) return; onAdd(p) }}
                 disabled={!authed || ((Array.isArray(p.variants) && p.variants.length > 0) ? false : (p.stock != null && p.stock <= 0))}
                 className="h-9 w-9 rounded-xl bg-[#1244ea] text-white flex items-center justify-center shadow-sm hover:bg-[#0d35c7] active:scale-95 disabled:opacity-40 transition-all flex-shrink-0"
               >
@@ -658,7 +655,7 @@ function RecGrid({ items }) {
               </button>
             </div>
           </div>
-        </div>
+        </Link>
       ))}
     </div>
   )
