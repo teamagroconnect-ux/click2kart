@@ -2,7 +2,6 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import { useCart } from '../lib/CartContext'
 import { CONFIG } from '../shared/lib/config.js'
-import logo from '../click2kart.png'
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -36,7 +35,7 @@ export default function UserLayout() {
               <Link to="/" className="flex items-center group">
                 <div className="h-14 w-14 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 transition-all group-hover:scale-110 p-2 overflow-hidden">
                   <img
-                    src={logo}
+                    src="/logo.png"
                     alt="Click2Kart"
                     className="h-full w-full object-contain"
                   />

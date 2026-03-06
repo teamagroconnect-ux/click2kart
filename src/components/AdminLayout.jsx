@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import logo from '../click2kart.png'
 import { CONFIG } from '../shared/lib/config.js'
 
 const Icon = ({ name }) => (
@@ -123,7 +122,7 @@ export default function AdminLayout() {
           </button>
           <div className="flex items-center gap-3">
             <span className="h-12 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-1 overflow-hidden">
-              <img src={logo} alt="Click2Kart" className="h-full w-auto object-contain" />
+              <img src="/logo.png" alt="Click2Kart" className="h-full w-auto object-contain" />
             </span>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
