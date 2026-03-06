@@ -84,10 +84,9 @@ export default function Home() {
         /* ── same variables as Partner.jsx ── */
         .hm-root {
           font-family: 'DM Sans', system-ui, sans-serif;
-          background: #f5f3ff;
+          background: #ffffff;
           color: #1e1b2e;
           overflow-x: hidden;
-          /* ensure footer is always visible on mobile */
           padding-bottom: env(safe-area-inset-bottom, 0px);
         }
 
@@ -96,17 +95,17 @@ export default function Home() {
           content: '';
           position: fixed; inset: 0;
           background-image:
-            linear-gradient(rgba(139,92,246,0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(139,92,246,0.04) 1px, transparent 1px);
-          background-size: 60px 60px;
+            linear-gradient(rgba(139,92,246,0.02) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(139,92,246,0.02) 1px, transparent 1px);
+          background-size: 80px 80px;
           pointer-events: none; z-index: 0;
         }
 
         /* violet glow blobs — light, not dark */
         .hm-blob1 {
-          position: fixed; top: -200px; left: 50%; transform: translateX(-50%);
-          width: 900px; height: 600px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(139,92,246,0.1), transparent 65%);
+          position: fixed; top: -300px; left: 50%; transform: translateX(-50%);
+          width: 1200px; height: 800px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(139,92,246,0.04), transparent 70%);
           pointer-events: none; z-index: 0;
         }
         .hm-blob2 {
@@ -554,10 +553,10 @@ export default function Home() {
 
           <div className="hm-trust-grid">
             {[
-              { t: 'GST Invoicing',   d: 'Claim 18% Input Tax Credit',      i: '📄' },
-              { t: 'Bulk Pricing',    d: 'Up to 40% Volume Discounts',       i: '📦' },
-              { t: 'Express Freight', d: 'Priority Pan-India Logistics',     i: '✈️' },
-              { t: 'Brand Warranty',  d: '100% Genuine Authorized Stock',    i: '🛡️' },
+              { t: 'GST Invoicing',   d: 'Claim 18% ITC easily',      i: '📄' },
+              { t: 'Bulk Pricing',    d: 'Up to 40% Volume Off',       i: '📦' },
+              { t: 'Express Freight', d: 'Priority Pan-India Delivery',     i: '✈️' },
+              { t: 'Brand Warranty',  d: '100% Genuine Authorized',    i: '🛡️' },
             ].map((f, i) => (
               <div key={i} className="hm-trust-card">
                 <span className="hm-trust-icon">{f.i}</span>
@@ -572,64 +571,6 @@ export default function Home() {
             <span>Scroll</span>
           </div>
         </section>
-
-        {/* ── FEATURED CATEGORIES STRIP ── */}
-        {cats.length > 0 && (
-          <>
-            <div className="hm-divider" />
-            <section className="hm-features-section" style={{ paddingTop: 48, paddingBottom: 24 }}>
-              <div className="hm-section-label">Featured Categories</div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-                {cats.slice(0,6).map((c) => (
-                  <Link key={c._id} to={`/products?category=${encodeURIComponent(c.name)}`} className="group bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md transition-all flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center">
-                      {c.image ? <img src={c.image} alt={c.name} className="h-full w-full object-contain" /> : <span className="text-[10px] text-gray-400">📦</span>}
-                    </div>
-                    <div className="text-sm font-bold text-gray-900 capitalize group-hover:text-violet-600 transition-colors">{c.name}</div>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          </>
-        )}
-
-        {/* ── RECOMMENDED PRODUCTS ── */}
-        {recs.length > 0 && (
-          <section className="hm-features-section" style={{ paddingTop: 24 }}>
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <div className="hm-section-label">Trending Now</div>
-                <h2 className="text-3xl font-black text-gray-900 tracking-tight">Top <span className="text-violet-600">Picks</span></h2>
-              </div>
-              <Link to="/products" className="text-xs font-black uppercase tracking-widest text-violet-600 hover:translate-x-1 transition-transform flex items-center gap-2">
-                View All <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-              </Link>
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-              {recs.slice(0, 10).map((p) => (
-                <Link key={p._id} to={`/product/${p._id}`} className="group bg-white border border-gray-100 rounded-3xl p-4 hover:shadow-xl transition-all relative overflow-hidden">
-                  <div className="h-40 w-full rounded-2xl bg-gray-50 border border-gray-50 overflow-hidden mb-4 p-4 flex items-center justify-center relative">
-                    {p.images?.[0]?.url 
-                      ? <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain group-hover:scale-110 transition-transform duration-500" />
-                      : <span className="text-2xl text-gray-300">📦</span>}
-                    {p.bulkDiscountQuantity > 0 && (
-                      <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-green-500 text-white text-[8px] font-black uppercase tracking-widest">Bulk Off</div>
-                    )}
-                  </div>
-                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 truncate">{p.category}</div>
-                  <div className="text-sm font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-violet-600 transition-colors h-10">{p.name}</div>
-                  <div className="flex items-center justify-between mt-auto">
-                    <div className="text-sm font-black text-gray-900">₹{Number(p.price).toLocaleString()}</div>
-                    <div className="h-8 w-8 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 group-hover:bg-violet-600 group-hover:text-white transition-all">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* ── STATS BAND ── */}
         <section className="hm-stats-section">
