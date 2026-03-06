@@ -110,12 +110,23 @@ export default function Orders(){
       }
     });
 
+    socket.on('new_manual_payment', (order) => {
+      notify(`New Manual Payment submitted by ${order.customer.name}`, 'info');
+      load(page);
+      
+      try {
+        const audio = new Audio('/notification.mp3');
+        audio.play();
+      } catch (err) {
+        console.log('Audio playback blocked');
+      }
+    });
+
     return () => socket.disconnect();
   }, [page]);
 
   useEffect(()=>{ load(1) }, [status])
   const update = async(id, s)=>{ await api.patch(`/api/orders/${id}/status`, { status: s }); load(page) }
-  const approveCash = async(id)=>{ await api.patch(`/api/orders/${id}/approve-cash`); load(page) }
   const toggle = (id) => setExpandedId(expandedId === id ? null : id)
   const sendInvoice = async (billId) => {
     try {
@@ -156,8 +167,9 @@ export default function Orders(){
             >
               <option value="">All Statuses</option>
               <option value="NEW">New</option>
-              <option value="PENDING_CASH_APPROVAL">Pending Cash Approval</option>
               <option value="CONFIRMED">Confirmed</option>
+              <option value="SHIPPED">Shipped</option>
+              <option value="DELIVERED">Delivered</option>
               <option value="FULFILLED">Fulfilled</option>
               <option value="CANCELLED">Cancelled</option>
             </select>
@@ -359,33 +371,12 @@ export default function Orders(){
                                     </div>
                                     <div className="space-y-1">
                                       <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Payment Status</div>
-                                      <div className={`text-xs font-black uppercase tracking-widest ${o.paymentStatus === 'PAID' ? 'text-emerald-600' : 'text-amber-600'}`}>
+                                      <div className={`text-xs font-black uppercase tracking-widest ${o.paymentStatus === 'PAID' ? 'text-emerald-600' : o.paymentStatus === 'PARTIAL' ? 'text-blue-600' : 'text-amber-600'}`}>
                                         {o.paymentStatus}
                                       </div>
                                     </div>
                                   </div>
 
-                                  {o.paymentMethod === 'CASH' && o.status === 'PENDING_CASH_APPROVAL' && (
-                                    <div className="space-y-3">
-                                      <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 text-[11px] text-amber-700 font-medium">
-                                        User has requested an Offline/Manual Payment. Please verify the payment before approving.
-                                      </div>
-                                      <div className="grid grid-cols-2 gap-3">
-                                        <button 
-                                          onClick={(e) => { e.stopPropagation(); approveCash(o._id); }}
-                                          className="bg-emerald-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-100 hover:bg-emerald-500 transition-all transform hover:-translate-y-0.5"
-                                        >
-                                          Approve & Confirm
-                                        </button>
-                                        <button 
-                                          onClick={(e) => { e.stopPropagation(); update(o._id, 'CANCELLED'); }}
-                                          className="bg-red-50 text-red-600 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100 hover:bg-red-100 transition-all"
-                                        >
-                                          Decline & Cancel
-                                        </button>
-                                      </div>
-                                    </div>
-                                  )}
                                   {o.paymentMethod === 'COD_20' && o.paymentStatus === 'PARTIAL' && (
                                     <button 
                                       onClick={(e) => { 
@@ -399,43 +390,53 @@ export default function Orders(){
                                   )}
 
                                   <div className="space-y-2">
-                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Real-World Flow</div>
+                                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Order Lifecycle</div>
                                     <div className="grid grid-cols-2 gap-2">
-                                      <button
-                                        onClick={(e)=>{ e.stopPropagation(); update(o._id, 'CONFIRMED').then(()=>notify('Order confirmed','success')).catch(()=>notify('Failed to confirm','error')) }}
-                                        disabled={o.status==='CONFIRMED' || o.status==='FULFILLED' || o.status==='CANCELLED'}
-                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-gray-50 disabled:opacity-40"
-                                      >
-                                        Confirm
-                                      </button>
-                                      <button
-                                        onClick={(e)=>{ e.stopPropagation(); api.patch(`/api/orders/${o._id}/pack`).then(()=>{ notify('Marked as Packed','success'); load(page) }).catch(()=>notify('Failed to update','error')) }}
-                                        disabled={o.status==='CANCELLED' || o.status==='FULFILLED' || (o.status!=='CONFIRMED' && o.paymentMethod!=='CASH' && o.paymentMethod!=='RAZORPAY')}
-                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-gray-50 disabled:opacity-40"
-                                      >
-                                        Mark Packed
-                                      </button>
-                                      <button
-                                        onClick={(e)=>{ e.stopPropagation(); setShipOpen(o._id); setShipForm({ provider:o.shipping?.provider||'', waybill:o.shipping?.waybill||'', trackingUrl:o.shipping?.trackingUrl||'' }) }}
-                                        disabled={o.status==='CANCELLED' || o.status==='FULFILLED'}
-                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-gray-50 disabled:opacity-40"
-                                      >
-                                        Create Shipment
-                                      </button>
-                                      <button
-                                        onClick={(e)=>{ e.stopPropagation(); api.patch(`/api/orders/${o._id}/deliver`).then(()=>{ notify('Marked Delivered','success'); load(page) }).catch(()=>notify('Failed to update','error')) }}
-                                        disabled={o.status==='CANCELLED' || o.status==='FULFILLED'}
-                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-gray-50 disabled:opacity-40"
-                                      >
-                                        Mark Delivered
-                                      </button>
-                                      <button
-                                        onClick={(e)=>{ e.stopPropagation(); update(o._id, 'CANCELLED').then(()=>notify('Order cancelled','success')).catch(()=>notify('Failed to cancel','error')) }}
-                                        disabled={o.status==='FULFILLED' || o.status==='CANCELLED'}
-                                        className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-gray-50 disabled:opacity-40 col-span-2"
-                                      >
-                                        Cancel Order
-                                      </button>
+                                      {o.status === 'NEW' && (
+                                        <button
+                                          onClick={(e)=>{ e.stopPropagation(); update(o._id, 'CONFIRMED').then(()=>notify('Order confirmed','success')).catch(()=>notify('Failed to confirm','error')) }}
+                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-100 transition-all"
+                                        >
+                                          Confirm Order
+                                        </button>
+                                      )}
+                                      
+                                      {['CONFIRMED', 'PROCESSING', 'PACKED'].includes(o.status) && (
+                                        <button
+                                          onClick={(e)=>{ e.stopPropagation(); api.patch(`/api/orders/${o._id}/pack`).then(()=>{ notify('Marked as Packed','success'); load(page) }).catch(()=>notify('Failed to update','error')) }}
+                                          disabled={o.shipping?.status === 'PACKED'}
+                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-100 transition-all disabled:opacity-40"
+                                        >
+                                          {o.shipping?.status === 'PACKED' ? 'Already Packed' : 'Mark Packed'}
+                                        </button>
+                                      )}
+
+                                      {['CONFIRMED', 'PACKED', 'PROCESSING'].includes(o.status) && (
+                                        <button
+                                          onClick={(e)=>{ e.stopPropagation(); setShipOpen(o._id); setShipForm({ provider:o.shipping?.provider||'', waybill:o.shipping?.waybill||'', trackingUrl:o.shipping?.trackingUrl||'' }) }}
+                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-100 transition-all"
+                                        >
+                                          Dispatch Order
+                                        </button>
+                                      )}
+
+                                      {o.status === 'SHIPPED' && (
+                                        <button
+                                          onClick={(e)=>{ e.stopPropagation(); api.patch(`/api/orders/${o._id}/deliver`).then(()=>{ notify('Marked Delivered','success'); load(page) }).catch(()=>notify('Failed to update','error')) }}
+                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-100 transition-all"
+                                        >
+                                          Mark Delivered
+                                        </button>
+                                      )}
+
+                                      {!['DELIVERED', 'CANCELLED', 'FULFILLED', 'RETURNED'].includes(o.status) && (
+                                        <button
+                                          onClick={(e)=>{ e.stopPropagation(); update(o._id, 'CANCELLED').then(()=>notify('Order cancelled','success')).catch(()=>notify('Failed to cancel','error')) }}
+                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-red-50 text-red-600 border-red-100 hover:bg-red-100 transition-all"
+                                        >
+                                          Cancel Order
+                                        </button>
+                                      )}
                                     </div>
                                   </div>
 

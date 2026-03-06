@@ -5,6 +5,7 @@ import Products from './pages/admin/Products.jsx'
 import Categories from './pages/admin/Categories.jsx'
 import Billing from './pages/admin/Billing.jsx'
 import Orders from './pages/admin/Orders.jsx'
+import PaymentVerification from './pages/admin/PaymentVerification.jsx'
 import Coupons from './pages/admin/Coupons.jsx'
 import Partners from './pages/admin/Partners.jsx'
 import Settings from './pages/admin/Settings.jsx'
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="categories" element={<Categories />} />
         <Route path="billing" element={<Billing />} />
         <Route path="orders" element={<Orders />} />
+        <Route path="payment-verification" element={<PaymentVerification />} />
         <Route path="coupons" element={<Coupons />} />
         <Route path="partners" element={<Partners />} />
         <Route path="customers" element={<Customers />} />
