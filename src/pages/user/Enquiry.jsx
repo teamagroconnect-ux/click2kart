@@ -31,6 +31,7 @@ export default function Enquiry(){
   const [svc, setSvc] = useState({ loading: true, available: null, cod: null, etaStart: null, etaEnd: null, error: '' })
   const [ship, setShip] = useState({ loading: false, amount: 0, discount: 0, final: 0 })
   const [paymentMethod, setPaymentMethod] = useState('RAZORPAY')
+  const [codAdvMethod, setCodAdvMethod] = useState('RAZORPAY')
   const [loading, setLoading] = useState(false)
 
   const computeEtaRange = () => {
@@ -156,7 +157,7 @@ export default function Enquiry(){
       .filter(it => typeof it.productId === 'string' && it.productId.length >= 12)
       .reduce((sum, it) => sum + lineTotal(it), 0)
 
-  const handleRazorpay = async (orderData, razorpayOrderId, amountPaise) => {
+  const handleRazorpay = async ({ items, paymentMethod, razorpayOrderId, amountPaise }) => {
     try {
       await ensureRazorpayLoaded()
     } catch {
@@ -165,7 +166,7 @@ export default function Enquiry(){
     }
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_placeholder",
-      amount: amountPaise ?? Math.round(cartTotal * 100),
+      amount: amountPaise,
       currency: "INR",
       name: "Click2Kart",
       description: "B2B Order Payment",
@@ -173,11 +174,12 @@ export default function Enquiry(){
       order_id: razorpayOrderId,
       handler: async function (response) {
         try {
-          await api.post('/api/orders/verify-payment', {
+          await api.post('/api/orders/create-after-verify', {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
-            orderId: orderData._id
+            items,
+            paymentMethod
           });
           notify('Payment Successful!', 'success');
           clearCart();
@@ -235,21 +237,25 @@ export default function Enquiry(){
         nav('/manual-payment', { state: { items: cleanItems, amount: visibleTotal } })
         return
       }
-      if (paymentMethod === 'COD_20_MANUAL') {
-        setLoading(false)
-        nav('/manual-payment', { state: { items: cleanItems, amount: Math.round(visibleTotal * 0.2), cod20: true } })
-        return
-      }
-      const { data } = await api.post('/api/orders', { items: cleanItems, paymentMethod })
-      
       if (paymentMethod === 'RAZORPAY') {
-        handleRazorpay(data.order, data.razorpayOrderId, Math.round(cartTotal * 100));
-      } else if (paymentMethod === 'COD_20') {
-        handleRazorpay(data.order, data.razorpayOrderId, Math.round(cartTotal * 0.2 * 100));
-      } else {
-        notify('Order requested! Pending admin approval for cash payment.', 'success')
-        clearCart()
-        nav('/orders')
+        try {
+          const { data } = await api.post('/api/orders/prepare-payment', { items: cleanItems, paymentMethod: 'RAZORPAY' })
+          await handleRazorpay({ items: cleanItems, paymentMethod: 'RAZORPAY', razorpayOrderId: data.razorpayOrderId, amountPaise: data.amountPaise })
+        } catch {
+          notify('Payment initialization failed. Please retry.', 'error')
+        }
+      } else if (paymentMethod === 'COD') {
+        if (codAdvMethod === 'MANUAL') {
+          setLoading(false)
+          nav('/manual-payment', { state: { items: cleanItems, amount: Math.round(visibleTotal * 0.2), cod20: true } })
+          return
+        }
+        try {
+          const { data } = await api.post('/api/orders/prepare-payment', { items: cleanItems, paymentMethod: 'COD_20' })
+          await handleRazorpay({ items: cleanItems, paymentMethod: 'COD_20', razorpayOrderId: data.razorpayOrderId, amountPaise: data.amountPaise })
+        } catch {
+          notify('Payment initialization failed. Please retry.', 'error')
+        }
       }
     } catch (err) {
       const code = err?.response?.data?.error
@@ -443,18 +449,9 @@ export default function Enquiry(){
                 <span className="text-[10px] text-violet-600 font-black uppercase tracking-[0.2em] mt-2">Online Payment (Auto Confirmation)</span>
               </div>
             </button>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod('CASH')}
-              disabled={!svc.available}
-              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${!svc.available ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'CASH' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
-            >
-              <span className="text-4xl">💼</span>
-              <div className="flex flex-col">
-                <span className="text-base font-black uppercase tracking-widest text-gray-900 leading-none">Offline Payment</span>
-                <span className="text-[10px] text-amber-600 font-black uppercase tracking-[0.2em] mt-2">Manual Approval Required</span>
-              </div>
-            </button>
+            {false && (
+              <button type="button" />
+            )}
             <button
               type="button"
               onClick={() => setPaymentMethod('MANUAL')}
@@ -469,9 +466,9 @@ export default function Enquiry(){
             </button>
             <button
               type="button"
-              onClick={() => setPaymentMethod('COD_20')}
+              onClick={() => setPaymentMethod('COD')}
               disabled={!svc.available || !svc.cod}
-              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${(!svc.available || !svc.cod) ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'COD_20' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
+              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${(!svc.available || !svc.cod) ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'COD' ? 'border-violet-600 bg-violet-50 shadow-xl shadow-violet-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
             >
               <span className="text-4xl">🚚</span>
               <div className="flex flex-col">
@@ -479,18 +476,26 @@ export default function Enquiry(){
                 <span className={`text-[10px] font-black uppercase tracking-[0.2em] mt-2 ${svc.cod ? 'text-blue-600' : 'text-gray-400'}`}>{svc.cod ? 'Pay 20% now • Rest on delivery' : 'COD not available'}</span>
               </div>
             </button>
-            <button
-              type="button"
-              onClick={() => setPaymentMethod('COD_20_MANUAL')}
-              disabled={!svc.available || !svc.cod}
-              className={`p-6 rounded-[2rem] border-2 transition-all text-left flex items-center gap-6 ${(!svc.available || !svc.cod) ? 'opacity-50 cursor-not-allowed' : (paymentMethod === 'COD_20_MANUAL' ? 'border-emerald-600 bg-emerald-50 shadow-xl shadow-emerald-100' : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50')}`}
-            >
-              <span className="text-4xl">🧾</span>
-              <div className="flex flex-col">
-                <span className="text-base font-black uppercase tracking-widest text-gray-900 leading-none">COD (20% via UPI/Bank)</span>
-                <span className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.2em] mt-2">Submit UTR for approval</span>
+            {paymentMethod === 'COD' && (
+              <div className="pl-4">
+                <div className="inline-flex items-center gap-2 bg-white border border-gray-100 rounded-2xl p-2">
+                  <button
+                    type="button"
+                    onClick={()=>setCodAdvMethod('RAZORPAY')}
+                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${codAdvMethod==='RAZORPAY' ? 'bg-violet-600 text-white border-violet-600' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300'}`}
+                  >
+                    Pay 20% via Razorpay
+                  </button>
+                  <button
+                    type="button"
+                    onClick={()=>setCodAdvMethod('MANUAL')}
+                    className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border ${codAdvMethod==='MANUAL' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-gray-300'}`}
+                  >
+                    Pay 20% via UPI/Bank
+                  </button>
+                </div>
               </div>
-            </button>
+            )}
           </div>
         </div>
 

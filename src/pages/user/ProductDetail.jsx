@@ -244,76 +244,40 @@ export default function ProductDetail(){
               </div>
             </div>
 
-            {authed && (p.bulkDiscountQuantity > 0 || (Array.isArray(p.bulkTiers) && p.bulkTiers.length > 0)) && (
-              <div className="relative overflow-hidden rounded-[2.5rem] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 p-8 space-y-6">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-100 rounded-full -mr-20 -mt-20 opacity-30 blur-2xl"></div>
-                {(() => {
-                  const tiersAsc = Array.isArray(p.bulkTiers) ? p.bulkTiers.slice().sort((a,b)=>a.quantity-b.quantity) : []
-                  const promoQty = tiersAsc[0]?.quantity || p.bulkDiscountQuantity
-                  const promoOff = tiersAsc[0]?.priceReduction || p.bulkDiscountPriceReduction
-                  return (
-                    <div className="flex items-start justify-between gap-4 relative z-10">
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-xl bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-200">
-                          <svg className="w-4.5 h-4.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                        </div>
-                        <div className="text-xs font-black text-emerald-700 uppercase tracking-widest">
-                          Exclusive Bulk Buying Offer
-                        </div>
-                      </div>
-                      <div className="text-[10px] font-black uppercase tracking-widest bg-white/80 backdrop-blur px-3 py-1 rounded-xl border border-emerald-100 text-emerald-700">
-                        Auto-Applied at Checkout
-                      </div>
-                    </div>
-                  )
-                })()}
-                <div className="text-base md:text-lg font-bold text-emerald-900 leading-relaxed relative z-10">
-                  Unlock wholesale pricing! Buy{" "}
-                  <span className="text-xl font-extrabold text-emerald-700 px-1">
-                    {(Array.isArray(p.bulkTiers) && p.bulkTiers.length > 0) ? p.bulkTiers.slice().sort((a,b)=>a.quantity-b.quantity)[0].quantity : p.bulkDiscountQuantity}
-                  </span>{" "}
-                  units or more and automatically receive{" "}
-                  <span className="text-xl font-extrabold text-emerald-700 px-1">
-                    ₹{(Array.isArray(p.bulkTiers) && p.bulkTiers.length > 0) ? p.bulkTiers.slice().sort((a,b)=>a.quantity-b.quantity)[0].priceReduction : p.bulkDiscountPriceReduction} OFF
-                  </span>{" "}
-                  on every unit.
-                </div>
-                {Array.isArray(p.bulkTiers) && p.bulkTiers.length > 0 && (
-                  <div className="bg-white/70 backdrop-blur border border-emerald-100 rounded-2xl p-6 relative z-10">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-emerald-700 mb-3">Bulk Pricing</div>
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left text-emerald-800">
-                          <th className="py-2 font-extrabold">Quantity</th>
-                          <th className="py-2 font-extrabold">Price/Unit</th>
-                          <th className="py-2 font-extrabold">Savings/Unit</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(() => {
-                          const tiers = p.bulkTiers.slice().sort((a,b) => a.quantity - b.quantity)
-                          return tiers.map((t, idx) => {
-                            const next = tiers[idx+1]
-                            const from = t.quantity
-                            const to = next ? (next.quantity - 1) : null
-                            const label = to ? `${from}-${to}` : `${from}+`
-                            const base = Number(activeVariant?.price ?? p.price ?? 0)
-                            const eff = Math.max(0, base - Number(t.priceReduction || 0))
-                            const perSave = Math.max(0, base - eff)
-                            const highlight = qty >= from && (!next || qty <= to || to === null)
-                            return (
-                              <tr key={idx} className={`border-t ${highlight ? 'bg-emerald-50/60' : ''}`}>
-                                <td className="py-2 font-semibold text-gray-900">{label}</td>
-                                <td className="py-2 font-bold text-gray-900">₹{eff.toLocaleString()}</td>
-                                <td className="py-2 font-bold text-emerald-700">₹{perSave.toLocaleString()}</td>
-                              </tr>
-                            )
-                          })
-                        })()}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+            {authed && Array.isArray(p.bulkTiers) && p.bulkTiers.length > 0 && (
+              <div className="bg-white border border-gray-100 rounded-2xl p-6">
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Bulk Pricing</div>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-gray-700">
+                      <th className="py-2 font-extrabold">Quantity</th>
+                      <th className="py-2 font-extrabold">Price/Unit</th>
+                      <th className="py-2 font-extrabold">Savings/Unit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const tiers = p.bulkTiers.slice().sort((a,b) => a.quantity - b.quantity)
+                      return tiers.map((t, idx) => {
+                        const next = tiers[idx+1]
+                        const from = t.quantity
+                        const to = next ? (next.quantity - 1) : null
+                        const label = to ? `${from}-${to}` : `${from}+`
+                        const base = Number(activeVariant?.price ?? p.price ?? 0)
+                        const eff = Math.max(0, base - Number(t.priceReduction || 0))
+                        const perSave = Math.max(0, base - eff)
+                        const highlight = qty >= from && (!next || qty <= to || to === null)
+                        return (
+                          <tr key={idx} className={`border-t ${highlight ? 'bg-emerald-50/60' : ''}`}>
+                            <td className="py-2 font-semibold text-gray-900">{label}</td>
+                            <td className="py-2 font-bold text-gray-900">₹{eff.toLocaleString()}</td>
+                            <td className="py-2 font-bold text-emerald-700">₹{perSave.toLocaleString()}</td>
+                          </tr>
+                        )
+                      })
+                    })()}
+                  </tbody>
+                </table>
               </div>
             )}
 
@@ -437,14 +401,7 @@ export default function ProductDetail(){
                   </div>
                 </div>
               </div>
-              <div>
-                <button
-                  onClick={() => { if (!authed) { navigate('/login'); return } setReviewOpen(true) }}
-                  className="px-6 py-3 rounded-2xl bg-violet-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-violet-500 transition-all"
-                >
-                  Rate this Product
-                </button>
-              </div>
+              <div></div>
             </div>
 
             <div className="pt-10 flex flex-col sm:flex-row gap-4">
