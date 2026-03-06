@@ -389,18 +389,18 @@ export default function Products() {
       </div>
 
       {editing && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 sm:p-8 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto">
           <form
             onSubmit={saveEdit}
-            className="bg-white border border-gray-100 rounded-3xl p-8 w-full max-w-2xl shadow-2xl space-y-6 animate-in zoom-in-95 duration-300"
+            className="bg-white border border-gray-100 rounded-[2rem] p-6 md:p-10 w-full max-w-4xl shadow-2xl space-y-8 animate-in zoom-in-95 duration-300 my-auto relative"
           >
-            <div className="flex items-center justify-between border-b border-gray-50 pb-4">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-6">
               <div>
-                <h3 className="text-xl font-black text-gray-900 tracking-tight">Edit Product</h3>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Update item details</p>
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Edit Product</h3>
+                <p className="text-[10px] text-blue-600 font-black uppercase tracking-[0.2em]">Inventory Management</p>
               </div>
-              <button type="button" onClick={() => setEditing(null)} className="p-2 hover:bg-gray-50 rounded-xl transition-colors text-gray-400">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              <button type="button" onClick={() => setEditing(null)} className="p-3 hover:bg-gray-100 rounded-2xl transition-all text-gray-400 hover:text-gray-900">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
 
@@ -532,14 +532,18 @@ export default function Products() {
                 )}
               </div>
 
-            <div className="flex gap-3 pt-4">
-              <button type="button" onClick={() => setEditing(null)} className="flex-1 bg-gray-100 text-gray-600 py-4 rounded-2xl text-sm font-black hover:bg-gray-200 transition-all uppercase tracking-widest">Cancel</button>
-              <button className="flex-2 bg-gray-900 text-white py-4 px-12 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest">Save Changes</button>
+              <div className="md:col-span-3 pt-6 border-t border-gray-50">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Variant Management</h4>
+                  <div className="text-[9px] font-bold text-gray-400">Manage Color, RAM, Storage variants</div>
+                </div>
+                <VariantManager product={editing} onChanged={() => { api.get(`/api/products/${editing._id}`).then(({data}) => setEditing({ ...editing, variants: data.variants||[] })) }} />
+              </div>
             </div>
 
-            <div className="mt-8 border-t pt-6 space-y-4">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Variants</h4>
-              <VariantManager product={editing} onChanged={() => { api.get(`/api/products/${editing._id}`).then(({data}) => setEditing({ ...editing, variants: data.variants||[] })) }} />
+            <div className="flex gap-4 pt-6 border-t border-gray-100">
+              <button type="button" onClick={() => setEditing(null)} className="flex-1 bg-gray-50 text-gray-500 py-4 rounded-3xl text-xs font-black hover:bg-gray-100 transition-all uppercase tracking-[0.2em] border-2 border-transparent">Cancel</button>
+              <button className="flex-[2] bg-blue-600 text-white py-4 px-12 rounded-3xl text-xs font-black shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 active:scale-95 transition-all uppercase tracking-[0.2em]">Update Product</button>
             </div>
           </form>
         </div>
