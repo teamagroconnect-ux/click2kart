@@ -75,17 +75,15 @@ export default function Dashboard() {
         <p className="text-sm text-gray-500">Welcome back! Here's an overview of your platform</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card iconBg="bg-blue-50" icon="📦" title="Total Products" value={stats?.totalProducts ?? inv.totalSkus} />
-        <Card iconBg="bg-yellow-50" icon="⏳" title="Pending Approvals" value={stats?.pendingCustomers ?? 0} />
-        <Card iconBg="bg-violet-50" icon="🧾" title="Total Bills" value={stats?.totalBills ?? 0} />
-        <Card iconBg="bg-green-50" icon="🧰" title="Units in Stock" value={inv.totalUnits} />
-        <Card iconBg="bg-amber-50" icon="⚠️" title="Low Stock Alerts" value={inv.lowStock} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card to="/admin/products" iconBg="bg-blue-50" icon="📦" title="Total Products" value={stats?.totalProducts ?? inv.totalSkus} />
+        <Card to="/admin/customers" iconBg="bg-yellow-50" icon="⏳" title="Pending New Customer Approval" value={stats?.pendingCustomers ?? 0} />
+        <Card to="/admin/inventory" iconBg="bg-amber-50" icon="⚠️" title="Low Stock Alerts" value={inv.lowStock} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card iconBg="bg-blue-50" icon="🛒" title="New Order Requests" value={stats?.newOrders ?? 0} />
-        <Card iconBg="bg-purple-50" icon="💼" title="Cash Approvals Pending" value={stats?.pendingCash ?? 0} />
+        <Card to="/admin/orders" iconBg="bg-blue-50" icon="🛒" title="New Order Requests" value={stats?.newOrders ?? 0} />
+        <Card to="/admin/payment-verification" iconBg="bg-purple-50" icon="💼" title="Payment Verification" value={stats?.pendingCash ?? 0} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -191,9 +189,9 @@ export default function Dashboard() {
   )
 }
 
-function Card({ icon, iconBg, title, value }) {
-  return (
-    <div className="bg-white border rounded-2xl p-5 flex items-center gap-4">
+function Card({ icon, iconBg, title, value, to }) {
+  const content = (
+    <>
       <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${iconBg}`}>
         <span className="text-xl">{icon}</span>
       </div>
@@ -201,6 +199,20 @@ function Card({ icon, iconBg, title, value }) {
         <div className="text-[12px] text-gray-500 font-bold">{title}</div>
         <div className="text-2xl font-bold text-gray-900">{value}</div>
       </div>
+    </>
+  )
+
+  if (to) {
+    return (
+      <Link to={to} className="bg-white border rounded-2xl p-5 flex items-center gap-4 hover:shadow-md transition-all">
+        {content}
+      </Link>
+    )
+  }
+
+  return (
+    <div className="bg-white border rounded-2xl p-5 flex items-center gap-4">
+      {content}
     </div>
   )
 }
