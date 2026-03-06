@@ -198,6 +198,14 @@ export default function Enquiry(){
       const cleanItems = items
         .filter(it => typeof it.productId === 'string' && it.productId.length >= 12)
         .map(it => ({ productId: it.productId, variantId: it.variantId, quantity: Math.max(1, Number(it.quantity || 1)) }))
+      const visibleTotal = items
+        .filter(it => typeof it.productId === 'string' && it.productId.length >= 12)
+        .reduce((sum, it) => sum + Number(it.price || 0) * Math.max(1, Number(it.quantity || 1)), 0)
+      if (visibleTotal < minAmount) {
+        notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`, 'error')
+        setLoading(false)
+        return
+      }
       const { data } = await api.post('/api/orders', { items: cleanItems, paymentMethod })
       
       if (paymentMethod === 'RAZORPAY') {
@@ -211,13 +219,17 @@ export default function Enquiry(){
       }
     } catch (err) {
       const code = err?.response?.data?.error
+      const lower = typeof code === 'string' ? code.toLowerCase() : ''
       const serverMin = Number(err?.response?.data?.minAmount || minAmount)
       const message =
         code === 'kyc_required' ? 'Please complete KYC to place orders' :
         code === 'product_not_found' ? 'Some items are no longer available' :
-        code === 'insufficient_stock' ? 'Insufficient stock for one of the items' :
+        code === 'insufficient_stock' || lower.includes('insufficient stock') ? 'Insufficient stock for one of the items' :
         code === 'min_order_not_met' ? `Minimum order amount is ₹${serverMin.toLocaleString()}` :
         code === 'invalid_payment_method' ? 'Invalid payment method selected' :
+        code === 'service_unavailable' ? 'Delivery not available for your pincode' :
+        code === 'cod_unavailable' ? 'COD not available for your pincode' :
+        code === 'payment_initiation_failed' ? 'Payment initialization failed. Please retry.' :
         'Failed to place order'
       notify(message, 'error')
     } finally {
@@ -349,8 +361,12 @@ export default function Enquiry(){
                   : (
                     <>
                       <div className="flex items-center justify-between">
-                        <span>{svc.available ? 'Service available' : 'Service not available'}</span>
-                        <span className="text-gray-500">PIN {String(profile?.kyc?.pincode || '').trim() || '—'}</span>
+                        <span>
+                          {svc.available
+                            ? <>Service available <span className="mx-1">•</span> PIN {String(profile?.kyc?.pincode || '').trim() || '—'}</>
+                            : 'Service not available'
+                          }
+                        </span>
                       </div>
                       {svc.available && (
                         <div className="mt-1 text-[10px]">
