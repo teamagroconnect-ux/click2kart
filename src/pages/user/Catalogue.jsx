@@ -32,7 +32,11 @@ export default function Catalogue() {
       const { data } = await api.get('/api/products', {
         params: { q, page: p, limit, category: category || undefined },
       })
-      setItems(data.items)
+      if (p === 1) {
+        setItems(data.items)
+      } else {
+        setItems(prev => [...prev, ...data.items])
+      }
       setTotal(data.total)
       setPage(p)
     } finally {
@@ -518,45 +522,32 @@ export default function Catalogue() {
               </div>
             )}
 
-            {/* Premium Pagination */}
-            {!loading && filteredSorted.length > 0 && (
-              <div className="flex items-center justify-center gap-3 pt-12 pb-8">
-                <button
-                  onClick={() => load(Math.max(1, page - 1))}
-                  disabled={page === 1}
-                  className="h-12 w-12 rounded-xl bg-white/90 backdrop-blur border border-indigo-100 flex items-center justify-center text-indigo-600 disabled:opacity-30 hover:border-indigo-300 hover:shadow-md hover:scale-110 transition-all duration-300"
-                >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const p = Math.max(1, Math.min(page - 2, totalPages - 4)) + i
-                  return (
-                    <button
-                      key={p}
-                      onClick={() => load(p)}
-                      className={`h-12 w-12 rounded-xl text-sm font-black transition-all duration-300 ${
-                        p === page
-                          ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 scale-110'
-                          : 'bg-white/90 backdrop-blur border border-indigo-100 text-gray-600 hover:border-indigo-300 hover:shadow-md hover:scale-105'
-                      }`}
-                    >
-                      {p}
-                    </button>
-                  )
-                })}
-                
+            {/* Premium Pagination - Load More Style */}
+            {!loading && page * limit < total && (
+              <div className="flex flex-col items-center justify-center gap-4 pt-12 pb-8">
                 <button
                   onClick={() => load(page + 1)}
-                  disabled={page * limit >= total}
-                  className="h-12 w-12 rounded-xl bg-white/90 backdrop-blur border border-indigo-100 flex items-center justify-center text-indigo-600 disabled:opacity-30 hover:border-indigo-300 hover:shadow-md hover:scale-110 transition-all duration-300"
+                  className="px-10 py-4 bg-white border-2 border-indigo-100 text-indigo-600 rounded-2xl text-sm font-black uppercase tracking-widest shadow-md hover:border-indigo-300 hover:shadow-xl hover:-translate-y-1 active:scale-95 transition-all duration-300 flex items-center gap-3 group"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M9 5l7 7-7 7" />
+                  Load More Products
+                  <svg className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                  Showing {items.length} of {total} Products
+                </p>
+              </div>
+            )}
+            
+            {!loading && page * limit >= total && total > 0 && (
+              <div className="pt-12 pb-8 text-center">
+                <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gray-50 border border-gray-100 text-gray-400 text-xs font-bold">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                  You've reached the end of the collection
+                </div>
               </div>
             )}
           </main>
@@ -889,7 +880,7 @@ function ProductCard({ p, authed, addToCart, navigate, index }) {
       {recOpen && recItems.length > 0 && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setRecOpen(false)} />
-          <div className="relative bg-white rounded-[2rem] overflow-hidden shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-300">
+          <div className="relative bg-white rounded-[2rem] overflow-hidden shadow-2xl w-full max-w-lg animate-zoom-in">
             <div className="bg-indigo-600 p-6 text-white relative">
               <button onClick={() => setRecOpen(false)} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-all">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>

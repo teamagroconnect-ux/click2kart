@@ -1546,18 +1546,16 @@ export default function Enquiry() {
                 <div className="eq-sumrow">
                   <span className="eq-sumrow-label">
                     <span className="eq-sumrow-label-icon">🚚</span>
-                    Shipping
+                    Delivery Fee
                   </span>
                   <span className="eq-sumrow-val">
                     {ship.loading ? (
                       <span className="eq-shimmer">...</span>
                     ) : (
                       <>
-                        {ship.amount > 0 && (
-                          <span style={{ textDecoration: 'line-through', color: '#9ca3af', marginRight: 8 }}>
-                            ₹{ship.amount.toLocaleString()}
-                          </span>
-                        )}
+                        <span style={{ textDecoration: 'line-through', color: '#9ca3af', marginRight: 8 }}>
+                          ₹{(ship.amount || 85).toLocaleString()}
+                        </span>
                         <span className="green">FREE</span>
                       </>
                     )}
@@ -1680,13 +1678,12 @@ export default function Enquiry() {
                               <span>Expected Delivery: {fmtDate(svc.etaStart)} – {fmtDate(svc.etaEnd)}</span>
                             </div>
                           </div>
-                          <div className="eq-svc-free">
-                            {ship.loading 
-                              ? 'Calculating…' 
-                              : ship.final === 0 
-                                ? '🎉 FREE DELIVERY APPLIED' 
-                                : `Shipping Fee: ₹${ship.final}`}
-                          </div>
+                          {ship.loading && (
+                            <div className="eq-svc-free">Calculating…</div>
+                          )}
+                          {!ship.loading && ship.final > 0 && (
+                            <div className="eq-svc-free">Shipping Fee: ₹{ship.final}</div>
+                          )}
                         </div>
                       )}
                     </div>

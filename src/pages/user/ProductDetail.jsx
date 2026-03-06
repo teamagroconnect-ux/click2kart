@@ -69,7 +69,7 @@ export default function ProductDetail() {
   const [lightbox, setLightbox]           = useState(false)
   const [zoom, setZoom]                   = useState({ on:false, x:50, y:50 })
   const [similar, setSimilar]             = useState([])
-  const [rec, setRec]                     = useState(null)
+  const [recItems, setRecItems]           = useState([])
   const [recOpen, setRecOpen]             = useState(false)
   const [reviewOpen, setReviewOpen]       = useState(false)
   const [myRating, setMyRating]           = useState(0)
@@ -83,12 +83,8 @@ export default function ProductDetail() {
       const moq = Math.max(1, Number(data.minOrderQty || 0))
       setQty(moq)
     })
-    api.get(`/api/products/${id}/recommendations`).then(({data})=>setSimilar(data||[])).catch(()=>setSimilar([]))
-  }, [id])
-  useEffect(() => {
-    api.get('/api/products/recommend', { params:{ productId:id } })
-      .then(({data}) => setRec(data?.items?.[0]||data?.item||null))
-      .catch(()=>setRec(null))
+    // Fetch similar products for the bottom section
+    api.get(`/api/recommendations/similar/${id}`).then(({data})=>setSimilar(data||[])).catch(()=>setSimilar([]))
   }, [id])
   useEffect(() => {
     if (!p||!Array.isArray(p.variants)||!p.variants.length) { setActiveVariant(null); return }
@@ -158,14 +154,18 @@ export default function ProductDetail() {
 
   const handleAddToCart = async () => {
     if (!authed) { navigate('/login'); return }
-    if (Array.isArray(p.variants)&&p.variants.length>0&&!activeVariant) return
-    const ok = await addToCart({ ...p, minOrderQty:Math.max(minTierQty,qty) }, activeVariant||undefined)
+    if (Array.isArray(p.variants) && p.variants.length > 0 && !activeVariant) return
+    const ok = await addToCart({ ...p, minOrderQty: Math.max(minTierQty, qty) }, activeVariant || undefined)
     if (ok) {
       try {
-        const { data } = await api.get('/api/products/recommend', { params:{ productId:id } })
-        const item = data?.items?.[0]||null
-        setRec(item); if(item) setRecOpen(true)
-      } catch {}
+        const { data } = await api.get(`/api/recommendations/frequently-bought/${id}`)
+        if (data && data.length > 0) {
+          setRecItems(data)
+          setRecOpen(true)
+        }
+      } catch (err) {
+        console.error("Rec failed:", err)
+      }
     }
   }
 
@@ -834,20 +834,12 @@ export default function ProductDetail() {
         </div>
 
         {/* ── BELOW SECTIONS ── */}
-        {(similar.length > 0 || rec) && (
+        {(similar.length > 0) && (
           <div className="pd-below">
-            {similar.length > 0 && (
-              <div className="pd-below-section">
-                <div className="pd-below-label">Similar Products</div>
-                <RecGrid items={similar} authed={authed} onAdd={addToCart}/>
-              </div>
-            )}
-            {rec && (
-              <div className="pd-below-section">
-                <div className="pd-below-label">Recommended For You</div>
-                <RecGrid items={[rec]} authed={authed} onAdd={addToCart}/>
-              </div>
-            )}
+            <div className="pd-below-section">
+              <div className="pd-below-label">Similar Products</div>
+              <RecGrid items={similar} authed={authed} onAdd={addToCart}/>
+            </div>
           </div>
         )}
 
@@ -872,42 +864,54 @@ export default function ProductDetail() {
           </div>
         )}
 
-        {/* ── REC SHEET ── */}
-        {recOpen && rec && (
+        {/* ── REC SHEET (Flipkart Style) ── */}
+        {recOpen && recItems.length > 0 && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setRecOpen(false)} />
-            <div className="relative bg-white rounded-[2rem] overflow-hidden shadow-2xl w-full max-w-md animate-in zoom-in-95 duration-300">
+            <div className="relative bg-white rounded-[2rem] overflow-hidden shadow-2xl w-full max-w-lg animate-zoom-in">
               <div className="bg-indigo-600 p-6 text-white relative">
                 <button onClick={() => setRecOpen(false)} className="absolute top-4 right-4 h-8 w-8 rounded-full bg-white/20 flex items-center justify-center hover:bg-white/30 transition-all">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">Recommended For You</p>
-                <h3 className="text-xl font-black tracking-tight">Complete Your Purchase</h3>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-80 mb-1">Frequently Bought Together</p>
+                <h3 className="text-xl font-black tracking-tight">Complete Your Collection</h3>
               </div>
               
-              <div className="p-8">
-                <div className="flex items-center gap-5 p-5 rounded-2xl bg-gray-50 border border-gray-100 hover:border-indigo-200 transition-all group">
-                  <div className="h-20 w-20 rounded-xl bg-white border border-gray-100 overflow-hidden flex-shrink-0 p-2">
-                    {rec.images?.[0]?.url 
-                      ? <img src={rec.images[0].url} alt={rec.name} className="h-full w-full object-contain group-hover:scale-110 transition-transform duration-500" /> 
-                      : <span className="text-2xl text-gray-400">📦</span>}
+              <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                {recItems.map((item, idx) => (
+                  <div key={item._id} className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:border-indigo-200 transition-all group animate-fade-in-up" style={{ animationDelay: `${idx * 100}ms` }}>
+                    <div className="h-16 w-16 rounded-xl bg-white border border-gray-100 overflow-hidden flex-shrink-0 p-2">
+                      {item.images?.[0]?.url 
+                        ? <img src={item.images[0].url} alt={item.name} className="h-full w-full object-contain group-hover:scale-110 transition-transform duration-500" /> 
+                        : <span className="text-xl text-gray-400">📦</span>}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold text-gray-900 truncate">{item.name}</h4>
+                      <div className="text-indigo-600 font-black text-sm">
+                        {item.price != null ? `₹${Number(item.price).toLocaleString()}` : 'Login to view price'}
+                      </div>
+                    </div>
+                    <button 
+                      onClick={async () => {
+                        await addToCart(item)
+                        setRecItems(prev => prev.filter(i => i._id !== item._id))
+                        if (recItems.length <= 1) setRecOpen(false)
+                      }}
+                      className="h-10 px-4 rounded-xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                    >
+                      Add
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-bold text-gray-900 truncate">{rec.name}</h4>
-                    <p className="text-indigo-600 font-black text-lg mt-1">₹{Number(rec.price).toLocaleString()}</p>
-                  </div>
-                </div>
+                ))}
+              </div>
 
-                <div className="mt-8 space-y-3">
-                  <button onClick={async () => { await addToCart(rec); setRecOpen(false) }}
-                    className="w-full py-4 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
-                    Add This Also
-                  </button>
-                  <button onClick={() => setRecOpen(false)}
-                    className="w-full py-4 rounded-2xl bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-100 transition-all">
-                    Skip For Now
-                  </button>
-                </div>
+              <div className="p-6 border-t border-gray-100 flex gap-3">
+                <button onClick={() => setRecOpen(false)} className="flex-1 py-4 rounded-2xl bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-gray-100 transition-all">
+                  Skip For Now
+                </button>
+                <Link to="/cart" className="flex-1 py-4 rounded-2xl bg-indigo-600 text-white text-[10px] font-black uppercase tracking-[0.2em] text-center hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100">
+                  Go to Cart
+                </Link>
               </div>
             </div>
           </div>

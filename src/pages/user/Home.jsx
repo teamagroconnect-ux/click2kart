@@ -71,11 +71,8 @@ export default function Home() {
   const line2 = CONFIG.HERO_TITLE_LINE2 || 'Click2Kart'
 
   useEffect(() => {
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-    fetch(apiBase + '/api/public/categories')
-      .then(r => r.json()).then(setCats).catch(()=>setCats([]))
-    fetch(apiBase + '/api/public/products/recommendations')
-      .then(r => r.json()).then(setRecs).catch(()=>setRecs([]))
+    api.get('/api/public/categories').then(({ data }) => setCats(data || [])).catch(() => setCats([]))
+    api.get('/api/recommendations/trending').then(({ data }) => setRecs(data || [])).catch(() => setRecs([]))
   }, [])
 
   return (

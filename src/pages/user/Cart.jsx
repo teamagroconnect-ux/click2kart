@@ -41,11 +41,16 @@ export default function Cart() {
 
   useEffect(() => {
     const first = cart[0]
-    if (!first) { setSuggestions([]); return }
+    if (!first) {
+      api.get('/api/recommendations/trending?limit=4').then(({data}) => setSuggestions(data||[]))
+      return
+    }
     const pid = first.productId || first._id
-    if (!pid) return
-    api.get(`/api/recommendations/frequently-bought/${pid}`)
-      .then(({data}) => setSuggestions(data||[]))
+    api.get(`/api/recommendations/frequently-bought/${pid}?limit=4`)
+      .then(({data}) => {
+        if (data && data.length > 0) setSuggestions(data)
+        else api.get('/api/recommendations/trending?limit=4').then(({data}) => setSuggestions(data||[]))
+      })
       .catch(() => setSuggestions([]))
   }, [cart])
 
@@ -467,7 +472,7 @@ export default function Cart() {
                   </div>
                 )}
                 <div className="ct-summary-row">
-                  <span className="ct-summary-label">Shipping</span>
+                  <span className="ct-summary-label">Delivery Fee</span>
                   <span className="ct-summary-val">
                     <span style={{ textDecoration: 'line-through', color: '#9ca3af', marginRight: 8 }}>₹85</span>
                     <span className="free">FREE</span>

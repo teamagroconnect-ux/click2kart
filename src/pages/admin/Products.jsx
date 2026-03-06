@@ -136,16 +136,16 @@ export default function Products() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Product List</h3>
-            <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm border-collapse">
-                  <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
+          <div className="lg:col-span-2 space-y-4 flex flex-col h-[calc(100vh-12rem)]">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2 flex-shrink-0">Product List</h3>
+            <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm flex flex-col flex-1">
+              <div className="overflow-y-auto flex-1 custom-scrollbar">
+                <table className="w-full text-sm border-collapse relative">
+                  <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] sticky top-0 z-10 backdrop-blur-md">
                     <tr>
-                      <th className="px-6 py-4">Product Info</th>
-                      <th className="px-6 py-4">Price & GST</th>
-                      <th className="px-6 py-4">Inventory</th>
+                      <th className="px-6 py-4 text-left">Product Info</th>
+                      <th className="px-6 py-4 text-left">Price & GST</th>
+                      <th className="px-6 py-4 text-left">Inventory</th>
                       <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
