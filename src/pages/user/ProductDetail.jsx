@@ -162,7 +162,6 @@ export default function ProductDetail(){
     <div className="bg-white min-h-screen">
       <div className="max-w-7xl mx-auto p-6 md:p-10 space-y-12">
         <header className="flex items-center justify-between border-b border-gray-50 pb-8 animate-in fade-in slide-in-from-top-4 duration-700">
-        <header className="flex items-center justify-between border-b border-gray-50 pb-8 animate-in fade-in slide-in-from-top-4 duration-700">
           <button 
             onClick={() => navigate(-1)} 
             className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors"
