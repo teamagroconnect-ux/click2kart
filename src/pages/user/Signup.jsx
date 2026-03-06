@@ -3,9 +3,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import { useAuth } from '../../lib/AuthContext'
-import logo from '../../click2kart.png'
 
 export default function Signup() {
+  const logo = "/logo.png"
   const { notify } = useToast()
   const navigate = useNavigate()
   const { setAuth, refreshProfile } = useAuth()

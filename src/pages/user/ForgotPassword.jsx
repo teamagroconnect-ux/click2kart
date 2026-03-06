@@ -2,9 +2,9 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
-import logo from '../../click2kart.png'
 
 export default function ForgotPassword() {
+  const logo = "/logo.png"
   const { notify } = useToast()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
