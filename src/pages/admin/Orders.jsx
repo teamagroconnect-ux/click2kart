@@ -418,12 +418,7 @@ export default function Orders(){
                                   </div>
 
                                   <div className="pt-4 border-t border-gray-100">
-                                    {o.notes && (
-                                      <div className="p-3 bg-blue-50/50 rounded-xl border border-blue-100/50">
-                                        <div className="text-[9px] font-black uppercase tracking-widest text-blue-400 mb-1">Customer Note</div>
-                                        <div className="text-[11px] text-blue-700 italic leading-relaxed">"{o.notes}"</div>
-                                      </div>
-                                    )}
+                                    {/* User notes removed from main orders page as per request */}
                                   </div>
                                 </div>
                               </div>
