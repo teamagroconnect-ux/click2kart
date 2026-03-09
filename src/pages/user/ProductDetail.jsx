@@ -87,11 +87,12 @@ export default function ProductDetail() {
   useEffect(() => {
     if (authed) {
       setKycLoading(true)
-      api.get('/api/user/profile').then(({ data }) => {
-        if (data.kyc?.pincode) {
-          const pc = data.kyc.pincode
+      api.get('/api/user/me').then(({ data }) => {
+        const kyc = data.kyc || {}
+        if (kyc.pincode) {
+          const pc = kyc.pincode
           setPincode(pc)
-          setKycData(data.kyc)
+          setKycData(kyc)
           // Trigger initial estimate
           const days = 2 + (Number(pc[0]) % 4)
           const date = new Date()
@@ -314,8 +315,8 @@ export default function ProductDetail() {
         }
         .pd-img-main:hover{ box-shadow:0 12px 40px rgba(124,58,237,.12); }
         .pd-img-main img{
-          width:100%; height:100%; object-fit:contain; padding:32px;
-          transition:transform .3s;
+          width:100%; height:100%; object-fit:contain; padding:16px;
+          transition:transform .3s; image-rendering: -webkit-optimize-contrast;
         }
 
         .pd-img-fullbtn{
