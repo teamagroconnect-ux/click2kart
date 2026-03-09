@@ -79,7 +79,25 @@ export default function ProductDetail() {
   const [pincode, setPincode] = useState('')
   const [deliveryDate, setDeliveryDate] = useState(null)
   const [countdown, setCountdown] = useState({ h: 0, m: 0, s: 0 })
+  const [kycData, setKycData] = useState(null)
   const authed = !!localStorage.getItem('token')
+
+  // Fetch KYC to get pincode
+  useEffect(() => {
+    if (authed) {
+      api.get('/api/user/profile').then(({ data }) => {
+        if (data.kyc?.pincode) {
+          setPincode(data.kyc.pincode)
+          setKycData(data.kyc)
+          // Trigger initial estimate
+          const days = 2 + (Number(data.kyc.pincode[0]) % 4)
+          const date = new Date()
+          date.setDate(date.getDate() + days)
+          setDeliveryDate(date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', weekday: 'short' }))
+        }
+      }).catch(() => {})
+    }
+  }, [authed])
 
   // Timer logic for same-day dispatch (Cut-off 6 PM)
   useEffect(() => {
@@ -183,6 +201,13 @@ export default function ProductDetail() {
   const savingsTotal = Math.max(0,(basePrice-effectiveUnitPrice))*qty
   const mrp          = Number(activeVariant?.mrp ?? p.mrp ?? 0)
   const unitSave     = mrp>0 ? Math.max(0,mrp-effectiveUnitPrice) : Math.max(0,basePrice-effectiveUnitPrice)
+  
+  // B2B GST Calculator
+  const gstRate = Number(p.gst || 0)
+  const taxableValue = effectiveUnitPrice / (1 + (gstRate / 100))
+  const gstAmount = effectiveUnitPrice - taxableValue
+  const gstSavingTotal = gstAmount * qty
+
   const isBestseller = (p.ratingCount||0)>=50
   const isHotDeal    = (mrp>0 ? ((mrp-(p.price||0))/mrp)*100 : 0)>=20
   const imgs         = (activeVariant?.images?.length ? activeVariant.images : (p.images||[]))
@@ -789,7 +814,12 @@ export default function ProductDetail() {
                       </div>
                     )}
                   </div>
-                  <div style={{fontSize:11,color:'#9ca3af',fontWeight:600}}>Inclusive of all taxes</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div style={{fontSize:11,color:'#9ca3af',fontWeight:600}}>Inclusive of {gstRate}% GST</div>
+                    <div className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-100">
+                      TAX INPUT: ₹{gstAmount.toFixed(2)} / unit
+                    </div>
+                  </div>
 
                   {/* qty */}
                   <div className="pd-qty-row">
@@ -798,10 +828,10 @@ export default function ProductDetail() {
                       <div className="pd-qty-val">{qty}</div>
                       <button className="pd-qty-btn" onClick={()=>setQty(q=>q+1)}>+</button>
                     </div>
-                    {savingsTotal > 0 && <span className="pd-savings-tag">You save ₹{savingsTotal.toLocaleString()} total</span>}
-                    {sortedTiersAsc.length > 0 && qty < minTierQty && (
-                      <span className="pd-mintier-tag">Min. order: {minTierQty} units</span>
-                    )}
+                    <div className="flex flex-col gap-1">
+                      {savingsTotal > 0 && <span className="pd-savings-tag">Wholesale Save: ₹{savingsTotal.toLocaleString()}</span>}
+                      {gstSavingTotal > 0 && <span className="pd-savings-tag" style={{ background:'rgba(124,58,237,0.08)', color:'#7c3aed', borderColor:'rgba(124,58,237,0.18)' }}>GST Input Claim: ₹{gstSavingTotal.toLocaleString()}</span>}
+                    </div>
                   </div>
                 </>
               ) : (
@@ -963,8 +993,29 @@ export default function ProductDetail() {
             {/* DESCRIPTION */}
             {p.description && (
               <div className="pd-section" style={{ marginTop:16 }}>
-                <div className="pd-section-label">About This Product</div>
-                <p className="pd-desc">{p.description}</p>
+                <div className="pd-section-label">Product Specifications</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
+                  <div className="flex justify-between items-center border-b border-gray-50 pb-2">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">HSN Code</span>
+                    <span className="text-sm font-black text-gray-900">{p.hsnCode || '—'}</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-gray-50 pb-2">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">GST Rate</span>
+                    <span className="text-sm font-black text-gray-900">{p.gst || 0}%</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-gray-50 pb-2">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Weight</span>
+                    <span className="text-sm font-black text-gray-900">{p.weight || 0}g</span>
+                  </div>
+                  <div className="flex justify-between items-center border-b border-gray-50 pb-2">
+                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">MOQ</span>
+                    <span className="text-sm font-black text-gray-900">{p.minOrderQty || 1} Units</span>
+                  </div>
+                </div>
+                <div className="mt-6">
+                  <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Detailed Description</div>
+                  <p className="pd-desc">{p.description}</p>
+                </div>
               </div>
             )}
 
