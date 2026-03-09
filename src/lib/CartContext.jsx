@@ -91,7 +91,7 @@ export function CartProvider({ children }) {
         const price = vid ? (variant?.price ?? product.price) : product.price
         const image = vid ? (variant?.images?.[0] || product.images?.[0]) : product.images?.[0]
         const attributes = variant?.attributes
-        return [...prev, { ...product, _id: pid, variantId: vid, attributes, price, image, quantity: addQty, stock: available, minOrderQty: minQty }]
+        return [...prev, { ...product, _id: pid, variantId: vid, attributes, price, image, quantity: addQty, stock: available, minOrderQty: minQty, weight: product.weight }]
       })
       return success
     }

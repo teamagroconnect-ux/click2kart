@@ -708,7 +708,7 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
 
   return (
     <div
-      className="group bg-white/90 backdrop-blur rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 flex flex-col cursor-pointer border border-indigo-100/50 hover:border-indigo-300 relative animate-fade-in-up"
+      className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-500 flex flex-col cursor-pointer border border-slate-100 hover:border-indigo-100 relative animate-fade-in-up"
       style={{ animationDelay: `${index * 50}ms` }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -733,11 +733,6 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
 
         {/* Premium Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2 z-20">
-          {discount > 0 && authed && (
-            <div className="bg-gradient-to-r from-indigo-600 to-indigo-500 text-white text-[10px] font-black px-3 py-1.5 rounded-lg shadow-lg shadow-indigo-500/30 animate-pulse-slow">
-              {discount}% OFF
-            </div>
-          )}
           {authed && p.bulkDiscountQuantity > 0 && (
             <div className="bg-gradient-to-r from-emerald-500 to-emerald-400 text-white text-[10px] font-black px-3 py-1.5 rounded-lg shadow-lg shadow-emerald-500/30">
               BULK OFFER
@@ -813,18 +808,23 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
           onClick={e => e.stopPropagation()}
           className="text-sm font-bold text-gray-900 line-clamp-2 leading-tight hover:text-indigo-600 transition-colors mb-3"
         >
-          {p.name}
+          {p.name.length > 50 ? p.name.substring(0, 50) + '...' : p.name}
         </Link>
 
         {/* Price + Cart */}
         <div className="mt-auto space-y-3">
           <div className="flex items-end justify-between gap-2">
             <div>
-              <div className="text-xl font-black text-gray-900 leading-none">
-                {authed && p.price != null ? (
-                  <>₹{Number(p.price).toLocaleString()}</>
-                ) : (
-                  <span className="text-sm text-gray-400 font-medium">Login to view</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-black text-gray-900 leading-none">
+                  {authed && p.price != null ? (
+                    <>₹{Number(p.price).toLocaleString()}</>
+                  ) : (
+                    <span className="text-sm text-gray-400 font-medium">Login to view</span>
+                  )}
+                </span>
+                {authed && p.mrp != null && p.mrp > p.price && (
+                  <span className="text-[11px] text-emerald-600 font-bold">({discount}% off)</span>
                 )}
               </div>
               {authed && p.mrp != null && p.mrp > p.price && (
@@ -879,11 +879,6 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
             {p.gst > 0 && (
               <span className="text-[8px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-md">
                 GST Invoice
-              </span>
-            )}
-            {discount > 0 && authed && (
-              <span className="text-[8px] font-bold text-rose-600 bg-rose-50 border border-rose-100 px-2 py-1 rounded-md animate-pulse-slow">
-                🔥 Price Drop
               </span>
             )}
             {authed && p.bulkDiscountQuantity > 0 && (

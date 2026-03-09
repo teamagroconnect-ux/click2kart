@@ -8,6 +8,7 @@ export default function PaymentVerification() {
   const [items, setItems] = useState([])
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(false)
+  const [processingId, setProcessingId] = useState(null)
   const [tab, setTab] = useState('pending') // 'pending' | 'history'
   const [expandedId, setExpandedId] = useState(null)
 
@@ -66,23 +67,29 @@ export default function PaymentVerification() {
 
   const approve = async (id) => {
     if (!window.confirm('Are you sure you want to approve this payment?')) return
+    setProcessingId(id)
     try {
       await api.patch(`/api/orders/${id}/approve-manual`)
       notify('Payment approved successfully', 'success')
       loadPending()
     } catch (err) {
       notify(err.response?.data?.error || 'Failed to approve payment', 'error')
+    } finally {
+      setProcessingId(null)
     }
   }
 
   const reject = async (id) => {
     if (!window.confirm('Are you sure you want to reject this payment?')) return
+    setProcessingId(id)
     try {
       await api.patch(`/api/orders/${id}/reject-manual`)
       notify('Payment rejected', 'warning')
       loadPending()
     } catch (err) {
       notify(err.response?.data?.error || 'Failed to reject payment', 'error')
+    } finally {
+      setProcessingId(null)
     }
   }
 
@@ -170,21 +177,31 @@ export default function PaymentVerification() {
                           <div className="flex items-center justify-end gap-3">
                             <button
                               onClick={(e) => { e.stopPropagation(); approve(o._id); }}
-                              className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm border border-emerald-100 group"
+                              disabled={processingId === o._id}
+                              className={`flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm border border-emerald-100 group ${processingId === o._id ? 'opacity-50 cursor-not-allowed' : ''}`}
                               title="Verify & Approve"
                             >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                              </svg>
+                              {processingId === o._id ? (
+                                <div className="w-4 h-4 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
                             </button>
                             <button
                               onClick={(e) => { e.stopPropagation(); reject(o._id); }}
-                              className="flex items-center justify-center w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all shadow-sm border border-rose-100"
+                              disabled={processingId === o._id}
+                              className={`flex items-center justify-center w-10 h-10 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all shadow-sm border border-rose-100 ${processingId === o._id ? 'opacity-50 cursor-not-allowed' : ''}`}
                               title="Reject Payment"
                             >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
-                              </svg>
+                              {processingId === o._id ? (
+                                <div className="w-4 h-4 border-2 border-rose-600 border-t-transparent rounded-full animate-spin"></div>
+                              ) : (
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              )}
                             </button>
                             <div className={`transition-transform duration-300 ${expandedId === o._id ? 'rotate-180' : ''}`}>
                               <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>

@@ -14,6 +14,7 @@ export default function Orders(){
   const limit = 20
   const [loading, setLoading] = useState(false)
   const [sendingId, setSendingId] = useState('')
+  const [actionLoading, setActionLoading] = useState(null)
 
   const load = async (p = 1) => {
     setLoading(true)
@@ -77,7 +78,15 @@ export default function Orders(){
   }, [page]);
 
   useEffect(()=>{ load(1) }, [status])
-  const update = async(id, s)=>{ await api.patch(`/api/orders/${id}/status`, { status: s }); load(page) }
+  const update = async(id, s)=>{ 
+    setActionLoading(`${id}-${s}`)
+    try {
+      await api.patch(`/api/orders/${id}/status`, { status: s })
+      load(page)
+    } finally {
+      setActionLoading(null)
+    }
+  }
   const toggle = (id) => setExpandedId(expandedId === id ? null : id)
   const sendInvoice = async (billId) => {
     try {
@@ -346,37 +355,48 @@ export default function Orders(){
                                       {o.status === 'NEW' && (
                                         <button
                                           onClick={(e)=>{ e.stopPropagation(); update(o._id, 'CONFIRMED').then(()=>notify('Order confirmed','success')).catch(()=>notify('Failed to confirm','error')) }}
-                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-100 transition-all"
+                                          disabled={actionLoading === `${o._id}-CONFIRMED`}
+                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-100 transition-all disabled:opacity-50"
                                         >
-                                          Confirm Order
+                                          {actionLoading === `${o._id}-CONFIRMED` ? 'Confirming...' : 'Confirm Order'}
                                         </button>
                                       )}
                                       
                                       {['CONFIRMED', 'PROCESSING', 'PACKED'].includes(o.status) && (
                                         <button
-                                          onClick={(e)=>{ e.stopPropagation(); api.patch(`/api/orders/${o._id}/pack`).then(()=>{ notify('Marked as Packed','success'); load(page) }).catch(()=>notify('Failed to update','error')) }}
-                                          disabled={o.shipping?.status === 'PACKED'}
+                                          onClick={(e)=>{ 
+                                            e.stopPropagation(); 
+                                            setActionLoading(`${o._id}-PACK`);
+                                            api.patch(`/api/orders/${o._id}/pack`).then(()=>{ notify('Marked as Packed','success'); load(page) }).catch(()=>notify('Failed to update','error')).finally(()=>setActionLoading(null)) 
+                                          }}
+                                          disabled={o.shipping?.status === 'PACKED' || actionLoading === `${o._id}-PACK`}
                                           className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-100 transition-all disabled:opacity-40"
                                         >
-                                          {o.shipping?.status === 'PACKED' ? 'Already Packed' : 'Mark Packed'}
+                                          {actionLoading === `${o._id}-PACK` ? 'Packing...' : (o.shipping?.status === 'PACKED' ? 'Already Packed' : 'Mark Packed')}
                                         </button>
                                       )}
 
                                       {o.status === 'SHIPPED' && (
                                         <button
-                                          onClick={(e)=>{ e.stopPropagation(); api.patch(`/api/orders/${o._id}/deliver`).then(()=>{ notify('Marked Delivered','success'); load(page) }).catch(()=>notify('Failed to update','error')) }}
-                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-100 transition-all col-span-2"
+                                          onClick={(e)=>{ 
+                                            e.stopPropagation(); 
+                                            setActionLoading(`${o._id}-DELIVER`);
+                                            api.patch(`/api/orders/${o._id}/deliver`).then(()=>{ notify('Marked Delivered','success'); load(page) }).catch(()=>notify('Failed to update','error')).finally(()=>setActionLoading(null)) 
+                                          }}
+                                          disabled={actionLoading === `${o._id}-DELIVER`}
+                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-100 transition-all col-span-2 disabled:opacity-50"
                                         >
-                                          Mark Delivered
+                                          {actionLoading === `${o._id}-DELIVER` ? 'Delivering...' : 'Mark Delivered'}
                                         </button>
                                       )}
 
                                       {!['DELIVERED', 'CANCELLED', 'FULFILLED', 'RETURNED'].includes(o.status) && (
                                         <button
                                           onClick={(e)=>{ e.stopPropagation(); update(o._id, 'CANCELLED').then(()=>notify('Order cancelled','success')).catch(()=>notify('Failed to cancel','error')) }}
-                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-red-50 text-red-600 border-red-100 hover:bg-red-100 transition-all"
+                                          disabled={actionLoading === `${o._id}-CANCELLED`}
+                                          className="px-4 py-2 rounded-xl text-[10px] font-bold border bg-white hover:bg-red-50 text-red-600 border-red-100 hover:bg-red-100 transition-all disabled:opacity-50"
                                         >
-                                          Cancel Order
+                                          {actionLoading === `${o._id}-CANCELLED` ? 'Cancelling...' : 'Cancel Order'}
                                         </button>
                                       )}
                                     </div>
@@ -397,11 +417,11 @@ export default function Orders(){
                                     <div className="grid grid-cols-1 gap-2">
                                       {!o.shipping?.waybill ? (
                                         <button
-                                          onClick={(e)=>{ e.stopPropagation(); createStandardShipment(o._id) }}
-                                          disabled={!['CONFIRMED', 'PACKED', 'SHIPPED'].includes(o.status)}
+                                          onClick={(e)=>{ e.stopPropagation(); setActionLoading(`${o._id}-SHIP`); createStandardShipment(o._id).finally(()=>setActionLoading(null)) }}
+                                          disabled={!['CONFIRMED', 'PACKED', 'SHIPPED'].includes(o.status) || actionLoading === `${o._id}-SHIP`}
                                           className="w-full bg-blue-600 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-0.5 disabled:opacity-40 disabled:transform-none"
                                         >
-                                          🚀 Create Express Shipment
+                                          {actionLoading === `${o._id}-SHIP` ? '🚀 Creating Shipment...' : '🚀 Create Express Shipment'}
                                         </button>
                                       ) : (
                                         <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-between">

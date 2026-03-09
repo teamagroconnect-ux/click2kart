@@ -25,6 +25,7 @@ export default function Enquiry() {
         bulkQty:   item.bulkDiscountQuantity || item.bulkQty || 0,
         bulkRed:   item.bulkDiscountPriceReduction || item.bulkRed || 0,
         bulkTiers: item.bulkTiers,
+        weight:    item.weight || 0,
       }))
     : (loc.state?.productId ? [{ productId: loc.state.productId, quantity: 1, name: loc.state.name, mrp: loc.state.mrp || loc.state.price, price: loc.state.price }] : [])
 
@@ -54,7 +55,9 @@ export default function Enquiry() {
       if (data.delivery_available) {
         setShip(s => ({ ...s, loading:true }))
         try {
-          const { data:calc } = await api.post('/api/shipping/calculate', { destination_pin:pin, weight:1, order_amount:cartTotal })
+          const totalWeightGrams = items.reduce((s, it) => s + (Number(it.weight || 0) * Number(it.quantity || 1)), 0)
+          const weightKg = totalWeightGrams > 0 ? (totalWeightGrams / 1000) : 0.5
+          const { data:calc } = await api.post('/api/shipping/calculate', { destination_pin:pin, weight:weightKg, order_amount:cartTotal })
           setShip({ loading:false, amount:calc?.shipping??calc?.amount??85, discount:calc?.discount??85, final:calc?.final??0 })
         } catch { setShip({ loading:false, amount:85, discount:85, final:0 }) }
       } else { setShip({ loading:false, amount:0, discount:0, final:0 }) }
@@ -70,8 +73,14 @@ export default function Enquiry() {
       name: item.name, price: item.price, mrp: item.mrp || item.price, image: item.image||item.images?.[0]?.url,
       attributes: item.attributes, bulkQty: item.bulkDiscountQuantity||item.bulkQty||0,
       bulkRed: item.bulkDiscountPriceReduction||item.bulkRed||0, bulkTiers: item.bulkTiers,
+      weight: item.weight || 0,
     })))
   }, [cart])
+
+  useEffect(() => {
+    const pin = String(profile?.kyc?.pincode || '').trim()
+    if (pin && items.length > 0) loadServiceability(pin)
+  }, [items])
 
   useEffect(() => {
     if (!localStorage.getItem('token')) { nav('/login'); return }
@@ -1794,8 +1803,8 @@ export default function Enquiry() {
                   {/* Premium Submit Button */}
                   <button
                     type="submit"
-                    className={`eq-submit ${payIsReady ? 'ready' : 'blocked'}`}
-                    disabled={!payIsReady}
+                    className={`eq-submit ${payIsReady && !loading ? 'ready' : 'blocked'}`}
+                    disabled={!payIsReady || loading}
                   >
                     {loading ? (
                       <>

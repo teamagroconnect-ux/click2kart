@@ -6,21 +6,35 @@ import { CONFIG } from '../../shared/lib/config.js'
 const COLORS = ['#8b5cf6', '#7c3aed', '#a78bfa', '#6d28d9', '#c4b5fd', '#ddd6fe']
 
 export default function Partner() {
-  const [code, setCode] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('')
+  const [otp, setOtp] = useState('')
+  const [otpSent, setOtpSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
 
+  const sendOtp = async () => {
+    if (!email) return
+    setLoading(true); setError(null)
+    try {
+      await api.post('/api/public/partner/send-otp', { email })
+      setOtpSent(true)
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Failed to send OTP')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const fetchSummary = async (e) => {
     e.preventDefault()
-    if (!code || !password) return
+    if (!email || !otp) return
     setLoading(true); setError(null); setData(null)
     try {
-      const { data } = await api.post(`/api/public/partner/summary/${code}`, { password })
+      const { data } = await api.post(`/api/public/partner/login`, { otp, email })
       setData(data)
     } catch (err) {
-      setError(err?.response?.data?.error || 'Failed to fetch summary')
+      setError(err?.response?.data?.error || 'Failed to verify OTP')
     } finally {
       setLoading(false)
     }
@@ -375,6 +389,16 @@ export default function Partner() {
         .pr-utr { font-size: 10px; color: #9ca3af; font-weight: 600; }
         .pr-notes { font-size: 11px; color: #9ca3af; font-style: italic; margin-top: 6px; }
 
+        /* ── SALES LIST ── */
+        .pr-sale {
+          background: #f9f7ff; border: 1px solid rgba(139,92,246,0.08);
+          border-radius: 14px; padding: 14px 16px; margin-bottom: 8px;
+          display: flex; justify-content: space-between; align-items: center;
+        }
+        .pr-sale-phone { font-size: 13px; font-weight: 700; color: #1e1b2e; }
+        .pr-sale-amount { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #059669; }
+        .pr-sale-date { font-size: 9px; color: #9ca3af; font-weight: 600; text-transform: uppercase; }
+
         .pr-scroll { max-height: 300px; overflow-y: auto; padding-right: 4px; }
         .pr-scroll::-webkit-scrollbar { width: 3px; }
         .pr-scroll::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.25); border-radius: 10px; }
@@ -555,11 +579,50 @@ export default function Partner() {
             </div>
 
             <form onSubmit={fetchSummary} className="pr-form">
-              <input className="pr-input" placeholder="Coupon Code…" value={code} onChange={e => setCode(e.target.value.toUpperCase())} />
-              <input type="password" className="pr-input" placeholder="Portal Password…" value={password} onChange={e => setPassword(e.target.value)} />
-              <button type="submit" className="pr-btn" disabled={!code || !password || loading}>
-                {loading ? '⟳  Verifying…' : 'Access Portal →'}
-              </button>
+              <input 
+                type="email" 
+                className="pr-input" 
+                placeholder="Partner Email…" 
+                value={email} 
+                onChange={e => setEmail(e.target.value.toLowerCase())} 
+                disabled={otpSent}
+              />
+              
+              {!otpSent ? (
+                <button 
+                  type="button" 
+                  onClick={sendOtp} 
+                  className="pr-btn" 
+                  disabled={loading || !email}
+                >
+                  {loading ? '⟳ Sending OTP…' : 'Send Login OTP →'}
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <input 
+                      className="pr-input" 
+                      placeholder="Enter 4-digit OTP…" 
+                      value={otp} 
+                      onChange={e => setOtp(e.target.value)} 
+                    />
+                    <button 
+                      type="button" 
+                      onClick={() => { setOtpSent(false); setOtp('') }} 
+                      className="px-3 text-[9px] font-black uppercase text-gray-400 hover:text-indigo-600 transition-all"
+                    >
+                      Change
+                    </button>
+                  </div>
+                  <div className="text-[10px] text-emerald-600 font-bold ml-1 flex items-center gap-1">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    OTP sent to your email!
+                  </div>
+                  <button type="submit" className="pr-btn" disabled={!otp || loading}>
+                    {loading ? '⟳ Verifying…' : 'Access Dashboard →'}
+                  </button>
+                </div>
+              )}
             </form>
           </div>
 
@@ -687,9 +750,15 @@ export default function Partner() {
                       </div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 10 }}>Active Code</div>
-                      <div className="pr-code-pill"># {data.code}</div>
-                      <div className="pr-rate"><span className="pr-rate-dot" /> Commission: {data.commissionPercent}%</div>
+                      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#9ca3af', marginBottom: 10 }}>Active Coupons</div>
+                      <div className="flex flex-col gap-2 items-end">
+                        {data.coupons?.map(c => (
+                          <div key={c.code} className="flex items-center gap-3">
+                            <div className="pr-code-pill"># {c.code}</div>
+                            <div className="pr-rate" style={{ marginTop: 0 }}><span className="pr-rate-dot" /> {c.commissionPercent}%</div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
 
@@ -714,28 +783,30 @@ export default function Partner() {
                 </div>
               </div>
 
-              {/* Charts */}
+              {/* Charts & Sales */}
               <div className="pr-charts">
                 <div className="pr-card">
                   <div className="pr-card-head">
-                    <span className="pr-card-title">Commission by Category</span>
-                    <span className="pr-card-dot" />
+                    <span className="pr-card-title">Recent Referrals</span>
+                    {data.bills?.length > 0 && <span className="pr-count-tag">{data.bills.length} Orders</span>}
                   </div>
-                  {data.categoryBreakdown && data.categoryBreakdown.length > 0 ? (
-                    <div style={{ height: 260 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie data={data.categoryBreakdown} cx="50%" cy="50%" innerRadius={65} outerRadius={95} paddingAngle={6} dataKey="value">
-                            {data.categoryBreakdown.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                          </Pie>
-                          <Tooltip formatter={v => `₹${Number(v).toFixed(2)}`}
-                            contentStyle={{ background: 'white', border: '1px solid rgba(139,92,246,0.2)', borderRadius: 12, fontSize: 12, padding: '10px 16px', boxShadow: '0 8px 24px rgba(139,92,246,0.12)' }} />
-                          <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: 10, color: '#6b7280' }} />
-                        </PieChart>
-                      </ResponsiveContainer>
+                  {data.bills && data.bills.length > 0 ? (
+                    <div className="pr-scroll">
+                      {data.bills.map((b, i) => (
+                        <div key={i} className="pr-sale">
+                          <div>
+                            <div className="pr-sale-phone">{b.customerPhone}</div>
+                            <div className="flex items-center gap-2">
+                              <div className="pr-sale-date">{new Date(b.createdAt).toLocaleDateString()}</div>
+                              <div style={{ fontSize: 9, fontWeight: 800, color: '#7c3aed', background: '#f5f3ff', padding: '1px 6px', borderRadius: 4 }}>{b.couponCode}</div>
+                            </div>
+                          </div>
+                          <div className="pr-sale-amount">₹{b.payable.toLocaleString()}</div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
-                    <div className="pr-empty-chart">No category data available yet.</div>
+                    <div className="pr-empty-chart">No referral orders yet.</div>
                   )}
                 </div>
 
@@ -754,6 +825,7 @@ export default function Partner() {
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                             <span className="pr-method">{p.method}</span>
+                            {p.couponCode && <span style={{ fontSize: 9, fontWeight: 800, color: '#7c3aed', background: '#f5f3ff', padding: '3px 10px', borderRadius: 6, border: '1px solid rgba(139,92,246,0.2)' }}>{p.couponCode}</span>}
                             {p.utr && <span className="pr-utr">UTR: {p.utr}</span>}
                             {p.razorpayPaymentId && <span className="pr-utr">ID: {p.razorpayPaymentId}</span>}
                           </div>

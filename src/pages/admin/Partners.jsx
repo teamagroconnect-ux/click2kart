@@ -13,7 +13,7 @@ export default function Partners() {
   const [viewingPartner, setViewingPartner] = useState(null)
   const [form, setForm] = useState({ amount:'', method:'MANUAL', utr:'', razorpayPaymentId:'', notes:'' })
   const [partners, setPartners] = useState([])
-  const [newPartner, setNewPartner] = useState({ name:'', email:'', phone:'' })
+  const [newPartner, setNewPartner] = useState({ name:'', email:'', phone:'', password:'' })
 
   const load = async () => {
     setLoading(true)
@@ -40,7 +40,7 @@ export default function Partners() {
     if (!newPartner.name) return
     try {
       await api.post('/api/partner-accounts', newPartner)
-      setNewPartner({ name:'', email:'', phone:'' })
+      setNewPartner({ name:'', email:'', phone:'', password:'' })
       loadPartners()
       notify('Partner added','success')
     } catch {
@@ -98,8 +98,9 @@ export default function Partners() {
             <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Add Partner</h3>
             <form onSubmit={createPartner} className="space-y-3">
               <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Partner Name" value={newPartner.name} onChange={e=>setNewPartner({...newPartner, name:e.target.value})} />
-              <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Email (optional)" value={newPartner.email} onChange={e=>setNewPartner({...newPartner, email:e.target.value})} />
+              <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Email (Primary Key)" value={newPartner.email} onChange={e=>setNewPartner({...newPartner, email:e.target.value})} />
               <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Phone" value={newPartner.phone} onChange={e=>setNewPartner({...newPartner, phone:e.target.value})} />
+              <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Password" type="password" value={newPartner.password} onChange={e=>setNewPartner({...newPartner, password:e.target.value})} />
               <button className="w-full bg-gray-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all">Save Partner</button>
             </form>
           </div>
