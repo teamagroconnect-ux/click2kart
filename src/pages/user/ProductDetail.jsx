@@ -391,6 +391,22 @@ export default function ProductDetail() {
         .pd-btn-buy:hover:not(:disabled){ transform:translateY(-2px); box-shadow:0 10px 30px rgba(124,58,237,.4); }
         .pd-btn-buy:disabled{ opacity:.4; cursor:not-allowed; }
 
+        /* mobile floating bar */
+        .pd-mobile-bar{
+          position:fixed; bottom:0; left:0; right:0;
+          background:rgba(255,255,255,.95); backdrop-filter:blur(12px);
+          border-top:1px solid rgba(139,92,246,.12);
+          padding:12px 16px env(safe-area-inset-bottom,12px);
+          z-index:90; display:flex; align-items:center; gap:12px;
+          box-shadow:0 -4px 20px rgba(0,0,0,.08);
+          animation:slideUp .4s ease both;
+        }
+        @media(min-width:900px){ .pd-mobile-bar{ display:none; } }
+        @keyframes slideUp{ from{transform:translateY(100%);} to{transform:translateY(0);} }
+        .pd-m-price{ flex:1; }
+        .pd-m-price-label{ font-size:9px; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:.05em; }
+        .pd-m-price-val{ font-size:18px; font-weight:800; color:#7c3aed; line-height:1; }
+
         .pd-btn-cart{
           flex:1; min-width:140px;
           background:white; color:#7c3aed;
@@ -724,6 +740,20 @@ export default function ProductDetail() {
                     <div className="pd-price-main">₹{effectiveUnitPrice.toLocaleString()}<span style={{fontSize:'50%',opacity:.6}}>/unit</span></div>
                     {mrp > 0 && <span className="pd-price-mrp">MRP ₹{mrp.toLocaleString()}</span>}
                     {mrp > 0 && <span className="pd-price-save">You save ₹{unitSave.toLocaleString()}/unit</span>}
+                    {p.priceTrend !== undefined && (
+                      <div className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-black ${p.priceTrend === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                        {p.priceTrend === 0 ? (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                            <path d="M7 13l5 5 5-5M12 18V6" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        ) : (
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                            <path d="M7 11l5-5 5 5M12 6v12" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        )}
+                        {p.priceTrend === 0 ? 'Price Drop' : 'Trending Up'}
+                      </div>
+                    )}
                   </div>
                   <div style={{fontSize:11,color:'#9ca3af',fontWeight:600}}>Inclusive of all taxes</div>
 
@@ -745,7 +775,26 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* STOCK + STOCK STATUS */}
+            {/* DELIVERY PANEL */}
+            <div className="pd-section" style={{ background:'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', border:'1px solid #e2e8f0', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 20px' }}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-indigo-600 border border-indigo-50">
+                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Shipping Info</div>
+                  <div className="text-sm font-black text-gray-900 leading-none">Ready for Dispatch</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Estimate</div>
+                <div className="text-sm font-black text-emerald-700 leading-none">Ships Today</div>
+              </div>
+            </div>
+
+            {/* STOCK STATUS */}
             <div className="pd-stock" style={{ background: stock>0?(stock<=5?'rgba(245,158,11,.1)':'rgba(5,150,105,.1)'):'rgba(220,38,38,.1)', border:`1px solid ${stock>0?(stock<=5?'rgba(245,158,11,.25)':'rgba(5,150,105,.25)'):'rgba(220,38,38,.25)'}`, color: stock>0?(stock<=5?'#d97706':'#059669'):'#dc2626' }}>
               <span className="pd-stock-dot" style={{ background:stock>0?(stock<=5?'#d97706':'#10b981'):'#ef4444', boxShadow:`0 0 5px ${stock>0?(stock<=5?'#d97706':'#10b981'):'#ef4444'}`, animation:stock>5?'none':'ohpulse 2s infinite' }}/>
               {stockSt.text}
@@ -980,6 +1029,26 @@ export default function ProductDetail() {
         )}
 
       </div>
+
+      {/* MOBILE FLOATING BAR */}
+      {p && (
+        <div className="pd-mobile-bar">
+          <div className="pd-m-price">
+            <div className="pd-m-price-label">Wholesale Price</div>
+            <div className="pd-m-price-val">
+              {authed ? `₹${effectiveUnitPrice.toLocaleString()}` : 'Login'}
+            </div>
+          </div>
+          <button 
+            className="pd-btn-buy" 
+            style={{ flex: 2, padding: '12px 20px', borderRadius: 14 }}
+            disabled={!authed || stock <= 0 || (sortedTiersAsc.length > 0 && qty < minTierQty)}
+            onClick={handleAddToCart}
+          >
+            {!authed ? 'Login' : stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
+          </button>
+        </div>
+      )}
     </>
   )
 }
