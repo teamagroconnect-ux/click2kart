@@ -371,15 +371,21 @@ export default function Profile() {
               <form onSubmit={save}>
                 <div className="pf-form-wrap">
                   <div className="pf-fgrid">
-                    <EF label="Business Name"  val={draft.businessName}  set={v=>setDraft({...draft,businessName:v})}  req />
-                    <EF label="GSTIN"          val={draft.gstin}         set={v=>setDraft({...draft,gstin:v})}          req />
-                    <EF label="PAN"            val={draft.pan}           set={v=>setDraft({...draft,pan:v})}            req />
+                    <EF label="Business Name"  val={draft.businessName}  set={v=>setDraft({...draft,businessName:v})}  req disabled={!!kyc.businessName} />
+                    <EF label="GSTIN"          val={draft.gstin}         set={v=>setDraft({...draft,gstin:v})}          req disabled={!!kyc.gstin} />
+                    <EF label="PAN"            val={draft.pan}           set={v=>setDraft({...draft,pan:v})}            req disabled={!!kyc.pan} />
                     <EF label="Pincode"        val={draft.pincode}       set={v=>setDraft({...draft,pincode:v})}        req />
                     <EF label="City"           val={draft.city}          set={v=>setDraft({...draft,city:v})}           req />
                     <EF label="State"          val={draft.state}         set={v=>setDraft({...draft,state:v})}          req />
                     <EF label="Address Line 1" val={draft.addressLine1}  set={v=>setDraft({...draft,addressLine1:v})}   req span2 />
                     <EF label="Address Line 2" val={draft.addressLine2}  set={v=>setDraft({...draft,addressLine2:v})}   span2 />
                   </div>
+                  {(kyc.businessName || kyc.gstin || kyc.pan) && (
+                    <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-[11px] text-blue-700 font-medium flex items-center gap-2">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      Verified KYC fields (Business Name, GSTIN, PAN) cannot be edited.
+                    </div>
+                  )}
                 </div>
 
                 <div className="pf-ffoot">
@@ -424,18 +430,19 @@ function VF({ label, val, span2, optional }) {
 }
 
 /* ── edit field ── */
-function EF({ label, val, set, req, span2 }) {
+function EF({ label, val, set, req, span2, disabled }) {
   return (
     <div className={`pf-field${span2 ? ' span2' : ''}`}>
       <label className="pf-flabel">
         {label}{req && <em> *</em>}
       </label>
       <input
-        className="pf-finput"
+        className={`pf-finput ${disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : ''}`}
         value={val || ''}
         onChange={e => set(e.target.value)}
         required={req}
-        placeholder={`Enter ${label.toLowerCase()}…`}
+        disabled={disabled}
+        placeholder={disabled ? `Verified ${label}` : `Enter ${label.toLowerCase()}…`}
       />
     </div>
   )

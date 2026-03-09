@@ -7,14 +7,27 @@ const COLORS = ['#8b5cf6', '#7c3aed', '#a78bfa', '#6d28d9', '#c4b5fd', '#ddd6fe'
 
 export default function Partner() {
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [otp, setOtp] = useState('')
+  const [useOtp, setUseOtp] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [data, setData] = useState(null)
 
+  const validateEmail = (email) => {
+    return String(email)
+      .toLowerCase()
+      .match(
+        /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+      );
+  };
+
   const sendOtp = async () => {
-    if (!email) return
+    if (!validateEmail(email)) {
+      setError('Please enter a valid business email address');
+      return;
+    }
     setLoading(true); setError(null)
     try {
       await api.post('/api/public/partner/send-otp', { email })
@@ -28,13 +41,18 @@ export default function Partner() {
 
   const fetchSummary = async (e) => {
     e.preventDefault()
-    if (!email || !otp) return
+    if (!validateEmail(email)) {
+      setError('Please enter a valid business email address');
+      return;
+    }
+    if (!password && !otp) return
     setLoading(true); setError(null); setData(null)
     try {
-      const { data } = await api.post(`/api/public/partner/login`, { otp, email })
+      const payload = useOtp ? { otp, email } : { password, email }
+      const { data } = await api.post(`/api/public/partner/login`, payload)
       setData(data)
     } catch (err) {
-      setError(err?.response?.data?.error || 'Failed to verify OTP')
+      setError(err?.response?.data?.error || 'Authentication failed. Please check your credentials.')
     } finally {
       setLoading(false)
     }
@@ -585,19 +603,14 @@ export default function Partner() {
                 placeholder="Partner Email…" 
                 value={email} 
                 onChange={e => setEmail(e.target.value.toLowerCase())} 
-                disabled={otpSent}
               />
               
-              {!otpSent ? (
-                <button 
-                  type="button" 
-                  onClick={sendOtp} 
-                  className="pr-btn" 
-                  disabled={loading || !email}
-                >
-                  {loading ? '⟳ Sending OTP…' : 'Send Login OTP →'}
-                </button>
-              ) : (
+              <div className="flex gap-2 p-1 bg-gray-100 rounded-xl mb-1">
+                <button type="button" onClick={() => setUseOtp(false)} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${!useOtp ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400'}`}>Password</button>
+                <button type="button" onClick={() => setUseOtp(true)} className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${useOtp ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-400'}`}>OTP</button>
+              </div>
+
+              {useOtp ? (
                 <div className="space-y-3">
                   <div className="flex gap-2">
                     <input 
@@ -606,20 +619,46 @@ export default function Partner() {
                       value={otp} 
                       onChange={e => setOtp(e.target.value)} 
                     />
-                    <button 
-                      type="button" 
-                      onClick={() => { setOtpSent(false); setOtp('') }} 
-                      className="px-3 text-[9px] font-black uppercase text-gray-400 hover:text-indigo-600 transition-all"
-                    >
-                      Change
-                    </button>
+                    {!otpSent ? (
+                      <button 
+                        type="button" 
+                        onClick={sendOtp} 
+                        className="px-4 bg-indigo-50 text-indigo-600 rounded-xl text-[10px] font-black uppercase tracking-widest border border-indigo-100 hover:bg-indigo-100 transition-all" 
+                        disabled={loading || !email}
+                      >
+                        Send
+                      </button>
+                    ) : (
+                      <button 
+                        type="button" 
+                        onClick={() => { setOtpSent(false); setOtp('') }} 
+                        className="px-3 text-[9px] font-black uppercase text-gray-400 hover:text-indigo-600 transition-all"
+                      >
+                        Resend
+                      </button>
+                    )}
                   </div>
-                  <div className="text-[10px] text-emerald-600 font-bold ml-1 flex items-center gap-1">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    OTP sent to your email!
-                  </div>
+                  {otpSent && (
+                    <div className="text-[10px] text-emerald-600 font-bold ml-1 flex items-center gap-1">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      OTP sent to your email!
+                    </div>
+                  )}
                   <button type="submit" className="pr-btn" disabled={!otp || loading}>
                     {loading ? '⟳ Verifying…' : 'Access Dashboard →'}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <input 
+                    type="password" 
+                    className="pr-input" 
+                    placeholder="Portal Password…" 
+                    value={password} 
+                    onChange={e => setPassword(e.target.value)} 
+                  />
+                  <button type="submit" className="pr-btn" disabled={!password || loading}>
+                    {loading ? '⟳ Authenticating…' : 'Access Dashboard →'}
                   </button>
                 </div>
               )}

@@ -823,8 +823,19 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
                     <span className="text-sm text-gray-400 font-medium">Login to view</span>
                   )}
                 </span>
-                {authed && p.mrp != null && p.mrp > p.price && (
-                  <span className="text-[11px] text-emerald-600 font-bold">({discount}% off)</span>
+                {authed && p.priceTrend !== undefined && (
+                  <div className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-black ${p.priceTrend === 0 ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
+                    {p.priceTrend === 0 ? (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                        <path d="M7 13l5 5 5-5M12 18V6" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4">
+                        <path d="M7 11l5-5 5 5M12 6v12" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                    {p.priceTrend === 0 ? 'Price Down' : 'Price Up'}
+                  </div>
                 )}
               </div>
               {authed && p.mrp != null && p.mrp > p.price && (

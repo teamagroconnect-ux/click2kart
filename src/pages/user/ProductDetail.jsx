@@ -767,7 +767,7 @@ export default function ProductDetail() {
 
             {/* TRUST STRIP */}
             <div className="pd-trust">
-              {[['7-Day Returns','↩'],['Secure Payment','🔒'],['Verified Genuine','✓'],['GST Invoice Included','🧾']].map(([t,i])=>(
+              {[['Secure Payment','🔒'],['Verified Genuine','✓'],['GST Invoice Included','🧾'],['Fast Dispatch','⚡']].map(([t,i])=>(
                 <div key={t} className="pd-trust-item">
                   <span className="pd-trust-icon" style={{fontSize:13}}>{i}</span>
                   <span>{t}</span>
@@ -777,38 +777,52 @@ export default function ProductDetail() {
 
             {/* BULK PRICING */}
             {authed && Array.isArray(p.bulkTiers) && p.bulkTiers.length > 0 && (
-              <div className="pd-bulk" style={{ marginTop:20 }}>
-                <div className="pd-bulk-head">
-                  <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                  </svg>
-                  Bulk Pricing Tiers
+              <div className="pd-bulk" style={{ marginTop:24, background:'linear-gradient(135deg, #fff 0%, #f9f7ff 100%)' }}>
+                <div className="pd-bulk-head" style={{ borderBottom:'1px solid rgba(124,58,237,0.1)' }}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                      </svg>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Wholesale Tiers</span>
+                      <span className="text-sm font-black text-gray-900">Bulk Purchase Savings</span>
+                    </div>
+                  </div>
                 </div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Quantity</th><th>Price / Unit</th><th>Savings / Unit</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedTiersAsc.map((t,idx)=>{
-                      const next    = sortedTiersAsc[idx+1]
-                      const from    = t.quantity
-                      const to      = next ? next.quantity-1 : null
-                      const label   = to ? `${from}–${to}` : `${from}+`
-                      const eff     = Math.max(0, basePrice-Number(t.priceReduction||0))
-                      const perSave = Math.max(0, basePrice-eff)
-                      const hit     = qty>=from && (!next||qty<=to||to===null)
-                      return (
-                        <tr key={idx} className={hit?'hit':''}>
-                          <td>{label}</td>
-                          <td>₹{eff.toLocaleString()}</td>
-                          <td style={{color:'#059669'}}>₹{perSave.toLocaleString()}</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {sortedTiersAsc.map((t,idx)=>{
+                    const next    = sortedTiersAsc[idx+1]
+                    const from    = t.quantity
+                    const to      = next ? next.quantity-1 : null
+                    const label   = to ? `${from}–${to} Units` : `${from}+ Units`
+                    const eff     = Math.max(0, basePrice-Number(t.priceReduction||0))
+                    const perSave = Math.max(0, basePrice-eff)
+                    const hit     = qty>=from && (!next||qty<=to||to===null)
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`p-4 rounded-2xl border-2 transition-all duration-300 flex items-center justify-between ${
+                          hit 
+                          ? 'bg-white border-emerald-500 shadow-lg shadow-emerald-500/10 scale-[1.02]' 
+                          : 'bg-white/50 border-gray-100 hover:border-indigo-200'
+                        }`}
+                      >
+                        <div>
+                          <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${hit ? 'text-emerald-600' : 'text-gray-400'}`}>
+                            {label}
+                          </div>
+                          <div className="text-lg font-black text-gray-900">₹{eff.toLocaleString()}<span className="text-[10px] text-gray-400 ml-1">/unit</span></div>
+                        </div>
+                        <div className={`text-center px-3 py-2 rounded-xl border ${hit ? 'bg-emerald-50 border-emerald-100' : 'bg-indigo-50 border-indigo-100'}`}>
+                          <div className={`text-[9px] font-black uppercase tracking-tighter ${hit ? 'text-emerald-600' : 'text-indigo-600'}`}>Save</div>
+                          <div className={`text-sm font-black ${hit ? 'text-emerald-700' : 'text-indigo-700'}`}>₹{perSave.toLocaleString()}</div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
 
