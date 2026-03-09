@@ -7,6 +7,10 @@ export default function Cart() {
   const { cart, removeFromCart, updateQuantity, cartTotal, addToCart } = useCart()
   const navigate = useNavigate()
   const [suggestions, setSuggestions] = useState([])
+  const [couponCode, setCouponCode] = useState('')
+  const [appliedCoupon, setAppliedCoupon] = useState(null)
+  const [couponError, setCouponError] = useState('')
+  const [isApplying, setIsApplying] = useState(false)
   const minAmount = Number(import.meta.env.VITE_MIN_ORDER_AMOUNT || 5000)
 
   /* ── price helpers ── */
@@ -38,6 +42,37 @@ export default function Cart() {
     return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short' })
   })()
   const minLeft = Math.max(0, minAmount - totalPayable)
+
+  const handleApplyCoupon = async (e) => {
+    e?.preventDefault()
+    if (!couponCode.trim()) return
+    setIsApplying(true)
+    setCouponError('')
+    try {
+      const { data } = await api.post('/api/coupons/validate', { 
+        code: couponCode.trim(),
+        amount: totalPayable 
+      })
+      if (data.valid) {
+        setAppliedCoupon(data)
+        setCouponCode('')
+      } else {
+        setCouponError(data.reason || 'Invalid coupon')
+      }
+    } catch (err) {
+      setCouponError(err?.response?.data?.reason || 'Invalid or expired coupon')
+    } finally {
+      setIsApplying(false)
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null)
+    setCouponError('')
+  }
+
+  const finalTotalPayable = appliedCoupon ? appliedCoupon.payable : totalPayable
+  const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0
 
   useEffect(() => {
     const first = cart[0]
@@ -501,22 +536,70 @@ export default function Cart() {
                   <span className="ct-summary-label">GST</span>
                   <span className="ct-summary-val">Included</span>
                 </div>
+                {couponDiscount > 0 && (
+                  <div className="ct-summary-row">
+                    <span className="ct-summary-label">Coupon Discount</span>
+                    <span className="ct-summary-val green">−₹{couponDiscount.toLocaleString()}</span>
+                  </div>
+                )}
               </div>
 
               <div className="ct-summary-divider"/>
 
               <div className="ct-summary-total-row" style={{ marginBottom:16 }}>
                 <span className="ct-summary-total-label">Total Payable</span>
-                <span className="ct-summary-total-val">₹{totalPayable.toLocaleString()}</span>
+                <span className="ct-summary-total-val">₹{finalTotalPayable.toLocaleString()}</span>
+              </div>
+
+              {/* Coupon Section */}
+              <div className="mb-6">
+                {!appliedCoupon ? (
+                  <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                    <input 
+                      className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-widest outline-none focus:border-indigo-400"
+                      placeholder="Coupon Code"
+                      value={couponCode}
+                      onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                    />
+                    <button 
+                      type="submit"
+                      disabled={isApplying || !couponCode.trim()}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 disabled:opacity-50 transition-all"
+                    >
+                      {isApplying ? 'Applying…' : 'Apply'}
+                    </button>
+                  </form>
+                ) : (
+                  <div className="flex items-center justify-between bg-emerald-50 border border-emerald-100 p-3 rounded-xl">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">{appliedCoupon.code} Applied</div>
+                        <div className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">₹{couponDiscount.toLocaleString()} Saved</div>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={handleRemoveCoupon}
+                      className="text-emerald-700 hover:text-emerald-900 font-black text-[10px] uppercase tracking-widest p-2"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
+                {couponError && <div className="text-[10px] font-bold text-rose-500 uppercase tracking-widest mt-2 px-1">{couponError}</div>}
               </div>
 
               {/* savings badge */}
-              {(bulkDiscount > 0 || true) && (
+              {(bulkDiscount > 0 || couponDiscount > 0 || true) && (
                 <div className="ct-savings-badge">
                   <div className="ct-savings-ico">🎉</div>
                   <div>
-                    <div className="ct-savings-text">You're saving ₹{(bulkDiscount + 85).toLocaleString()}</div>
-                    <div className="ct-savings-sub">Bulk discount + Free Delivery applied</div>
+                    <div className="ct-savings-text">You're saving ₹{(bulkDiscount + couponDiscount + 85).toLocaleString()}</div>
+                    <div className="ct-savings-sub">Bulk + Coupon + Free Delivery</div>
                   </div>
                 </div>
               )}
@@ -536,7 +619,7 @@ export default function Cart() {
               <button
                 className={`ct-checkout-btn ${totalPayable >= minAmount ? 'ready' : 'disabled'}`}
                 disabled={totalPayable < minAmount}
-                onClick={() => navigate('/order')}
+                onClick={() => navigate('/order', { state: { appliedCoupon } })}
               >
                 {totalPayable < minAmount
                   ? `Need ₹${minLeft.toLocaleString()} more`
@@ -569,7 +652,7 @@ export default function Cart() {
           <button
             className={`ct-mobile-btn ${totalPayable >= minAmount ? '' : 'disabled'}`}
             disabled={totalPayable < minAmount}
-            onClick={() => navigate('/order')}
+            onClick={() => navigate('/order', { state: { appliedCoupon } })}
           >
             {totalPayable < minAmount ? `₹${minLeft.toLocaleString()} more needed` : 'Place Order →'}
           </button>

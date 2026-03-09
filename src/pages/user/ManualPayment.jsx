@@ -40,7 +40,8 @@ export default function ManualPayment() {
         amountPaid: amountDefault,
         utr: utr.trim(),
         note: note.trim(),
-        codAdvance20: cod20
+        codAdvance20: cod20,
+        couponCode: loc.state?.couponCode || ''
       })
       notify('Payment details submitted. Awaiting verification.', 'success')
       clearCart()

@@ -36,6 +36,10 @@ export default function Enquiry() {
   const [paymentMethod,  setPaymentMethod]  = useState('RAZORPAY')
   const [codAdvMethod,   setCodAdvMethod]   = useState('RAZORPAY')
   const [loading,        setLoading]        = useState(false)
+  const [couponCode,     setCouponCode]     = useState('')
+  const [appliedCoupon,  setAppliedCoupon]  = useState(loc.state?.appliedCoupon || null)
+  const [couponError,    setCouponError]    = useState('')
+  const [isApplying,     setIsApplying]     = useState(false)
 
   /* ── helpers ── */
   const computeEtaRange = () => {
@@ -122,6 +126,37 @@ export default function Enquiry() {
   }
   const lineTotal = (it) => unitPrice(it) * Math.max(1, Number(it.quantity||1))
   const computedVisibleTotal = (arr) => arr.filter(it=>typeof it.productId==='string'&&it.productId.length>=12).reduce((s,it)=>s+lineTotal(it),0)
+  const subTotal = computedVisibleTotal(items)
+  const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0
+  const totalPayable = subTotal - couponDiscount + ship.final
+
+  const handleApplyCoupon = async (e) => {
+    e?.preventDefault()
+    if (!couponCode.trim()) return
+    setIsApplying(true)
+    setCouponError('')
+    try {
+      const { data } = await api.post('/api/coupons/validate', { 
+        code: couponCode.trim(),
+        amount: subTotal 
+      })
+      if (data.valid) {
+        setAppliedCoupon(data)
+        setCouponCode('')
+      } else {
+        setCouponError(data.reason || 'Invalid coupon')
+      }
+    } catch (err) {
+      setCouponError(err?.response?.data?.reason || 'Invalid or expired coupon')
+    } finally {
+      setIsApplying(false)
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null)
+    setCouponError('')
+  }
 
   const handleRazorpay = async ({ items, paymentMethod, razorpayOrderId, amountPaise }) => {
     try { await ensureRazorpayLoaded() } catch { notify('Unable to load payment gateway. Please try again.','error'); return }
@@ -157,13 +192,13 @@ export default function Enquiry() {
       const cleanItems = items.filter(it=>typeof it.productId==='string'&&it.productId.length>=12).map(it=>({ productId:it.productId, variantId:it.variantId, quantity:Math.max(1,Number(it.quantity||1)) }))
       const visibleTotal = computedVisibleTotal(items)
       if (visibleTotal < minAmount) { notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`,'error'); setLoading(false); return }
-      if (paymentMethod==='MANUAL') { setLoading(false); nav('/manual-payment',{ state:{ items:cleanItems, amount:visibleTotal } }); return }
+      if (paymentMethod==='MANUAL') { setLoading(false); nav('/manual-payment',{ state:{ items:cleanItems, amount:totalPayable, couponCode:appliedCoupon?.code || '' } }); return }
       if (paymentMethod==='RAZORPAY') {
-        try { const { data } = await api.post('/api/orders/prepare-payment',{ items:cleanItems, paymentMethod:'RAZORPAY' }); await handleRazorpay({ items:cleanItems, paymentMethod:'RAZORPAY', razorpayOrderId:data.razorpayOrderId, amountPaise:data.amountPaise }) }
+        try { const { data } = await api.post('/api/orders/prepare-payment',{ items:cleanItems, paymentMethod:'RAZORPAY', couponCode:appliedCoupon?.code || '' }); await handleRazorpay({ items:cleanItems, paymentMethod:'RAZORPAY', razorpayOrderId:data.razorpayOrderId, amountPaise:data.amountPaise }) }
         catch { notify('Payment initialization failed. Please retry.','error') }
       } else if (paymentMethod==='COD') {
-        if (codAdvMethod==='MANUAL') { setLoading(false); nav('/manual-payment',{ state:{ items:cleanItems, amount:Math.round(visibleTotal*0.2), cod20:true } }); return }
-        try { const { data } = await api.post('/api/orders/prepare-payment',{ items:cleanItems, paymentMethod:'COD_20' }); await handleRazorpay({ items:cleanItems, paymentMethod:'COD_20', razorpayOrderId:data.razorpayOrderId, amountPaise:data.amountPaise }) }
+        if (codAdvMethod==='MANUAL') { setLoading(false); nav('/manual-payment',{ state:{ items:cleanItems, amount:Math.round(totalPayable*0.2), cod20:true, couponCode:appliedCoupon?.code || '' } }); return }
+        try { const { data } = await api.post('/api/orders/prepare-payment',{ items:cleanItems, paymentMethod:'COD_20', couponCode:appliedCoupon?.code || '' }); await handleRazorpay({ items:cleanItems, paymentMethod:'COD_20', razorpayOrderId:data.razorpayOrderId, amountPaise:data.amountPaise }) }
         catch { notify('Payment initialization failed. Please retry.','error') }
       }
     } catch (err) {
@@ -191,8 +226,8 @@ export default function Enquiry() {
   const minLeft      = Math.max(0, minAmount - visibleTotal)
   
   const mrpTotal     = items.reduce((s, it) => s + Number(it.mrp || it.price || 0) * Math.max(1, Number(it.quantity || 1)), 0)
-  const bulkSavings  = Math.max(0, mrpTotal - visibleTotal)
-  const totalSavings = bulkSavings + (ship.amount || 0)
+  const bulkSavings  = Math.max(0, mrpTotal - subTotal)
+  const totalSavings = bulkSavings + couponDiscount + (ship.amount || 0)
 
   /* ── EMPTY ── */
   if (items.length === 0) return (
@@ -1579,11 +1614,104 @@ export default function Enquiry() {
                   <span className="eq-sumrow-val">Included</span>
                 </div>
 
+                {/* Coupon Section */}
+                <div style={{ marginTop: 24, marginBottom: 16 }}>
+                  {!appliedCoupon ? (
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input 
+                        className="eq-coupon-input"
+                        placeholder="COUPON CODE"
+                        value={couponCode}
+                        onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                        style={{
+                          flex: 1,
+                          background: 'rgba(255,255,255,0.8)',
+                          border: '1.5px solid rgba(124, 58, 237, 0.15)',
+                          borderRadius: 14,
+                          padding: '10px 16px',
+                          fontSize: 12,
+                          fontWeight: 800,
+                          letterSpacing: '0.1em',
+                          outline: 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                      />
+                      <button 
+                        onClick={handleApplyCoupon}
+                        disabled={isApplying || !couponCode.trim()}
+                        style={{
+                          padding: '10px 20px',
+                          background: '#7c3aed',
+                          color: 'white',
+                          borderRadius: 14,
+                          fontSize: 10,
+                          fontWeight: 900,
+                          letterSpacing: '0.1em',
+                          textTransform: 'uppercase',
+                          border: 'none',
+                          cursor: 'pointer',
+                          opacity: (isApplying || !couponCode.trim()) ? 0.5 : 1,
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        {isApplying ? '...' : 'Apply'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      background: 'rgba(5, 150, 105, 0.08)',
+                      border: '1.5px solid rgba(5, 150, 105, 0.2)',
+                      padding: '12px 16px',
+                      borderRadius: 16,
+                      animation: 'fadeIn 0.3s ease'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 18 }}>🎟️</span>
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 900, color: '#059669', letterSpacing: '0.05em' }}>{appliedCoupon.code} APPLIED</div>
+                          <div style={{ fontSize: 9, fontWeight: 700, color: '#059669', opacity: 0.8 }}>₹{couponDiscount.toLocaleString()} SAVED</div>
+                        </div>
+                      </div>
+                      <button 
+                        onClick={handleRemoveCoupon}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#059669',
+                          fontSize: 10,
+                          fontWeight: 900,
+                          letterSpacing: '0.05em',
+                          cursor: 'pointer',
+                          padding: 4
+                        }}
+                      >
+                        REMOVE
+                      </button>
+                    </div>
+                  )}
+                  {couponError && <div style={{ fontSize: 9, fontWeight: 700, color: '#ef4444', marginTop: 6, paddingLeft: 4 }}>{couponError}</div>}
+                </div>
+
                 <div className="eq-sum-divider" />
+
+                {couponDiscount > 0 && (
+                  <div className="eq-sumrow" style={{ marginBottom: 12 }}>
+                    <span className="eq-sumrow-label">
+                      <span className="eq-sumrow-label-icon">🎟️</span>
+                      Coupon Discount
+                    </span>
+                    <span className="eq-sumrow-val green">
+                      -₹{couponDiscount.toLocaleString()}
+                    </span>
+                  </div>
+                )}
 
                 <div className="eq-total-row">
                   <span className="eq-total-label">Total Payable</span>
-                  <span className="eq-total-val">₹{visibleTotal.toLocaleString()}</span>
+                  <span className="eq-total-val">₹{totalPayable.toLocaleString()}</span>
                 </div>
 
                 {totalSavings > 0 && (
