@@ -68,25 +68,40 @@ export default function Profile() {
     if (!navigator.geolocation) return notify('Geolocation is not supported by your browser', 'error')
     
     setLocLoading(true)
+    
+    const fetchWithZoom = async (lat, lon, zoomLevel) => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=${zoomLevel}&addressdetails=1&accept-language=en`)
+        const data = await res.json()
+        let pc = data.address?.postcode || ''
+        if (pc) pc = pc.replace(/\s+/g, '').match(/\d{6}/)?.[0] || pc // sanitize to 6 digits
+        
+        if (!pc && data.display_name) {
+          const pinMatch = data.display_name.match(/\b\d{6}\b/)
+          if (pinMatch) pc = pinMatch[0]
+        }
+        return { data, pc }
+      } catch (e) { return { data: null, pc: '' } }
+    }
+
     navigator.geolocation.getCurrentPosition(async (pos) => {
       try {
         const { latitude, longitude } = pos.coords
-        // Using zoom=18 for better address precision
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1&accept-language=en`)
-        const data = await res.json()
         
-        if (data.address) {
+        // Try precise zoom first (18)
+        let { data, pc } = await fetchWithZoom(latitude, longitude, 18)
+        
+        // If no pincode at 18, try broader zoom (14) - much higher chance for area postcode
+        if (!pc) {
+          const retry = await fetchWithZoom(latitude, longitude, 14)
+          if (retry.pc) pc = retry.pc
+        }
+        
+        if (data && data.address) {
           const addr = data.address
-          // Robust postcode check
-          let detectedPincode = addr.postcode || ''
-          if (!detectedPincode && data.display_name) {
-            const pinMatch = data.display_name.match(/\b\d{6}\b/)
-            if (pinMatch) detectedPincode = pinMatch[0]
-          }
-
           const newState = {
             ...draft,
-            pincode: detectedPincode || draft.pincode,
+            pincode: pc || draft.pincode,
             city: addr.city || addr.town || addr.village || addr.suburb || addr.district || draft.city,
             district: addr.state_district || addr.county || addr.district || draft.district,
             state: addr.state || draft.state,
@@ -94,7 +109,7 @@ export default function Profile() {
             addressLine2: [addr.county, addr.state_district].filter(Boolean).join(', ') || data.display_name.split(',').slice(2, 4).join(',').trim() || draft.addressLine2
           }
           setDraft(newState)
-          notify(detectedPincode ? 'Address and Pincode detected!' : 'Address detected (Pincode not found)', detectedPincode ? 'success' : 'warning')
+          notify(pc ? 'Address and Pincode detected!' : 'Address detected (Pincode not found)', pc ? 'success' : 'warning')
         }
       } catch (err) {
         notify('Failed to fetch address from location', 'error')
@@ -104,7 +119,7 @@ export default function Profile() {
     }, () => {
       setLocLoading(false)
       notify('Location access denied. Please enable GPS.', 'error')
-    }, { enableHighAccuracy: true, timeout: 10000 })
+    }, { enableHighAccuracy: true, timeout: 15000 })
   }
 
   useEffect(() => {
