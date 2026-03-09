@@ -15,6 +15,49 @@ export default function Profile() {
   const EMPTY = { businessName:'', gstin:'', pan:'', addressLine1:'', addressLine2:'', city:'', state:'', pincode:'' }
   const [kyc,   setKyc]   = useState(EMPTY)   // saved / server state
   const [draft, setDraft] = useState(EMPTY)   // in-flight edits
+  const [locLoading, setLocLoading] = useState(false)
+
+  const INDIAN_STATES = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana", 
+    "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", 
+    "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", 
+    "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal", "Andaman and Nicobar Islands", "Chandigarh", 
+    "Dadra and Nagar Haveli and Daman and Diu", "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
+  ]
+
+  const detectLocation = () => {
+    if (!navigator.geolocation) return notify('Geolocation is not supported by your browser', 'error')
+    
+    setLocLoading(true)
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        const { latitude, longitude } = pos.coords
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`)
+        const data = await res.json()
+        
+        if (data.address) {
+          const addr = data.address
+          const newState = {
+            ...draft,
+            pincode: addr.postcode || draft.pincode,
+            city: addr.city || addr.town || addr.village || addr.suburb || draft.city,
+            state: addr.state || draft.state,
+            addressLine1: data.display_name.split(',').slice(0, 2).join(',').trim() || draft.addressLine1,
+            addressLine2: data.display_name.split(',').slice(2, 4).join(',').trim() || draft.addressLine2
+          }
+          setDraft(newState)
+          notify('Location detected successfully!', 'success')
+        }
+      } catch (err) {
+        notify('Failed to fetch address from location', 'error')
+      } finally {
+        setLocLoading(false)
+      }
+    }, () => {
+      setLocLoading(false)
+      notify('Location access denied', 'error')
+    })
+  }
 
   useEffect(() => {
     if (!token) return
@@ -370,13 +413,28 @@ export default function Profile() {
             {editing && (
               <form onSubmit={save}>
                 <div className="pf-form-wrap">
+                  <div className="mb-6 flex justify-between items-center bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
+                    <div>
+                      <div className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1">Quick Address Fill</div>
+                      <div className="text-xs text-gray-500 font-medium">Use GPS to automatically fill your address details.</div>
+                    </div>
+                    <button 
+                      type="button" 
+                      onClick={detectLocation}
+                      disabled={locLoading}
+                      className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-indigo-200 shadow-sm text-[11px] font-bold text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-50"
+                    >
+                      {locLoading ? <div className="pf-spin2" style={{borderTopColor:'#7c3aed', borderLeftColor:'#7c3aed'}} /> : '📍 Detect Location'}
+                    </button>
+                  </div>
+
                   <div className="pf-fgrid">
                     <EF label="Business Name"  val={draft.businessName}  set={v=>setDraft({...draft,businessName:v})}  req disabled={!!kyc.businessName} />
                     <EF label="GSTIN"          val={draft.gstin}         set={v=>setDraft({...draft,gstin:v})}          req disabled={!!kyc.gstin} />
                     <EF label="PAN"            val={draft.pan}           set={v=>setDraft({...draft,pan:v})}            req disabled={!!kyc.pan} />
                     <EF label="Pincode"        val={draft.pincode}       set={v=>setDraft({...draft,pincode:v})}        req />
                     <EF label="City"           val={draft.city}          set={v=>setDraft({...draft,city:v})}           req />
-                    <EF label="State"          val={draft.state}         set={v=>setDraft({...draft,state:v})}          req />
+                    <EF label="State"          val={draft.state}         set={v=>setDraft({...draft,state:v})}          req type="select" options={INDIAN_STATES} />
                     <EF label="Address Line 1" val={draft.addressLine1}  set={v=>setDraft({...draft,addressLine1:v})}   req span2 />
                     <EF label="Address Line 2" val={draft.addressLine2}  set={v=>setDraft({...draft,addressLine2:v})}   span2 />
                   </div>
@@ -430,20 +488,33 @@ function VF({ label, val, span2, optional }) {
 }
 
 /* ── edit field ── */
-function EF({ label, val, set, req, span2, disabled }) {
+function EF({ label, val, set, req, span2, disabled, type, options }) {
   return (
     <div className={`pf-field${span2 ? ' span2' : ''}`}>
       <label className="pf-flabel">
         {label}{req && <em> *</em>}
       </label>
-      <input
-        className={`pf-finput ${disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : ''}`}
-        value={val || ''}
-        onChange={e => set(e.target.value)}
-        required={req}
-        disabled={disabled}
-        placeholder={disabled ? `Verified ${label}` : `Enter ${label.toLowerCase()}…`}
-      />
+      {type === 'select' ? (
+        <select
+          className={`pf-finput ${disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : ''}`}
+          value={val || ''}
+          onChange={e => set(e.target.value)}
+          required={req}
+          disabled={disabled}
+        >
+          <option value="">Select {label}</option>
+          {options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+      ) : (
+        <input
+          className={`pf-finput ${disabled ? 'opacity-50 cursor-not-allowed bg-gray-50' : ''}`}
+          value={val || ''}
+          onChange={e => set(e.target.value)}
+          required={req}
+          disabled={disabled}
+          placeholder={disabled ? `Verified ${label}` : `Enter ${label.toLowerCase()}…`}
+        />
+      )}
     </div>
   )
 }
