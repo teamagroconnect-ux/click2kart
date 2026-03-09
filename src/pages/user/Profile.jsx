@@ -32,21 +32,29 @@ export default function Profile() {
     navigator.geolocation.getCurrentPosition(async (pos) => {
       try {
         const { latitude, longitude } = pos.coords
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`)
+        // Using zoom=18 for better address precision
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`)
         const data = await res.json()
         
         if (data.address) {
           const addr = data.address
+          // Robust postcode check: Nominatim sometimes puts it in different fields or display_name
+          let detectedPincode = addr.postcode || ''
+          if (!detectedPincode && data.display_name) {
+            const pinMatch = data.display_name.match(/\b\d{6}\b/)
+            if (pinMatch) detectedPincode = pinMatch[0]
+          }
+
           const newState = {
             ...draft,
-            pincode: addr.postcode || draft.pincode,
-            city: addr.city || addr.town || addr.village || addr.suburb || draft.city,
+            pincode: detectedPincode || draft.pincode,
+            city: addr.city || addr.town || addr.village || addr.suburb || addr.district || draft.city,
             state: addr.state || draft.state,
-            addressLine1: data.display_name.split(',').slice(0, 2).join(',').trim() || draft.addressLine1,
-            addressLine2: data.display_name.split(',').slice(2, 4).join(',').trim() || draft.addressLine2
+            addressLine1: [addr.road, addr.neighbourhood, addr.suburb].filter(Boolean).join(', ') || data.display_name.split(',').slice(0, 2).join(',').trim() || draft.addressLine1,
+            addressLine2: [addr.county, addr.state_district].filter(Boolean).join(', ') || data.display_name.split(',').slice(2, 4).join(',').trim() || draft.addressLine2
           }
           setDraft(newState)
-          notify('Location detected successfully!', 'success')
+          notify(detectedPincode ? 'Address and Pincode detected!' : 'Address detected (Pincode not found)', detectedPincode ? 'success' : 'warning')
         }
       } catch (err) {
         notify('Failed to fetch address from location', 'error')
@@ -55,8 +63,8 @@ export default function Profile() {
       }
     }, () => {
       setLocLoading(false)
-      notify('Location access denied', 'error')
-    })
+      notify('Location access denied. Please enable GPS.', 'error')
+    }, { enableHighAccuracy: true, timeout: 5000 })
   }
 
   useEffect(() => {
@@ -413,19 +421,34 @@ export default function Profile() {
             {editing && (
               <form onSubmit={save}>
                 <div className="pf-form-wrap">
-                  <div className="mb-6 flex justify-between items-center bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100">
-                    <div>
-                      <div className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1">Quick Address Fill</div>
-                      <div className="text-xs text-gray-500 font-medium">Use GPS to automatically fill your address details.</div>
+                  {/* Premium Quick Fill Section */}
+                  <div className="mb-8 p-1 rounded-[22px] bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 shadow-xl shadow-indigo-100">
+                    <div className="bg-white/95 backdrop-blur-sm p-5 rounded-[20px] flex justify-between items-center gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-inner">
+                          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <div className="text-[11px] font-black text-indigo-600 uppercase tracking-[0.15em] mb-0.5">Instant Checkout</div>
+                          <div className="text-sm font-black text-gray-900 leading-tight">Auto-fill Business Address</div>
+                          <div className="text-[10px] text-gray-400 font-bold mt-1">Uses precise GPS for faster KYC completion.</div>
+                        </div>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={detectLocation}
+                        disabled={locLoading}
+                        className="group relative overflow-hidden flex items-center gap-2 bg-gray-900 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 shadow-lg shadow-gray-200"
+                      >
+                        <span className="relative z-10 flex items-center gap-2">
+                          {locLoading ? <div className="pf-spin2" /> : '📍 Locate Me'}
+                        </span>
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
                     </div>
-                    <button 
-                      type="button" 
-                      onClick={detectLocation}
-                      disabled={locLoading}
-                      className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-indigo-200 shadow-sm text-[11px] font-bold text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all disabled:opacity-50"
-                    >
-                      {locLoading ? <div className="pf-spin2" style={{borderTopColor:'#7c3aed', borderLeftColor:'#7c3aed'}} /> : '📍 Detect Location'}
-                    </button>
                   </div>
 
                   <div className="pf-fgrid">

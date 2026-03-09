@@ -80,22 +80,25 @@ export default function ProductDetail() {
   const [deliveryDate, setDeliveryDate] = useState(null)
   const [countdown, setCountdown] = useState({ h: 0, m: 0, s: 0 })
   const [kycData, setKycData] = useState(null)
+  const [kycLoading, setKycLoading] = useState(false)
   const authed = !!localStorage.getItem('token')
 
   // Fetch KYC to get pincode
   useEffect(() => {
     if (authed) {
+      setKycLoading(true)
       api.get('/api/user/profile').then(({ data }) => {
         if (data.kyc?.pincode) {
-          setPincode(data.kyc.pincode)
+          const pc = data.kyc.pincode
+          setPincode(pc)
           setKycData(data.kyc)
           // Trigger initial estimate
-          const days = 2 + (Number(data.kyc.pincode[0]) % 4)
+          const days = 2 + (Number(pc[0]) % 4)
           const date = new Date()
           date.setDate(date.getDate() + days)
           setDeliveryDate(date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', weekday: 'short' }))
         }
-      }).catch(() => {})
+      }).catch(() => {}).finally(() => setKycLoading(false))
     }
   }, [authed])
 
@@ -852,7 +855,15 @@ export default function ProductDetail() {
               </div>
 
               <div style={{ padding: '20px' }}>
-                {!kycData?.pincode ? (
+                {kycLoading ? (
+                  <div className="flex items-center gap-3 animate-pulse">
+                    <div className="w-8 h-8 rounded-lg bg-gray-100" />
+                    <div className="space-y-2 flex-1">
+                      <div className="h-2 bg-gray-100 rounded w-1/3" />
+                      <div className="h-3 bg-gray-100 rounded w-1/2" />
+                    </div>
+                  </div>
+                ) : !kycData?.pincode ? (
                   <>
                     <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Check Delivery Availability</div>
                     <form onSubmit={checkDelivery} className="flex gap-2">
@@ -873,13 +884,21 @@ export default function ProductDetail() {
                     </form>
                   </>
                 ) : (
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Delivering to</div>
-                      <div className="text-sm font-black text-gray-900">{kycData.city || 'Your Location'}, {pincode}</div>
+                  <div className="flex items-center justify-between p-1">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Shipping to Business</div>
+                        <div className="text-sm font-black text-gray-900">{kycData.city || 'Your Hub'}, {pincode}</div>
+                      </div>
                     </div>
                     <button 
-                      onClick={() => setKycData(null)}
+                      onClick={() => { setKycData(null); setPincode(''); setDeliveryDate(null); }}
                       className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100"
                     >
                       Change
