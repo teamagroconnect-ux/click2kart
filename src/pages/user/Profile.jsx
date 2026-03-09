@@ -73,35 +73,22 @@ export default function Profile() {
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=${zoomLevel}&addressdetails=1&accept-language=en`)
         const data = await res.json()
-        let pc = data.address?.postcode || ''
-        if (pc) pc = pc.replace(/\s+/g, '').match(/\d{6}/)?.[0] || pc // sanitize to 6 digits
-        
-        if (!pc && data.display_name) {
-          const pinMatch = data.display_name.match(/\b\d{6}\b/)
-          if (pinMatch) pc = pinMatch[0]
-        }
-        return { data, pc }
-      } catch (e) { return { data: null, pc: '' } }
+        return { data }
+      } catch (e) { return { data: null } }
     }
 
     navigator.geolocation.getCurrentPosition(async (pos) => {
       try {
         const { latitude, longitude } = pos.coords
         
-        // Try precise zoom first (18)
-        let { data, pc } = await fetchWithZoom(latitude, longitude, 18)
-        
-        // If no pincode at 18, try broader zoom (14) - much higher chance for area postcode
-        if (!pc) {
-          const retry = await fetchWithZoom(latitude, longitude, 14)
-          if (retry.pc) pc = retry.pc
-        }
+        // Using zoom 18 for best address details
+        let { data } = await fetchWithZoom(latitude, longitude, 18)
         
         if (data && data.address) {
           const addr = data.address
           const newState = {
             ...draft,
-            pincode: pc || draft.pincode,
+            // Pincode removed - user fills manually
             city: addr.city || addr.town || addr.village || addr.suburb || addr.district || draft.city,
             district: addr.state_district || addr.county || addr.district || draft.district,
             state: addr.state || draft.state,
@@ -109,7 +96,7 @@ export default function Profile() {
             addressLine2: [addr.county, addr.state_district].filter(Boolean).join(', ') || data.display_name.split(',').slice(2, 4).join(',').trim() || draft.addressLine2
           }
           setDraft(newState)
-          notify(pc ? 'Address and Pincode detected!' : 'Address detected (Pincode not found)', pc ? 'success' : 'warning')
+          notify('Address details detected! Please fill your pincode manually.', 'success')
         }
       } catch (err) {
         notify('Failed to fetch address from location', 'error')
@@ -464,9 +451,9 @@ export default function Profile() {
                   <VF label="GSTIN"          val={kyc.gstin} />
                   <VF label="PAN"            val={kyc.pan} />
                   <VF label="Pincode"        val={kyc.pincode} />
-                  <VF label="City"           val={kyc.city} />
-                  <VF label="District"       val={kyc.district} />
                   <VF label="State"          val={kyc.state} />
+                  <VF label="District"       val={kyc.district} />
+                  <VF label="City"           val={kyc.city} />
                   <VF label="Address Line 1" val={kyc.addressLine1} span2 />
                   <VF label="Address Line 2" val={kyc.addressLine2} span2 optional />
                 </div>
@@ -512,13 +499,12 @@ export default function Profile() {
                     <EF label="GSTIN"          val={draft.gstin}         set={v=>setDraft({...draft,gstin:v})}          req disabled={!!kyc.gstin} />
                     <EF label="PAN"            val={draft.pan}           set={v=>setDraft({...draft,pan:v})}            req disabled={!!kyc.pan} />
                     <EF label="Pincode"        val={draft.pincode}       set={v=>setDraft({...draft,pincode:v})}        req />
-                    <EF label="City"           val={draft.city}          set={v=>setDraft({...draft,city:v})}           req />
                     <EF 
                       label="State" 
                       val={draft.state} 
                       set={v=>{
-                        // Reset district when state changes
-                        setDraft({...draft, state:v, district: ''})
+                        // Reset district and city when state changes
+                        setDraft({...draft, state:v, district: '', city: ''})
                       }} 
                       req 
                       type="select" 
@@ -527,12 +513,13 @@ export default function Profile() {
                     <EF 
                       label="District" 
                       val={draft.district} 
-                      set={v=>setDraft({...draft,district:v})} 
+                      set={v=>setDraft({...draft,district:v, city: ''})} 
                       req 
                       type="select" 
                       options={draft.state ? (DISTRICTS_BY_STATE[draft.state] || []) : []}
                       disabled={!draft.state}
                     />
+                    <EF label="City"           val={draft.city}          set={v=>setDraft({...draft,city:v})}           req disabled={!draft.district} />
                     <EF label="Address Line 1" val={draft.addressLine1}  set={v=>setDraft({...draft,addressLine1:v})}   req span2 />
                     <EF label="Address Line 2" val={draft.addressLine2}  set={v=>setDraft({...draft,addressLine2:v})}   span2 />
                   </div>
