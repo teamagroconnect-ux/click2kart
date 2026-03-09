@@ -814,12 +814,7 @@ export default function ProductDetail() {
                       </div>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <div style={{fontSize:11,color:'#9ca3af',fontWeight:600}}>Inclusive of {gstRate}% GST</div>
-                    <div className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-100">
-                      TAX INPUT: ₹{gstAmount.toFixed(2)} / unit
-                    </div>
-                  </div>
+                  <div style={{fontSize:11,color:'#9ca3af',fontWeight:600,marginTop:4}}>Inclusive of {gstRate}% GST</div>
 
                   {/* qty */}
                   <div className="pd-qty-row">
@@ -828,10 +823,7 @@ export default function ProductDetail() {
                       <div className="pd-qty-val">{qty}</div>
                       <button className="pd-qty-btn" onClick={()=>setQty(q=>q+1)}>+</button>
                     </div>
-                    <div className="flex flex-col gap-1">
-                      {savingsTotal > 0 && <span className="pd-savings-tag">Wholesale Save: ₹{savingsTotal.toLocaleString()}</span>}
-                      {gstSavingTotal > 0 && <span className="pd-savings-tag" style={{ background:'rgba(124,58,237,0.08)', color:'#7c3aed', borderColor:'rgba(124,58,237,0.18)' }}>GST Input Claim: ₹{gstSavingTotal.toLocaleString()}</span>}
-                    </div>
+                    {savingsTotal > 0 && <span className="pd-savings-tag">Wholesale Save: ₹{savingsTotal.toLocaleString()}</span>}
                   </div>
                 </>
               ) : (
@@ -850,7 +842,7 @@ export default function ProductDetail() {
                   </div>
                   <div>
                     <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Express Dispatch</div>
-                    <div className="text-sm font-black text-gray-900 leading-none">Order in {countdown.h}h {countdown.m}m {countdown.s}s</div>
+                    <div className="text-sm font-black text-rose-600 leading-none">Order in {countdown.h}h {countdown.m}m {countdown.s}s</div>
                   </div>
                 </div>
                 <div className="text-right">
@@ -860,23 +852,40 @@ export default function ProductDetail() {
               </div>
 
               <div style={{ padding: '20px' }}>
-                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Check Delivery Availability</div>
-                <form onSubmit={checkDelivery} className="flex gap-2">
-                  <input 
-                    type="text" 
-                    maxLength="6"
-                    placeholder="Enter 6-digit Pincode"
-                    value={pincode}
-                    onChange={e => setPincode(e.target.value.replace(/\D/g,''))}
-                    style={{ flex: 1, padding: '10px 14px', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '13px', fontWeight: '600', outline: 'none' }}
-                  />
-                  <button 
-                    type="submit"
-                    className="px-6 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
-                  >
-                    Check
-                  </button>
-                </form>
+                {!kycData?.pincode ? (
+                  <>
+                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Check Delivery Availability</div>
+                    <form onSubmit={checkDelivery} className="flex gap-2">
+                      <input 
+                        type="text" 
+                        maxLength="6"
+                        placeholder="Enter 6-digit Pincode"
+                        value={pincode}
+                        onChange={e => setPincode(e.target.value.replace(/\D/g,''))}
+                        style={{ flex: 1, padding: '10px 14px', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '13px', fontWeight: '600', outline: 'none' }}
+                      />
+                      <button 
+                        type="submit"
+                        className="px-6 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                      >
+                        Check
+                      </button>
+                    </form>
+                  </>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Delivering to</div>
+                      <div className="text-sm font-black text-gray-900">{kycData.city || 'Your Location'}, {pincode}</div>
+                    </div>
+                    <button 
+                      onClick={() => setKycData(null)}
+                      className="text-[10px] font-black text-indigo-600 uppercase tracking-widest bg-indigo-50 px-3 py-1.5 rounded-lg border border-indigo-100"
+                    >
+                      Change
+                    </button>
+                  </div>
+                )}
 
                 {deliveryDate && (
                   <div className="mt-4 flex items-center gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
@@ -993,29 +1002,8 @@ export default function ProductDetail() {
             {/* DESCRIPTION */}
             {p.description && (
               <div className="pd-section" style={{ marginTop:16 }}>
-                <div className="pd-section-label">Product Specifications</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
-                  <div className="flex justify-between items-center border-b border-gray-50 pb-2">
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">HSN Code</span>
-                    <span className="text-sm font-black text-gray-900">{p.hsnCode || '—'}</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b border-gray-50 pb-2">
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">GST Rate</span>
-                    <span className="text-sm font-black text-gray-900">{p.gst || 0}%</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b border-gray-50 pb-2">
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Weight</span>
-                    <span className="text-sm font-black text-gray-900">{p.weight || 0}g</span>
-                  </div>
-                  <div className="flex justify-between items-center border-b border-gray-50 pb-2">
-                    <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">MOQ</span>
-                    <span className="text-sm font-black text-gray-900">{p.minOrderQty || 1} Units</span>
-                  </div>
-                </div>
-                <div className="mt-6">
-                  <div className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Detailed Description</div>
-                  <p className="pd-desc">{p.description}</p>
-                </div>
+                <div className="pd-section-label">About This Product</div>
+                <p className="pd-desc">{p.description}</p>
               </div>
             )}
 
