@@ -74,9 +74,43 @@ export default function ProductDetail() {
   const [recOpen, setRecOpen]             = useState(false)
   const [reviewOpen, setReviewOpen]       = useState(false)
   const [myRating, setMyRating]           = useState(0)
-  const [myComment, setMyComment]         = useState('')
-  const [qty, setQty]                     = useState(1)
+  const [myComment, setMyComment] = useState('')
+  const [qty, setQty] = useState(1)
+  const [pincode, setPincode] = useState('')
+  const [deliveryDate, setDeliveryDate] = useState(null)
+  const [countdown, setCountdown] = useState({ h: 0, m: 0, s: 0 })
   const authed = !!localStorage.getItem('token')
+
+  // Timer logic for same-day dispatch (Cut-off 6 PM)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const now = new Date()
+      const cutoff = new Date()
+      cutoff.setHours(18, 0, 0, 0) // 6 PM Cut-off
+
+      let diff = cutoff - now
+      if (diff < 0) {
+        cutoff.setDate(cutoff.getDate() + 1)
+        diff = cutoff - now
+      }
+
+      const h = Math.floor(diff / (1000 * 60 * 60))
+      const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+      const s = Math.floor((diff % (1000 * 60)) / 1000)
+      setCountdown({ h, m, s })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const checkDelivery = (e) => {
+    e?.preventDefault()
+    if (pincode.length !== 6) return
+    // Mock delivery logic: 2-5 days based on pincode first digit
+    const days = 2 + (Number(pincode[0]) % 4)
+    const date = new Date()
+    date.setDate(date.getDate() + days)
+    setDeliveryDate(date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', weekday: 'short' }))
+  }
 
   useEffect(() => {
     api.get(`/api/products/${id}`).then(({data})=>{
@@ -776,21 +810,57 @@ export default function ProductDetail() {
             </div>
 
             {/* DELIVERY PANEL */}
-            <div className="pd-section" style={{ background:'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', border:'1px solid #e2e8f0', display:'flex', alignItems:'center', justifyContent:'space-between', padding:'16px 20px' }}>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-indigo-600 border border-indigo-50">
-                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                  </svg>
+            <div className="pd-section" style={{ background:'white', border:'1px solid rgba(139,92,246,0.12)', padding:'0' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(139,92,246,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-indigo-600 border border-indigo-50">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Express Dispatch</div>
+                    <div className="text-sm font-black text-gray-900 leading-none">Order in {countdown.h}h {countdown.m}m {countdown.s}s</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Shipping Info</div>
-                  <div className="text-sm font-black text-gray-900 leading-none">Ready for Dispatch</div>
+                <div className="text-right">
+                  <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Ships</div>
+                  <div className="text-sm font-black text-emerald-700 leading-none">{new Date().getHours() < 18 ? 'Today' : 'Tomorrow'}</div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Estimate</div>
-                <div className="text-sm font-black text-emerald-700 leading-none">Ships Today</div>
+
+              <div style={{ padding: '20px' }}>
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Check Delivery Availability</div>
+                <form onSubmit={checkDelivery} className="flex gap-2">
+                  <input 
+                    type="text" 
+                    maxLength="6"
+                    placeholder="Enter 6-digit Pincode"
+                    value={pincode}
+                    onChange={e => setPincode(e.target.value.replace(/\D/g,''))}
+                    style={{ flex: 1, padding: '10px 14px', borderRadius: '12px', border: '1.5px solid #e2e8f0', fontSize: '13px', fontWeight: '600', outline: 'none' }}
+                  />
+                  <button 
+                    type="submit"
+                    className="px-6 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                  >
+                    Check
+                  </button>
+                </form>
+
+                {deliveryDate && (
+                  <div className="mt-4 flex items-center gap-3 p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest leading-none mb-1">Estimated Delivery</div>
+                      <div className="text-sm font-black text-emerald-800 leading-none">by {deliveryDate}</div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
