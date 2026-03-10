@@ -212,7 +212,13 @@ export default function Cart() {
         .ct-qty-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#7c3aed;background:none;border:none;cursor:pointer;transition:background .15s;font-family:'DM Sans',sans-serif;}
         .ct-qty-btn:hover{background:rgba(139,92,246,.1);}
         .ct-qty-btn:disabled{opacity:.3;cursor:not-allowed;}
-        .ct-qty-val{min-width:36px;text-align:center;font-size:14px;font-weight:800;color:#1e1b2e;border-left:1px solid rgba(139,92,246,.12);border-right:1px solid rgba(139,92,246,.12);line-height:32px;padding:0 4px;}
+        .ct-qty-val{
+          width:44px; text-align:center; font-size:14px; font-weight:800; color:#1e1b2e;
+          border-left:1px solid rgba(139,92,246,.12); border-right:1px solid rgba(139,92,246,.12);
+          line-height:32px; background:none; border-top:none; border-bottom:none; outline:none;
+          appearance: textfield; -moz-appearance: textfield;
+        }
+        .ct-qty-val::-webkit-outer-spin-button, .ct-qty-val::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
         .ct-action-btn{font-size:11px;font-weight:700;letter-spacing:.06em;background:none;border:none;cursor:pointer;padding:0;font-family:'DM Sans',sans-serif;transition:color .15s;}
         .ct-action-btn.remove{color:#ef4444;}
@@ -418,7 +424,20 @@ export default function Cart() {
                           <button className="ct-qty-btn"
                             disabled={item.quantity <= Math.max(1, Number(item.minOrderQty||0))}
                             onClick={() => updateQuantity(item.productId||item._id, Math.max(Number(item.minOrderQty||1), item.quantity-1))}>−</button>
-                          <div className="ct-qty-val">{item.quantity}</div>
+                          <input 
+                            className="ct-qty-val" 
+                            type="number"
+                            value={item.quantity} 
+                            onChange={(e) => {
+                              const v = parseInt(e.target.value) || 0
+                              updateQuantity(item.productId||item._id, Math.max(0, v))
+                            }}
+                            onBlur={(e) => {
+                              const min = Math.max(1, Number(item.minOrderQty||0))
+                              const v = parseInt(e.target.value) || min
+                              updateQuantity(item.productId||item._id, Math.max(min, v))
+                            }}
+                          />
                           <button className="ct-qty-btn"
                             onClick={() => updateQuantity(item.productId||item._id, item.quantity+1)}>+</button>
                         </div>

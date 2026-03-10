@@ -29,6 +29,8 @@ import OrderHistory from './pages/user/OrderHistory.jsx'
 import Cart from './pages/user/Cart.jsx'
 import Profile from './pages/user/Profile.jsx'
 import ManualPayment from './pages/user/ManualPayment.jsx'
+import PrivacyPolicy from './pages/user/PrivacyPolicy.jsx'
+import TermsOfService from './pages/user/TermsOfService.jsx'
 
 export default function App() {
   return (
@@ -71,6 +73,8 @@ export default function App() {
         <Route path="profile" element={<Profile />} />
         <Route path="cart" element={<Cart />} />
         <Route path="manual-payment" element={<ManualPayment />} />
+        <Route path="privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="terms-of-service" element={<TermsOfService />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

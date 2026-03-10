@@ -184,9 +184,10 @@ export default function UserLayout() {
               <span className="text-violet-600">{CONFIG.SUPPORT_EMAIL}</span>
             </a>
             <div className="h-8 w-[1px] bg-gray-100"></div>
-            {['Privacy Policy', 'Terms of Service'].map((f) => (
-              <span key={f} className="text-[10px] font-black text-gray-400 uppercase tracking-widest cursor-pointer hover:text-gray-900 transition-colors">{f}</span>
-            ))}
+            <div className="flex gap-8">
+              <Link to="/privacy-policy" className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors">Privacy Policy</Link>
+              <Link to="/terms-of-service" className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors">Terms of Service</Link>
+            </div>
           </div>
         </div>
       </footer>

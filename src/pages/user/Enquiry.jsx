@@ -758,12 +758,10 @@ export default function Enquiry() {
         }
 
         .eq-item-price {
-          font-family: 'Playfair Display', serif;
-          font-size: 20px;
-          font-weight: 900;
-          background: linear-gradient(135deg, var(--primary), var(--primary-light));
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-size: 18px;
+          font-weight: 800;
+          color: var(--primary);
           flex-shrink: 0;
           margin-left: auto;
           padding-left: 12px;
@@ -839,12 +837,10 @@ export default function Enquiry() {
         }
 
         .eq-total-val {
-          font-family: 'Playfair Display', serif;
-          font-size: 36px;
-          font-weight: 900;
-          background: linear-gradient(135deg, var(--primary), var(--primary-light));
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          font-size: 32px;
+          font-weight: 800;
+          color: var(--primary);
           line-height: 1;
         }
 
