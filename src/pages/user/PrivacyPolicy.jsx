@@ -29,7 +29,7 @@ export default function PrivacyPolicy() {
 
         <section className="mb-10">
           <h2 className="text-xl font-black uppercase tracking-widest text-gray-900 mb-4">5. Contact Us</h2>
-          <p className="mb-4">If you have any questions regarding this privacy policy, you can contact our support team at support@click2kart.com.</p>
+          <p className="mb-4">If you have any questions regarding this privacy policy, you can contact our support team at support@click2kart.net .</p>
         </section>
       </div>
     </div>
