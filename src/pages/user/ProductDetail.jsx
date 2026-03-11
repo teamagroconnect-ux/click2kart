@@ -517,6 +517,7 @@ export default function ProductDetail() {
         .pd-bulk{
           background:white; border:1px solid rgba(139,92,246,.12);
           border-radius:16px; overflow:hidden; margin-bottom:20px;
+          box-shadow: 0 4px 20px rgba(139,92,246,0.04);
         }
         .pd-bulk-head{
           padding:14px 18px 12px;
@@ -527,12 +528,35 @@ export default function ProductDetail() {
         }
         .pd-bulk table{ width:100%; border-collapse:collapse; }
         .pd-bulk th{
-          padding:10px 18px; text-align:left;
-          font-size:9px; font-weight:700; letter-spacing:.15em; text-transform:uppercase; color:#9ca3af;
-          background:#faf9ff;
+          padding:12px 18px; text-align:left;
+          font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:#6b7280;
+          background:#faf9ff; border-bottom:1px solid rgba(139,92,246,.06);
         }
-        .pd-bulk td{ padding:10px 18px; font-size:13px; font-weight:600; color:#1e1b2e; border-top:1px solid rgba(139,92,246,.06); }
-        .pd-bulk tr.hit td{ background:rgba(5,150,105,.05); color:#059669; font-weight:700; }
+        .pd-bulk td{ 
+          padding:14px 18px; font-size:13px; font-weight:600; color:#1e1b2e; 
+          border-bottom:1px solid rgba(139,92,246,.04);
+          transition: all 0.2s ease;
+        }
+        .pd-bulk tr.hit td{ 
+          background:rgba(16,185,129,.04); 
+          color:#059669; 
+          font-weight:700;
+          border-bottom: 1px solid rgba(16,185,129,0.1);
+        }
+        .pd-bulk tr.hit .pd-bulk-qty{ color: #059669; }
+        .pd-bulk tr.hit .pd-bulk-price{ color: #059669; }
+        .pd-bulk tr.hit .pd-bulk-save{ 
+          background: #10b981; color: white; 
+          padding: 4px 10px; border-radius: 8px; font-size: 11px;
+        }
+        .pd-bulk-save-badge{
+          display: inline-flex; align-items: center; gap: 4px;
+          background: rgba(139,92,246,0.08); color: #7c3aed;
+          padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 800;
+          border: 1px solid rgba(139,92,246,0.1);
+        }
+        .pd-bulk-qty{ font-weight: 800; color: #4b5563; }
+        .pd-bulk-price{ font-weight: 800; color: #111827; }
 
         /* ── HIGHLIGHTS ── */
         .pd-section{
@@ -955,8 +979,8 @@ export default function ProductDetail() {
 
             {/* BULK PRICING */}
             {authed && Array.isArray(p.bulkTiers) && p.bulkTiers.length > 0 && (
-              <div className="pd-bulk" style={{ marginTop:24, background:'linear-gradient(135deg, #fff 0%, #f9f7ff 100%)' }}>
-                <div className="pd-bulk-head" style={{ borderBottom:'1px solid rgba(124,58,237,0.1)' }}>
+              <div className="pd-bulk" style={{ marginTop:24 }}>
+                <div className="pd-bulk-head">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600">
                       <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
@@ -969,37 +993,45 @@ export default function ProductDetail() {
                     </div>
                   </div>
                 </div>
-                <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {sortedTiersAsc.map((t,idx)=>{
-                    const next    = sortedTiersAsc[idx+1]
-                    const from    = t.quantity
-                    const to      = next ? next.quantity-1 : null
-                    const label   = to ? `${from}–${to} Units` : `${from}+ Units`
-                    const eff     = Math.max(0, basePrice-Number(t.priceReduction||0))
-                    const perSave = Math.max(0, basePrice-eff)
-                    const hit     = qty>=from && (!next||qty<=to||to===null)
-                    return (
-                      <div 
-                        key={idx} 
-                        className={`p-4 rounded-2xl border-2 transition-all duration-300 flex items-center justify-between ${
-                          hit 
-                          ? 'bg-white border-emerald-500 shadow-lg shadow-emerald-500/10 scale-[1.02]' 
-                          : 'bg-white/50 border-gray-100 hover:border-indigo-200'
-                        }`}
-                      >
-                        <div>
-                          <div className={`text-[10px] font-black uppercase tracking-widest mb-1 ${hit ? 'text-emerald-600' : 'text-gray-400'}`}>
-                            {label}
-                          </div>
-                          <div className="text-lg font-black text-gray-900">₹{eff.toLocaleString()}<span className="text-[10px] text-gray-400 ml-1">/unit</span></div>
-                        </div>
-                        <div className={`text-center px-3 py-2 rounded-xl border ${hit ? 'bg-emerald-50 border-emerald-100' : 'bg-indigo-50 border-indigo-100'}`}>
-                          <div className={`text-[9px] font-black uppercase tracking-tighter ${hit ? 'text-emerald-600' : 'text-indigo-600'}`}>Save</div>
-                          <div className={`text-sm font-black ${hit ? 'text-emerald-700' : 'text-indigo-700'}`}>₹{perSave.toLocaleString()}</div>
-                        </div>
-                      </div>
-                    )
-                  })}
+                <div className="overflow-x-auto">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Quantity</th>
+                        <th>Price/Unit</th>
+                        <th>Total Savings</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedTiersAsc.map((t, idx) => {
+                        const next = sortedTiersAsc[idx + 1]
+                        const from = t.quantity
+                        const to = next ? next.quantity - 1 : null
+                        const label = to ? `${from}–${to} Units` : `${from}+ Units`
+                        const eff = Math.max(0, basePrice - Number(t.priceReduction || 0))
+                        const perSave = Math.max(0, basePrice - eff)
+                        const hit = qty >= from && (!next || qty <= to || to === null)
+                        return (
+                          <tr key={idx} className={hit ? 'hit' : ''}>
+                            <td>
+                              <div className="pd-bulk-qty">
+                                {label}
+                                {hit && <span className="ml-2 text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Current</span>}
+                              </div>
+                            </td>
+                            <td>
+                              <div className="pd-bulk-price">₹{eff.toLocaleString()}</div>
+                            </td>
+                            <td>
+                              <div className={hit ? 'pd-bulk-save' : 'pd-bulk-save-badge'}>
+                                <span>Save ₹{perSave.toLocaleString()}</span>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
