@@ -17,6 +17,7 @@ export default function ProductDetail() {
   const { notify }    = useToast()
 
   const [p, setP]                         = useState(null)
+  const [error, setError]                 = useState(null)
   const [selected, setSelected]           = useState({ color:'', storage:'', ram:'' })
   const [activeVariant, setActiveVariant] = useState(null)
   const [activeImg, setActiveImg]         = useState(0)
@@ -74,8 +75,12 @@ export default function ProductDetail() {
 
   /* load product */
   useEffect(() => {
+    setError(null);
     api.get(`/api/products/${id}`).then(({ data }) => {
       setP(data); setQty(Math.max(1, Number(data.minOrderQty || 1)))
+    }).catch(err => {
+      console.error(err);
+      setError(err?.response?.data?.error || 'Product not found');
     })
     api.get(`/api/recommendations/similar/${id}`).then(({ data }) => setSimilar(data||[])).catch(() => {})
     api.get(`/api/recommendations/frequently-bought/${id}?limit=6`).then(({ data }) => setRecItems(data||[])).catch(() => {})
@@ -118,17 +123,51 @@ export default function ProductDetail() {
     return cleanup
   }, [p])
 
-  /* ── LOADING ── */
+  /* ── LOADING & ERROR ── */
+  if (error) return (
+    <div className="pd-error-root">
+      <style>{`
+        .pd-error-root { font-family:'DM Sans',sans-serif; background:#f5f3ff; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center; }
+        .pd-error-box { background:white; padding:40px; border-radius:24px; box-shadow:0 10px 40px rgba(0,0,0,.05); border:1px solid rgba(124,58,237,.1); max-width:400px; width:100%; }
+        .pd-error-ico { font-size:40px; margin-bottom:20px; display:block; }
+        .pd-error-h { font-family:'Bebas Neue',sans-serif; font-size:32px; color:#1e1b2e; margin-bottom:10px; }
+        .pd-error-p { font-size:14px; color:#6b7280; margin-bottom:24px; line-height:1.6; }
+        .pd-error-btn { background:#7c3aed; color:white; padding:12px 24px; border-radius:12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; text-decoration:none; display:inline-block; transition:all .2s; }
+        .pd-error-btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(124,58,237,.3); }
+      `}</style>
+      <div className="pd-error-box">
+        <span className="pd-error-ico">🛍️</span>
+        <h2 className="pd-error-h">Oops!</h2>
+        <p className="pd-error-p">{error}</p>
+        <Link to="/products" className="pd-error-btn">Back to Catalogue</Link>
+      </div>
+    </div>
+  )
+
   if (!p) return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;600;700&display=swap');
-        .pdload{font-family:'DM Sans',sans-serif;background:#f5f3ff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
-        .pdload-ring{width:44px;height:44px;border:3px solid rgba(124,58,237,.15);border-top-color:#7c3aed;border-radius:50%;animation:pdSpin .75s linear infinite;}
-        .pdload-txt{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#9ca3af;}
-        @keyframes pdSpin{to{transform:rotate(360deg)}}
+        .pdload{font-family:'DM Sans',sans-serif;background:#f5f3ff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;position:relative;overflow:hidden;}
+        .pdload::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(139,92,246,.03)1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.03)1px,transparent 1px);background-size:60px 60px;}
+        .pdload-wrap{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;}
+        .pdload-outer{width:80px;height:80px;border-radius:50%;border:4px solid rgba(124,58,237,.08);display:flex;align-items:center;justify-content:center;position:relative;}
+        .pdload-inner{width:60px;height:60px;border-radius:50%;border:4px solid transparent;border-top-color:#7c3aed;border-right-color:#7c3aed;animation:pdSpin 1s cubic-bezier(.4,0,.2,1) infinite;}
+        .pdload-center{position:absolute;width:30px;height:30px;background:rgba(124,58,237,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;animation:pdPulse 1.5s ease-in-out infinite;}
+        .pdload-txt{font-size:10px;font-weight:800;letter-spacing:.25em;text-transform:uppercase;color:#7c3aed;margin-top:20px;opacity:.6;animation:pdFade 1.5s ease-in-out infinite;}
+        @keyframes pdSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes pdPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:1}}
+        @keyframes pdFade{0%,100%{opacity:.4}50%{opacity:1}}
       `}</style>
-      <div className="pdload"><div className="pdload-ring"/><span className="pdload-txt">Loading product…</span></div>
+      <div className="pdload">
+        <div className="pdload-wrap">
+          <div className="pdload-outer">
+            <div className="pdload-inner"/>
+            <div className="pdload-center">📦</div>
+          </div>
+          <span className="pdload-txt">Fetching Product…</span>
+        </div>
+      </div>
     </>
   )
 
@@ -818,6 +857,22 @@ export default function ProductDetail() {
               <span className="pd-badge pd-badge-a">⚡ Fast Dispatch</span>
             </div>
 
+            {/* STOCK STATUS */}
+            <div className="pd-stock" style={{
+              background: stock>0?(stock<=5?'rgba(245,158,11,.1)':'rgba(5,150,105,.1)'):'rgba(220,38,38,.1)',
+              border: `1px solid ${stock>0?(stock<=5?'rgba(245,158,11,.25)':'rgba(5,150,105,.25)'):'rgba(220,38,38,.25)'}`,
+              color: stock>0?(stock<=5?'#d97706':'#059669'):'#dc2626',
+              marginBottom: 12
+            }}>
+              <span className="pd-stock-dot" style={{
+                background: stock>0?(stock<=5?'#d97706':'#10b981'):'#ef4444',
+                boxShadow: `0 0 5px ${stock>0?(stock<=5?'#d97706':'#10b981'):'#ef4444'}`,
+                animation: stock<=5 && stock>0 ? 'pdStockPulse 2s infinite' : 'none',
+              }}/>
+              {stockSt.text}
+              {stock > 0 && stock <= 10 && <span style={{fontWeight:500,opacity:.7,textTransform:'none',letterSpacing:0}}> — only {stock} left</span>}
+            </div>
+
             {/* name */}
             <h1 className="pd-name">{p.name}</h1>
 
@@ -1030,21 +1085,6 @@ export default function ProductDetail() {
                   </>
                 )}
               </div>
-            </div>
-
-            {/* STOCK STATUS */}
-            <div className="pd-stock" style={{
-              background: stock>0?(stock<=5?'rgba(245,158,11,.1)':'rgba(5,150,105,.1)'):'rgba(220,38,38,.1)',
-              border: `1px solid ${stock>0?(stock<=5?'rgba(245,158,11,.25)':'rgba(5,150,105,.25)'):'rgba(220,38,38,.25)'}`,
-              color: stock>0?(stock<=5?'#d97706':'#059669'):'#dc2626',
-            }}>
-              <span className="pd-stock-dot" style={{
-                background: stock>0?(stock<=5?'#d97706':'#10b981'):'#ef4444',
-                boxShadow: `0 0 5px ${stock>0?(stock<=5?'#d97706':'#10b981'):'#ef4444'}`,
-                animation: stock<=5 && stock>0 ? 'pdStockPulse 2s infinite' : 'none',
-              }}/>
-              {stockSt.text}
-              {stock > 0 && stock <= 10 && <span style={{fontWeight:500,opacity:.7,textTransform:'none',letterSpacing:0}}> — only {stock} left</span>}
             </div>
 
             {/* CTA */}
