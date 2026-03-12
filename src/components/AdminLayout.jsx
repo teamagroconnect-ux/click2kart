@@ -76,6 +76,11 @@ const Icon = ({ name }) => (
         <path d="M17 20h3" />
       </svg>
     )}
+    {name === 'offer' && (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    )}
   </span>
 )
 
@@ -195,6 +200,12 @@ export default function AdminLayout() {
                 <>
                   <Icon name="coupon" />
                   Coupons
+                </>
+              ))}
+              {link('/admin/offers', (
+                <>
+                  <Icon name="offer" />
+                  Offers
                 </>
               ))}
               {link('/admin/partners', (

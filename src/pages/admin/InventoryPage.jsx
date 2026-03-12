@@ -8,6 +8,7 @@ export default function InventoryPage() {
   const [q, setQ] = useState('')
   const [options, setOptions] = useState([])
   const [selected, setSelected] = useState(null)
+  const [selectedVariant, setSelectedVariant] = useState(null)
   const [qty, setQty] = useState('')
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -67,10 +68,15 @@ export default function InventoryPage() {
   const submit = async (e) => {
     e.preventDefault()
     if (!canSubmit) return
+    if (selected.variants?.length > 0 && !selectedVariant) {
+      notify('Please select a variant', 'error')
+      return
+    }
     setSubmitting(true)
     try {
       await api.post('/api/inventory/in', {
         productId: selected._id,
+        variantId: selectedVariant?._id || selectedVariant?.id,
         quantity: Number(qty),
         note
       })
@@ -79,6 +85,7 @@ export default function InventoryPage() {
       setNote('')
       setQ('')
       setSelected(null)
+      setSelectedVariant(null)
       const { data } = await api.get('/api/inventory/history', { params: { limit: 20 } })
       setHistory(data.items || [])
     } catch (err) {
@@ -236,10 +243,31 @@ export default function InventoryPage() {
                       <div className="text-[11px] text-gray-600">Location: {(selected.store || '-')}{selected.section ? `(${selected.section})` : ''}</div>
                     )}
                   </div>
-                  <button type="button" onClick={() => { setSelected(null); setQ('') }} className="px-3 py-1.5 rounded-lg bg-white border text-gray-600 hover:bg-gray-100 text-xs font-bold">Change</button>
+                  <button type="button" onClick={() => { setSelected(null); setQ(''); setSelectedVariant(null); }} className="px-3 py-1.5 rounded-lg bg-white border text-gray-600 hover:bg-gray-100 text-xs font-bold">Change</button>
                 </div>
               )}
             </div>
+            {selected && selected.variants?.length > 0 && (
+              <div className="mt-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Select Variant</label>
+                <select 
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                  value={selectedVariant?._id || ''}
+                  onChange={e => {
+                    const v = selected.variants.find(vx => (vx._id || vx.id) === e.target.value);
+                    setSelectedVariant(v);
+                  }}
+                  required
+                >
+                  <option value="">-- Select Variant --</option>
+                  {selected.variants.map(v => {
+                    const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {});
+                    const label = Object.entries(vAttrs).map(([k,val]) => `${k}: ${val}`).join(', ') || `SKU: ${v.sku || v._id}`;
+                    return <option key={v._id || v.id} value={v._id || v.id}>{label} (Current: {v.stock || 0})</option>
+                  })}
+                </select>
+              </div>
+            )}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>

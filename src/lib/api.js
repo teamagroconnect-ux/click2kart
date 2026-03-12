@@ -5,7 +5,7 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('token') || localStorage.getItem('partnerToken')
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
@@ -20,7 +20,13 @@ api.interceptors.response.use(
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       localStorage.removeItem('userPhone')
+      
+      const isPartner = localStorage.getItem('partnerToken') || location.pathname.startsWith('/partner')
+      localStorage.removeItem('partnerToken')
+      localStorage.removeItem('partnerData')
+
       if (location.pathname.startsWith('/admin')) location.href = '/admin/login'
+      else if (isPartner) location.href = '/partner'
       else location.href = '/login'
     }
     // For 403, do not force logout. Let pages handle access errors gracefully.

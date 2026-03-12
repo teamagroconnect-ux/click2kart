@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import { CONFIG } from '../../shared/lib/config.js'
@@ -6,6 +7,7 @@ import { CONFIG } from '../../shared/lib/config.js'
 const COLORS = ['#8b5cf6', '#7c3aed', '#a78bfa', '#6d28d9', '#c4b5fd', '#ddd6fe']
 
 export default function Partner() {
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [otp, setOtp] = useState('')
@@ -13,7 +15,43 @@ export default function Partner() {
   const [otpSent, setOtpSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [data, setData] = useState(null)
+  const [data, setData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('partnerData')
+      return saved ? JSON.parse(saved) : null
+    } catch { return null }
+  })
+
+  useEffect(() => {
+    const token = localStorage.getItem('partnerToken')
+    if (token) {
+      if (window.location.pathname === '/partner') {
+        navigate('/partner/dashboard')
+      }
+      if (!data) {
+        setLoading(true)
+        api.get('/api/public/partner/me')
+          .then(({ data }) => {
+            setData(data)
+            localStorage.setItem('partnerData', JSON.stringify(data))
+          })
+          .catch(() => {
+            localStorage.removeItem('partnerToken')
+            localStorage.removeItem('partnerData')
+            setData(null)
+            navigate('/partner')
+          })
+          .finally(() => setLoading(false))
+      }
+    }
+  }, [data, navigate])
+
+  const logout = () => {
+    localStorage.removeItem('partnerToken')
+    localStorage.removeItem('partnerData')
+    setData(null)
+    navigate('/partner')
+  }
 
   const validateEmail = (email) => {
     return String(email)
@@ -50,7 +88,12 @@ export default function Partner() {
     try {
       const payload = useOtp ? { otp, email } : { password, email }
       const { data } = await api.post(`/api/public/partner/login`, payload)
+      if (data.token) {
+        localStorage.setItem('partnerToken', data.token)
+        localStorage.setItem('partnerData', JSON.stringify(data))
+      }
       setData(data)
+      navigate('/partner/dashboard')
     } catch (err) {
       setError(err?.response?.data?.error || 'Authentication failed. Please check your credentials.')
     } finally {
@@ -763,6 +806,11 @@ export default function Partner() {
           {/* ── DASHBOARD ── */}
           {data && (
             <div style={{ animation: 'prFadeUp 0.6s ease both' }}>
+              <div className="flex justify-end mb-6">
+                <button onClick={logout} className="px-6 py-2.5 bg-white border border-red-100 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-50 transition-all shadow-sm">
+                  Logout Session
+                </button>
+              </div>
 
               {/* Profile */}
               <div className="pr-profile">
@@ -818,12 +866,43 @@ export default function Partner() {
                       <div className="pr-stat-label">Current Balance</div>
                       <div className="pr-stat-val">₹{data.balance.toLocaleString()}</div>
                     </div>
+                    <div className="pr-stat" style={{ border: '1px solid rgba(139,92,246,0.1)', background: 'white' }}>
+                      <div className="pr-stat-label">Total Referrals</div>
+                      <div className="pr-stat-val">{data.bills?.length || 0}</div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Charts & Sales */}
               <div className="pr-charts">
+                <div className="pr-card">
+                  <div className="pr-card-head">
+                    <span className="pr-card-title">Coupon Performance</span>
+                  </div>
+                  <div style={{ height: 260, width: '100%', marginTop: 10 }}>
+                    {data.coupons?.some(c => c.sales > 0) ? (
+                      <ResponsiveContainer>
+                        <PieChart>
+                          <Pie data={data.coupons.filter(c => c.sales > 0)} dataKey="sales" nameKey="code" cx="50%" cy="50%" outerRadius={80} stroke="none">
+                            {data.coupons.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                          </Pie>
+                          <Tooltip 
+                            contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', fontSize: '11px', fontWeight: 'bold' }} 
+                            formatter={(v) => `₹${v.toLocaleString()}`}
+                          />
+                          <Legend iconType="circle" wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '10px' }} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-3">
+                        <div style={{ fontSize: 32 }}>📊</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>No Sales Data Yet</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="pr-card">
                   <div className="pr-card-head">
                     <span className="pr-card-title">Recent Referrals</span>

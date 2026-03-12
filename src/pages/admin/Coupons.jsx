@@ -6,7 +6,7 @@ export default function Coupons(){
   const [expandedId, setExpandedId] = useState(null)
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({
-    code:'', type:'PERCENT', value:'', minAmount:'', expiryDate:'', usageLimit:'',
+    code:'', type:'PERCENT', value:'', minAmount:'', minOrderValue:'', maxDiscount:'', expiryDate:'', usageLimit:'',
     partnerId:'', partnerCommissionPercent:'', maxTotalSales:'', isActive:true, password:''
   })
   const [partners, setPartners] = useState([])
@@ -17,7 +17,7 @@ export default function Coupons(){
 
   const resetForm = () => {
     setForm({
-      code:'', type:'PERCENT', value:'', minAmount:'', expiryDate:'', usageLimit:'',
+      code:'', type:'PERCENT', value:'', minAmount:'', minOrderValue:'', maxDiscount:'', expiryDate:'', usageLimit:'',
       partnerId:'', partnerCommissionPercent:'', maxTotalSales:'', isActive:true, password:''
     });
     setEditingId(null);
@@ -29,7 +29,9 @@ export default function Coupons(){
       code: c.code,
       type: c.type,
       value: c.value,
-      minAmount: c.minAmount || '',
+      minAmount: c.minOrderValue || c.minAmount || '',
+      minOrderValue: c.minOrderValue || c.minAmount || '',
+      maxDiscount: c.maxDiscount || '',
       expiryDate: c.expiryDate ? new Date(c.expiryDate).toISOString().split('T')[0] : '',
       usageLimit: c.usageLimit || '',
       partnerId: c.partner?._id || c.partner || '',
@@ -47,7 +49,8 @@ export default function Coupons(){
     const payload = {
       ...form,
       value: Number(form.value),
-      minAmount: form.minAmount? Number(form.minAmount): undefined,
+      minOrderValue: form.minOrderValue? Number(form.minOrderValue): Number(form.minAmount || 0),
+      maxDiscount: form.maxDiscount? Number(form.maxDiscount): 0,
       usageLimit: form.usageLimit? Number(form.usageLimit): undefined,
       partnerCommissionPercent: form.partnerCommissionPercent ? Number(form.partnerCommissionPercent) : undefined,
       maxTotalSales: form.maxTotalSales ? Number(form.maxTotalSales) : undefined,
@@ -133,12 +136,16 @@ export default function Coupons(){
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Min Order</label>
-                  <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="500" value={form.minAmount} onChange={e=>setForm({...form, minAmount:e.target.value})} />
+                  <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="500" value={form.minOrderValue} onChange={e=>setForm({...form, minOrderValue:e.target.value})} />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Usage Limit</label>
-                  <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="100" value={form.usageLimit} onChange={e=>setForm({...form, usageLimit:e.target.value})} />
+                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Max Discount</label>
+                  <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0 = no max" value={form.maxDiscount} onChange={e=>setForm({...form, maxDiscount:e.target.value})} />
                 </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Usage Limit</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="100" value={form.usageLimit} onChange={e=>setForm({...form, usageLimit:e.target.value})} />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Expiry Date</label>

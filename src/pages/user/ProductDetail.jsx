@@ -18,7 +18,7 @@ export default function ProductDetail() {
 
   const [p, setP]                         = useState(null)
   const [error, setError]                 = useState(null)
-  const [selected, setSelected]           = useState({ color:'', storage:'', ram:'' })
+  const [selected, setSelected]           = useState({})
   const [activeVariant, setActiveVariant] = useState(null)
   const [activeImg, setActiveImg]         = useState(0)
   const [lightbox, setLightbox]           = useState(false)
@@ -89,22 +89,35 @@ export default function ProductDetail() {
   /* variant selection */
   useEffect(() => {
     if (!p || !Array.isArray(p.variants) || !p.variants.length) { setActiveVariant(null); return }
-    const colors   = [...new Set(p.variants.map(v => v.attributes?.color).filter(Boolean))]
-    const rams     = [...new Set(p.variants.map(v => v.attributes?.ram).filter(Boolean))]
-    const storages = [...new Set(p.variants.map(v => v.attributes?.storage).filter(Boolean))]
-    setSelected(prev => ({ color:prev.color||colors[0]||'', ram:prev.ram||rams[0]||'', storage:prev.storage||storages[0]||'' }))
+    const attrs = p.attributes || []
+    const initial = {}
+    attrs.forEach(a => {
+      const vals = [...new Set(p.variants.map(v => (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {}))[a]).filter(Boolean))]
+      if (vals.length) initial[a] = vals[0]
+    })
+    setSelected(prev => ({ ...initial, ...prev }))
   }, [p])
 
   useEffect(() => {
     if (!p || !Array.isArray(p.variants) || !p.variants.length) { setActiveVariant(null); return }
-    const v = p.variants.find(v =>
-      (v.attributes?.color||'')===(selected.color||'') &&
-      (v.attributes?.ram||'')===(selected.ram||'') &&
-      (v.attributes?.storage||'')===(selected.storage||'')
-    ) || null
-    if (!v) {
-      const pick = p.variants.filter(x => (x.attributes?.color||'')===(selected.color||''))[0] || p.variants[0]
-      if (pick) { setSelected({ color:pick.attributes?.color||'', ram:pick.attributes?.ram||'', storage:pick.attributes?.storage||'' }); return }
+    const v = p.variants.find(v => {
+      const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+      return Object.entries(selected).every(([k, val]) => (vAttrs[k] || '') === (val || ''))
+    }) || null
+    
+    if (!v && Object.keys(selected).length > 0) {
+      // Fallback: try to find any variant that matches the first selected attribute
+      const firstKey = Object.keys(selected)[0]
+      const pick = p.variants.find(x => {
+        const xAttrs = x.attributes instanceof Map ? Object.fromEntries(x.attributes) : (x.attributes || {})
+        return (xAttrs[firstKey] || '') === (selected[firstKey] || '')
+      }) || p.variants[0]
+      
+      if (pick) {
+        const pickAttrs = pick.attributes instanceof Map ? Object.fromEntries(pick.attributes) : (pick.attributes || {})
+        setSelected(pickAttrs)
+        return
+      }
     }
     setActiveVariant(v); setActiveImg(0)
   }, [selected, p])
@@ -205,12 +218,17 @@ export default function ProductDetail() {
     }
   }
 
-  const variantOpts = (key) => [...new Set(p.variants.map(v => v.attributes?.[key]).filter(Boolean))]
+  const variantOpts = (key) => [...new Set(p.variants.map(v => {
+    const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+    return vAttrs[key]
+  }).filter(Boolean))]
+
   const isOptEnabled = (key, val) => p.variants.some(v => {
-    const checks = { color:selected.color, ram:selected.ram, storage:selected.storage }
+    const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+    const checks = { ...selected }
     delete checks[key]
-    return (v.attributes?.[key]||'')===(val) &&
-      Object.entries(checks).every(([k,sv]) => !sv || (v.attributes?.[k]||'')===(sv))
+    return (vAttrs[key] || '') === (val) &&
+      Object.entries(checks).every(([k, sv]) => !sv || (vAttrs[k] || '') === (sv))
   })
 
   /* ── RENDER ── */
@@ -893,48 +911,27 @@ export default function ProductDetail() {
             {/* VARIANTS */}
             {Array.isArray(p.variants) && p.variants.length > 0 && (
               <div className="pd-variants">
-                {variantOpts('color').length > 0 && (
-                  <div className="pd-var-sec">
-                    <div className="pd-var-lbl">Color</div>
-                    <div className="pd-var-opts">
-                      {variantOpts('color').map((c,i) => (
-                        <button key={i} disabled={!isOptEnabled('color',c)}
-                          className={`pd-var-btn${selected.color===c?' on':''}`}
-                          onClick={() => isOptEnabled('color',c) && setSelected(s => ({...s, color:c}))}>
-                          {c}
-                        </button>
-                      ))}
+                {(p.attributes || []).map(attrKey => {
+                  const options = variantOpts(attrKey)
+                  if (!options.length) return null
+                  return (
+                    <div key={attrKey} className="pd-var-sec">
+                      <div className="pd-var-lbl" style={{ textTransform: 'capitalize' }}>{attrKey}</div>
+                      <div className="pd-var-opts">
+                        {options.map((opt, i) => (
+                          <button 
+                            key={i} 
+                            disabled={!isOptEnabled(attrKey, opt)}
+                            className={`pd-var-btn${selected[attrKey] === opt ? ' on' : ''}`}
+                            onClick={() => isOptEnabled(attrKey, opt) && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
+                          >
+                            {opt}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-                {variantOpts('storage').length > 0 && (
-                  <div className="pd-var-sec">
-                    <div className="pd-var-lbl">Storage</div>
-                    <div className="pd-var-opts">
-                      {variantOpts('storage').map((s,i) => (
-                        <button key={i} disabled={!isOptEnabled('storage',s)}
-                          className={`pd-var-btn${selected.storage===s?' on':''}`}
-                          onClick={() => isOptEnabled('storage',s) && setSelected(prev => ({...prev, storage:s}))}>
-                          {s}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {variantOpts('ram').length > 0 && (
-                  <div className="pd-var-sec">
-                    <div className="pd-var-lbl">RAM</div>
-                    <div className="pd-var-opts">
-                      {variantOpts('ram').map((r,i) => (
-                        <button key={i} disabled={!isOptEnabled('ram',r)}
-                          className={`pd-var-btn${selected.ram===r?' on':''}`}
-                          onClick={() => isOptEnabled('ram',r) && setSelected(prev => ({...prev, ram:r}))}>
-                          {r}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  )
+                })}
                 {activeVariant && <div className="pd-sku">SKU: {activeVariant.sku || '—'}</div>}
               </div>
             )}

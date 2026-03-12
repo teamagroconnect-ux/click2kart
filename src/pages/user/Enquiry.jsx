@@ -137,17 +137,21 @@ export default function Enquiry() {
     setCouponError('')
     try {
       const { data } = await api.post('/api/coupons/validate', { 
-        code: couponCode.trim(),
+        code: couponCode.trim().toUpperCase(),
         amount: subTotal 
       })
       if (data.valid) {
         setAppliedCoupon(data)
         setCouponCode('')
-      } else {
-        setCouponError(data.reason || 'Invalid coupon')
       }
     } catch (err) {
-      setCouponError(err?.response?.data?.reason || 'Invalid or expired coupon')
+      const msg = err?.response?.data?.error || ''
+      if (msg.startsWith('min_order_value_not_met:')) {
+        const val = msg.split(':')[1]
+        setCouponError(`Min order value ₹${Number(val).toLocaleString()} required`)
+      } else if (msg === 'coupon_expired') setCouponError('Coupon has expired')
+      else if (msg === 'usage_limit_reached') setCouponError('Coupon usage limit reached')
+      else setCouponError('Invalid or inactive coupon')
     } finally {
       setIsApplying(false)
     }

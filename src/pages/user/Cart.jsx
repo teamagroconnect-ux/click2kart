@@ -50,17 +50,21 @@ export default function Cart() {
     setCouponError('')
     try {
       const { data } = await api.post('/api/coupons/validate', { 
-        code: couponCode.trim(),
+        code: couponCode.trim().toUpperCase(),
         amount: totalPayable 
       })
       if (data.valid) {
         setAppliedCoupon(data)
         setCouponCode('')
-      } else {
-        setCouponError(data.reason || 'Invalid coupon')
       }
     } catch (err) {
-      setCouponError(err?.response?.data?.reason || 'Invalid or expired coupon')
+      const msg = err?.response?.data?.error || ''
+      if (msg.startsWith('min_order_value_not_met:')) {
+        const val = msg.split(':')[1]
+        setCouponError(`Min order value ₹${Number(val).toLocaleString()} required`)
+      } else if (msg === 'coupon_expired') setCouponError('Coupon has expired')
+      else if (msg === 'usage_limit_reached') setCouponError('Coupon usage limit reached')
+      else setCouponError('Invalid or inactive coupon')
     } finally {
       setIsApplying(false)
     }
@@ -202,6 +206,7 @@ export default function Cart() {
         .ct-item-body{flex:1;min-width:0;}
         .ct-item-name{font-size:15px;font-weight:700;color:#1e1b2e;line-height:1.3;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
         .ct-item-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+        .ct-item-variant{font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.1em;background:rgba(124,58,237,.06);padding:2px 8px;border-radius:6px;border:1px solid rgba(124,58,237,.1);}
         .ct-unit-price{font-size:13px;font-weight:600;color:#6b7280;}
         .ct-delivery{font-size:11px;color:#9ca3af;margin-bottom:10px;}
         .ct-delivery b{color:#059669;}
@@ -399,6 +404,11 @@ export default function Cart() {
                     <div className="ct-item-body">
                       <div className="ct-item-name" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${item.productId || item._id}`)}>{item.name}</div>
                       <div className="ct-item-meta">
+                        {item.attributes && Object.entries(item.attributes).length > 0 && (
+                          <span className="ct-item-variant">
+                            {Object.entries(item.attributes).map(([k,v]) => `${k}: ${v}`).join(' • ')}
+                          </span>
+                        )}
                         <span className="ct-unit-price">₹{unitPrice(item).toLocaleString()} / unit</span>
                         {item.stock <= 20 && (
                           <span style={{ fontSize:9, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase',

@@ -15,11 +15,13 @@ import AdminLayout from './components/AdminLayout.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import InventoryPage from './pages/admin/InventoryPage.jsx'
 import Stores from './pages/admin/Stores.jsx'
+import Offers from './pages/admin/Offers.jsx'
 import Home from './pages/user/Home.jsx'
 import Catalogue from './pages/user/Catalogue.jsx'
 import ProductDetail from './pages/user/ProductDetail.jsx'
 import Enquiry from './pages/user/Enquiry.jsx'
 import Partner from './pages/user/Partner.jsx'
+import PartnerProtectedRoute from './components/PartnerProtectedRoute.jsx'
 import UserLayout from './components/UserLayout.jsx'
 import UserLogin from './pages/user/Login.jsx'
 import UserSignup from './pages/user/Signup.jsx'
@@ -57,6 +59,7 @@ export default function App() {
         <Route path="settings" element={<Settings />} />
         <Route path="inventory" element={<InventoryPage />} />
         <Route path="stores" element={<Stores />} />
+        <Route path="offers" element={<Offers />} />
       </Route>
 
       <Route path="/" element={<UserLayout />}>
@@ -65,6 +68,11 @@ export default function App() {
         <Route path="products/:id" element={<ProductDetail />} />
         <Route path="order" element={<Enquiry />} />
         <Route path="partner" element={<Partner />} />
+        <Route path="partner/dashboard" element={
+          <PartnerProtectedRoute>
+            <Partner />
+          </PartnerProtectedRoute>
+        } />
         <Route path="login" element={<UserLogin />} />
         <Route path="signup" element={<UserSignup />} />
         <Route path="forgot-password" element={<ForgotPassword />} />

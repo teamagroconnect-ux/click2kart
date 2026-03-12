@@ -46,6 +46,7 @@ export default function Home() {
   const [scrollY, setScrollY] = useState(0)
   const [cats, setCats] = useState([])
   const [recs, setRecs] = useState([])
+  const [offers, setOffers] = useState([])
   useEffect(() => {
     const fn = () => setScrollY(window.scrollY)
     window.addEventListener('scroll', fn, { passive: true })
@@ -83,6 +84,7 @@ export default function Home() {
     })
     api.get('/api/public/categories').then(({ data }) => setCats(data || [])).catch(() => setCats([]))
     api.get('/api/recommendations/trending').then(({ data }) => setRecs(data || [])).catch(() => setRecs([]))
+    api.get('/api/offers?activeOnly=true').then(({ data }) => setOffers(data || [])).catch(() => setOffers([]))
   }, [])
 
   return (
@@ -509,6 +511,32 @@ export default function Home() {
         }
         .hm-step-p strong { color: #1e1b2e; font-weight: 700; }
 
+        /* ────────────── OFFERS ────────────── */
+        .hm-offers-section { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; position: relative; z-index: 1; }
+        .hm-offers-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+        @media(min-width:768px) { .hm-offers-grid { grid-template-columns: repeat(2, 1fr); } }
+        .hm-offer-card { 
+          position: relative; border-radius: 24px; overflow: hidden; aspect-ratio: 16/9; 
+          background: #f5f3ff; border: 1px solid rgba(124,58,237,0.1); transition: all 0.4s;
+        }
+        .hm-offer-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px rgba(124,58,237,0.25); }
+        .hm-offer-img { width: 100%; height: 100%; object-fit: cover; }
+        .hm-offer-content { 
+          position: absolute; inset: 0; padding: 32px; 
+          background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+          display: flex; flex-direction: column; justify-content: center; color: white;
+        }
+        .hm-offer-tag { 
+          display: inline-block; width: fit-content; padding: 4px 12px; border-radius: 100px;
+          background: #7c3aed; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 12px;
+        }
+        .hm-offer-title { font-family: 'Bebas Neue', sans-serif; font-size: 36px; line-height: 1; letter-spacing: 0.02em; margin-bottom: 8px; }
+        .hm-offer-btn { 
+          width: fit-content; padding: 10px 24px; border-radius: 12px; background: white; color: #1e1b2e;
+          font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; transition: all 0.3s;
+        }
+        .hm-offer-card:hover .hm-offer-btn { background: #7c3aed; color: white; }
+
         @media(max-width:768px) {
           .hm-steps-section { margin-bottom: 60px; }
         }
@@ -594,6 +622,26 @@ export default function Home() {
             ))}
           </div>
         </section>
+
+        {/* ── OFFERS SECTION ── */}
+        {offers.length > 0 && (
+          <section className="hm-offers-section">
+            <div className="hm-section-label">Limited Time Deals</div>
+            <h2 className="hm-section-heading">🔥 Special <em>Offers</em></h2>
+            <div className="hm-offers-grid">
+              {offers.map(off => (
+                <div key={off._id} className="hm-offer-card">
+                  <img src={off.bannerImage} alt={off.title} className="hm-offer-img" />
+                  <div className="hm-offer-content">
+                    <div className="hm-offer-tag">{off.discountPercent}% OFF</div>
+                    <h3 className="hm-offer-title">{off.title}</h3>
+                    <Link to="/products" className="hm-offer-btn">Shop Now</Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="hm-divider" />
 

@@ -309,6 +309,11 @@ export default function Orders(){
                                       </div>
                                       <div className="flex-1 min-w-0">
                                         <div className="text-xs font-bold text-gray-900 truncate">{it.name}</div>
+                                        {it.attributes && Object.entries(it.attributes instanceof Map ? Object.fromEntries(it.attributes) : it.attributes).length > 0 && (
+                                          <div className="text-[9px] text-blue-600 font-bold uppercase tracking-widest mt-0.5">
+                                            {Object.entries(it.attributes instanceof Map ? Object.fromEntries(it.attributes) : it.attributes).map(([k,v]) => `${k}: ${v}`).join(' • ')}
+                                          </div>
+                                        )}
                                         <div className="text-[10px] text-gray-500 font-medium">Qty: {it.quantity} × ₹{it.price}</div>
                                       </div>
                                       <div className="text-xs font-black text-gray-900">₹{it.lineTotal || (it.price * it.quantity)}</div>

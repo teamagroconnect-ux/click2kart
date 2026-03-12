@@ -11,7 +11,8 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', weight:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [] })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', weight:'', hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [], attributes: [] })
+  const [attrInput, setAttrInput] = useState('')
   const [hasVariants, setHasVariants] = useState(false)
   const [editing, setEditing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -56,16 +57,18 @@ export default function Products() {
       bulkDiscountPriceReduction: form.bulkTiers?.[0]?.priceReduction ? Number(form.bulkTiers[0].priceReduction) : Number(form.bulkDiscountPriceReduction||0),
       bulkTiers: (form.bulkTiers || []).map(t => ({ quantity: Number(t.quantity||0), priceReduction: Number(t.priceReduction||0) })),
       images,
+      attributes: form.attributes,
       variants: (form.variants || []).map(v => ({
-        attributes: { color: v.color || '', ram: v.ram || '', storage: v.storage || '', capacity: v.capacity || '' },
+        attributes: v.attributes || {},
         price: v.price ? Number(v.price) : undefined,
         mrp: v.mrp ? Number(v.mrp) : undefined,
         stock: v.stock ? Number(v.stock) : 0,
         sku: v.sku || undefined,
+        weight: Number(v.weight || 0),
         images: (v.images || '').split(',').map(s=>s.trim()).filter(Boolean)
       }))
     })
-    setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', weight: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [] }); setHasVariants(false); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', weight: '', hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [], attributes: [] }); setHasVariants(false); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -76,7 +79,17 @@ export default function Products() {
   const openEdit = (p) => setEditing({ 
     ...p, 
     weight: p.weight || '',
+    hsnCode: p.hsnCode || '',
     images: (p.images||[]).map(i=>i.url||i).join(', '),
+    attributes: Array.isArray(p.attributes) ? p.attributes : [],
+    variants: (p.variants || []).map(v => ({
+      ...v,
+      attributes: v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {}),
+      price: v.price || '',
+      mrp: v.mrp || '',
+      stock: v.stock || '',
+      weight: v.weight || ''
+    })),
     bulkDiscountQuantity: p.bulkDiscountQuantity || '',
     bulkDiscountPriceReduction: p.bulkDiscountPriceReduction || '',
     minOrderQty: p.minOrderQty || '',
@@ -94,6 +107,7 @@ export default function Products() {
       subcategory: editing.subcategory || undefined,
       stock: Number(editing.stock),
       weight: Number(editing.weight || 0),
+      hsnCode: editing.hsnCode || '',
       gst: Number(editing.gst||0),
       mrp: editing.mrp ? Number(editing.mrp) : undefined,
       minOrderQty: Number(editing.minOrderQty || 0),
@@ -103,7 +117,16 @@ export default function Products() {
       bulkTiers: (editing.bulkTiers || []).map(t => ({ quantity: Number(t.quantity||0), priceReduction: Number(t.priceReduction||0) })),
       images: (editing.images||'').split(',').map(s=>s.trim()).filter(Boolean),
       store: editing.store || '',
-      section: editing.section || ''
+      section: editing.section || '',
+      attributes: editing.attributes || [],
+      variants: (editing.variants || []).map(v => ({
+        ...v,
+        attributes: v.attributes instanceof Map ? Object.fromEntries(v.attributes) : v.attributes,
+        price: Number(v.price),
+        mrp: v.mrp ? Number(v.mrp) : undefined,
+        stock: Number(v.stock),
+        weight: Number(v.weight || 0)
+      }))
     }
     await api.put(`/api/products/${editing._id}`, payload)
     setEditing(null); load(page); notify('Product updated','success')
@@ -263,6 +286,107 @@ export default function Products() {
                     </div>
                   </div>
                 </div>
+
+                {hasVariants && (
+                  <div className="space-y-3 p-4 bg-gray-50 rounded-3xl border border-gray-100">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Dynamic Attributes</label>
+                      <div className="flex gap-2">
+                        <input 
+                          className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500" 
+                          placeholder="e.g. color, ram, storage" 
+                          value={attrInput} 
+                          onChange={e => setAttrInput(e.target.value)} 
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            if (attrInput.trim()) {
+                              setForm(f => ({ ...f, attributes: [...new Set([...(f.attributes||[]), attrInput.trim().toLowerCase()])] }))
+                              setAttrInput('')
+                            }
+                          }}
+                          className="px-4 py-2 bg-gray-900 text-white text-[10px] font-black uppercase rounded-xl"
+                        >Add</button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {(form.attributes || []).map(a => (
+                          <span key={a} className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">
+                            {a}
+                            <button type="button" className="text-red-500 hover:text-red-700" onClick={() => setForm(f => ({ ...f, attributes: f.attributes.filter(x => x !== a) }))}>✕</button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {(form.attributes || []).length > 0 && (
+                      <div className="pt-2">
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            // Simple variant generator logic
+                            setForm(f => ({ ...f, variants: [{ attributes: {}, stock: 0, price: f.price, mrp: f.mrp, sku: '' }] }))
+                          }}
+                          className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-[10px] font-black uppercase text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all"
+                        >
+                          + Define Variants
+                        </button>
+                      </div>
+                    )}
+
+                    {(form.variants || []).length > 0 && (
+                      <div className="space-y-3 mt-4">
+                        {form.variants.map((v, idx) => (
+                          <div key={idx} className="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm space-y-3">
+                            <div className="grid grid-cols-2 gap-2">
+                              {form.attributes.map(a => (
+                                <div key={a} className="space-y-1">
+                                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">{a}</label>
+                                  <input 
+                                    className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-[11px] font-bold" 
+                                    placeholder={`Value for ${a}`}
+                                    value={v.attributes[a] || ''}
+                                    onChange={e => {
+                                      const next = [...form.variants]
+                                      next[idx].attributes = { ...next[idx].attributes, [a]: e.target.value }
+                                      setForm({ ...form, variants: next })
+                                    }}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Price</label>
+                                <input className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-[11px] font-bold" value={v.price} onChange={e => {
+                                  const next = [...form.variants]; next[idx].price = e.target.value; setForm({ ...form, variants: next })
+                                }} />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Stock</label>
+                                <input className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-[11px] font-bold" value={v.stock} onChange={e => {
+                                  const next = [...form.variants]; next[idx].stock = e.target.value; setForm({ ...form, variants: next })
+                                }} />
+                              </div>
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">SKU</label>
+                                <input className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-[11px] font-bold" value={v.sku} onChange={e => {
+                                  const next = [...form.variants]; next[idx].sku = e.target.value; setForm({ ...form, variants: next })
+                                }} />
+                              </div>
+                            </div>
+                            <button type="button" className="text-[9px] font-black text-red-500 uppercase tracking-widest ml-1" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>Remove Variant</button>
+                          </div>
+                        ))}
+                        <button 
+                          type="button"
+                          onClick={() => setForm(f => ({ ...f, variants: [...f.variants, { attributes: {}, stock: 0, price: f.price, mrp: f.mrp, sku: '' }] }))}
+                          className="w-full py-2 bg-gray-100 text-gray-600 text-[10px] font-black uppercase rounded-xl"
+                        >+ Add Another Variant</button>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category</label>
@@ -289,6 +413,10 @@ export default function Products() {
                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Weight (grams)</label>
                     <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 500" value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} />
                   </div>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">HSN Code</label>
+                  <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 8517" value={form.hsnCode} onChange={e => setForm({ ...form, hsnCode: e.target.value })} />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Min Order Qty</label>
@@ -462,6 +590,10 @@ export default function Products() {
                 <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 500" value={editing.weight} onChange={e => setEditing({ ...editing, weight: e.target.value })} />
               </div>
               <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">HSN Code</label>
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 8517" value={editing.hsnCode || ''} onChange={e => setEditing({ ...editing, hsnCode: e.target.value })} />
+              </div>
+              <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Min Order Qty</label>
                 <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 5" value={editing.minOrderQty || ''} onChange={e => setEditing({ ...editing, minOrderQty: e.target.value })} />
               </div>
@@ -546,9 +678,20 @@ export default function Products() {
               <div className="md:col-span-3 pt-6 border-t border-gray-50">
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Variant Management</h4>
-                  <div className="text-[9px] font-bold text-gray-400">Manage Color, RAM, Storage variants</div>
+                  <div className="text-[9px] font-bold text-gray-400">Manage Dynamic Variants</div>
                 </div>
-                <VariantManager product={editing} onChanged={() => { api.get(`/api/products/${editing._id}`).then(({data}) => setEditing({ ...editing, variants: data.variants||[] })) }} />
+                <VariantManager 
+                  product={editing} 
+                  onChanged={() => { 
+                    api.get(`/api/products/${editing._id}`).then(({data}) => {
+                      setEditing(prev => ({ 
+                        ...prev, 
+                        variants: data.variants || [],
+                        attributes: data.attributes || prev.attributes || []
+                      }))
+                    })
+                  }} 
+                />
               </div>
             </div>
 
@@ -580,26 +723,30 @@ export default function Products() {
 
 function VariantManager({ product, onChanged }) {
   const { notify } = useToast()
-  const [form, setForm] = useState({ color:'', ram:'', storage:'', capacity:'', price:'', mrp:'', stock:'', sku:'', images:'' })
+  const [attrInput, setAttrInput] = useState('')
+  const [form, setForm] = useState({ attributes: {}, price: product.price || '', mrp: product.mrp || '', stock: '', sku: '', weight: product.weight || '', images: '' })
+  
   const add = async (e) => {
     e.preventDefault()
     try {
       const images = form.images.split(',').map(s=>s.trim()).filter(Boolean)
       await api.post(`/api/products/${product._id}/variants`, {
-        attributes: { color: form.color, ram: form.ram, storage: form.storage, capacity: form.capacity },
+        attributes: form.attributes,
         price: Number(form.price||0),
         mrp: form.mrp ? Number(form.mrp) : undefined,
         stock: Number(form.stock||0),
         sku: form.sku || undefined,
+        weight: Number(form.weight || 0),
         images
       })
-      setForm({ color:'', ram:'', storage:'', capacity:'', price:'', mrp:'', stock:'', sku:'', images:'' })
+      setForm({ attributes: {}, price: product.price || '', mrp: product.mrp || '', stock: '', sku: '', weight: product.weight || '', images: '' })
       notify('Variant added','success')
       onChanged && onChanged()
     } catch (err) {
       notify(err?.response?.data?.error || 'Failed to add variant','error')
     }
   }
+
   const toggleActive = async (v) => {
     try {
       await api.put(`/api/products/${product._id}/variants/${v._id}`, { isActive: !v.isActive })
@@ -607,47 +754,91 @@ function VariantManager({ product, onChanged }) {
       onChanged && onChanged()
     } catch { notify('Update failed','error') }
   }
+
+  const deleteVariant = async (v) => {
+    if (!window.confirm('Delete variant?')) return
+    try {
+      await api.delete(`/api/products/${product._id}/variants/${v._id}`)
+      notify('Variant deleted','success')
+      onChanged && onChanged()
+    } catch { notify('Delete failed','error') }
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div className="md:col-span-2 space-y-3">
         {(product.variants || []).length === 0 && (
           <div className="text-xs text-gray-500 italic">No variants added yet</div>
         )}
-        {(product.variants || []).map(v => (
-          <div key={v._id} className="flex items-center justify-between gap-4 bg-white border border-gray-100 rounded-2xl p-4">
-            <div className="space-y-1">
-              <div className="text-sm font-black text-gray-900">{product.name}</div>
-              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                {['color','ram','storage','capacity'].map(k => v.attributes?.[k] ? `${k}: ${v.attributes[k]}` : '').filter(Boolean).join(' • ')}
+        {(product.variants || []).map(v => {
+          const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+          return (
+            <div key={v._id} className="flex items-center justify-between gap-4 bg-white border border-gray-100 rounded-2xl p-4">
+              <div className="space-y-1">
+                <div className="text-sm font-black text-gray-900">{product.name}</div>
+                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                  {Object.entries(vAttrs).map(([k, val]) => `${k}: ${val}`).join(' • ')}
+                </div>
+                <div className="text-xs font-bold text-gray-900">₹{(v.price ?? product.price).toLocaleString()} • {v.weight||0}g • SKU: {v.sku || '-'}</div>
+                <div className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black border ${v.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                  {v.stock} IN STOCK
+                </div>
               </div>
-              <div className="text-xs font-bold text-gray-900">₹{(v.price ?? product.price).toLocaleString()} • SKU: {v.sku || '-'}</div>
-              <div className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black border ${v.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                {v.stock} IN STOCK
+              <div className="flex items-center gap-2">
+                <button onClick={() => toggleActive(v)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${v.isActive ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'}`}>
+                  {v.isActive ? 'Active' : 'Inactive'}
+                </button>
+                <button onClick={() => deleteVariant(v)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">✕</button>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button onClick={() => toggleActive(v)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${v.isActive ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                {v.isActive ? 'Active' : 'Inactive'}
-              </button>
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
-      <form onSubmit={add} className="space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="Color" value={form.color} onChange={e=>setForm({...form,color:e.target.value})} />
-          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="RAM" value={form.ram} onChange={e=>setForm({...form,ram:e.target.value})} />
-          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="Storage" value={form.storage} onChange={e=>setForm({...form,storage:e.target.value})} />
-          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="Capacity" value={form.capacity} onChange={e=>setForm({...form,capacity:e.target.value})} />
+      <form onSubmit={add} className="space-y-3 bg-gray-50 p-4 rounded-3xl border border-gray-100">
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Define Attributes</label>
+          {product.attributes?.length > 0 ? (
+            <div className="grid grid-cols-1 gap-2">
+              {product.attributes.map(a => (
+                <div key={a} className="space-y-1">
+                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">{a}</label>
+                  <input 
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none" 
+                    placeholder={`Value for ${a}`}
+                    value={form.attributes[a] || ''}
+                    onChange={e => setForm({ ...form, attributes: { ...form.attributes, [a]: e.target.value } })}
+                    required
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[10px] text-red-500 font-bold italic">No attributes defined for this product. Add them in the "Attributes" field first.</p>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="Price (₹)" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} />
-          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="MRP (₹)" value={form.mrp} onChange={e=>setForm({...form,mrp:e.target.value})} />
-          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="Stock" value={form.stock} onChange={e=>setForm({...form,stock:e.target.value})} />
-          <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold" placeholder="SKU" value={form.sku} onChange={e=>setForm({...form,sku:e.target.value})} />
+          <div className="space-y-1">
+            <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Price</label>
+            <input className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} required />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Stock</label>
+            <input className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none" value={form.stock} onChange={e=>setForm({...form,stock:e.target.value})} required />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">SKU</label>
+            <input className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none" value={form.sku} onChange={e=>setForm({...form,sku:e.target.value})} />
+          </div>
+          <div className="space-y-1">
+            <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Weight (g)</label>
+            <input className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none" value={form.weight} onChange={e=>setForm({...form,weight:e.target.value})} />
+          </div>
         </div>
-        <input className="bg-gray-50 rounded-2xl px-3 py-2 text-xs font-bold w-full" placeholder="Images (comma URLs)" value={form.images} onChange={e=>setForm({...form,images:e.target.value})} />
-        <button className="w-full bg-blue-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest">Add Variant</button>
+        <div className="space-y-1">
+          <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Images (comma URLs)</label>
+          <input className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none" value={form.images} onChange={e=>setForm({...form,images:e.target.value})} />
+        </div>
+        <button disabled={!product.attributes?.length} className="w-full bg-gray-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50">Add Variant</button>
       </form>
     </div>
   )
