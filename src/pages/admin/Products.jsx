@@ -65,7 +65,7 @@ export default function Products() {
         stock: v.stock ? Number(v.stock) : 0,
         sku: v.sku || undefined,
         weight: Number(v.weight || 0),
-        images: (v.images || '').split(',').map(s=>s.trim()).filter(Boolean)
+        images: (v.images || '').split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
       }))
     })
     setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', weight: '', hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [], attributes: [] }); setHasVariants(false); load(page); notify('Product added','success')
@@ -88,7 +88,8 @@ export default function Products() {
       price: v.price || '',
       mrp: v.mrp || '',
       stock: v.stock || '',
-      weight: v.weight || ''
+      weight: v.weight || '',
+      images: (v.images || []).map(i => i.url || i).join(', ')
     })),
     bulkDiscountQuantity: p.bulkDiscountQuantity || '',
     bulkDiscountPriceReduction: p.bulkDiscountPriceReduction || '',
@@ -125,7 +126,8 @@ export default function Products() {
         price: Number(v.price),
         mrp: v.mrp ? Number(v.mrp) : undefined,
         stock: Number(v.stock),
-        weight: Number(v.weight || 0)
+        weight: Number(v.weight || 0),
+        images: (v.images || '').toString().split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
       }))
     }
     await api.put(`/api/products/${editing._id}`, payload)
@@ -288,13 +290,18 @@ export default function Products() {
                 </div>
 
                 {hasVariants && (
-                  <div className="space-y-3 p-4 bg-gray-50 rounded-3xl border border-gray-100">
+                  <div className="space-y-4 p-5 bg-gray-50 rounded-3xl border border-gray-100 shadow-inner">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900">Variant Management</h4>
+                      <div className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-black uppercase rounded-md border border-blue-100">Dynamic Mode</div>
+                    </div>
+
                     <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Dynamic Attributes</label>
+                      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Define Attributes</label>
                       <div className="flex gap-2">
                         <input 
-                          className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500" 
-                          placeholder="e.g. color, ram, storage" 
+                          className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
+                          placeholder="e.g. Color, Size, RAM" 
                           value={attrInput} 
                           onChange={e => setAttrInput(e.target.value)} 
                         />
@@ -306,85 +313,118 @@ export default function Products() {
                               setAttrInput('')
                             }
                           }}
-                          className="px-4 py-2 bg-gray-900 text-white text-[10px] font-black uppercase rounded-xl"
+                          className="px-6 py-3 bg-gray-900 text-white text-[10px] font-black uppercase rounded-xl hover:bg-black transition-colors"
                         >Add</button>
                       </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
-                        {(form.attributes || []).map(a => (
-                          <span key={a} className="inline-flex items-center gap-2 px-3 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700">
-                            {a}
-                            <button type="button" className="text-red-500 hover:text-red-700" onClick={() => setForm(f => ({ ...f, attributes: f.attributes.filter(x => x !== a) }))}>✕</button>
-                          </span>
-                        ))}
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {(form.attributes || []).length === 0 ? (
+                          <div className="text-[10px] text-gray-400 font-medium italic ml-1">No attributes defined yet. Add them above.</div>
+                        ) : (
+                          (form.attributes || []).map(a => (
+                            <span key={a} className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700 shadow-sm">
+                              <span className="capitalize">{a}</span>
+                              <button type="button" className="text-red-400 hover:text-red-600 transition-colors" onClick={() => setForm(f => ({ ...f, attributes: f.attributes.filter(x => x !== a) }))}>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                            </span>
+                          ))
+                        )}
                       </div>
                     </div>
-                    
-                    {(form.attributes || []).length > 0 && (
-                      <div className="pt-2">
-                        <button 
-                          type="button"
-                          onClick={() => {
-                            // Simple variant generator logic
-                            setForm(f => ({ ...f, variants: [{ attributes: {}, stock: 0, price: f.price, mrp: f.mrp, sku: '' }] }))
-                          }}
-                          className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-[10px] font-black uppercase text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-all"
-                        >
-                          + Define Variants
-                        </button>
-                      </div>
-                    )}
 
-                    {(form.variants || []).length > 0 && (
-                      <div className="space-y-3 mt-4">
-                        {form.variants.map((v, idx) => (
-                          <div key={idx} className="p-3 bg-white border border-gray-100 rounded-2xl shadow-sm space-y-3">
-                            <div className="grid grid-cols-2 gap-2">
-                              {form.attributes.map(a => (
-                                <div key={a} className="space-y-1">
-                                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">{a}</label>
-                                  <input 
-                                    className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-[11px] font-bold" 
-                                    placeholder={`Value for ${a}`}
-                                    value={v.attributes[a] || ''}
-                                    onChange={e => {
-                                      const next = [...form.variants]
-                                      next[idx].attributes = { ...next[idx].attributes, [a]: e.target.value }
-                                      setForm({ ...form, variants: next })
-                                    }}
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                            <div className="grid grid-cols-3 gap-2">
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Price</label>
-                                <input className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-[11px] font-bold" value={v.price} onChange={e => {
-                                  const next = [...form.variants]; next[idx].price = e.target.value; setForm({ ...form, variants: next })
-                                }} />
-                              </div>
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Stock</label>
-                                <input className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-[11px] font-bold" value={v.stock} onChange={e => {
-                                  const next = [...form.variants]; next[idx].stock = e.target.value; setForm({ ...form, variants: next })
-                                }} />
-                              </div>
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">SKU</label>
-                                <input className="w-full bg-gray-50 border-none rounded-lg px-3 py-2 text-[11px] font-bold" value={v.sku} onChange={e => {
-                                  const next = [...form.variants]; next[idx].sku = e.target.value; setForm({ ...form, variants: next })
-                                }} />
-                              </div>
-                            </div>
-                            <button type="button" className="text-[9px] font-black text-red-500 uppercase tracking-widest ml-1" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>Remove Variant</button>
-                          </div>
-                        ))}
-                        <button 
-                          type="button"
-                          onClick={() => setForm(f => ({ ...f, variants: [...f.variants, { attributes: {}, stock: 0, price: f.price, mrp: f.mrp, sku: '' }] }))}
-                          className="w-full py-2 bg-gray-100 text-gray-600 text-[10px] font-black uppercase rounded-xl"
-                        >+ Add Another Variant</button>
+                    <div className="pt-2 border-t border-gray-100">
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Manage Variants</label>
+                        {(form.attributes || []).length > 0 && (
+                          <button 
+                            type="button"
+                            onClick={() => setForm(f => ({ ...f, variants: [...(f.variants||[]), { attributes: {}, stock: '', price: f.price, mrp: f.mrp, sku: '', weight: '', images: '' }] }))}
+                            className="text-[9px] font-black text-blue-600 uppercase tracking-widest hover:underline"
+                          >+ Add Variant</button>
+                        )}
                       </div>
-                    )}
+
+                      {(form.variants || []).length === 0 ? (
+                        <div className="py-8 bg-white/50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-2">
+                          <span className="text-2xl opacity-20">📦</span>
+                          <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No variants added yet</div>
+                          {(form.attributes || []).length === 0 && (
+                            <div className="text-[9px] text-gray-400 max-w-[180px] text-center font-medium">Define attributes like "Color" or "Size" first to start adding variants.</div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                          {form.variants.map((v, idx) => (
+                            <div key={idx} className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm space-y-4 relative group/v">
+                              <button 
+                                type="button" 
+                                className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors"
+                                onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                              </button>
+
+                              <div className="grid grid-cols-2 gap-3 pr-8">
+                                {form.attributes.map(a => (
+                                  <div key={a} className="space-y-1">
+                                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">{a}</label>
+                                    <input 
+                                      className="w-full bg-gray-50 border border-transparent rounded-xl px-3 py-2 text-[11px] font-bold focus:bg-white focus:border-blue-100 transition-all outline-none" 
+                                      placeholder={`e.g. ${a === 'color' ? 'Red' : a === 'size' ? 'XL' : 'Value'}`}
+                                      value={v.attributes[a] || ''}
+                                      onChange={e => {
+                                        const next = [...form.variants]
+                                        next[idx].attributes = { ...next[idx].attributes, [a]: e.target.value }
+                                        setForm({ ...form, variants: next })
+                                      }}
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Price</label>
+                                  <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-100" placeholder="Price" value={v.price} onChange={e => {
+                                    const next = [...form.variants]; next[idx].price = e.target.value; setForm({ ...form, variants: next })
+                                  }} />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Stock</label>
+                                  <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-100" placeholder="Qty" value={v.stock} onChange={e => {
+                                    const next = [...form.variants]; next[idx].stock = e.target.value; setForm({ ...form, variants: next })
+                                  }} />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">SKU</label>
+                                  <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-100" placeholder="SKU" value={v.sku} onChange={e => {
+                                    const next = [...form.variants]; next[idx].sku = e.target.value; setForm({ ...form, variants: next })
+                                  }} />
+                                </div>
+                                <div className="space-y-1">
+                                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Weight (g)</label>
+                                  <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-100" placeholder="Grams" value={v.weight} onChange={e => {
+                                    const next = [...form.variants]; next[idx].weight = e.target.value; setForm({ ...form, variants: next })
+                                  }} />
+                                </div>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Images (comma URLs)</label>
+                                <input 
+                                  className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-100" 
+                                  placeholder="https://img1.jpg, https://img2.jpg" 
+                                  value={v.images} 
+                                  onChange={e => {
+                                    const next = [...form.variants]; next[idx].images = e.target.value; setForm({ ...form, variants: next })
+                                  }} 
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-3">
@@ -766,45 +806,71 @@ function VariantManager({ product, onChanged }) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="md:col-span-2 space-y-3">
-        {(product.variants || []).length === 0 && (
-          <div className="text-xs text-gray-500 italic">No variants added yet</div>
+      <div className="md:col-span-2 space-y-4">
+        {(product.variants || []).length === 0 ? (
+          <div className="py-12 bg-gray-50/50 border-2 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center gap-2">
+            <span className="text-3xl opacity-10">📦</span>
+            <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">No variants added yet</div>
+          </div>
+        ) : (
+          (product.variants || []).map(v => {
+            const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+            return (
+              <div key={v._id} className="group relative flex items-center justify-between gap-4 bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md transition-all">
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <div className="text-[11px] font-black text-gray-900 truncate uppercase tracking-tight">{product.name}</div>
+                    <div className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[8px] font-black uppercase rounded border border-gray-200">SKU: {v.sku || '-'}</div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(vAttrs).map(([k, val]) => (
+                      <span key={k} className="px-2 py-0.5 bg-blue-50/50 text-blue-600 text-[9px] font-bold rounded-md border border-blue-100/50 uppercase tracking-tighter">
+                        {k}: {val}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-[11px] font-bold text-gray-900">₹{(v.price ?? product.price).toLocaleString()}</div>
+                    <div className="w-1 h-1 rounded-full bg-gray-200" />
+                    <div className="text-[10px] font-medium text-gray-500">{v.weight||0}g</div>
+                    <div className="w-1 h-1 rounded-full bg-gray-200" />
+                    <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-black border ${v.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${v.stock <= 5 ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                      {v.stock} UNITS
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => toggleActive(v)} 
+                    className={`h-9 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${v.isActive ? 'bg-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-gray-100 text-gray-400'}`}
+                  >
+                    {v.isActive ? 'Active' : 'Hidden'}
+                  </button>
+                  <button 
+                    onClick={() => deleteVariant(v)} 
+                    className="w-9 h-9 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                </div>
+              </div>
+            )
+          })
         )}
-        {(product.variants || []).map(v => {
-          const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
-          return (
-            <div key={v._id} className="flex items-center justify-between gap-4 bg-white border border-gray-100 rounded-2xl p-4">
-              <div className="space-y-1">
-                <div className="text-sm font-black text-gray-900">{product.name}</div>
-                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                  {Object.entries(vAttrs).map(([k, val]) => `${k}: ${val}`).join(' • ')}
-                </div>
-                <div className="text-xs font-bold text-gray-900">₹{(v.price ?? product.price).toLocaleString()} • {v.weight||0}g • SKU: {v.sku || '-'}</div>
-                <div className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black border ${v.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                  {v.stock} IN STOCK
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => toggleActive(v)} className={`px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${v.isActive ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'}`}>
-                  {v.isActive ? 'Active' : 'Inactive'}
-                </button>
-                <button onClick={() => deleteVariant(v)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">✕</button>
-              </div>
-            </div>
-          )
-        })}
       </div>
-      <form onSubmit={add} className="space-y-3 bg-gray-50 p-4 rounded-3xl border border-gray-100">
+
+      <form onSubmit={add} className="space-y-4 bg-white p-5 rounded-3xl border border-gray-100 shadow-sm self-start sticky top-4">
         <div className="space-y-2">
-          <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Define Attributes</label>
+          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Define Attributes</label>
           {product.attributes?.length > 0 ? (
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 gap-3 bg-gray-50/50 p-3 rounded-2xl border border-gray-100/50">
               {product.attributes.map(a => (
                 <div key={a} className="space-y-1">
-                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">{a}</label>
+                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1 capitalize">{a}</label>
                   <input 
-                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none" 
-                    placeholder={`Value for ${a}`}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm" 
+                    placeholder={`e.g. ${a === 'color' ? 'Red' : a === 'size' ? 'XL' : 'Value'}`}
                     value={form.attributes[a] || ''}
                     onChange={e => setForm({ ...form, attributes: { ...form.attributes, [a]: e.target.value } })}
                     required
@@ -813,32 +879,42 @@ function VariantManager({ product, onChanged }) {
               ))}
             </div>
           ) : (
-            <p className="text-[10px] text-red-500 font-bold italic">No attributes defined for this product. Add them in the "Attributes" field first.</p>
+            <div className="p-4 bg-red-50 rounded-2xl border border-red-100 text-center">
+              <p className="text-[10px] text-red-600 font-bold leading-relaxed">No attributes defined for this product. Add them in the "Attributes" field first.</p>
+            </div>
           )}
         </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Price</label>
-            <input className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} required />
+            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-100" placeholder="999" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} required />
           </div>
           <div className="space-y-1">
             <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Stock</label>
-            <input className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none" value={form.stock} onChange={e=>setForm({...form,stock:e.target.value})} required />
+            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-100" placeholder="100" value={form.stock} onChange={e=>setForm({...form,stock:e.target.value})} required />
           </div>
           <div className="space-y-1">
             <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">SKU</label>
-            <input className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none" value={form.sku} onChange={e=>setForm({...form,sku:e.target.value})} />
+            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-100" placeholder="SKU" value={form.sku} onChange={e=>setForm({...form,sku:e.target.value})} />
           </div>
           <div className="space-y-1">
             <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Weight (g)</label>
-            <input className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none" value={form.weight} onChange={e=>setForm({...form,weight:e.target.value})} />
+            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-100" placeholder="500" value={form.weight} onChange={e=>setForm({...form,weight:e.target.value})} />
           </div>
         </div>
+
         <div className="space-y-1">
           <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Images (comma URLs)</label>
-          <input className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none" value={form.images} onChange={e=>setForm({...form,images:e.target.value})} />
+          <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-100" placeholder="https://img1.jpg, https://img2.jpg" value={form.images} onChange={e=>setForm({...form,images:e.target.value})} />
         </div>
-        <button disabled={!product.attributes?.length} className="w-full bg-gray-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest disabled:opacity-50">Add Variant</button>
+
+        <button 
+          disabled={!product.attributes?.length} 
+          className="w-full bg-gray-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg hover:bg-black hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-30 disabled:pointer-events-none"
+        >
+          Add Variant
+        </button>
       </form>
     </div>
   )
