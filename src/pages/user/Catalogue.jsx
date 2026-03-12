@@ -821,20 +821,31 @@ export default function Catalogue() {
             <span className="ct-page-info">Page {page} of {totalPages}</span>
           </div>
 
-          {/* skeleton */}
+          {/* premium loader */}
           {loading && (
-            <div className="ct-grid">
-              {[1,2,3,4,5,6,7,8].map(i => (
-                <div key={i} className="ct-skel">
-                  <div className="ct-skel-img"/>
-                  <div className="ct-skel-body">
-                    <div className="ct-skel-line" style={{width:'72%'}}/>
-                    <div className="ct-skel-line" style={{width:'48%'}}/>
-                    <div className="ct-skel-line" style={{width:'60%',marginTop:10}}/>
+            <>
+              <div className="ct-grid">
+                {[1,2,3,4,5,6,7,8].map(i => (
+                  <div key={i} className="ct-skel" style={{ animationDelay: `${i*40}ms` }}>
+                    <div className="ct-skel-img"/>
+                    <div className="ct-skel-body">
+                      <div className="ct-skel-line" style={{width:'72%'}}/>
+                      <div className="ct-skel-line" style={{width:'48%'}}/>
+                      <div className="ct-skel-line" style={{width:'60%',marginTop:10}}/>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+              <div className="ct-load-txt-wrap">
+                <style>{`
+                  .ct-load-txt-wrap { text-align:center; padding:40px 0; animation:ctFadeUp .6s ease both; }
+                  .ct-load-h { font-family:'Bebas Neue',sans-serif; font-size:24px; color:#1e1b2e; letter-spacing:.05em; margin-bottom:4px; }
+                  .ct-load-p { font-size:10px; font-weight:800; color:#7c3aed; text-transform:uppercase; letter-spacing:.25em; opacity:.5; animation:ctPulse 1.5s ease infinite; }
+                `}</style>
+                <h2 className="ct-load-h">Wholesale Collection</h2>
+                <p className="ct-load-p">Fetching products…</p>
+              </div>
+            </>
           )}
 
           {/* grid */}

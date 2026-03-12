@@ -145,14 +145,29 @@ export default function Profile() {
   if (loading) return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&display=swap');
-        .pf-loader{font-family:'DM Sans',sans-serif;background:#f5f3ff;min-height:100vh;
-          display:flex;align-items:center;justify-content:center;}
-        .pf-spin{width:38px;height:38px;border:3px solid rgba(139,92,246,0.15);
-          border-top-color:#7c3aed;border-radius:50%;animation:pfs .8s linear infinite;}
-        @keyframes pfs{to{transform:rotate(360deg)}}
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;700&display=swap');
+        .pf-load-root { font-family:'DM Sans',sans-serif; background:#f5f3ff; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px; position:relative; overflow:hidden; }
+        .pf-load-root::before { content:''; position:absolute; inset:0; background-image:radial-gradient(circle at 2px 2px, rgba(124,58,237,.04) 1px, transparent 0); background-size:40px 40px; }
+        
+        .pf-load-avatar { width:90px; height:90px; background:white; border-radius:32px; box-shadow:0 12px 32px rgba(124,58,237,.15); border:1px solid rgba(124,58,237,.1); display:flex; align-items:center; justify-content:center; position:relative; z-index:1; }
+        .pf-load-avatar::after { content:''; position:absolute; inset:-4px; border:2px solid #7c3aed; border-radius:36px; opacity:.2; animation:pfPulse 2s ease-out infinite; }
+        .pf-load-avatar span { font-size:36px; }
+        
+        .pf-load-txt-w { text-align:center; z-index:1; }
+        .pf-load-h { font-family:'Bebas Neue',sans-serif; font-size:26px; color:#1e1b2e; letter-spacing:.05em; margin-bottom:2px; }
+        .pf-load-p { font-size:10px; font-weight:800; color:#7c3aed; text-transform:uppercase; letter-spacing:.25em; opacity:.5; }
+        
+        @keyframes pfPulse { 0% { transform:scale(.9); opacity:.8; } 100% { transform:scale(1.3); opacity:0; } }
       `}</style>
-      <div className="pf-loader"><div className="pf-spin" /></div>
+      <div className="pf-load-root">
+        <div className="pf-load-avatar">
+          <span>👤</span>
+        </div>
+        <div className="pf-load-txt-w">
+          <h2 className="pf-load-h">Profile Center</h2>
+          <p className="pf-load-p">Preparing your workspace…</p>
+        </div>
+      </div>
     </>
   )
 
