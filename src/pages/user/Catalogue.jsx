@@ -190,34 +190,32 @@ export default function Catalogue() {
       }
       .ct-searchbar-clear:hover { background: rgba(139,92,246,.18); }
 
-      /* suggest dropdown */
+      /* suggest dropdown (YT STYLE) */
       .ct-suggest {
         position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 200;
-        background: white;
-        border: 1.5px solid rgba(124,58,237,.18);
-        border-radius: 16px;
-        box-shadow: 0 16px 48px rgba(124,58,237,.15);
-        overflow: hidden;
+        background: white; border-radius: 18px; overflow: hidden;
+        box-shadow: 0 16px 48px rgba(0,0,0,.15);
+        border: 1.5px solid rgba(124,58,237,.1); padding: 8px 0;
         animation: ctFadeUp .18s ease both;
       }
       .ct-suggest-item {
-        display: flex; align-items: center; gap: 12px;
-        padding: 11px 14px; cursor: pointer;
+        display: flex; align-items: center; gap: 14px;
+        padding: 10px 18px; cursor: pointer;
         transition: background .12s;
-        border-bottom: 1px solid rgba(139,92,246,.05);
       }
-      .ct-suggest-item:last-child { border-bottom: none; }
       .ct-suggest-item:hover, .ct-suggest-item.act { background: #f5f3ff; }
+      .ct-sug-ico { color: #9ca3af; flex-shrink: 0; display: flex; align-items: center; }
       .ct-sug-thumb {
-        width: 40px; height: 40px; border-radius: 10px;
+        width: 34px; height: 34px; border-radius: 8px;
         background: #f9f7ff; border: 1px solid rgba(139,92,246,.1);
         overflow: hidden; flex-shrink: 0;
         display: flex; align-items: center; justify-content: center;
       }
       .ct-sug-thumb img { width: 100%; height: 100%; object-fit: contain; padding: 4px; }
-      .ct-sug-name { font-size: 13px; font-weight: 700; color: #1e1b2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .ct-sug-cat { font-size: 10px; color: #9ca3af; margin-top: 1px; text-transform: capitalize; }
-      .ct-sug-arr { color: #c4b5fd; margin-left: auto; flex-shrink: 0; }
+      .ct-sug-name { font-size: 14px; font-weight: 600; color: #1e1b2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .ct-sug-cat { font-size: 10px; font-weight: 700; color: #7c3aed; text-transform: uppercase; letter-spacing: .04em; margin-top: 1px; }
+      .ct-sug-fill { color: #c4b5fd; margin-left: auto; flex-shrink: 0; display: flex; align-items: center; transform: rotate(-45deg); transition: transform .15s, color .15s; }
+      .ct-suggest-item:hover .ct-sug-fill { color: #7c3aed; transform: rotate(-45deg) scale(1.1); }
 
       /* category chips */
       .ct-chips { display: flex; gap: 7px; padding: 10px 14px 13px; overflow-x: auto; scrollbar-width: none; }
@@ -516,8 +514,9 @@ export default function Catalogue() {
 
       /* price row */
       .ct-price-area { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 6px; }
-      .ct-price-authed { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #7c3aed; letter-spacing: .03em; line-height: 1; }
-      .ct-price-mrp { font-size: 11px; color: #9ca3af; text-decoration: line-through; margin-top: 1px; }
+      .ct-price-authed { font-family: 'Bebas Neue', sans-serif; font-size: 21px; color: #7c3aed; letter-spacing: .02em; line-height: 1; display: flex; align-items: center; gap: 6px; }
+      .ct-price-off { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 800; color: #059669; background: rgba(5,150,105,.08); padding: 2px 6px; border-radius: 6px; letter-spacing: 0; }
+      .ct-price-mrp { font-size: 11px; color: #9ca3af; text-decoration: line-through; font-weight: 500; margin-top: 2px; }
 
       /* ── MASKED PRICE (guest) ── */
       .ct-price-mask {
@@ -666,7 +665,7 @@ export default function Catalogue() {
                 <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             )}
-            {showSug && sug.length > 0 && <SuggestList items={sug}/>}
+            {showSug && sug.length > 0 && <SuggestList items={sug} setQ={setQ}/>}
           </div>
         </div>
         <div className="ct-chips">
@@ -704,7 +703,7 @@ export default function Catalogue() {
                   <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
               )}
-              {showSug && sug.length > 0 && <SuggestList items={sug}/>}
+              {showSug && sug.length > 0 && <SuggestList items={sug} setQ={setQ}/>}
             </div>
           </div>
           <div className="ct-sort-wrap">
@@ -1030,7 +1029,14 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
           <div>
             {authed ? (
               <>
-                <div className="ct-price-authed">₹{Number(p.price).toLocaleString()}</div>
+                <div className="ct-price-authed">
+                  ₹{Number(p.price).toLocaleString()}
+                  {p.mrp > p.price && (
+                    <span className="ct-price-off">
+                      {Math.round(((p.mrp - p.price) / p.mrp) * 100)}% OFF
+                    </span>
+                  )}
+                </div>
                 {p.mrp > p.price && <div className="ct-price-mrp">MRP ₹{Number(p.mrp).toLocaleString()}</div>}
               </>
             ) : (
@@ -1092,9 +1098,9 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
 }
 
 /* ══════════════════════════════════════════
-   SUGGEST LIST
+   SUGGEST LIST (YT STYLE)
 ══════════════════════════════════════════ */
-function SuggestList({ items }) {
+function SuggestList({ items, setQ }) {
   const [active, setActive] = useState(0)
   const navigate = useNavigate()
   return (
@@ -1106,14 +1112,23 @@ function SuggestList({ items }) {
           onMouseEnter={() => setActive(i)}
           onClick={() => navigate(`/products/${s.id}`)}
         >
+          <div className="ct-sug-ico">
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
           <div className="ct-sug-thumb">
-            {s.image ? <img src={s.image} alt={s.name}/> : <span style={{fontSize:17,opacity:.25}}>📦</span>}
+            {s.image ? <img src={s.image} alt={s.name}/> : <span style={{fontSize:15,opacity:.25}}>📦</span>}
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div className="ct-sug-name">{s.name}</div>
             <div className="ct-sug-cat">{s.category || 'General'}</div>
           </div>
-          <svg className="ct-sug-arr" width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7"/></svg>
+          <div className="ct-sug-fill" onClick={e => { e.stopPropagation(); setQ(s.name) }}>
+            <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M7 17l10-10m0 0H8m9 0v9"/>
+            </svg>
+          </div>
         </div>
       ))}
     </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import api from '../../lib/api'
 import { useCart, getStockStatus } from '../../lib/CartContext'
 import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
@@ -12,6 +12,7 @@ import RecommendationModal from '../../components/RecommendationModal'
 export default function ProductDetail() {
   const { id }        = useParams()
   const navigate      = useNavigate()
+  const location      = useLocation()
   const { addToCart } = useCart()
   const { notify }    = useToast()
 
@@ -111,7 +112,7 @@ export default function ProductDetail() {
       "@context":"https://schema.org/","@type":"Product","name":p.name,
       "image":(p.images||[]).map(i=>i.url).filter(Boolean),"category":p.category||"General",
       "offers":{"@type":"Offer","priceCurrency":"INR","price":String(p.price||0),
-        "availability":p.stock>0?"https://schema.org/InStock":"https://schema.org/OutOfStock","url":`${location.origin}/products/${p._id}`},
+        "availability":p.stock>0?"https://schema.org/InStock":"https://schema.org/OutOfStock","url":`${window.location.origin}/products/${p._id}`},
       "aggregateRating":{"@type":"AggregateRating","ratingValue":String(p.ratingAvg||0),"reviewCount":String(p.ratingCount||0)}
     })
     return cleanup
@@ -592,22 +593,24 @@ export default function ProductDetail() {
       /* ─── DESCRIPTION ─── */
       .pd-desc { font-size: 14px; color: #4b5563; font-weight: 400; line-height: 1.9; white-space: pre-line; }
 
-      /* ─── SIMILAR PRODUCTS (INSIDE CARD) ─── */
-      .pd-similar-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-      @media (max-width: 480px) { .pd-similar-grid { grid-template-columns: repeat(2, 1fr); } }
+      /* ─── SIMILAR PRODUCTS (SCROLLABLE) ─── */
+      .pd-sim-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+      .pd-sim-scroll::-webkit-scrollbar { display: none; }
       .pd-sim-item {
-        background: #f9f7ff; border-radius: 14px; overflow: hidden;
+        flex-shrink: 0; width: 160px;
+        background: white; border-radius: 16px; overflow: hidden;
         border: 1px solid rgba(124,58,237,.08); cursor: pointer;
         transition: all .25s; display: flex; flex-direction: column;
+        box-shadow: 0 2px 10px rgba(0,0,0,.03);
       }
-      .pd-sim-item:hover { border-color: rgba(124,58,237,.22); background: white; box-shadow: 0 6px 22px rgba(124,58,237,.1); transform: translateY(-2px); }
-      .pd-sim-img { aspect-ratio: 1; background: white; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-      .pd-sim-img img { width: 100%; height: 100%; object-fit: contain; padding: 12px; transition: transform .35s; }
-      .pd-sim-item:hover .pd-sim-img img { transform: scale(1.07); }
+      .pd-sim-item:hover { border-color: #7c3aed; transform: translateY(-3px); box-shadow: 0 10px 25px rgba(124,58,237,.12); }
+      .pd-sim-img { aspect-ratio: 1; background: #f9f7ff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+      .pd-sim-img img { width: 100%; height: 100%; object-fit: contain; padding: 14px; transition: transform .4s; }
+      .pd-sim-item:hover .pd-sim-img img { transform: scale(1.08); }
       .pd-sim-body { padding: 10px 12px; }
-      .pd-sim-cat { font-size: 8px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #9ca3af; margin-bottom: 3px; }
+      .pd-sim-cat { font-size: 8px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #9ca3af; margin-bottom: 3px; }
       .pd-sim-name { font-size: 11px; font-weight: 700; color: #1e1b2e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .pd-sim-price { font-family: 'Bebas Neue', sans-serif; font-size: 15px; color: #7c3aed; letter-spacing: .03em; margin-top: 3px; }
+      .pd-sim-price { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #7c3aed; letter-spacing: .03em; margin-top: 4px; }
 
       /* ─── BELOW SECTIONS ─── */
       .pd-below { max-width: 1260px; margin: 0 auto; padding: 0 16px 80px; position: relative; z-index: 1; }
@@ -1226,14 +1229,14 @@ export default function ProductDetail() {
                     <div className="pd-card-head-title">Similar Products</div>
                   </div>
                 </div>
-                <div className="pd-card-body">
-                  <div className="pd-similar-grid">
-                    {similar.slice(0,6).map(item => (
+                <div className="pd-card-body" style={{padding:'12px 16px 18px'}}>
+                  <div className="pd-sim-scroll">
+                    {similar.slice(0,8).map(item => (
                       <div key={item._id} className="pd-sim-item" onClick={() => navigate(`/products/${item._id}`)}>
                         <div className="pd-sim-img">
                           {item.images?.[0]?.url
                             ? <img src={item.images[0].url} alt={item.name}/>
-                            : <span style={{fontSize:28,opacity:.2}}>📦</span>}
+                            : <span style={{fontSize:24,opacity:.2}}>📦</span>}
                         </div>
                         <div className="pd-sim-body">
                           <div className="pd-sim-cat">{item.category}</div>
