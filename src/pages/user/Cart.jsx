@@ -388,7 +388,7 @@ export default function Cart() {
                   <div key={item.productId||item._id} className="ct-item" style={{ animationDelay:`${idx*50}ms` }}>
 
                     {/* image */}
-                    <div className="ct-img">
+                    <div className="ct-img" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${item.productId || item._id}`)}>
                       {imgSrc
                         ? <img src={imgSrc} alt={item.name}/>
                         : <span className="ct-img-ph">📦</span>
@@ -397,7 +397,7 @@ export default function Cart() {
 
                     {/* body */}
                     <div className="ct-item-body">
-                      <div className="ct-item-name">{item.name}</div>
+                      <div className="ct-item-name" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${item.productId || item._id}`)}>{item.name}</div>
                       <div className="ct-item-meta">
                         <span className="ct-unit-price">₹{unitPrice(item).toLocaleString()} / unit</span>
                         {item.stock <= 20 && (
@@ -509,7 +509,7 @@ export default function Cart() {
                   <div className="ct-sugg-label">Frequently Bought Together</div>
                   <div className="ct-sugg-grid">
                     {suggestions.map(p => (
-                      <div key={p._id||p.id} className="ct-sugg-card">
+                      <div key={p._id||p.id} className="ct-sugg-card" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${p._id || p.id}`)}>
                         <div className="ct-sugg-img">
                           {p.images?.[0]?.url
                             ? <img src={p.images[0].url} alt={p.name}/>
@@ -520,7 +520,7 @@ export default function Cart() {
                           <div className="ct-sugg-name">{p.name}</div>
                           <div className="ct-sugg-price">{p.price!=null?`₹${Number(p.price).toLocaleString()}`:'—'}</div>
                         </div>
-                        <button className="ct-sugg-add" onClick={() => addToCart(p)}>Add</button>
+                        <button className="ct-sugg-add" onClick={(e) => { e.stopPropagation(); addToCart(p); }}>Add</button>
                       </div>
                     ))}
                   </div>

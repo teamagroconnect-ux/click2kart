@@ -561,7 +561,7 @@ export default function OrderHistory() {
                           <div className="oh-items-label">Items Ordered ({order.items.length})</div>
                           <div className="oh-items-list">
                             {order.items.map((item, i) => (
-                              <div key={i} className="oh-item">
+                              <div key={i} className="oh-item" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${item.productId || item._id}`)}>
                                 <div className="oh-item-img">
                                   {item.image
                                     ? <img src={item.image} alt={item.name} />

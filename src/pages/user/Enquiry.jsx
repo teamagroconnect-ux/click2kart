@@ -1505,7 +1505,7 @@ export default function Enquiry() {
                     .join(' · ')
 
                   return (
-                    <div key={idx} className="eq-item">
+                    <div key={idx} className="eq-item" style={{ cursor: 'pointer' }} onClick={() => nav(`/products/${item.productId}`)}>
                       <div className="eq-item-img">
                         {item.image ? (
                           <img src={item.image} alt={item.name} />
