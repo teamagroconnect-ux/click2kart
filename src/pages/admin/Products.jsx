@@ -106,7 +106,6 @@ export default function Products() {
       price: Number(editing.price),
       category: editing.category,
       subcategory: editing.subcategory || undefined,
-      stock: Number(editing.stock),
       weight: Number(editing.weight || 0),
       hsnCode: editing.hsnCode || '',
       gst: Number(editing.gst||0),
@@ -125,11 +124,14 @@ export default function Products() {
         attributes: v.attributes instanceof Map ? Object.fromEntries(v.attributes) : v.attributes,
         price: Number(v.price),
         mrp: v.mrp ? Number(v.mrp) : undefined,
-        stock: Number(v.stock),
         weight: Number(v.weight || 0),
         images: (v.images || '').toString().split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
       }))
     }
+    // Remove stock from payload to prevent accidental reset to 0
+    delete payload.stock;
+    payload.variants.forEach(v => delete v.stock);
+
     await api.put(`/api/products/${editing._id}`, payload)
     setEditing(null); load(page); notify('Product updated','success')
   }
@@ -604,8 +606,11 @@ export default function Products() {
                 <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="Subcategory" value={editing.subcategory || ''} onChange={e => setEditing({ ...editing, subcategory: e.target.value })} />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Stock</label>
-                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="Stock" value={editing.stock} onChange={e => setEditing({ ...editing, stock: e.target.value })} required />
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Current Stock (Read Only)</label>
+                <div className="w-full bg-gray-100 border-2 border-transparent rounded-2xl px-4 py-3 text-sm font-bold text-gray-500 cursor-not-allowed">
+                  {editing.stock} Units
+                </div>
+                <p className="text-[9px] text-gray-400 ml-1">Manage stock via Inventory page or stock adjustment.</p>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Store</label>
