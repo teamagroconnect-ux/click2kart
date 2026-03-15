@@ -167,10 +167,22 @@ export default function AdminLayout() {
                   Products
                 </>
               ))}
+              {link('/admin/brands', (
+                <>
+                  <Icon name="cat" />
+                  Brands
+                </>
+              ))}
               {link('/admin/categories', (
                 <>
                   <Icon name="cat" />
                   Categories
+                </>
+              ))}
+              {link('/admin/subcategories', (
+                <>
+                  <Icon name="cat" />
+                  Subcategories
                 </>
               ))}
               {link('/admin/billing', (

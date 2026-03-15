@@ -45,6 +45,7 @@ function StatItem({ n, t, delay }) {
 export default function Home() {
   const [scrollY, setScrollY] = useState(0)
   const [cats, setCats] = useState([])
+  const [brands, setBrands] = useState([])
   const [recs, setRecs] = useState([])
   const [offers, setOffers] = useState([])
   useEffect(() => {
@@ -83,6 +84,7 @@ export default function Home() {
       "description": "India's Premier B2B Tech Hub for electronics wholesale."
     })
     api.get('/api/public/categories').then(({ data }) => setCats(data || [])).catch(() => setCats([]))
+    api.get('/api/brands', { params: { active: true } }).then(({ data }) => setBrands(data || [])).catch(() => setBrands([]))
     api.get('/api/recommendations/trending').then(({ data }) => setRecs(data || [])).catch(() => setRecs([]))
     api.get('/api/offers?activeOnly=true').then(({ data }) => setOffers(data || [])).catch(() => setOffers([]))
   }, [])
@@ -264,11 +266,59 @@ export default function Home() {
           100%{transform:scaleY(0);transform-origin:bottom}
         }
 
+        /* ────────────── BRANDS ────────────── */
+        .hm-brand-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 30px rgba(124,58,237,0.12);
+          border-color: rgba(124,58,237,0.3) !important;
+        }
+
         /* ────────────── STATS BAND ────────────── */
         .hm-stats-section {
           position: relative; z-index: 1;
           background: #7c3aed;
           padding: 56px 24px;
+        }
+
+        /* ── TICKER ── */
+        .hm-ticker-section {
+          background: #7c3aed;
+          padding: 14px 0;
+          overflow: hidden;
+          position: relative;
+          z-index: 10;
+          border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .hm-ticker-inner {
+          display: flex;
+          width: fit-content;
+          animation: hmTicker 30s linear infinite;
+        }
+        .hm-ticker-item {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 0 40px;
+          color: white;
+          font-weight: 800;
+          font-size: 11px;
+          text-transform: uppercase;
+          letter-spacing: 0.15em;
+          white-space: nowrap;
+        }
+        .hm-ticker-item span.highlight {
+          background: white;
+          color: #7c3aed;
+          padding: 3px 10px;
+          border-radius: 6px;
+          font-size: 10px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .hm-ticker-item .fire { font-size: 16px; }
+
+        @keyframes hmTicker {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
         .hm-stats-inner {
           max-width: 880px; margin: 0 auto;
@@ -608,6 +658,47 @@ export default function Home() {
             <span>Scroll</span>
           </div>
         </section>
+
+        {/* ── BRANDS SECTION ── */}
+        {brands.length > 0 && (
+          <section className="hm-brands-section" style={{ padding: '80px 24px', background: '#faf8ff', position: 'relative', zIndex: 1 }}>
+            <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+              <div style={{ textAlign: 'center', marginBottom: 48 }}>
+                <h2 style={{ fontFamily: 'Bebas Neue', fontSize: 42, color: '#1e1b2e', letterSpacing: '0.02em', marginBottom: 8 }}>Top Authorized Brands</h2>
+                <p style={{ color: '#6b7280', fontSize: 14, fontWeight: 500 }}>Direct wholesale access to premium tech manufacturers</p>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 24 }}>
+                {brands.map(b => (
+                  <Link key={b._id} to={`/brand/${b.slug}`} className="hm-brand-card" style={{ 
+                    background: 'white', border: '1px solid rgba(124,58,237,0.1)', borderRadius: 24, padding: '32px 24px', 
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
+                    transition: 'all 0.3s', textDecoration: 'none'
+                  }}>
+                    <div style={{ height: 48, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {b.logo ? <img src={b.logo} alt={b.name} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} /> : <span style={{ fontSize: 32 }}>🏭</span>}
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 800, color: '#1e1b2e', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{b.name}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── OFFER TICKER ── */}
+        <div className="hm-ticker-section">
+          <div className="hm-ticker-inner">
+            {[...Array(10)].map((_, i) => (
+              <div key={i} className="hm-ticker-item">
+                <span className="fire">🔥</span>
+                Limited Time Deals
+                <span className="highlight">10% OFF HOLI</span>
+                Special Offers
+                <Link to="/products" style={{ color: 'inherit', textDecoration: 'underline' }}>Shop Now</Link>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* ── STATS BAND ── */}
         <section className="hm-stats-section">

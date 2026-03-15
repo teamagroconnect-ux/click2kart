@@ -11,12 +11,14 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', weight:'', hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [], attributes: [] })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [], attributes: [] })
   const [attrInput, setAttrInput] = useState('')
   const [hasVariants, setHasVariants] = useState(false)
   const [editing, setEditing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
+  const [brands, setBrands] = useState([])
   const [categories, setCategories] = useState([])
+  const [subcategories, setSubcategories] = useState([])
   const [stores, setStores] = useState([])
   const limit = 10
   const [preview, setPreview] = useState('')
@@ -32,10 +34,24 @@ export default function Products() {
   useEffect(()=>{ load(1) }, [q])
 
   useEffect(() => {
-    api.get('/api/categories').then(({ data }) => {
-      setCategories((data || []).filter(c => c.isActive))
-    }).catch(() => {})
+    api.get('/api/brands', { params: { active: true } }).then(({ data }) => setBrands(data || [])).catch(() => {})
   }, [])
+  useEffect(() => {
+    const brandId = editing ? editing.brandId : form.brandId;
+    if (brandId) {
+      api.get('/api/categories', { params: { brand: brandId, active: true } }).then(({ data }) => setCategories(data || [])).catch(() => {})
+    } else {
+      setCategories([])
+    }
+  }, [form.brandId, editing?.brandId])
+  useEffect(() => {
+    const categoryId = editing ? editing.categoryId : form.categoryId;
+    if (categoryId) {
+      api.get('/api/subcategories', { params: { category: categoryId, active: true } }).then(({ data }) => setSubcategories(data || [])).catch(() => {})
+    } else {
+      setSubcategories([])
+    }
+  }, [form.categoryId, editing?.categoryId])
   useEffect(() => {
     api.get('/api/stores').then(({ data }) => setStores(data || [])).catch(()=>{})
   }, [])
@@ -68,7 +84,7 @@ export default function Products() {
         images: (v.images || '').split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
       }))
     })
-    setForm({ name:'', price:'', mrp:'', category:'', subcategory:'', stock:'', weight: '', hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [], attributes: [] }); setHasVariants(false); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [], attributes: [] }); setHasVariants(false); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -78,6 +94,9 @@ export default function Products() {
 
   const openEdit = (p) => setEditing({ 
     ...p, 
+    brandId: p.brand?._id || p.brand || '',
+    categoryId: p.category?._id || p.category || '',
+    subCategoryId: p.subCategory?._id || p.subCategory || '',
     weight: p.weight || '',
     hsnCode: p.hsnCode || '',
     images: (p.images||[]).map(i=>i.url||i).join(', '),
@@ -104,8 +123,9 @@ export default function Products() {
       name: editing.name,
       description: editing.description,
       price: Number(editing.price),
-      category: editing.category,
-      subcategory: editing.subcategory || undefined,
+      brandId: editing.brandId,
+      categoryId: editing.categoryId,
+      subCategoryId: editing.subCategoryId || undefined,
       weight: Number(editing.weight || 0),
       hsnCode: editing.hsnCode || '',
       gst: Number(editing.gst||0),
@@ -429,21 +449,29 @@ export default function Products() {
                     </div>
                   </div>
                 )}
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Brand</label>
+                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.brandId} onChange={e => setForm({ ...form, brandId: e.target.value, categoryId: '', subCategoryId: '' })} required>
+                      <option value="">Select Brand...</option>
+                      {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                    </select>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category</label>
-                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.category} onChange={e => {
-                      const catName = e.target.value
-                      const cat = categories.find(c => c.name === catName)
-                      setForm({ ...form, category: catName, store: form.store || cat?.store || '', section: form.section || cat?.section || '' })
-                    }} required>
-                      <option value="">Select...</option>
-                      {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
+                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value, subCategoryId: '' })} required>
+                      <option value="">Select Category...</option>
+                      {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                     </select>
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Subcategory (optional)</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. mi" value={form.subcategory} onChange={e => setForm({ ...form, subcategory: e.target.value })} />
+                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.subCategoryId} onChange={e => setForm({ ...form, subCategoryId: e.target.value })}>
+                      <option value="">Select Subcategory...</option>
+                      {subcategories.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                    </select>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -595,15 +623,25 @@ export default function Products() {
                 <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="1099" value={editing.mrp || ''} onChange={e => setEditing({ ...editing, mrp: e.target.value })} />
               </div>
               <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Brand</label>
+                <select className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none appearance-none" value={editing.brandId || ''} onChange={e => setEditing({ ...editing, brandId: e.target.value, categoryId: '', subCategoryId: '' })} required>
+                  <option value="">Select Brand</option>
+                  {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                </select>
+              </div>
+              <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Category</label>
-                <select className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none appearance-none" value={editing.category || ''} onChange={e => setEditing({ ...editing, category: e.target.value })} required>
+                <select className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none appearance-none" value={editing.categoryId || ''} onChange={e => setEditing({ ...editing, categoryId: e.target.value, subCategoryId: '' })} required>
                   <option value="">Select category</option>
-                  {categories.map(c => <option key={c._id} value={c.name}>{c.name}</option>)}
+                  {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Subcategory</label>
-                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="Subcategory" value={editing.subcategory || ''} onChange={e => setEditing({ ...editing, subcategory: e.target.value })} />
+                <select className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none appearance-none" value={editing.subCategoryId || ''} onChange={e => setEditing({ ...editing, subCategoryId: e.target.value })}>
+                  <option value="">Select subcategory</option>
+                  {subcategories.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                </select>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Current Stock (Read Only)</label>

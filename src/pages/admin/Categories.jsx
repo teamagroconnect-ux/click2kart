@@ -4,25 +4,28 @@ import ImageUpload from '../../components/ImageUpload'
 
 export default function Categories(){
   const [items, setItems] = useState([])
-  const [form, setForm] = useState({ name:'', image:'', store:'', section:'', parentId:'' })
+  const [brands, setBrands] = useState([])
+  const [form, setForm] = useState({ name:'', slug:'', image:'', brandId:'' })
   const [editing, setEditing] = useState(null)
-  const [stores, setStores] = useState([])
-  const load = async () => { const {data} = await api.get('/api/categories'); setItems(data) }
+  
+  const load = async () => { 
+    const {data} = await api.get('/api/categories')
+    setItems(data)
+  }
   useEffect(()=>{ load() }, [])
-  useEffect(()=>{ api.get('/api/stores').then(({data})=>setStores(data||[])).catch(()=>{}) },[])
+  useEffect(()=>{ api.get('/api/brands', { params: { active: true } }).then(({data})=>setBrands(data||[])).catch(()=>{}) },[])
+
   const create = async (e) => { 
     e.preventDefault(); 
-    const payload = { name: form.name, image: form.image || undefined, store: form.store || undefined, section: form.section || undefined }
-    if (form.parentId) payload.parentId = form.parentId
-    await api.post('/api/categories', payload); 
-    setForm({ name:'', image:'', store:'', section:'', parentId:'' }); 
+    await api.post('/api/categories', form); 
+    setForm({ name:'', slug:'', image:'', brandId:'' }); 
     load() 
   }
   const toggle = async (c) => { await api.put(`/api/categories/${c._id}`, { isActive: !c.isActive }); load() }
   const update = async (e) => {
     e.preventDefault()
     if (!editing) return
-    await api.put(`/api/categories/${editing._id}`, { image: editing.image || '', store: editing.store || '', section: editing.section || '' })
+    await api.put(`/api/categories/${editing._id}`, { name: editing.name, slug: editing.slug, image: editing.image || '', brandId: editing.brandId, isActive: editing.isActive })
     setEditing(null)
     load()
   }
@@ -41,21 +44,26 @@ export default function Categories(){
             <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Add New Category</h3>
             <form onSubmit={create} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category Name</label>
-                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Summer Collection" value={form.name} onChange={e=>setForm({...form, name:e.target.value})} required />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Parent (Optional)</label>
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Brand</label>
                 <select
                   className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={form.parentId}
-                  onChange={e=>setForm({...form, parentId:e.target.value})}
+                  value={form.brandId}
+                  onChange={e=>setForm({...form, brandId:e.target.value})}
+                  required
                 >
-                  <option value="">No Parent (Top-level)</option>
-                  {items.filter(x=>x.isActive).map(c=>(
-                    <option key={c._id} value={c._id}>{c.name}</option>
+                  <option value="">Select Brand</option>
+                  {brands.map(b=>(
+                    <option key={b._id} value={b._id}>{b.name}</option>
                   ))}
                 </select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category Name</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Chargers" value={form.name} onChange={e=>setForm({...form, name:e.target.value, slug:e.target.value.toLowerCase().replace(/\s+/g, '-')})} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Slug</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. chargers" value={form.slug} onChange={e=>setForm({...form, slug:e.target.value})} required />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Image (Optional)</label>
@@ -102,7 +110,7 @@ export default function Categories(){
                     </div>
                     <div className="space-y-1">
                     <div className="font-bold text-gray-900 capitalize text-lg tracking-tight">{c.name}</div>
-                    {c.parent?.name && <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Parent: {c.parent.name}</div>}
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Brand: {c.brand?.name || '-'} | Slug: {c.slug}</div>
                       {(c.store || c.section) && (
                         <div className="text-[11px] text-gray-600 font-bold">Location: {c.store || '-'} {c.section ? `• ${c.section}` : ''}</div>
                       )}
@@ -143,23 +151,36 @@ export default function Categories(){
                 <svg className="w-4 h-4 m-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Name</label>
-              <input className="w-full bg-gray-100 border-none rounded-2xl px-4 py-3 text-sm font-bold outline-none" value={editing.name} disabled />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Image</label>
-              <div className="flex items-center gap-2">
-                <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://..." value={editing.image || ''} onChange={e=>setEditing({...editing, image: e.target.value})} />
-                <ImageUpload onUploaded={(url)=>setEditing(ed=>({...ed, image:url}))} />
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Brand</label>
+                <select
+                  className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold outline-none"
+                  value={editing.brandId || (editing.brand?._id || '')}
+                  onChange={e=>setEditing({...editing, brandId: e.target.value})}
+                  required
+                >
+                  <option value="">Select Brand</option>
+                  {brands.map(b=>(
+                    <option key={b._id} value={b._id}>{b.name}</option>
+                  ))}
+                </select>
               </div>
-              {editing.image && (
-                <div className="mt-2 h-20 w-20 rounded-xl border border-gray-100 bg-white overflow-hidden flex items-center justify-center">
-                  <img src={editing.image} alt="Preview" className="h-full w-full object-contain p-2" />
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Name</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold outline-none" value={editing.name} onChange={e=>setEditing({...editing, name: e.target.value})} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Slug</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold outline-none" value={editing.slug} onChange={e=>setEditing({...editing, slug: e.target.value})} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Image</label>
+                <div className="flex items-center gap-2">
+                  <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://..." value={editing.image || ''} onChange={e=>setEditing({...editing, image: e.target.value})} />
+                  <ImageUpload onUploaded={(url)=>setEditing(ed=>({...ed, image:url}))} />
                 </div>
-              )}
-            </div>
-            <div className="space-y-1">
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">

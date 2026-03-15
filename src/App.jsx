@@ -2,7 +2,9 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/admin/Login.jsx'
 import Dashboard from './pages/admin/Dashboard.jsx'
 import Products from './pages/admin/Products.jsx'
+import Brands from './pages/admin/Brands.jsx'
 import Categories from './pages/admin/Categories.jsx'
+import SubCategories from './pages/admin/SubCategories.jsx'
 import Billing from './pages/admin/Billing.jsx'
 import Orders from './pages/admin/Orders.jsx'
 import PaymentVerification from './pages/admin/PaymentVerification.jsx'
@@ -18,6 +20,7 @@ import Stores from './pages/admin/Stores.jsx'
 import Offers from './pages/admin/Offers.jsx'
 import Home from './pages/user/Home.jsx'
 import Catalogue from './pages/user/Catalogue.jsx'
+import BrandPage from './pages/user/BrandPage.jsx'
 import ProductDetail from './pages/user/ProductDetail.jsx'
 import Enquiry from './pages/user/Enquiry.jsx'
 import Partner from './pages/user/Partner.jsx'
@@ -48,7 +51,9 @@ export default function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="products" element={<Products />} />
+        <Route path="brands" element={<Brands />} />
         <Route path="categories" element={<Categories />} />
+        <Route path="subcategories" element={<SubCategories />} />
         <Route path="billing" element={<Billing />} />
         <Route path="orders" element={<Orders />} />
         <Route path="payment-verification" element={<PaymentVerification />} />
@@ -65,6 +70,7 @@ export default function App() {
       <Route path="/" element={<UserLayout />}>
         <Route index element={<Home />} />
         <Route path="products" element={<Catalogue />} />
+        <Route path="brand/:slug" element={<BrandPage />} />
         <Route path="products/:id" element={<ProductDetail />} />
         <Route path="order" element={<Enquiry />} />
         <Route path="partner" element={<Partner />} />
