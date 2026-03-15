@@ -20,11 +20,9 @@ export default function SubCategories() {
   }, [])
 
   useEffect(() => {
-    if (selectedBrand) {
-      api.get('/api/categories', { params: { brand: selectedBrand, active: true } }).then(({ data }) => setCategories(data || [])).catch(() => {})
-    } else {
-      setCategories([])
-    }
+    const params = { active: true };
+    if (selectedBrand) params.brand = selectedBrand;
+    api.get('/api/categories', { params }).then(({ data }) => setCategories(data || [])).catch(() => {})
   }, [selectedBrand])
 
   const create = async (e) => {
@@ -62,9 +60,9 @@ export default function SubCategories() {
             <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Add New Subcategory</h3>
             <form onSubmit={create} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Filter by Brand (to find category)</label>
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Filter by Brand (Optional)</label>
                 <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={selectedBrand} onChange={e => setSelectedBrand(e.target.value)}>
-                  <option value="">Select Brand</option>
+                  <option value="">All Brands / No Brand</option>
                   {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                 </select>
               </div>

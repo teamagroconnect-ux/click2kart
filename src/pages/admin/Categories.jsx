@@ -76,22 +76,6 @@ export default function Categories(){
                   </div>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Store (optional)</label>
-                  <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" value={form.store} onChange={e=>setForm({...form, store:e.target.value, section:''})}>
-                    <option value="">Select store</option>
-                    {stores.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Section (optional)</label>
-                  <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" value={form.section} onChange={e=>setForm({...form, section:e.target.value})}>
-                    <option value="">Select section</option>
-                    {(stores.find(s => s.name === form.store)?.sections || []).map(sec => <option key={sec} value={sec}>{sec}</option>)}
-                  </select>
-                </div>
-              </div>
               <button className="w-full bg-gray-900 text-white py-4 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest">Create Category</button>
             </form>
           </div>
@@ -110,9 +94,6 @@ export default function Categories(){
                     <div className="space-y-1">
                     <div className="font-bold text-gray-900 capitalize text-lg tracking-tight">{c.name}</div>
                     <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Brand: {c.brand?.name || '-'} | Slug: {c.slug}</div>
-                      {(c.store || c.section) && (
-                        <div className="text-[11px] text-gray-600 font-bold">Location: {c.store || '-'} {c.section ? `• ${c.section}` : ''}</div>
-                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -179,22 +160,6 @@ export default function Categories(){
                   <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" placeholder="https://..." value={editing.image || ''} onChange={e=>setEditing({...editing, image: e.target.value})} />
                   <ImageUpload onUploaded={(url)=>setEditing(ed=>({...ed, image:url}))} />
                 </div>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Store</label>
-                <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" value={editing.store || ''} onChange={e=>setEditing({...editing, store: e.target.value, section:''})}>
-                  <option value="">Select store</option>
-                  {stores.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Section</label>
-                <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none" value={editing.section || ''} onChange={e=>setEditing({...editing, section: e.target.value})}>
-                  <option value="">Select section</option>
-                  {(stores.find(s => s.name === (editing.store||''))?.sections || []).map(sec => <option key={sec} value={sec}>{sec}</option>)}
-                </select>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
