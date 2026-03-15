@@ -52,21 +52,13 @@ export default function Catalogue({ initialBrand, brandName }) {
   
   useEffect(() => {
     api.get('/api/brands', { params: { active: true } }).then(({ data }) => setBrands(data || []))
+    // Fetch all active categories by default
+    api.get('/api/categories', { params: { active: true } }).then(({ data }) => setCategories(data || []))
   }, [])
   
   useEffect(() => {
-    if (brand) {
-      api.get('/api/categories', { params: { brand, active: true } }).then(({ data }) => setCategories(data || []))
-    } else {
-      setCategories([])
-      setCategory('')
-      setSubCategory('')
-    }
-  }, [brand])
-
-  useEffect(() => {
     if (category) {
-      api.get('/api/subcategories', { params: { category, active: true } }).then(({ data }) => setSubcategories(data || []))
+      api.get('/api/subcategories', { params: { category: category, active: true } }).then(({ data }) => setSubcategories(data || []))
     } else {
       setSubcategories([])
       setSubCategory('')
@@ -762,9 +754,52 @@ export default function Catalogue({ initialBrand, brandName }) {
               ))}
             </div>
 
+            {/* Categories */}
+            <div>
+              <div className="ct-sb-label">Categories</div>
+              <div className="ct-sb-cats">
+                <button className={`ct-sb-cat-btn${category===''?' on':''}`} onClick={() => setCategory('')}>
+                  <div className="ct-sb-cat-img"><span style={{fontSize:17}}>📦</span></div>
+                  <div style={{flex:1,textAlign:'left'}}>
+                    <div style={{fontWeight:700,fontSize:13}}>All Categories</div>
+                  </div>
+                  {category==='' && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7"/></svg></div>}
+                </button>
+                {categories.map(c => (
+                  <button key={c._id} className={`ct-sb-cat-btn${category===c._id?' on':''}`} onClick={() => setCategory(c._id)}>
+                    <div className="ct-sb-cat-img">
+                      {c.image ? <img src={c.image} alt={c.name}/> : <span style={{fontSize:17}}>📦</span>}
+                    </div>
+                    <div style={{flex:1,textAlign:'left'}}>
+                      <div style={{fontWeight:700,fontSize:13,textTransform:'capitalize'}}>{c.name}</div>
+                    </div>
+                    {category===c._id && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7"/></svg></div>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Subcategories (category specific) */}
+            {category && subcategories.length > 0 && (
+              <div>
+                <div className="ct-sb-label">Subcategories</div>
+                <div className="ct-sb-cats">
+                  {subcategories.map(s => (
+                    <button key={s._id} className={`ct-sb-cat-btn${subCategory===s._id?' on':''}`} onClick={() => setSubCategory(s._id)}>
+                      <div className="ct-sb-cat-img"><span style={{fontSize:17}}>🔹</span></div>
+                      <div style={{flex:1,textAlign:'left'}}>
+                        <div style={{fontWeight:700,fontSize:13,textTransform:'capitalize'}}>{s.name}</div>
+                      </div>
+                      {subCategory===s._id && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7"/></svg></div>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Brands */}
             <div>
-              <div className="ct-sb-label">Brands</div>
+              <div className="ct-sb-label">Filter by Brand</div>
               <div className="ct-sb-cats">
                 <button className={`ct-sb-cat-btn${brand===''?' on':''}`} onClick={() => setBrand('')}>
                   <div className="ct-sb-cat-img"><span style={{fontSize:17}}>🏷️</span></div>
@@ -786,44 +821,6 @@ export default function Catalogue({ initialBrand, brandName }) {
                 ))}
               </div>
             </div>
-
-            {/* Categories (brand specific) */}
-            {brand && (
-              <div>
-                <div className="ct-sb-label">Categories</div>
-                <div className="ct-sb-cats">
-                  {categories.map(c => (
-                    <button key={c._id} className={`ct-sb-cat-btn${category===c._id?' on':''}`} onClick={() => setCategory(c._id)}>
-                      <div className="ct-sb-cat-img">
-                        {c.image ? <img src={c.image} alt={c.name}/> : <span style={{fontSize:17}}>📦</span>}
-                      </div>
-                      <div style={{flex:1,textAlign:'left'}}>
-                        <div style={{fontWeight:700,fontSize:13,textTransform:'capitalize'}}>{c.name}</div>
-                      </div>
-                      {category===c._id && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7"/></svg></div>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Subcategories (category specific) */}
-            {category && subcategories.length > 0 && (
-              <div>
-                <div className="ct-sb-label">Subcategories</div>
-                <div className="ct-sb-cats">
-                  {subcategories.map(s => (
-                    <button key={s._id} className={`ct-sb-cat-btn${subCategory===s._id?' on':''}`} onClick={() => setSubCategory(s._id)}>
-                      <div className="ct-sb-cat-img"><span style={{fontSize:17}}>🔹</span></div>
-                      <div style={{flex:1,textAlign:'left'}}>
-                        <div style={{fontWeight:700,fontSize:13,textTransform:'capitalize'}}>{s.name}</div>
-                      </div>
-                      {subCategory===s._id && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7"/></svg></div>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Price Filter */}
             <div>
@@ -965,24 +962,14 @@ export default function Catalogue({ initialBrand, brandName }) {
             </div>
             <div className="ct-sheet-body">
               <div>
-                <div className="ct-sheet-lbl">Brand</div>
+                <div className="ct-sheet-lbl">Category</div>
                 <div className="ct-sheet-cats">
-                  <button className={`ct-sheet-cat${brand===''?' on':''}`} onClick={() => setBrand('')}>All Brands</button>
-                  {brands.map(b => (
-                    <button key={b._id} className={`ct-sheet-cat${brand===b._id?' on':''}`} onClick={() => setBrand(b._id)}>{b.name}</button>
+                  <button className={`ct-sheet-cat${category===''?' on':''}`} onClick={() => setCategory('')}>All Categories</button>
+                  {categories.map(c => (
+                    <button key={c._id} className={`ct-sheet-cat${category===c._id?' on':''}`} onClick={() => setCategory(c._id)}>{c.name}</button>
                   ))}
                 </div>
               </div>
-              {brand && (
-                <div>
-                  <div className="ct-sheet-lbl">Category</div>
-                  <div className="ct-sheet-cats">
-                    {categories.map(c => (
-                      <button key={c._id} className={`ct-sheet-cat${category===c._id?' on':''}`} onClick={() => setCategory(c._id)}>{c.name}</button>
-                    ))}
-                  </div>
-                </div>
-              )}
               {category && subcategories.length > 0 && (
                 <div>
                   <div className="ct-sheet-lbl">Subcategory</div>
@@ -993,6 +980,15 @@ export default function Catalogue({ initialBrand, brandName }) {
                   </div>
                 </div>
               )}
+              <div>
+                <div className="ct-sheet-lbl">Brand</div>
+                <div className="ct-sheet-cats">
+                  <button className={`ct-sheet-cat${brand===''?' on':''}`} onClick={() => setBrand('')}>All Brands</button>
+                  {brands.map(b => (
+                    <button key={b._id} className={`ct-sheet-cat${brand===b._id?' on':''}`} onClick={() => setBrand(b._id)}>{b.name}</button>
+                  ))}
+                </div>
+              </div>
               <div>
                 <div className="ct-sheet-lbl">Price Range (₹)</div>
                 <div className="ct-price-row">

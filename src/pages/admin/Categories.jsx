@@ -25,7 +25,7 @@ export default function Categories(){
   const update = async (e) => {
     e.preventDefault()
     if (!editing) return
-    await api.put(`/api/categories/${editing._id}`, { name: editing.name, slug: editing.slug, image: editing.image || '', brandId: editing.brandId, isActive: editing.isActive })
+    await api.put(`/api/categories/${editing._id}`, { name: editing.name, slug: editing.slug, image: editing.image || '', brandId: editing.brandId || null, isActive: editing.isActive })
     setEditing(null)
     load()
   }
@@ -49,9 +49,8 @@ export default function Categories(){
                   className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
                   value={form.brandId}
                   onChange={e=>setForm({...form, brandId:e.target.value})}
-                  required
                 >
-                  <option value="">Select Brand</option>
+                  <option value="">No Brand (General Category)</option>
                   {brands.map(b=>(
                     <option key={b._id} value={b._id}>{b.name}</option>
                   ))}

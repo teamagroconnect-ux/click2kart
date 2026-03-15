@@ -38,11 +38,9 @@ export default function Products() {
   }, [])
   useEffect(() => {
     const brandId = editing ? editing.brandId : form.brandId;
-    if (brandId) {
-      api.get('/api/categories', { params: { brand: brandId, active: true } }).then(({ data }) => setCategories(data || [])).catch(() => {})
-    } else {
-      setCategories([])
-    }
+    const params = { active: true };
+    if (brandId) params.brand = brandId;
+    api.get('/api/categories', { params }).then(({ data }) => setCategories(data || [])).catch(() => {})
   }, [form.brandId, editing?.brandId])
   useEffect(() => {
     const categoryId = editing ? editing.categoryId : form.categoryId;
@@ -451,9 +449,9 @@ export default function Products() {
                 )}
                 <div className="grid grid-cols-1 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Brand</label>
-                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.brandId} onChange={e => setForm({ ...form, brandId: e.target.value, categoryId: '', subCategoryId: '' })} required>
-                      <option value="">Select Brand...</option>
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Brand (Optional)</label>
+                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.brandId} onChange={e => setForm({ ...form, brandId: e.target.value, categoryId: '', subCategoryId: '' })}>
+                      <option value="">No Brand...</option>
                       {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                     </select>
                   </div>
@@ -623,9 +621,9 @@ export default function Products() {
                 <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="1099" value={editing.mrp || ''} onChange={e => setEditing({ ...editing, mrp: e.target.value })} />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Brand</label>
-                <select className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none appearance-none" value={editing.brandId || ''} onChange={e => setEditing({ ...editing, brandId: e.target.value, categoryId: '', subCategoryId: '' })} required>
-                  <option value="">Select Brand</option>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Brand (Optional)</label>
+                <select className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none appearance-none" value={editing.brandId || ''} onChange={e => setEditing({ ...editing, brandId: e.target.value, categoryId: '', subCategoryId: '' })}>
+                  <option value="">No Brand</option>
                   {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
                 </select>
               </div>
