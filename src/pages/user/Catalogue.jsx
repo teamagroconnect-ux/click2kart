@@ -961,15 +961,55 @@ export default function Catalogue({ initialBrand, brandName }) {
           {!loading && !q && (
             <div className="ct-flow-wrap">
               <style>{`
-                .ct-flow-wrap { padding-bottom: 40px; }
-                .ct-flow-h { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: #1e1b2e; margin-bottom: 24px; padding: 0 4px; }
-                .ct-grid-flow { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
-                .ct-flow-card { background: white; border: 1.5px solid rgba(124,58,237,.1); border-radius: 24px; padding: 32px 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: all .3s; cursor: pointer; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,.02); }
-                .ct-flow-card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(124,58,237,.12); border-color: rgba(124,58,237,.35); }
-                .ct-flow-img { height: 60px; width: 100%; display: flex; align-items: center; justify-content: center; font-size: 40px; }
-                .ct-flow-img img { max-height: 100%; max-width: 100%; object-fit: contain; }
-                .ct-flow-name { font-size: 14px; font-weight: 800; color: #1e1b2e; text-transform: uppercase; letter-spacing: .12em; }
-                .ct-flow-sub { font-size: 10px; font-weight: 700; color: #7c3aed; text-transform: uppercase; opacity: .7; }
+                .ct-flow-wrap { padding: 40px 0; max-width: 1000px; margin: 0 auto; }
+                .ct-flow-h { font-family: 'Bebas Neue', sans-serif; font-size: 48px; color: #1e1b2e; margin-bottom: 32px; text-align: center; letter-spacing: 0.02em; }
+                .ct-flow-desc { text-align: center; color: #6b7280; font-size: 14px; margin-top: -24px; margin-bottom: 48px; font-weight: 500; }
+                
+                .ct-grid-flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; justify-content: center; }
+                
+                .ct-start-card { 
+                  background: white; border: 1px solid rgba(124,58,237,.1); border-radius: 32px; padding: 48px 32px; 
+                  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 24px;
+                  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; position: relative; overflow: hidden;
+                  box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+                }
+                .ct-start-card:hover { 
+                  transform: translateY(-10px); 
+                  box-shadow: 0 20px 60px rgba(124,58,237,0.15); 
+                  border-color: rgba(124,58,237,0.4); 
+                }
+                .ct-start-card::after {
+                  content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(124,58,237,0.05), transparent); opacity: 0; transition: opacity 0.4s;
+                }
+                .ct-start-card:hover::after { opacity: 1; }
+                
+                .ct-start-ico { 
+                  width: 80px; height: 80px; border-radius: 24px; background: #f5f3ff; 
+                  display: flex; align-items: center; justify-content: center; font-size: 32px; 
+                  color: #7c3aed; transition: all 0.4s;
+                }
+                .ct-start-card:hover .ct-start-ico { background: #7c3aed; color: white; transform: scale(1.1) rotate(5deg); }
+                
+                .ct-start-name { font-size: 20px; font-weight: 800; color: #1e1b2e; text-transform: uppercase; letter-spacing: 0.05em; }
+                .ct-start-sub { font-size: 13px; color: #6b7280; font-weight: 500; line-height: 1.6; }
+                .ct-start-btn { 
+                  margin-top: 8px; padding: 12px 24px; border-radius: 14px; background: #f5f3ff; 
+                  color: #7c3aed; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+                  transition: all 0.3s;
+                }
+                .ct-start-card:hover .ct-start-btn { background: #7c3aed; color: white; }
+
+                /* Inner grid for Brands/Categories */
+                .ct-inner-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
+                .ct-inner-card {
+                  background: white; border: 1.5px solid rgba(124,58,237,.08); border-radius: 24px; padding: 24px;
+                  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+                  transition: all 0.3s; cursor: pointer; text-align: center;
+                }
+                .ct-inner-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(124,58,237,0.1); border-color: rgba(124,58,237,0.3); }
+                .ct-inner-img { height: 50px; width: 100%; display: flex; align-items: center; justify-content: center; }
+                .ct-inner-img img { max-height: 100%; max-width: 100%; object-fit: contain; }
+                .ct-inner-name { font-size: 12px; font-weight: 800; color: #1e1b2e; text-transform: uppercase; letter-spacing: 0.05em; }
                 
                 .ct-bc-item { background: none; border: none; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #9ca3af; cursor: pointer; transition: color .2s; }
                 .ct-bc-item:hover { color: #7c3aed; }
@@ -981,21 +1021,31 @@ export default function Catalogue({ initialBrand, brandName }) {
               {viewMode === 'START' && (
                 <>
                   <h2 className="ct-flow-h">How would you like to browse?</h2>
+                  <p className="ct-flow-desc">Select your preferred way to discover our premium wholesale products</p>
                   <div className="ct-grid-flow">
-                    <div className="ct-flow-card" onClick={() => setBrowsePath('brand')}>
-                      <div className="ct-flow-img">🏷️</div>
-                      <div className="ct-flow-name">Browse by Brand</div>
-                      <div className="ct-flow-sub">Samsung, Oppo, Boat...</div>
+                    <div className="ct-start-card" onClick={() => setBrowsePath('brand')}>
+                      <div className="ct-start-ico">🏷️</div>
+                      <div>
+                        <div className="ct-start-name">Browse by Brand</div>
+                        <div className="ct-start-sub">Explore products by manufacturer like Samsung, Oppo, and Boat</div>
+                      </div>
+                      <div className="ct-start-btn">View All Brands</div>
                     </div>
-                    <div className="ct-flow-card" onClick={() => setBrowsePath('category')}>
-                      <div className="ct-flow-img">📦</div>
-                      <div className="ct-flow-name">Browse by Category</div>
-                      <div className="ct-flow-sub">Chargers, Cables, Earphones...</div>
+                    <div className="ct-start-card" onClick={() => setBrowsePath('category')}>
+                      <div className="ct-start-ico">📦</div>
+                      <div>
+                        <div className="ct-start-name">Browse by Category</div>
+                        <div className="ct-start-sub">Find products by type like Chargers, Cables, or Earphones</div>
+                      </div>
+                      <div className="ct-start-btn">View Categories</div>
                     </div>
-                    <div className="ct-flow-card" style={{ background: '#faf8ff', borderStyle: 'dashed' }} onClick={() => { setBrowsePath('category'); setViewMode('PRODUCTS') }}>
-                      <div className="ct-flow-img">�</div>
-                      <div className="ct-flow-name">All Products</div>
-                      <div className="ct-flow-sub">Browse Entire Catalog</div>
+                    <div className="ct-start-card" style={{ background: '#faf8ff', borderStyle: 'dashed' }} onClick={() => { setBrowsePath('category'); setViewMode('PRODUCTS') }}>
+                      <div className="ct-start-ico" style={{ background: 'white' }}>🔍</div>
+                      <div>
+                        <div className="ct-start-name">Direct Catalog</div>
+                        <div className="ct-start-sub">Browse our entire inventory with advanced filtering options</div>
+                      </div>
+                      <div className="ct-start-btn" style={{ background: 'white' }}>Quick Search</div>
                     </div>
                   </div>
                 </>
@@ -1004,14 +1054,13 @@ export default function Catalogue({ initialBrand, brandName }) {
               {viewMode === 'BRANDS' && (
                 <>
                   <h2 className="ct-flow-h">Choose a Brand</h2>
-                  <div className="ct-grid-flow">
+                  <div className="ct-inner-grid">
                     {brands.map(b => (
-                      <div key={b._id} className="ct-flow-card" onClick={() => setBrand(b._id)}>
-                        <div className="ct-flow-img">
-                          {b.logo ? <img src={b.logo} alt={b.name} /> : <span>🏷️</span>}
+                      <div key={b._id} className="ct-inner-card" onClick={() => setBrand(b._id)}>
+                        <div className="ct-inner-img">
+                          {b.logo ? <img src={b.logo} alt={b.name} /> : <span style={{fontSize:32}}>🏭</span>}
                         </div>
-                        <div className="ct-flow-name">{b.name}</div>
-                        <div className="ct-flow-sub">Official Partner</div>
+                        <div className="ct-inner-name">{b.name}</div>
                       </div>
                     ))}
                   </div>
@@ -1022,24 +1071,22 @@ export default function Catalogue({ initialBrand, brandName }) {
                 <>
                   <h2 className="ct-flow-h">
                     {browsePath === 'brand' 
-                      ? `Select Category for ${brands.find(b => b._id === brand)?.name}` 
-                      : 'Choose a Category'}
+                      ? `${brands.find(b => b._id === brand)?.name} Categories` 
+                      : 'Product Categories'}
                   </h2>
-                  <div className="ct-grid-flow">
+                  <div className="ct-inner-grid">
                     {categories.map(c => (
-                      <div key={c._id} className="ct-flow-card" onClick={() => setCategory(c._id)}>
-                        <div className="ct-flow-img">
-                          {c.image ? <img src={c.image} alt={c.name} /> : <span>📦</span>}
+                      <div key={c._id} className="ct-inner-card" onClick={() => setCategory(c._id)}>
+                        <div className="ct-inner-img">
+                          {c.image ? <img src={c.image} alt={c.name} /> : <span style={{fontSize:32}}>📦</span>}
                         </div>
-                        <div className="ct-flow-name">{c.name}</div>
-                        <div className="ct-flow-sub">{browsePath === 'brand' ? (brands.find(b => b._id === brand)?.name) : 'Authorized Collection'}</div>
+                        <div className="ct-inner-name">{c.name}</div>
                       </div>
                     ))}
                     {browsePath === 'brand' && (
-                      <div className="ct-flow-card" style={{ background: '#faf8ff', borderStyle: 'dashed' }} onClick={() => setViewMode('PRODUCTS')}>
-                        <div className="ct-flow-img">🔍</div>
-                        <div className="ct-flow-name">All {brands.find(b => b._id === brand)?.name}</div>
-                        <div className="ct-flow-sub">View Full Brand Catalog</div>
+                      <div className="ct-inner-card" style={{ background: '#faf8ff', borderStyle: 'dashed' }} onClick={() => setViewMode('PRODUCTS')}>
+                        <div className="ct-inner-img" style={{fontSize:24}}>🔍</div>
+                        <div className="ct-inner-name">All Products</div>
                       </div>
                     )}
                   </div>
@@ -1048,19 +1095,17 @@ export default function Catalogue({ initialBrand, brandName }) {
 
               {viewMode === 'SUBCATEGORIES' && (
                 <>
-                  <h2 className="ct-flow-h">{categories.find(c => c._id === category)?.name} Types</h2>
-                  <div className="ct-grid-flow">
+                  <h2 className="ct-flow-h">{categories.find(c => c._id === category)?.name} Collections</h2>
+                  <div className="ct-inner-grid">
                     {subcategories.map(s => (
-                      <div key={s._id} className="ct-flow-card" onClick={() => setSubCategory(s._id)}>
-                        <div className="ct-flow-img">🔹</div>
-                        <div className="ct-flow-name">{s.name}</div>
-                        <div className="ct-flow-sub">Specific Collection</div>
+                      <div key={s._id} className="ct-inner-card" onClick={() => setSubCategory(s._id)}>
+                        <div className="ct-inner-img" style={{fontSize:32}}>🔹</div>
+                        <div className="ct-inner-name">{s.name}</div>
                       </div>
                     ))}
-                    <div className="ct-flow-card" style={{ background: '#faf8ff', borderStyle: 'dashed' }} onClick={() => setViewMode('PRODUCTS')}>
-                      <div className="ct-flow-img">📦</div>
-                      <div className="ct-flow-name">All {categories.find(c => c._id === category)?.name}</div>
-                      <div className="ct-flow-sub">Full Category View</div>
+                    <div className="ct-inner-card" style={{ background: '#faf8ff', borderStyle: 'dashed' }} onClick={() => setViewMode('PRODUCTS')}>
+                      <div className="ct-inner-img" style={{fontSize:24}}>📦</div>
+                      <div className="ct-inner-name">View All</div>
                     </div>
                   </div>
                 </>
