@@ -49,7 +49,7 @@ export function AuthProvider({ children }) {
         phone: data.phone,
         defaultAddress: data.defaultAddress,
         isKycComplete: !!data.isKycComplete,
-        role: 'customer'
+        role: data.role || (data.phone ? 'customer' : 'admin')
       }
       setUser(nextUser)
       localStorage.setItem('user', JSON.stringify(nextUser))
