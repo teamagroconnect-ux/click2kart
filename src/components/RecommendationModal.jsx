@@ -84,7 +84,7 @@ export default function RecommendationModal({ open, items, onClose, onAddToCart 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5 sm:mb-1">
-                        <span className="text-[8px] sm:text-[9px] font-black text-indigo-500 uppercase tracking-widest">{item.category || 'General'}</span>
+                        <span className="text-[8px] sm:text-[9px] font-black text-indigo-500 uppercase tracking-widest">{item.category?.name || item.category || 'General'}</span>
                         {item.ratingAvg > 0 && <span className="text-[8px] sm:text-[9px] font-bold text-amber-500 flex items-center gap-0.5">★ {item.ratingAvg}</span>}
                       </div>
                       <h4 className="text-sm sm:text-base font-bold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">{item.name}</h4>

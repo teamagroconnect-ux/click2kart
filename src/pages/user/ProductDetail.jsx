@@ -128,7 +128,8 @@ export default function ProductDetail() {
     setSEO(`${p.name} Wholesale Price | Click2Kart`, `Buy ${p.name} at wholesale B2B rates with GST invoice and fast delivery.`)
     const cleanup = injectJsonLd({
       "@context":"https://schema.org/","@type":"Product","name":p.name,
-      "image":(p.images||[]).map(i=>i.url).filter(Boolean),"category":p.category||"General",
+      "brand":{"@type":"Brand","name":p.brand?.name || p.brand || "Click2Kart"},
+      "image":(p.images||[]).map(i=>i.url).filter(Boolean),"category":p.category?.name || p.category || "General",
       "offers":{"@type":"Offer","priceCurrency":"INR","price":String(p.price||0),
         "availability":p.stock>0?"https://schema.org/InStock":"https://schema.org/OutOfStock","url":`${window.location.origin}/products/${p._id}`},
       "aggregateRating":{"@type":"AggregateRating","ratingValue":String(p.ratingAvg||0),"reviewCount":String(p.ratingCount||0)}
@@ -817,7 +818,7 @@ export default function ProductDetail() {
         <div className="pd-breadcrumb">
           <span>Catalogue</span>
           <span className="pd-breadcrumb-sep">›</span>
-          {p.category && <><span>{p.category}</span><span className="pd-breadcrumb-sep">›</span></>}
+          {p.category && <><span>{p.category?.name || p.category}</span><span className="pd-breadcrumb-sep">›</span></>}
           <span>{p.name}</span>
         </div>
       </div>
@@ -870,7 +871,7 @@ export default function ProductDetail() {
 
             {/* badges */}
             <div className="pd-badges">
-              {p.category && <span className="pd-badge pd-badge-v">{p.category}</span>}
+              {p.category && <span className="pd-badge pd-badge-v">{p.category?.name || p.category}</span>}
               <span className="pd-badge pd-badge-g">✓ GST Invoice</span>
               <span className="pd-badge pd-badge-a">⚡ Fast Dispatch</span>
             </div>
@@ -1276,7 +1277,7 @@ export default function ProductDetail() {
                             : <span style={{fontSize:24,opacity:.2}}>📦</span>}
                         </div>
                         <div className="pd-sim-body">
-                          <div className="pd-sim-cat">{item.category}</div>
+                          <div className="pd-sim-cat">{item.category?.name || item.category || 'General'}</div>
                           <div className="pd-sim-name">{item.name}</div>
                           <div className="pd-sim-price">
                             {authed && item.price != null ? `₹${Number(item.price).toLocaleString()}` : 'Login'}
@@ -1316,7 +1317,7 @@ export default function ProductDetail() {
                       : <span style={{fontSize:32,opacity:.2}}>📦</span>}
                   </div>
                   <div className="pd-rec-body">
-                    <div className="pd-rec-cat">{item.category}</div>
+                    <div className="pd-rec-cat">{item.category?.name || item.category || 'General'}</div>
                     <div className="pd-rec-name">{item.name}</div>
                     <div className="pd-rec-price">
                       {authed && item.price != null ? `₹${Number(item.price).toLocaleString()}` : 'Login to view'}

@@ -14,12 +14,12 @@ export const getStockStatus = (stock) => {
 
 export function CartProvider({ children }) {
   const { notify } = useToast()
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const [cart, setCart] = useState(() => {
     const saved = typeof window !== 'undefined' ? localStorage.getItem('cart') : null
     return saved ? JSON.parse(saved) : []
   })
-  const [mode, setMode] = useState(token ? 'server' : 'guest')
+  const [mode, setMode] = useState((token && user?.role === 'customer') ? 'server' : 'guest')
   const mergedRef = useRef(false)
 
   useEffect(() => {
@@ -29,11 +29,13 @@ export function CartProvider({ children }) {
   }, [cart, mode])
 
   useEffect(() => {
-    if (!token) {
+    if (!token || user?.role !== 'customer') {
       setMode('guest')
       mergedRef.current = false
-      const saved = localStorage.getItem('cart')
-      setCart(saved ? JSON.parse(saved) : [])
+      if (!token) {
+        const saved = localStorage.getItem('cart')
+        setCart(saved ? JSON.parse(saved) : [])
+      }
       return
     }
 
@@ -63,7 +65,7 @@ export function CartProvider({ children }) {
     }
 
     syncServerCart()
-  }, [token])
+  }, [token, user])
 
   const addToCart = async (product, variant) => {
     if (mode === 'guest') {
