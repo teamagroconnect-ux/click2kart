@@ -90,31 +90,34 @@ export default function Products() {
     if (qty>0){ await api.patch(`/api/products/${id}/stock`, { quantity: qty }); load(page) }
   }
 
-  const openEdit = (p) => setEditing({ 
-    ...p, 
-    brandId: p.brand?._id || p.brand || '',
-    categoryId: p.category?._id || p.category || '',
-    subCategoryId: p.subCategory?._id || p.subCategory || '',
-    weight: p.weight || '',
-    hsnCode: p.hsnCode || '',
-    images: (p.images||[]).map(i=>i.url||i).join(', '),
-    attributes: Array.isArray(p.attributes) ? p.attributes : [],
-    variants: (p.variants || []).map(v => ({
-      ...v,
-      attributes: v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {}),
-      price: v.price || '',
-      mrp: v.mrp || '',
-      stock: v.stock || '',
-      weight: v.weight || '',
-      images: (v.images || []).map(i => i.url || i).join(', ')
-    })),
-    bulkDiscountQuantity: p.bulkDiscountQuantity || '',
-    bulkDiscountPriceReduction: p.bulkDiscountPriceReduction || '',
-    minOrderQty: p.minOrderQty || '',
-    highlights: Array.isArray(p.highlights) ? p.highlights : [],
-    highlightInput: '',
-    bulkTiers: Array.isArray(p.bulkTiers) ? p.bulkTiers.map(t => ({ quantity: t.quantity, priceReduction: t.priceReduction })) : []
-  })
+  const openEdit = (p) => {
+    setEditing({ 
+      ...p, 
+      brandId: p.brand?._id || p.brand || '',
+      categoryId: p.category?._id || p.category || '',
+      subCategoryId: p.subCategory?._id || p.subCategory || '',
+      weight: p.weight || '',
+      hsnCode: p.hsnCode || '',
+      images: (p.images||[]).map(i=>i.url||i).join(', '),
+      attributes: Array.isArray(p.attributes) ? p.attributes : [],
+      variants: (p.variants || []).map(v => ({
+        ...v,
+        attributes: v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {}),
+        price: v.price || '',
+        mrp: v.mrp || '',
+        stock: v.stock || '',
+        weight: v.weight || '',
+        images: (v.images || []).map(i => i.url || i).join(', ')
+      })),
+      bulkDiscountQuantity: p.bulkDiscountQuantity || '',
+      bulkDiscountPriceReduction: p.bulkDiscountPriceReduction || '',
+      minOrderQty: p.minOrderQty || '',
+      highlights: Array.isArray(p.highlights) ? p.highlights : [],
+      highlightInput: '',
+      bulkTiers: Array.isArray(p.bulkTiers) ? p.bulkTiers.map(t => ({ quantity: t.quantity, priceReduction: t.priceReduction })) : []
+    })
+    setHasVariants(p.variants?.length > 0)
+  }
   const saveEdit = async (e) => {
     e.preventDefault()
     const payload = {
@@ -538,6 +541,98 @@ export default function Products() {
                     </select>
                   </div>
                 </div>
+                <div className="space-y-4 border-2 border-dashed border-gray-200 rounded-3xl p-6 bg-white/50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Step 1: Define Global Attributes</h4>
+                      <p className="text-[9px] text-gray-500 font-bold">e.g. Model, Length, Material</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        className="bg-white border rounded-xl px-3 py-2 text-[11px] font-bold focus:ring-2 focus:ring-blue-500 outline-none" 
+                        placeholder="New Attr (e.g. Model)" 
+                        value={attrInput} 
+                        onChange={e=>setAttrInput(e.target.value)} 
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = attrInput.trim().toLowerCase();
+                            if (val && !form.attributes.includes(val)) {
+                              setForm(f => ({ ...f, attributes: [...f.attributes, val] }));
+                              setAttrInput('');
+                            }
+                          }
+                        }}
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          const val = attrInput.trim().toLowerCase();
+                          if (val && !form.attributes.includes(val)) {
+                            setForm(f => ({ ...f, attributes: [...f.attributes, val] }));
+                            setAttrInput('');
+                          }
+                        }}
+                        className="p-2 bg-gray-900 text-white rounded-xl"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  {(form.attributes || []).length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {form.attributes.map((a, i) => (
+                        <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-100 text-[10px] font-black text-blue-600 uppercase tracking-widest">
+                          {a}
+                          <button type="button" onClick={() => setForm(f => ({ ...f, attributes: f.attributes.filter((_, idx) => idx !== i) }))} className="text-blue-400 hover:text-blue-600">✕</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3 py-2 border-t border-gray-100 mt-4">
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input type="checkbox" className="sr-only peer" checked={hasVariants} onChange={e => setHasVariants(e.target.checked)} />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                      <span className="ml-3 text-[10px] font-black text-gray-500 uppercase tracking-widest">Step 2: Enable Multi-Variants</span>
+                    </label>
+                  </div>
+
+                  {hasVariants && (
+                    <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-blue-600">Step 3: Add Individual Variants</div>
+                      {(form.variants || []).length > 0 && (
+                        <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                          {form.variants.map((v, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 border border-gray-100 hover:border-blue-200 transition-colors">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex flex-wrap gap-2">
+                                  {Object.entries(v.attributes || {}).map(([key, val]) => (
+                                    <span key={key} className="text-[9px] font-bold bg-white px-2 py-0.5 rounded-lg border border-gray-200 text-gray-600">
+                                      <span className="text-gray-400 uppercase mr-1">{key}:</span>{val}
+                                    </span>
+                                  ))}
+                                </div>
+                                <div className="text-[10px] font-black text-gray-900">₹{v.price} · {v.stock} in stock</div>
+                              </div>
+                              <button type="button" className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <VariantQuickAdd onAdd={(v)=> setForm(f => ({ ...f, variants: [...(f.variants||[]), v] }))} productAttributes={form.attributes} />
+                    </div>
+                  )}
+                </div>
+                {!hasVariants && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Stock</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} required />
+                  </div>
+                )}
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Images</label>
                   <div className="flex gap-2">
@@ -545,24 +640,6 @@ export default function Products() {
                     <ImageUpload onUploaded={url => setForm(f => ({ ...f, images: (f.images ? f.images + ', ' : '') + url }))} />
                   </div>
                 </div>
-                {hasVariants && (
-                  <div className="space-y-2 border rounded-2xl p-3">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Variants</div>
-                    {(form.variants || []).length > 0 && (
-                      <div className="divide-y border rounded-xl bg-gray-50">
-                        {form.variants.map((v, idx) => (
-                          <div key={idx} className="p-2 grid grid-cols-2 gap-2 text-[11px]">
-                            <div className="font-bold">{['color','ram','storage','capacity'].map(k => v[k] ? `${k}:${v[k]}` : '').filter(Boolean).join(' / ') || 'Variant'}</div>
-                            <div className="text-right">
-                              <button type="button" className="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-100" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>Remove</button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <VariantQuickAdd onAdd={(v)=> setForm(f => ({ ...f, variants: [...f.variants, v] }))} />
-                  </div>
-                )}
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Description</label>
                   <textarea className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-blue-500 outline-none min-h-[80px]" placeholder="Product details..." value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
@@ -806,9 +883,10 @@ function VariantManager({ product, onChanged }) {
   const { notify } = useToast()
   const [attrInput, setAttrInput] = useState('')
   const [form, setForm] = useState({ attributes: {}, price: product.price || '', mrp: product.mrp || '', stock: '', sku: '', weight: product.weight || '', images: '' })
-  
-  const add = async (e) => {
+
+  const addVariant = async (e) => {
     e.preventDefault()
+    if (!Object.keys(form.attributes).length) return notify('Select attributes','error')
     try {
       const images = form.images.split(',').map(s=>s.trim()).filter(Boolean)
       await api.post(`/api/products/${product._id}/variants`, {
@@ -820,12 +898,10 @@ function VariantManager({ product, onChanged }) {
         weight: Number(form.weight || 0),
         images
       })
-      setForm({ attributes: {}, price: product.price || '', mrp: product.mrp || '', stock: '', sku: '', weight: product.weight || '', images: '' })
       notify('Variant added','success')
+      setForm({ attributes: {}, price: product.price || '', mrp: product.mrp || '', stock: '', sku: '', weight: product.weight || '', images: '' })
       onChanged && onChanged()
-    } catch (err) {
-      notify(err?.response?.data?.error || 'Failed to add variant','error')
-    }
+    } catch (err) { notify(err.response?.data?.error || 'Failed to add','error') }
   }
 
   const toggleActive = async (v) => {
@@ -845,112 +921,109 @@ function VariantManager({ product, onChanged }) {
     } catch { notify('Delete failed','error') }
   }
 
+  const addAttr = () => {
+    const val = attrInput.trim().toLowerCase()
+    if (!val) return
+    const newAttrs = [...new Set([...(product.attributes || []), val])]
+    api.put(`/api/products/${product._id}`, { attributes: newAttrs }).then(() => {
+      setAttrInput('')
+      onChanged && onChanged()
+    })
+  }
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div className="md:col-span-2 space-y-4">
-        {(product.variants || []).length === 0 ? (
-          <div className="py-12 bg-gray-50/50 border-2 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center gap-2">
-            <span className="text-3xl opacity-10">📦</span>
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">No variants added yet</div>
-          </div>
-        ) : (
-          (product.variants || []).map(v => {
-            const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
-            return (
-              <div key={v._id} className="group relative flex items-center justify-between gap-4 bg-white border border-gray-100 rounded-2xl p-4 hover:shadow-md transition-all">
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <div className="text-[11px] font-black text-gray-900 truncate uppercase tracking-tight">{product.name}</div>
-                    <div className="px-1.5 py-0.5 bg-gray-100 text-gray-500 text-[8px] font-black uppercase rounded border border-gray-200">SKU: {v.sku || '-'}</div>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {Object.entries(vAttrs).map(([k, val]) => (
-                      <span key={k} className="px-2 py-0.5 bg-blue-50/50 text-blue-600 text-[9px] font-bold rounded-md border border-blue-100/50 uppercase tracking-tighter">
-                        {k}: {val}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-[11px] font-bold text-gray-900">₹{(v.price ?? product.price).toLocaleString()}</div>
-                    <div className="w-1 h-1 rounded-full bg-gray-200" />
-                    <div className="text-[10px] font-medium text-gray-500">{v.weight||0}g</div>
-                    <div className="w-1 h-1 rounded-full bg-gray-200" />
-                    <div className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-black border ${v.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${v.stock <= 5 ? 'bg-red-500' : 'bg-emerald-500'}`} />
-                      {v.stock} UNITS
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => toggleActive(v)} 
-                    className={`h-9 px-4 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${v.isActive ? 'bg-gray-900 text-white shadow-lg shadow-gray-200' : 'bg-gray-100 text-gray-400'}`}
-                  >
-                    {v.isActive ? 'Active' : 'Hidden'}
-                  </button>
-                  <button 
-                    onClick={() => deleteVariant(v)} 
-                    className="w-9 h-9 flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  </button>
-                </div>
+    <div className="space-y-6">
+      {/* Existing Variants List */}
+      <div className="space-y-3">
+        {(product.variants || []).map(v => (
+          <div key={v._id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between group">
+            <div className="flex-1">
+              <div className="flex flex-wrap gap-2 mb-1">
+                {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k,val]) => (
+                  <span key={k} className="text-[9px] font-black bg-white px-2 py-0.5 rounded-lg border border-gray-200 text-gray-600 uppercase">
+                    <span className="text-gray-400 mr-1">{k}:</span>{val}
+                  </span>
+                ))}
               </div>
-            )
-          })
-        )}
+              <div className="text-[10px] font-bold text-gray-900">
+                ₹{v.price} <span className="text-gray-400 mx-1">·</span> {v.stock} in stock
+                {v.sku && <span className="text-gray-400 ml-2">({v.sku})</span>}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => toggleActive(v)} className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase transition-all ${v.isActive ? 'text-emerald-600 bg-emerald-50' : 'text-gray-400 bg-gray-100'}`}>
+                {v.isActive ? 'Active' : 'Hidden'}
+              </button>
+              <button type="button" onClick={() => deleteVariant(v)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
-      <form onSubmit={add} className="space-y-4 bg-white p-5 rounded-3xl border border-gray-100 shadow-sm self-start sticky top-4">
-        <div className="space-y-2">
-          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Define Attributes</label>
-          {product.attributes?.length > 0 ? (
-            <div className="grid grid-cols-1 gap-3 bg-gray-50/50 p-3 rounded-2xl border border-gray-100/50">
-              {product.attributes.map(a => (
-                <div key={a} className="space-y-1">
-                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1 capitalize">{a}</label>
-                  <input 
-                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm" 
-                    placeholder={`e.g. ${a === 'color' ? 'Red' : a === 'size' ? 'XL' : 'Value'}`}
-                    value={form.attributes[a] || ''}
-                    onChange={e => setForm({ ...form, attributes: { ...form.attributes, [a]: e.target.value } })}
-                    required
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="p-4 bg-red-50 rounded-2xl border border-red-100 text-center">
-              <p className="text-[10px] text-red-600 font-bold leading-relaxed">No attributes defined for this product. Add them in the "Attributes" field first.</p>
-            </div>
-          )}
+      {/* Attributes Definition */}
+      <div className="p-5 bg-blue-50/30 border border-blue-100 rounded-3xl space-y-4">
+        <div className="flex items-center justify-between">
+          <h5 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Product Attributes</h5>
+          <div className="flex gap-2">
+            <input className="bg-white border border-blue-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Model" value={attrInput} onChange={e=>setAttrInput(e.target.value)} />
+            <button type="button" onClick={addAttr} className="p-2 bg-blue-600 text-white rounded-xl">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
+            </button>
+          </div>
         </div>
+        <div className="flex flex-wrap gap-2">
+          {(product.attributes || []).map(a => (
+            <span key={a} className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-blue-100 rounded-xl text-[10px] font-black text-blue-600 uppercase">
+              {a}
+              <button type="button" onClick={() => {
+                const next = product.attributes.filter(x => x !== a)
+                api.put(`/api/products/${product._id}`, { attributes: next }).then(onChanged)
+              }}>✕</button>
+            </span>
+          ))}
+        </div>
+      </div>
 
+      {/* Add New Variant Form */}
+      <form onSubmit={addVariant} className="space-y-4 border-t border-gray-100 pt-6">
+        <div className="grid grid-cols-2 gap-3">
+          {(product.attributes || []).map(a => (
+            <div key={a} className="space-y-1">
+              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{a}</label>
+              <input 
+                className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500" 
+                placeholder={`Value for ${a}`}
+                value={form.attributes[a] || ''}
+                onChange={e => setForm({ ...form, attributes: { ...form.attributes, [a]: e.target.value } })}
+                required
+              />
+            </div>
+          ))}
+        </div>
+        
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Price</label>
-            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-100" placeholder="999" value={form.price} onChange={e=>setForm({...form,price:e.target.value})} required />
+            <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Price</label>
+            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none" value={form.price} onChange={e=>setForm({...form, price: e.target.value})} />
           </div>
           <div className="space-y-1">
-            <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Stock</label>
-            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-100" placeholder="100" value={form.stock} onChange={e=>setForm({...form,stock:e.target.value})} required />
+            <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Stock</label>
+            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none" value={form.stock} onChange={e=>setForm({...form, stock: e.target.value})} required />
           </div>
           <div className="space-y-1">
-            <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">SKU</label>
-            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-100" placeholder="SKU" value={form.sku} onChange={e=>setForm({...form,sku:e.target.value})} />
+            <label className="text-[9px] font-black text-gray-400 uppercase ml-1">SKU</label>
+            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none" value={form.sku} onChange={e=>setForm({...form, sku: e.target.value})} />
           </div>
           <div className="space-y-1">
-            <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Weight (g)</label>
-            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-100" placeholder="500" value={form.weight} onChange={e=>setForm({...form,weight:e.target.value})} />
+            <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Images</label>
+            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none" value={form.images} onChange={e=>setForm({...form, images: e.target.value})} />
           </div>
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Images (comma URLs)</label>
-          <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-100" placeholder="https://img1.jpg, https://img2.jpg" value={form.images} onChange={e=>setForm({...form,images:e.target.value})} />
         </div>
 
         <button 
+          type="submit"
           disabled={!product.attributes?.length} 
           className="w-full bg-gray-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg hover:bg-black hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-30 disabled:pointer-events-none"
         >

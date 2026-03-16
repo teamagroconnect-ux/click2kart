@@ -219,6 +219,16 @@ export default function ProductDetail() {
     }
   }
 
+  const variantAttrs = useMemo(() => {
+    if (!p?.variants?.length) return []
+    const keys = new Set()
+    p.variants.forEach(v => {
+      const attrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+      Object.keys(attrs).forEach(k => keys.add(k))
+    })
+    return [...keys]
+  }, [p])
+
   const variantOpts = (key) => [...new Set(p.variants.map(v => {
     const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
     return vAttrs[key]

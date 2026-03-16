@@ -27,6 +27,8 @@ export default function Catalogue({ initialBrand, brandName }) {
   const [brand,       setBrand]       = useState(initialBrand || '')
   const [category,    setCategory]    = useState('')
   const [subCategory, setSubCategory] = useState('')
+  const [browsePath,  setBrowsePath]  = useState(initialBrand ? 'brand' : null)
+  const [viewMode,    setViewMode]    = useState(initialBrand ? 'CATEGORIES' : 'START')
   const [sort,        setSort]        = useState('NEW')
   const [minPrice,    setMinPrice]    = useState('')
   const [maxPrice,    setMaxPrice]    = useState('')
@@ -48,6 +50,21 @@ export default function Catalogue({ initialBrand, brandName }) {
     } finally { setLoading(false) }
   }
 
+  useEffect(() => {
+    if (q) setViewMode('PRODUCTS')
+    else if (!browsePath) setViewMode('START')
+    else if (browsePath === 'brand') {
+      if (!brand) setViewMode('BRANDS')
+      else if (!category) setViewMode('CATEGORIES')
+      else if (!subCategory) setViewMode('SUBCATEGORIES')
+      else setViewMode('PRODUCTS')
+    } else if (browsePath === 'category') {
+      if (!category) setViewMode('CATEGORIES')
+      else if (!subCategory) setViewMode('SUBCATEGORIES')
+      else setViewMode('PRODUCTS')
+    }
+  }, [q, browsePath, brand, category, subCategory])
+
   useEffect(() => { load(1) }, [q, brand, category, subCategory])
   
   useEffect(() => {
@@ -55,6 +72,14 @@ export default function Catalogue({ initialBrand, brandName }) {
     // Fetch all active categories by default
     api.get('/api/categories', { params: { active: true } }).then(({ data }) => setCategories(data || []))
   }, [])
+
+  useEffect(() => {
+    if (brand && browsePath === 'brand') {
+      api.get('/api/categories', { params: { brand, active: true } }).then(({ data }) => setCategories(data || []))
+    } else if (browsePath === 'category') {
+      api.get('/api/categories', { params: { active: true } }).then(({ data }) => setCategories(data || []))
+    }
+  }, [brand, browsePath])
   
   useEffect(() => {
     if (category) {
@@ -685,9 +710,9 @@ export default function Catalogue({ initialBrand, brandName }) {
           </div>
         </div>
         <div className="ct-chips">
-          <button className={`ct-chip${category===''?' on':''}`} onClick={() => setCategory('')}>All</button>
+          <button className={`ct-chip${category===''?' on':''}`} onClick={() => { setCategory(''); setSubCategory(''); setBrowsePath('category') }}>All</button>
           {categories.map(c => (
-            <button key={c._id} className={`ct-chip${category===c.name?' on':''}`} onClick={() => setCategory(c.name)}>{c.name}</button>
+            <button key={c._id} className={`ct-chip${category===c._id?' on':''}`} onClick={() => { setCategory(c._id); setSubCategory(''); setBrowsePath('category') }}>{c.name}</button>
           ))}
         </div>
       </div>
@@ -871,11 +896,38 @@ export default function Catalogue({ initialBrand, brandName }) {
 
           {/* desktop result bar */}
           <div className="ct-res-bar">
-            <div>
-              <b>{total}</b>
-              <span>products found{category ? <> in <strong style={{color:'#1e1b2e'}}>{category}</strong></> : ''}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="ct-breadcrumb">
+                <button className="ct-bc-item" onClick={() => { setBrowsePath(null); setBrand(''); setCategory(''); setSubCategory(''); setQ('') }}>Catalogue</button>
+                {browsePath && (
+                  <>
+                    <span className="ct-bc-sep">›</span>
+                    <button className="ct-bc-item" onClick={() => { setBrand(''); setCategory(''); setSubCategory('') }}>{browsePath === 'brand' ? 'Brands' : 'Categories'}</button>
+                  </>
+                )}
+                {brand && (
+                  <>
+                    <span className="ct-bc-sep">›</span>
+                    <button className="ct-bc-item" onClick={() => { setCategory(''); setSubCategory('') }}>{brands.find(b => b._id === brand)?.name || 'Brand'}</button>
+                  </>
+                )}
+                {category && (
+                  <>
+                    <span className="ct-bc-sep">›</span>
+                    <button className="ct-bc-item" onClick={() => setSubCategory('')}>{categories.find(c => c._id === category)?.name || 'Category'}</button>
+                  </>
+                )}
+                {subCategory && (
+                  <>
+                    <span className="ct-bc-sep">›</span>
+                    <span className="ct-bc-item active">{subcategories.find(s => s._id === subCategory)?.name || 'Subcategory'}</span>
+                  </>
+                )}
+              </div>
             </div>
-            <span className="ct-page-info">Page {page} of {totalPages}</span>
+            <span className="ct-page-info">
+              {viewMode === 'PRODUCTS' ? `Page ${page} of ${totalPages}` : ''}
+            </span>
           </div>
 
           {/* premium loader */}
@@ -905,8 +957,119 @@ export default function Catalogue({ initialBrand, brandName }) {
             </>
           )}
 
+          {/* NEW STEP-BY-STEP FLOW */}
+          {!loading && !q && (
+            <div className="ct-flow-wrap">
+              <style>{`
+                .ct-flow-wrap { padding-bottom: 40px; }
+                .ct-flow-h { font-family: 'Bebas Neue', sans-serif; font-size: 32px; color: #1e1b2e; margin-bottom: 24px; padding: 0 4px; }
+                .ct-grid-flow { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; }
+                .ct-flow-card { background: white; border: 1.5px solid rgba(124,58,237,.1); border-radius: 24px; padding: 32px 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; transition: all .3s; cursor: pointer; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,.02); }
+                .ct-flow-card:hover { transform: translateY(-6px); box-shadow: 0 12px 32px rgba(124,58,237,.12); border-color: rgba(124,58,237,.35); }
+                .ct-flow-img { height: 60px; width: 100%; display: flex; align-items: center; justify-content: center; font-size: 40px; }
+                .ct-flow-img img { max-height: 100%; max-width: 100%; object-fit: contain; }
+                .ct-flow-name { font-size: 14px; font-weight: 800; color: #1e1b2e; text-transform: uppercase; letter-spacing: .12em; }
+                .ct-flow-sub { font-size: 10px; font-weight: 700; color: #7c3aed; text-transform: uppercase; opacity: .7; }
+                
+                .ct-bc-item { background: none; border: none; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; color: #9ca3af; cursor: pointer; transition: color .2s; }
+                .ct-bc-item:hover { color: #7c3aed; }
+                .ct-bc-item.active { color: #7c3aed; pointer-events: none; }
+                .ct-bc-sep { color: #d1d5db; font-size: 14px; font-weight: 400; }
+                .ct-breadcrumb { display: flex; align-items: center; gap: 8px; }
+              `}</style>
+
+              {viewMode === 'START' && (
+                <>
+                  <h2 className="ct-flow-h">How would you like to browse?</h2>
+                  <div className="ct-grid-flow">
+                    <div className="ct-flow-card" onClick={() => setBrowsePath('brand')}>
+                      <div className="ct-flow-img">🏷️</div>
+                      <div className="ct-flow-name">Browse by Brand</div>
+                      <div className="ct-flow-sub">Samsung, Oppo, Boat...</div>
+                    </div>
+                    <div className="ct-flow-card" onClick={() => setBrowsePath('category')}>
+                      <div className="ct-flow-img">📦</div>
+                      <div className="ct-flow-name">Browse by Category</div>
+                      <div className="ct-flow-sub">Chargers, Cables, Earphones...</div>
+                    </div>
+                    <div className="ct-flow-card" style={{ background: '#faf8ff', borderStyle: 'dashed' }} onClick={() => { setBrowsePath('category'); setViewMode('PRODUCTS') }}>
+                      <div className="ct-flow-img">�</div>
+                      <div className="ct-flow-name">All Products</div>
+                      <div className="ct-flow-sub">Browse Entire Catalog</div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {viewMode === 'BRANDS' && (
+                <>
+                  <h2 className="ct-flow-h">Choose a Brand</h2>
+                  <div className="ct-grid-flow">
+                    {brands.map(b => (
+                      <div key={b._id} className="ct-flow-card" onClick={() => setBrand(b._id)}>
+                        <div className="ct-flow-img">
+                          {b.logo ? <img src={b.logo} alt={b.name} /> : <span>🏷️</span>}
+                        </div>
+                        <div className="ct-flow-name">{b.name}</div>
+                        <div className="ct-flow-sub">Official Partner</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {viewMode === 'CATEGORIES' && (
+                <>
+                  <h2 className="ct-flow-h">
+                    {browsePath === 'brand' 
+                      ? `Select Category for ${brands.find(b => b._id === brand)?.name}` 
+                      : 'Choose a Category'}
+                  </h2>
+                  <div className="ct-grid-flow">
+                    {categories.map(c => (
+                      <div key={c._id} className="ct-flow-card" onClick={() => setCategory(c._id)}>
+                        <div className="ct-flow-img">
+                          {c.image ? <img src={c.image} alt={c.name} /> : <span>📦</span>}
+                        </div>
+                        <div className="ct-flow-name">{c.name}</div>
+                        <div className="ct-flow-sub">{browsePath === 'brand' ? (brands.find(b => b._id === brand)?.name) : 'Authorized Collection'}</div>
+                      </div>
+                    ))}
+                    {browsePath === 'brand' && (
+                      <div className="ct-flow-card" style={{ background: '#faf8ff', borderStyle: 'dashed' }} onClick={() => setViewMode('PRODUCTS')}>
+                        <div className="ct-flow-img">🔍</div>
+                        <div className="ct-flow-name">All {brands.find(b => b._id === brand)?.name}</div>
+                        <div className="ct-flow-sub">View Full Brand Catalog</div>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {viewMode === 'SUBCATEGORIES' && (
+                <>
+                  <h2 className="ct-flow-h">{categories.find(c => c._id === category)?.name} Types</h2>
+                  <div className="ct-grid-flow">
+                    {subcategories.map(s => (
+                      <div key={s._id} className="ct-flow-card" onClick={() => setSubCategory(s._id)}>
+                        <div className="ct-flow-img">🔹</div>
+                        <div className="ct-flow-name">{s.name}</div>
+                        <div className="ct-flow-sub">Specific Collection</div>
+                      </div>
+                    ))}
+                    <div className="ct-flow-card" style={{ background: '#faf8ff', borderStyle: 'dashed' }} onClick={() => setViewMode('PRODUCTS')}>
+                      <div className="ct-flow-img">📦</div>
+                      <div className="ct-flow-name">All {categories.find(c => c._id === category)?.name}</div>
+                      <div className="ct-flow-sub">Full Category View</div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
           {/* grid */}
-          {!loading && (
+          {!loading && (viewMode === 'PRODUCTS' || q) && (
             <div className="ct-grid">
               {filteredSorted.map((p, idx) => (
                 <ProductCard key={p._id} p={p} authed={authed} addToCart={addToCart}
