@@ -38,6 +38,26 @@ export default function ProductDetail() {
   const [kycLoading, setKycLoading]       = useState(false)
   const authed = !!localStorage.getItem('token')
 
+  const variantAttrs = useMemo(() => {
+    if (!p || !p.attributes) return []
+    return Array.isArray(p.attributes) ? p.attributes : []
+  }, [p])
+
+  const matchedVariant = useMemo(() => {
+    if (!p || !p.variants || !Array.isArray(p.variants) || !p.variants.length) return null
+    return p.variants.find(v => {
+      const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+        ? v.attributes 
+        : (v && v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
+      if (!vAttrs) return false
+      return variantAttrs.every(attr => {
+        const val = selected[attr];
+        if (!val) return false;
+        return String(vAttrs[attr] || '').toLowerCase() === String(val || '').toLowerCase()
+      })
+    })
+  }, [p, selected, variantAttrs])
+
   /* KYC / pincode */
   useEffect(() => {
     if (!authed) return
@@ -233,26 +253,6 @@ export default function ProductDetail() {
       })
     })
   }
-
-  const variantAttrs = useMemo(() => {
-    if (!p?.attributes) return []
-    return Array.isArray(p.attributes) ? p.attributes : []
-  }, [p])
-
-  const matchedVariant = useMemo(() => {
-    if (!p?.variants?.length || !Array.isArray(p.variants)) return null
-    return p.variants.find(v => {
-      const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
-        ? v.attributes 
-        : (v && v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-      if (!vAttrs) return false
-      return variantAttrs.every(attr => {
-        const val = selected[attr];
-        if (!val) return false;
-        return String(vAttrs[attr] || '').toLowerCase() === String(val || '').toLowerCase()
-      })
-    })
-  }, [p, selected, variantAttrs])
 
   const currentPrice = matchedVariant?.price ?? p?.price
   const currentMrp = matchedVariant?.mrp ?? p?.mrp
