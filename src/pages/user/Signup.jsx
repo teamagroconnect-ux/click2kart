@@ -2,13 +2,10 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
-import { useAuth } from '../../lib/AuthContext'
 
 export default function Signup() {
-  const logo = "/logo.png"
   const { notify } = useToast()
   const navigate = useNavigate()
-  const { setAuth, refreshProfile } = useAuth()
   const [step, setStep] = useState(1) // 1: Details, 2: OTP
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -18,14 +15,9 @@ export default function Signup() {
     password: ''
   })
   const [otp, setOtp] = useState('')
-  const [agreed, setAgreed] = useState(false)
 
   const handleSendOTP = async (e) => {
     e.preventDefault()
-    if (!agreed) {
-      notify('Please agree to the Terms & Conditions to proceed', 'error')
-      return
-    }
     setLoading(true)
     try {
       await api.post('/api/auth/customer/signup', formData)
@@ -46,8 +38,10 @@ export default function Signup() {
         email: formData.email,
         otp
       })
-      notify('Application submitted. Your account will be activated by admin.', 'success')
-      navigate('/login')
+      localStorage.setItem('token', data.token)
+      localStorage.setItem('user', JSON.stringify(data.user))
+      notify('Account created successfully!', 'success')
+      navigate('/')
     } catch (err) {
       notify(err?.response?.data?.error || 'Invalid OTP', 'error')
     } finally {
@@ -63,16 +57,16 @@ export default function Signup() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-gray-50">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center h-16 rounded-3xl bg-white shadow-xl border border-gray-100 p-1 overflow-hidden mb-4">
-            <img src={logo} alt="Click2Kart" className="h-full w-auto object-contain" />
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-3xl bg-blue-600 text-white text-2xl font-black shadow-xl shadow-blue-100 mb-4">
+            C2K
           </div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">
             {step === 1 ? 'Create Business Account' : 'Verify Email'}
           </h2>
           <p className="text-sm text-gray-500 font-medium">
             {step === 1 
-              ? 'Join 500+ businesses sourcing Click2kart.' 
-              : `We've sent a 4-digit code to ${formData.email}`}
+              ? 'Join 500+ businesses sourcing premium tech.' 
+              : `We've sent a 6-digit code to ${formData.email}`}
           </p>
         </div>
 
@@ -104,13 +98,13 @@ export default function Signup() {
                 />
               </div>
               <div className="group">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Phone Number (Mandatory)</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Phone Number</label>
                 <input
                   name="phone"
                   type="tel"
                   required
                   className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  placeholder="+91 93484 12765"
+                  placeholder="+91 9348412765"
                   value={formData.phone}
                   onChange={handleChange}
                 />
@@ -128,39 +122,11 @@ export default function Signup() {
                   onChange={handleChange}
                 />
               </div>
-
-              {/* Terms & Conditions Checkbox */}
-              <div className="flex items-start gap-3 px-1 py-2">
-                <div className="relative flex items-center mt-1">
-                  <input
-                    id="agreed"
-                    type="checkbox"
-                    className="peer h-5 w-5 cursor-pointer appearance-none rounded-lg border-2 border-gray-200 bg-gray-50 transition-all checked:border-blue-600 checked:bg-blue-600 hover:border-blue-400"
-                    checked={agreed}
-                    onChange={(e) => setAgreed(e.target.checked)}
-                  />
-                  <svg
-                    className="pointer-events-none absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 transition-opacity peer-checked:opacity-100"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <label htmlFor="agreed" className="text-[11px] font-bold text-gray-500 leading-tight cursor-pointer select-none pt-0.5">
-                  I agree to the{' '}
-                  <Link to="/terms-of-service" className="text-blue-600 hover:underline">Terms of Service</Link>
-                  {' '}and{' '}
-                  <Link to="/privacy-policy" className="text-blue-600 hover:underline">Privacy Policy</Link>
-                </label>
-              </div>
             </div>
 
             <button
               type="submit"
-              disabled={loading || !agreed}
+              disabled={loading}
               className="w-full bg-blue-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
             >
               {loading ? 'Sending OTP...' : 'Send Verification Code'}
@@ -176,13 +142,13 @@ export default function Signup() {
         ) : (
           <form className="mt-8 space-y-6" onSubmit={handleVerifyOTP}>
             <div className="group text-center">
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 block">Enter 4-Digit OTP</label>
+              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4 block">Enter 6-Digit OTP</label>
               <input
                 type="text"
                 required
-                maxLength={4}
+                maxLength={6}
                 className="w-full bg-gray-50 border-none rounded-2xl px-5 py-6 text-3xl font-black text-center text-gray-900 tracking-[0.5em] placeholder-gray-300 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                placeholder="0000"
+                placeholder="000000"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
               />
@@ -190,7 +156,7 @@ export default function Signup() {
 
             <button
               type="submit"
-              disabled={loading || otp.length < 4}
+              disabled={loading || otp.length < 6}
               className="w-full bg-blue-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
             >
               {loading ? 'Verifying...' : 'Complete Registration'}

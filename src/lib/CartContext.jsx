@@ -72,10 +72,10 @@ export function CartProvider({ children }) {
       let success = true
       setCart(prev => {
         const pid = product._id || product.id
-        const vid = variant?._id || variant?.id || undefined
-        const existing = prev.find(item => item._id === pid && String(item.variantId||'') === String(vid||''))
+        const vsku = variant?.sku || undefined
+        const existing = prev.find(item => item._id === pid && (item.variantSku || '') === (vsku || ''))
         const currentQty = existing ? existing.quantity : 0
-        const available = vid ? (variant?.stock ?? 0) : (product.stock ?? 0)
+        const available = vsku ? (variant?.stock ?? 0) : (product.stock ?? 0)
         const minQty = Math.max(1, Number(product.minOrderQty || 0))
         const addQty = existing ? 1 : Math.max(1, minQty)
 
@@ -87,13 +87,13 @@ export function CartProvider({ children }) {
 
         if (existing) {
           return prev.map(item => 
-            (item._id === pid && String(item.variantId||'') === String(vid||'')) ? { ...item, quantity: item.quantity + addQty } : item
+            (item._id === pid && (item.variantSku || '') === (vsku || '')) ? { ...item, quantity: item.quantity + addQty } : item
           )
         }
-        const price = vid ? (variant?.price ?? product.price) : product.price
-        const image = vid ? (variant?.images?.[0] || product.images?.[0]) : product.images?.[0]
+        const price = vsku ? (variant?.price ?? product.price) : product.price
+        const image = vsku ? (variant?.images?.[0] || product.images?.[0]) : product.images?.[0]
         const attributes = variant?.attributes
-        return [...prev, { ...product, _id: pid, variantId: vid, attributes, price, image, quantity: addQty, stock: available, minOrderQty: minQty, weight: product.weight }]
+        return [...prev, { ...product, _id: pid, variantSku: vsku, attributes, price, image, quantity: addQty, stock: available, minOrderQty: minQty, weight: product.weight }]
       })
       return success
     }
@@ -102,7 +102,7 @@ export function CartProvider({ children }) {
       const minQty = Math.max(1, Number(product.minOrderQty || 0))
       const { data } = await api.post('/api/cart/add', {
         productId: product._id,
-        variantId: variant?._id,
+        variantSku: variant?.sku,
         quantity: Math.max(1, minQty)
       })
       setCart(data.items || [])
@@ -114,14 +114,14 @@ export function CartProvider({ children }) {
     }
   }
 
-  const removeFromCart = async (productId) => {
+  const removeFromCart = async (productId, variantSku) => {
     if (mode === 'guest') {
-      setCart(prev => prev.filter(item => item._id !== productId))
+      setCart(prev => prev.filter(item => !(item._id === productId && (item.variantSku || '') === (variantSku || ''))))
       return
     }
     try {
       const { data } = await api.delete('/api/cart/remove', {
-        data: { productId }
+        data: { productId, variantSku }
       })
       setCart(data.items || [])
     } catch (err) {
@@ -129,12 +129,12 @@ export function CartProvider({ children }) {
     }
   }
 
-  const updateQuantity = async (productId, quantity) => {
+  const updateQuantity = async (productId, variantSku, quantity) => {
     if (quantity < 1) return
 
     if (mode === 'guest') {
       setCart(prev => {
-        const item = prev.find(x => x._id === productId)
+        const item = prev.find(x => x._id === productId && (x.variantSku || '') === (variantSku || ''))
         if (!item) return prev
         const minQty = Math.max(1, Number(item.minOrderQty || 0))
         const nextQty = Math.max(minQty, quantity)
@@ -144,13 +144,13 @@ export function CartProvider({ children }) {
           return prev
         }
 
-        return prev.map(x => x._id === productId ? { ...x, quantity: nextQty } : x)
+        return prev.map(x => (x._id === productId && (x.variantSku || '') === (variantSku || '')) ? { ...x, quantity: nextQty } : x)
       })
       return
     }
 
     try {
-      const { data } = await api.put('/api/cart/update', { productId, quantity })
+      const { data } = await api.put('/api/cart/update', { productId, variantSku, quantity })
       setCart(data.items || [])
     } catch (err) {
       notify(err?.response?.data?.error || 'Could not update quantity', 'error')

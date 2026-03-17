@@ -68,19 +68,22 @@ export default function InventoryPage() {
   const submit = async (e) => {
     e.preventDefault()
     if (!canSubmit) return
+    
+    // Strict variant selection check
     if (selected.variants?.length > 0 && !selectedVariant) {
-      notify('Please select a variant', 'error')
+      notify('Please select a specific variant SKU', 'error')
       return
     }
+
     setSubmitting(true)
     try {
       await api.post('/api/inventory/in', {
         productId: selected._id,
-        variantId: selectedVariant?._id || selectedVariant?.id,
+        variantSku: selectedVariant?.sku || undefined,
         quantity: Number(qty),
         note
       })
-      notify('Stock added successfully', 'success')
+      notify(`Stock added to ${selectedVariant ? 'SKU: ' + selectedVariant.sku : 'Product'}`, 'success')
       setQty('')
       setNote('')
       setQ('')
@@ -252,9 +255,9 @@ export default function InventoryPage() {
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Select Variant</label>
                 <select 
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={selectedVariant?._id || ''}
+                  value={selectedVariant?.sku || ''}
                   onChange={e => {
-                    const v = selected.variants.find(vx => (vx._id || vx.id) === e.target.value);
+                    const v = selected.variants.find(vx => vx.sku === e.target.value);
                     setSelectedVariant(v);
                   }}
                   required
@@ -262,8 +265,8 @@ export default function InventoryPage() {
                   <option value="">-- Select Variant --</option>
                   {selected.variants.map(v => {
                     const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {});
-                    const label = Object.entries(vAttrs).map(([k,val]) => `${k}: ${val}`).join(', ') || `SKU: ${v.sku || v._id}`;
-                    return <option key={v._id || v.id} value={v._id || v.id}>{label} (Current: {v.stock || 0})</option>
+                    const label = Object.entries(vAttrs).map(([k,val]) => `${k}: ${val}`).join(', ') || `SKU: ${v.sku}`;
+                    return <option key={v.sku} value={v.sku}>{label} (Current: {v.stock || 0})</option>
                   })}
                 </select>
               </div>

@@ -388,9 +388,11 @@ export default function Cart() {
                 const pct     = tiers.length ? Math.min(100, Math.round((item.quantity/maxQ)*100)) : 100
                 const stockSt = getStockStatus(item.stock)
                 const imgSrc  = item.image || item.images?.[0]?.url
+                const itemId  = item.productId || item._id
+                const itemSku = item.variantSku || ''
 
                 return (
-                  <div key={item.productId||item._id} className="ct-item" style={{ animationDelay:`${idx*50}ms` }}>
+                  <div key={`${itemId}-${itemSku}`} className="ct-item" style={{ animationDelay:`${idx*50}ms` }}>
 
                     {/* image */}
                     <div className="ct-img" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${item.productId || item._id}`)}>
@@ -433,27 +435,27 @@ export default function Cart() {
                         <div className="ct-qty-ctrl">
                           <button className="ct-qty-btn"
                             disabled={item.quantity <= Math.max(1, Number(item.minOrderQty||0))}
-                            onClick={() => updateQuantity(item.productId||item._id, Math.max(Number(item.minOrderQty||1), item.quantity-1))}>−</button>
+                            onClick={() => updateQuantity(itemId, itemSku, Math.max(Number(item.minOrderQty||1), item.quantity-1))}>−</button>
                           <input 
                             className="ct-qty-val" 
                             type="number"
                             value={item.quantity} 
                             onChange={(e) => {
                               const v = parseInt(e.target.value) || 0
-                              updateQuantity(item.productId||item._id, Math.max(0, v))
+                              updateQuantity(itemId, itemSku, Math.max(0, v))
                             }}
                             onBlur={(e) => {
                               const min = Math.max(1, Number(item.minOrderQty||0))
                               const v = parseInt(e.target.value) || min
-                              updateQuantity(item.productId||item._id, Math.max(min, v))
+                              updateQuantity(itemId, itemSku, Math.max(min, v))
                             }}
                           />
                           <button className="ct-qty-btn"
-                            onClick={() => updateQuantity(item.productId||item._id, item.quantity+1)}>+</button>
+                            onClick={() => updateQuantity(itemId, itemSku, item.quantity+1)}>+</button>
                         </div>
 
                         <button className="ct-action-btn remove"
-                          onClick={() => removeFromCart(item.productId||item._id)}>
+                          onClick={() => removeFromCart(itemId, itemSku)}>
                           Remove
                         </button>
                         <button className="ct-action-btn save"
@@ -461,7 +463,7 @@ export default function Cart() {
                             try {
                               const saved = JSON.parse(localStorage.getItem('saved')||'[]')
                               localStorage.setItem('saved', JSON.stringify([...saved, item]))
-                              removeFromCart(item.productId||item._id)
+                              removeFromCart(itemId, itemSku)
                             } catch {}
                           }}>
                           Save for later
@@ -486,7 +488,7 @@ export default function Cart() {
                                     Add {delta} more → ₹{effUnit.toLocaleString()}/unit · save ~₹{estSave.toLocaleString()}
                                   </div>
                                   <button className="ct-tier-add-btn"
-                                    onClick={() => updateQuantity(item.productId||item._id, next.quantity)}>
+                                    onClick={() => updateQuantity(itemId, itemSku, next.quantity)}>
                                     +{delta} units
                                   </button>
                                 </>

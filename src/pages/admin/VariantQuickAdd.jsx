@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-export default function VariantQuickAdd({ onAdd, productAttributes = [] }) {
+export default function VariantQuickAdd({ onAdd, productAttributes = [], productName = '' }) {
   const [v, setV] = useState({ 
     attributes: {}, 
     price: '', 
@@ -18,6 +18,31 @@ export default function VariantQuickAdd({ onAdd, productAttributes = [] }) {
     })
     setV(prev => ({ ...prev, attributes: attrs }))
   }, [productAttributes])
+
+  // Auto-generate SKU when attributes or productName changes
+  useEffect(() => {
+    const values = productAttributes
+      .map(attr => (v.attributes[attr.toLowerCase()] || '').trim())
+      .filter(Boolean)
+    
+    if (productName && values.length > 0) {
+      // Clean product name and attribute values for SKU
+      const cleanName = productName.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '') // Remove special chars
+        .trim()
+        .replace(/\s+/g, '-') // Replace spaces with -
+      
+      const cleanValues = values.map(val => 
+        val.toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .trim()
+          .replace(/\s+/g, '-')
+      ).join('-')
+
+      const generatedSku = `${cleanName}-${cleanValues}`
+      setV(prev => ({ ...prev, sku: generatedSku }))
+    }
+  }, [v.attributes, productName, productAttributes])
 
   const add = (e) => {
     e.preventDefault()

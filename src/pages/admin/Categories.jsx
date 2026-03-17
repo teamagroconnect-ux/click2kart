@@ -5,7 +5,8 @@ import ImageUpload from '../../components/ImageUpload'
 export default function Categories(){
   const [items, setItems] = useState([])
   const [brands, setBrands] = useState([])
-  const [form, setForm] = useState({ name:'', slug:'', image:'', brandId:'' })
+  const [form, setForm] = useState({ name:'', slug:'', image:'', brandId:'', attributes: [] })
+  const [attrInput, setAttrInput] = useState('')
   const [editing, setEditing] = useState(null)
   
   const load = async () => { 
@@ -18,16 +19,35 @@ export default function Categories(){
   const create = async (e) => { 
     e.preventDefault(); 
     await api.post('/api/categories', form); 
-    setForm({ name:'', slug:'', image:'', brandId:'' }); 
+    setForm({ name:'', slug:'', image:'', brandId:'', attributes: [] }); 
     load() 
   }
   const toggle = async (c) => { await api.put(`/api/categories/${c._id}`, { isActive: !c.isActive }); load() }
   const update = async (e) => {
     e.preventDefault()
     if (!editing) return
-    await api.put(`/api/categories/${editing._id}`, { name: editing.name, slug: editing.slug, image: editing.image || '', brandId: editing.brandId || null, isActive: editing.isActive })
+    await api.put(`/api/categories/${editing._id}`, { 
+      name: editing.name, 
+      slug: editing.slug, 
+      image: editing.image || '', 
+      brandId: editing.brandId || null, 
+      isActive: editing.isActive,
+      attributes: editing.attributes
+    })
     setEditing(null)
     load()
+  }
+
+  const addAttr = (target, setTarget) => {
+    const val = attrInput.trim().toLowerCase()
+    if (val && !target.attributes.includes(val)) {
+      setTarget({ ...target, attributes: [...target.attributes, val] })
+      setAttrInput('')
+    }
+  }
+
+  const removeAttr = (target, setTarget, attr) => {
+    setTarget({ ...target, attributes: target.attributes.filter(a => a !== attr) })
   }
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
@@ -63,6 +83,21 @@ export default function Categories(){
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Slug</label>
                 <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. chargers" value={form.slug} onChange={e=>setForm({...form, slug:e.target.value})} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Dynamic Attributes (e.g. model, watt)</label>
+                <div className="flex gap-2">
+                  <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Add attribute..." value={attrInput} onChange={e=>setAttrInput(e.target.value)} onKeyDown={e=>e.key==='Enter' && (e.preventDefault(), addAttr(form, setForm))} />
+                  <button type="button" onClick={()=>addAttr(form, setForm)} className="px-4 bg-gray-900 text-white rounded-2xl text-xs font-bold">Add</button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {form.attributes.map(a => (
+                    <span key={a} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase flex items-center gap-2">
+                      {a}
+                      <button type="button" onClick={()=>removeAttr(form, setForm, a)}>✕</button>
+                    </span>
+                  ))}
+                </div>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Image (Optional)</label>
@@ -153,6 +188,21 @@ export default function Categories(){
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Slug</label>
                 <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold outline-none" value={editing.slug} onChange={e=>setEditing({...editing, slug: e.target.value})} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Dynamic Attributes</label>
+                <div className="flex gap-2">
+                  <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold outline-none" placeholder="Add attribute..." value={attrInput} onChange={e=>setAttrInput(e.target.value)} onKeyDown={e=>e.key==='Enter' && (e.preventDefault(), addAttr(editing, setEditing))} />
+                  <button type="button" onClick={()=>addAttr(editing, setEditing)} className="px-4 bg-gray-900 text-white rounded-2xl text-xs font-bold">Add</button>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {(editing.attributes || []).map(a => (
+                    <span key={a} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase flex items-center gap-2">
+                      {a}
+                      <button type="button" onClick={()=>removeAttr(editing, setEditing, a)}>✕</button>
+                    </span>
+                  ))}
+                </div>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Image</label>

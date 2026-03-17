@@ -15,7 +15,7 @@ export default function Enquiry() {
   const initialItems = cart.length > 0
     ? cart.map(item => ({
         productId: item.productId || item._id,
-        variantId: item.variantId,
+        variantSku: item.variantSku,
         quantity:  item.quantity,
         name:      item.name,
         price:     item.price,
@@ -73,7 +73,7 @@ export default function Enquiry() {
 
   useEffect(() => {
     if (cart.length > 0) setItems(cart.map(item => ({
-      productId: item.productId||item._id, variantId: item.variantId, quantity: item.quantity,
+      productId: item.productId||item._id, variantSku: item.variantSku, quantity: item.quantity,
       name: item.name, price: item.price, mrp: item.mrp || item.price, image: item.image||item.images?.[0]?.url,
       attributes: item.attributes, bulkQty: item.bulkDiscountQuantity||item.bulkQty||0,
       bulkRed: item.bulkDiscountPriceReduction||item.bulkRed||0, bulkTiers: item.bulkTiers,
@@ -193,7 +193,7 @@ export default function Enquiry() {
     } catch { notify('Unable to verify serviceability right now','error'); return }
     setLoading(true)
     try {
-      const cleanItems = items.filter(it=>typeof it.productId==='string'&&it.productId.length>=12).map(it=>({ productId:it.productId, variantId:it.variantId, quantity:Math.max(1,Number(it.quantity||1)) }))
+      const cleanItems = items.filter(it=>typeof it.productId==='string'&&it.productId.length>=12).map(it=>({ productId:it.productId, variantSku:it.variantSku, quantity:Math.max(1,Number(it.quantity||1)) }))
       const visibleTotal = computedVisibleTotal(items)
       if (visibleTotal < minAmount) { notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`,'error'); setLoading(false); return }
       if (paymentMethod==='MANUAL') { setLoading(false); nav('/manual-payment',{ state:{ items:cleanItems, amount:totalPayable, couponCode:appliedCoupon?.code || '' } }); return }

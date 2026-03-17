@@ -18,6 +18,7 @@ export default function Catalogue({ initialBrand, brandName }) {
   const [sug,         setSug]         = useState([])
   const [showSug,     setShowSug]     = useState(false)
   const [items,       setItems]       = useState([])
+  const [groupedItems, setGroupedItems] = useState([])
   const [total,       setTotal]       = useState(0)
   const [page,        setPage]        = useState(1)
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -41,12 +42,20 @@ export default function Catalogue({ initialBrand, brandName }) {
   const load = async (p = 1) => {
     setLoading(true)
     try {
-      const { data } = await api.get('/api/products', {
-        params: { q, page: p, limit, brand: brand || undefined, category: category || undefined, subCategory: subCategory || undefined },
-      })
-      if (p === 1) setItems(data.items)
-      else setItems(prev => [...prev, ...data.items])
-      setTotal(data.total); setPage(p)
+      if (viewMode === 'PRODUCTS' || q) {
+        const { data } = await api.get('/api/products', {
+          params: { q, page: p, limit, brand: brand || undefined, category: category || undefined, subCategory: subCategory || undefined },
+        })
+        if (p === 1) setItems(data.items)
+        else setItems(prev => [...prev, ...data.items])
+        setTotal(data.total); setPage(p)
+      } else if (viewMode === 'GROUPED' || (viewMode === 'START' && !browsePath)) {
+        // Grouped mode for Brands/Categories pages
+        const { data } = await api.get('/api/products/grouped', {
+          params: { brand: brand || undefined, category: category || undefined }
+        })
+        setGroupedItems(data || [])
+      }
     } finally { setLoading(false) }
   }
 
@@ -55,7 +64,7 @@ export default function Catalogue({ initialBrand, brandName }) {
     else if (!browsePath) setViewMode('START')
     else if (browsePath === 'brand') {
       if (!brand) setViewMode('BRANDS')
-      else if (!category) setViewMode('CATEGORIES')
+      else if (!category) setViewMode('GROUPED') // Show products grouped by category for this brand
       else if (!subCategory) setViewMode('SUBCATEGORIES')
       else setViewMode('PRODUCTS')
     } else if (browsePath === 'category') {
@@ -1123,6 +1132,32 @@ export default function Catalogue({ initialBrand, brandName }) {
             </div>
           )}
 
+          {/* Grouped View (Category-wise) */}
+          {!loading && !q && viewMode === 'GROUPED' && (
+            <div className="space-y-12">
+              {groupedItems.map(group => (
+                <section key={group.category._id} className="space-y-6">
+                  <div className="flex items-center justify-between border-b border-gray-200 pb-4">
+                    <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3">
+                      <span className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-sm">📦</span>
+                      {group.category.name}
+                    </h3>
+                    <button 
+                      onClick={() => { setCategory(group.category._id); setViewMode('PRODUCTS') }}
+                      className="text-xs font-black text-indigo-600 uppercase tracking-widest hover:underline"
+                    >View All {group.category.name}</button>
+                  </div>
+                  <div className="ct-grid">
+                    {group.items.slice(0, 4).map((p, idx) => (
+                      <ProductCard key={p._id} p={p} authed={authed} addToCart={addToCart}
+                        navigate={navigate} index={idx} setRecOpen={setRecOpen} setRecItems={setRecItems}/>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
+
           {/* empty */}
           {!loading && filteredSorted.length === 0 && (
             <div className="ct-empty">
@@ -1229,7 +1264,12 @@ export default function Catalogue({ initialBrand, brandName }) {
    PRODUCT CARD
 ══════════════════════════════════════════ */
 function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRecItems }) {
-  const status   = getStockStatus(p.stock)
+  // Use sum of variant stocks if variants exist, otherwise use top-level stock
+  const totalStock = Array.isArray(p.variants) && p.variants.length > 0
+    ? p.variants.filter(v => v.isActive !== false).reduce((sum, v) => sum + (v.stock || 0), 0)
+    : (p.stock || 0)
+  
+  const status   = getStockStatus(totalStock)
   const hasBulk  = p.bulkDiscountQuantity > 0
   const discount = p.mrp && p.mrp > p.price
     ? Math.round(((Number(p.mrp) - Number(p.price)) / Number(p.mrp)) * 100) : 0
@@ -1353,8 +1393,8 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
 
           <button
             className="ct-atc"
-            disabled={!authed || p.stock <= 0}
-            title={!authed ? 'Login to add' : p.stock <= 0 ? 'Out of stock' : 'Add to cart'}
+            disabled={!authed || totalStock <= 0}
+            title={!authed ? 'Login to add' : totalStock <= 0 ? 'Out of stock' : 'Add to cart'}
             onClick={async e => {
               e.stopPropagation(); e.preventDefault()
               if (!authed) { navigate('/login'); return }
@@ -1380,9 +1420,9 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
         {/* tags */}
         <div className="ct-tags">
           <span className="ct-tag" style={{
-            background: p.stock<=0 ? 'rgba(220,38,38,.08)' : p.stock<=5 ? 'rgba(245,158,11,.08)' : 'rgba(5,150,105,.08)',
-            color:      p.stock<=0 ? '#dc2626' : p.stock<=5 ? '#d97706' : '#059669',
-            border:     `1px solid ${p.stock<=0 ? 'rgba(220,38,38,.18)' : p.stock<=5 ? 'rgba(245,158,11,.18)' : 'rgba(5,150,105,.18)'}`,
+            background: totalStock<=0 ? 'rgba(220,38,38,.08)' : totalStock<=5 ? 'rgba(245,158,11,.08)' : 'rgba(5,150,105,.08)',
+            color:      totalStock<=0 ? '#dc2626' : totalStock<=5 ? '#d97706' : '#059669',
+            border:     `1px solid ${totalStock<=0 ? 'rgba(220,38,38,.18)' : totalStock<=5 ? 'rgba(245,158,11,.18)' : 'rgba(5,150,105,.18)'}`,
           }}>{status.text}</span>
           <span className="ct-tag" style={{background:'rgba(124,58,237,.08)',color:'#7c3aed',border:'1px solid rgba(124,58,237,.15)'}}>⚡ Fast</span>
           {p.gst > 0 && <span className="ct-tag" style={{background:'rgba(5,150,105,.08)',color:'#059669',border:'1px solid rgba(5,150,105,.15)'}}>GST</span>}

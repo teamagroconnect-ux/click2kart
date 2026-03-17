@@ -92,7 +92,10 @@ export default function ProductDetail() {
     const attrs = p.attributes || []
     const initial = {}
     attrs.forEach(a => {
-      const vals = [...new Set(p.variants.map(v => (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {}))[a]).filter(Boolean))]
+      const vals = [...new Set(p.variants.map(v => {
+        const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+        return vAttrs[a]
+      }).filter(Boolean))]
       if (vals.length) initial[a] = vals[0]
     })
     setSelected(prev => ({ ...initial, ...prev }))
@@ -102,7 +105,10 @@ export default function ProductDetail() {
     if (!p || !Array.isArray(p.variants) || !p.variants.length) { setActiveVariant(null); return }
     const v = p.variants.find(v => {
       const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
-      return Object.entries(selected).every(([k, val]) => (vAttrs[k] || '') === (val || ''))
+      return Object.entries(selected).every(([k, val]) => {
+        if (!val) return true;
+        return (vAttrs[k] || '') === (val || '')
+      })
     }) || null
     
     if (!v && Object.keys(selected).length > 0) {
@@ -185,8 +191,53 @@ export default function ProductDetail() {
     </>
   )
 
+  /* variant helpers */
+  const variantOpts = (key) => {
+    if (!p?.variants?.length) return []
+    const set = new Set()
+    p.variants.forEach(v => {
+      const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+      if (vAttrs[key]) set.add(vAttrs[key])
+    })
+    return Array.from(set).sort()
+  }
+
+  const isOptEnabled = (key, val) => {
+    if (!p?.variants?.length) return true
+    const testSelected = { ...selected, [key]: val }
+    return p.variants.some(v => {
+      const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+      return Object.entries(testSelected).every(([k, vVal]) => {
+        if (!vVal) return true
+        return (vAttrs[k] || '') === (vVal || '')
+      })
+    })
+  }
+
+  const variantAttrs = useMemo(() => p?.attributes || [], [p])
+
+  const matchedVariant = useMemo(() => {
+    if (!p?.variants?.length) return null
+    return p.variants.find(v => {
+      const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+      return variantAttrs.every(attr => {
+        const val = selected[attr];
+        if (!val) return false;
+        return (vAttrs[attr] || '') === (val || '')
+      })
+    })
+  }, [p, selected, variantAttrs])
+
+  const currentPrice = matchedVariant?.price ?? p?.price
+  const currentMrp = matchedVariant?.mrp ?? p?.mrp
+  const currentStock = matchedVariant?.stock ?? p?.stock
+  const currentSku = matchedVariant?.sku
+  const isAvailable = currentStock > 0
+
+  const canAddToCart = variantAttrs.every(attr => !!selected[attr]) && !!matchedVariant && isAvailable
+
   /* ── PRICE CALCULATIONS ── */
-  const basePrice  = Number(activeVariant?.price ?? p.price ?? 0)
+  const basePrice  = Number(currentPrice ?? 0)
   const sortedAsc  = Array.isArray(p.bulkTiers) ? p.bulkTiers.slice().sort((a,b) => a.quantity-b.quantity) : []
   const sortedDesc = Array.isArray(p.bulkTiers) ? p.bulkTiers.slice().sort((a,b) => b.quantity-a.quantity) : []
   const minTierQty = sortedAsc.length > 0 ? Math.max(1, Number(sortedAsc[0].quantity||1)) : (p.bulkDiscountQuantity||1)
@@ -195,20 +246,20 @@ export default function ProductDetail() {
   if (hitTier) effPrice = Math.max(0, basePrice - Number(hitTier.priceReduction||0))
   else if (p.bulkDiscountQuantity > 0 && qty >= Number(p.bulkDiscountQuantity)) effPrice = Math.max(0, basePrice - Number(p.bulkDiscountPriceReduction||0))
   const savingsTotal = Math.max(0, (basePrice - effPrice) * qty)
-  const mrp          = Number(activeVariant?.mrp ?? p.mrp ?? 0)
+  const mrp          = Number(currentMrp ?? 0)
   const unitSave     = mrp > 0 ? Math.max(0, mrp - effPrice) : Math.max(0, basePrice - effPrice)
   const gstRate      = Number(p.gst || 0)
   const isBestseller = (p.ratingCount||0) >= 50
   const isHotDeal    = mrp > 0 && ((mrp - (p.price||0)) / mrp) * 100 >= 20
-  const imgs         = activeVariant?.images?.length ? activeVariant.images : (p.images||[])
+  const imgs         = matchedVariant?.images?.length ? matchedVariant.images : (p.images||[])
   const currentImg   = imgs[activeImg]?.url || imgs[0]?.url
-  const stock        = activeVariant ? (activeVariant.stock||0) : p.stock
+  const stock        = currentStock ?? 0
   const stockSt      = getStockStatus(stock)
 
   const handleAddToCart = async () => {
     if (!authed) { navigate('/login'); return }
-    if (Array.isArray(p.variants) && p.variants.length > 0 && !activeVariant) return
-    const ok = await addToCart({ ...p, minOrderQty: Math.max(minTierQty, qty) }, activeVariant||undefined)
+    if (variantAttrs.length > 0 && !matchedVariant) return
+    const ok = await addToCart({ ...p, minOrderQty: Math.max(minTierQty, qty) }, matchedVariant||undefined)
     if (ok) {
       try {
         const { data } = await api.get(`/api/recommendations/frequently-bought/${id}`)
@@ -218,29 +269,6 @@ export default function ProductDetail() {
       } catch {}
     }
   }
-
-  const variantAttrs = useMemo(() => {
-    if (!p?.variants?.length) return []
-    const keys = new Set()
-    p.variants.forEach(v => {
-      const attrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
-      Object.keys(attrs).forEach(k => keys.add(k))
-    })
-    return [...keys]
-  }, [p])
-
-  const variantOpts = (key) => [...new Set(p.variants.map(v => {
-    const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
-    return vAttrs[key]
-  }).filter(Boolean))]
-
-  const isOptEnabled = (key, val) => p.variants.some(v => {
-    const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
-    const checks = { ...selected }
-    delete checks[key]
-    return (vAttrs[key] || '') === (val) &&
-      Object.entries(checks).every(([k, sv]) => !sv || (vAttrs[k] || '') === (sv))
-  })
 
   /* ── RENDER ── */
   return (
@@ -922,7 +950,7 @@ export default function ProductDetail() {
             {/* VARIANTS */}
             {Array.isArray(p.variants) && p.variants.length > 0 && (
               <div className="pd-variants">
-                {(p.attributes || []).map(attrKey => {
+                {variantAttrs.map(attrKey => {
                   const options = variantOpts(attrKey)
                   if (!options.length) return null
                   return (
@@ -943,7 +971,7 @@ export default function ProductDetail() {
                     </div>
                   )
                 })}
-                {activeVariant && <div className="pd-sku">SKU: {activeVariant.sku || '—'}</div>}
+                {matchedVariant && <div className="pd-sku">SKU: {matchedVariant.sku || '—'}</div>}
               </div>
             )}
 
@@ -1099,7 +1127,7 @@ export default function ProductDetail() {
             <div className="pd-cta">
               <button
                 className="pd-btn-primary"
-                disabled={!authed || stock <= 0 || (sortedAsc.length > 0 && qty < minTierQty)}
+                disabled={!authed || !isAvailable || (variantAttrs.length > 0 && !matchedVariant) || (sortedAsc.length > 0 && qty < minTierQty)}
                 onClick={handleAddToCart}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1107,7 +1135,7 @@ export default function ProductDetail() {
                   <circle cx="10" cy="19" r="1.4" fill="currentColor"/>
                   <circle cx="17" cy="19" r="1.4" fill="currentColor"/>
                 </svg>
-                {!authed ? 'Login to Buy' : stock<=0 ? 'Out of Stock' : 'Add to Cart'}
+                {!authed ? 'Login to Buy' : !isAvailable ? 'Out of Stock' : (variantAttrs.length > 0 && !matchedVariant) ? 'Select Options' : (sortedAsc.length > 0 && qty < minTierQty) ? `Min Order ${minTierQty}` : 'Add to Cart'}
               </button>
             </div>
 
@@ -1420,10 +1448,10 @@ export default function ProductDetail() {
         <button
           className="pd-btn-primary"
           style={{flex:2,padding:'12px 20px',borderRadius:13,minWidth:'auto'}}
-          disabled={!authed || stock<=0 || (sortedAsc.length>0 && qty<minTierQty)}
+          disabled={!authed || !isAvailable || (variantAttrs.length > 0 && !matchedVariant) || (sortedAsc.length > 0 && qty < minTierQty)}
           onClick={handleAddToCart}
         >
-          {!authed ? '🔒 Login' : stock<=0 ? 'Out of Stock' : 'Add to Cart'}
+          {!authed ? '🔒 Login' : !isAvailable ? 'Out of Stock' : (variantAttrs.length > 0 && !matchedVariant) ? 'Select' : 'Add to Cart'}
         </button>
       </div>
 

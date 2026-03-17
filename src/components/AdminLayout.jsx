@@ -87,27 +87,51 @@ const Icon = ({ name }) => (
 export default function AdminLayout() {
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
+  
+  // Get role and permissions from token
+  const token = localStorage.getItem('token')
+  let role = 'admin'
+  let permissions = []
+  if (token) {
+    try {
+      const part = token.split('.')[1] || ''
+      const b64 = part.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(part.length / 4) * 4, '=')
+      const payload = JSON.parse(atob(b64))
+      role = payload.role
+      permissions = payload.permissions || []
+    } catch {}
+  }
+
   const logout = () => {
     localStorage.removeItem('token')
     navigate('/admin/login')
   }
-  const link = (to, label, end = false) => (
-    <NavLink
-      to={to}
-      end={end}
-      onClick={() => setOpen(false)}
-      className={({ isActive }) =>
-        [
-          'flex items-center px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-200 group',
-          isActive
-            ? 'bg-gray-900 text-white shadow-lg shadow-gray-200 scale-[1.02]'
-            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:pl-5'
-        ].join(' ')
-      }
-    >
-      {label}
-    </NavLink>
-  )
+
+  const canAccess = (key) => {
+    if (role === 'admin') return true
+    return permissions.includes(key)
+  }
+
+  const link = (to, label, key, end = false) => {
+    if (key && !canAccess(key)) return null;
+    return (
+      <NavLink
+        to={to}
+        end={end}
+        onClick={() => setOpen(false)}
+        className={({ isActive }) =>
+          [
+            'flex items-center px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-200 group',
+            isActive
+              ? 'bg-gray-900 text-white shadow-lg shadow-gray-200 scale-[1.02]'
+              : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:pl-5'
+          ].join(' ')
+        }
+      >
+        {label}
+      </NavLink>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-white text-gray-900 selection:bg-blue-100 selection:text-blue-900">
@@ -132,9 +156,9 @@ export default function AdminLayout() {
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-base font-black tracking-tight text-gray-900">{CONFIG.BRAND_NAME}</span>
-                <span className="px-2 py-0.5 bg-gray-900 text-[10px] font-black text-white rounded-lg tracking-widest uppercase">Admin</span>
+                <span className="px-2 py-0.5 bg-gray-900 text-[10px] font-black text-white rounded-lg tracking-widest uppercase">{role}</span>
               </div>
-              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Admin Panel</div>
+              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">{role === 'admin' ? 'Admin Panel' : 'Staff Panel'}</div>
             </div>
           </div>
         </div>
@@ -160,43 +184,43 @@ export default function AdminLayout() {
                   <Icon name="dash" />
                   Dashboard
                 </>
-              ), true)}
+              ), null, true)}
               {link('/admin/products', (
                 <>
                   <Icon name="prod" />
                   Products
                 </>
-              ))}
+              ), 'products')}
               {link('/admin/brands', (
                 <>
                   <Icon name="cat" />
                   Brands
                 </>
-              ))}
+              ), 'brands')}
               {link('/admin/categories', (
                 <>
                   <Icon name="cat" />
                   Categories
                 </>
-              ))}
+              ), 'categories')}
               {link('/admin/subcategories', (
                 <>
                   <Icon name="cat" />
                   Subcategories
                 </>
-              ))}
+              ), 'subcategories')}
               {link('/admin/billing', (
                 <>
                   <Icon name="bill" />
                   Billing
                 </>
-              ))}
+              ), 'billing')}
               {link('/admin/orders', (
                 <>
                   <Icon name="order" />
                   Orders
                 </>
-              ))}
+              ), 'orders')}
               {link('/admin/payment-verification', (
                 <>
                   <span className="inline-block w-4 h-4 mr-2 align-middle">
@@ -207,43 +231,56 @@ export default function AdminLayout() {
                   </span>
                   Payment Verification
                 </>
-              ))}
+              ), 'payment-verification')}
               {link('/admin/coupons', (
                 <>
                   <Icon name="coupon" />
                   Coupons
                 </>
-              ))}
+              ), 'coupons')}
               {link('/admin/offers', (
                 <>
                   <Icon name="offer" />
                   Offers
                 </>
-              ))}
+              ), 'offers')}
               {link('/admin/partners', (
                 <>
                   <Icon name="partner" />
                   Partners
                 </>
-              ))}
+              ), 'partners')}
               {link('/admin/customers', (
                 <>
                   <Icon name="cust" />
                   Customers
                 </>
-              ))}
+              ), 'customers')}
               {link('/admin/inventory', (
                 <>
                   <Icon name="inv" />
                   Inventory
                 </>
-              ))}
+              ), 'inventory')}
               {link('/admin/stores', (
                 <>
                   <Icon name="inv" />
                   Stores
                 </>
-              ))}
+              ), 'stores')}
+              {link('/admin/staff', (
+                <>
+                  <span className="inline-block w-4 h-4 mr-2 align-middle">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                  </span>
+                  Staff Management
+                </>
+              ), 'staff')}
               <div className="pt-6 mt-6 border-t border-gray-50">
                 <div className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-4 px-2">
                   System
@@ -258,7 +295,7 @@ export default function AdminLayout() {
                     </span>
                     Settings
                   </>
-                ))}
+                ), 'settings')}
               </div>
             </nav>
             <div className="mt-auto pt-6 border-t border-gray-50 px-2">

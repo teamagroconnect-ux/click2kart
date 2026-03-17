@@ -46,10 +46,17 @@ export default function Products() {
     const categoryId = editing ? editing.categoryId : form.categoryId;
     if (categoryId) {
       api.get('/api/subcategories', { params: { category: categoryId, active: true } }).then(({ data }) => setSubcategories(data || [])).catch(() => {})
+      
+      // Auto load attributes from category
+      const cat = categories.find(c => c._id === categoryId)
+      if (cat && cat.attributes) {
+        if (editing) setEditing(prev => ({ ...prev, attributes: cat.attributes }))
+        else setForm(prev => ({ ...prev, attributes: cat.attributes }))
+      }
     } else {
       setSubcategories([])
     }
-  }, [form.categoryId, editing?.categoryId])
+  }, [form.categoryId, editing?.categoryId, categories])
   useEffect(() => {
     api.get('/api/stores').then(({ data }) => setStores(data || [])).catch(()=>{})
   }, [])
@@ -623,7 +630,11 @@ export default function Products() {
                           ))}
                         </div>
                       )}
-                      <VariantQuickAdd onAdd={(v)=> setForm(f => ({ ...f, variants: [...(f.variants||[]), v] }))} productAttributes={form.attributes} />
+                      <VariantQuickAdd 
+                        onAdd={(v)=> setForm(f => ({ ...f, variants: [...(f.variants||[]), v] }))} 
+                        productAttributes={form.attributes} 
+                        productName={form.name}
+                      />
                     </div>
                   )}
                 </div>
