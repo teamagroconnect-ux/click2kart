@@ -222,7 +222,8 @@ export default function Products() {
                               </div>
                       <div className="min-w-0">
                                 <div className="font-bold text-gray-900 truncate max-w-[240px]">{p.name}</div>
-                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.category || 'General'}</div>
+                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.category?.name || (typeof p.category === 'string' ? p.category : 'General')}</div>
+                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.brand?.name || (typeof p.brand === 'string' ? p.brand : '')}</div>
                         {(p.store || p.section) && (
                           <div className="text-[10px] text-gray-500 font-bold">{p.store || ''}{p.section ? `(${p.section})` : ''}</div>
                         )}
