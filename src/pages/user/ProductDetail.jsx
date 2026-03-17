@@ -77,10 +77,12 @@ export default function ProductDetail() {
   useEffect(() => {
     setError(null);
     api.get(`/api/products/${id}`).then(({ data }) => {
+      if (!data) throw new Error('no_data');
       setP(data); setQty(Math.max(1, Number(data.minOrderQty || 1)))
     }).catch(err => {
-      console.error(err);
-      setError(err?.response?.data?.error || 'Product not found');
+      console.error("Product load failed:", err);
+      const msg = err?.response?.data?.error || err.message || 'Product not found';
+      setError(msg === 'not_found' ? 'This product is no longer available.' : msg);
     })
     api.get(`/api/recommendations/similar/${id}`).then(({ data }) => setSimilar(data||[])).catch(() => {})
     api.get(`/api/recommendations/frequently-bought/${id}?limit=6`).then(({ data }) => setRecItems(data||[])).catch(() => {})
@@ -93,7 +95,9 @@ export default function ProductDetail() {
     const initial = {}
     attrs.forEach(a => {
       const vals = [...new Set(p.variants.map(v => {
-        const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+        const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+          ? v.attributes 
+          : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
         return vAttrs[a]
       }).filter(Boolean))]
       if (vals.length) initial[a] = vals[0]
@@ -104,10 +108,12 @@ export default function ProductDetail() {
   useEffect(() => {
     if (!p || !Array.isArray(p.variants) || !p.variants.length) { setActiveVariant(null); return }
     const v = p.variants.find(v => {
-      const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+      const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+        ? v.attributes 
+        : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
       return Object.entries(selected).every(([k, val]) => {
         if (!val) return true;
-        return (vAttrs[k] || '') === (val || '')
+        return String(vAttrs[k] || '').toLowerCase() === String(val || '').toLowerCase()
       })
     }) || null
     
@@ -115,12 +121,16 @@ export default function ProductDetail() {
       // Fallback: try to find any variant that matches the first selected attribute
       const firstKey = Object.keys(selected)[0]
       const pick = p.variants.find(x => {
-        const xAttrs = x.attributes instanceof Map ? Object.fromEntries(x.attributes) : (x.attributes || {})
-        return (xAttrs[firstKey] || '') === (selected[firstKey] || '')
+        const xAttrs = (x.attributes && typeof x.attributes === 'object' && !(x.attributes instanceof Map)) 
+          ? x.attributes 
+          : (x.attributes instanceof Map ? Object.fromEntries(x.attributes) : {})
+        return String(xAttrs[firstKey] || '').toLowerCase() === String(selected[firstKey] || '').toLowerCase()
       }) || p.variants[0]
       
       if (pick) {
-        const pickAttrs = pick.attributes instanceof Map ? Object.fromEntries(pick.attributes) : (pick.attributes || {})
+        const pickAttrs = (pick.attributes && typeof pick.attributes === 'object' && !(pick.attributes instanceof Map)) 
+          ? pick.attributes 
+          : (pick.attributes instanceof Map ? Object.fromEntries(pick.attributes) : {})
         setSelected(pickAttrs)
         return
       }
@@ -196,7 +206,9 @@ export default function ProductDetail() {
     if (!p?.variants?.length) return []
     const set = new Set()
     p.variants.forEach(v => {
-      const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+      const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+        ? v.attributes 
+        : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
       if (vAttrs[key]) set.add(vAttrs[key])
     })
     return Array.from(set).sort()
@@ -206,10 +218,12 @@ export default function ProductDetail() {
     if (!p?.variants?.length) return true
     const testSelected = { ...selected, [key]: val }
     return p.variants.some(v => {
-      const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+      const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+        ? v.attributes 
+        : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
       return Object.entries(testSelected).every(([k, vVal]) => {
         if (!vVal) return true
-        return (vAttrs[k] || '') === (vVal || '')
+        return String(vAttrs[k] || '').toLowerCase() === String(vVal || '').toLowerCase()
       })
     })
   }
@@ -219,11 +233,14 @@ export default function ProductDetail() {
   const matchedVariant = useMemo(() => {
     if (!p?.variants?.length) return null
     return p.variants.find(v => {
-      const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+      const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+        ? v.attributes 
+        : (v && v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
+      if (!vAttrs) return false
       return variantAttrs.every(attr => {
         const val = selected[attr];
         if (!val) return false;
-        return (vAttrs[attr] || '') === (val || '')
+        return String(vAttrs[attr] || '').toLowerCase() === String(val || '').toLowerCase()
       })
     })
   }, [p, selected, variantAttrs])

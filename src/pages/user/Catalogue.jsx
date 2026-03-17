@@ -61,14 +61,14 @@ export default function Catalogue({ initialBrand, brandName }) {
 
   useEffect(() => {
     if (q) setViewMode('PRODUCTS')
-    else if (!browsePath) setViewMode('START')
+    else if (!browsePath) setViewMode('PRODUCTS') // Show all products by default if no path
     else if (browsePath === 'brand') {
       if (!brand) setViewMode('BRANDS')
       else if (!category) setViewMode('GROUPED') // Show products grouped by category for this brand
       else if (!subCategory) setViewMode('SUBCATEGORIES')
       else setViewMode('PRODUCTS')
     } else if (browsePath === 'category') {
-      if (!category) setViewMode('CATEGORIES')
+      if (!category) setViewMode('PRODUCTS') // Show all products in category mode if no category selected
       else if (!subCategory) setViewMode('SUBCATEGORIES')
       else setViewMode('PRODUCTS')
     }

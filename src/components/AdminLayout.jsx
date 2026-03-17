@@ -96,10 +96,12 @@ export default function AdminLayout() {
     try {
       const part = token.split('.')[1] || ''
       const b64 = part.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(part.length / 4) * 4, '=')
-      const payload = JSON.parse(atob(b64))
+      const payload = JSON.parse(decodeURIComponent(atob(b64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('')))
       role = payload.role
       permissions = payload.permissions || []
-    } catch {}
+    } catch (e) {
+      console.error('AdminLayout token decode error:', e)
+    }
   }
 
   const logout = () => {

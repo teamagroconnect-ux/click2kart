@@ -252,9 +252,9 @@ export default function InventoryPage() {
             </div>
             {selected && selected.variants?.length > 0 && (
               <div className="mt-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Select Variant</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-1 block">Select Variant (SKU Mandatory)</label>
                 <select 
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                  className="w-full bg-white border-2 border-blue-100 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
                   value={selectedVariant?.sku || ''}
                   onChange={e => {
                     const v = selected.variants.find(vx => vx.sku === e.target.value);
@@ -262,13 +262,17 @@ export default function InventoryPage() {
                   }}
                   required
                 >
-                  <option value="">-- Select Variant --</option>
+                  <option value="">-- Choose Variant / SKU --</option>
                   {selected.variants.map(v => {
-                    const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {});
-                    const label = Object.entries(vAttrs).map(([k,val]) => `${k}: ${val}`).join(', ') || `SKU: ${v.sku}`;
-                    return <option key={v.sku} value={v.sku}>{label} (Current: {v.stock || 0})</option>
+                    const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+                      ? v.attributes 
+                      : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
+                    const attrLabel = Object.entries(vAttrs).map(([k,val]) => `${k}: ${val}`).join(', ');
+                    const label = `SKU: ${v.sku || 'N/A'} ${attrLabel ? `(${attrLabel})` : ''}`;
+                    return <option key={v.sku} value={v.sku}>{label} | Stock: {v.stock || 0}</option>
                   })}
                 </select>
+                <p className="text-[10px] text-gray-400 mt-1 italic">* This product has variants. You must select a specific SKU to add stock.</p>
               </div>
             )}
           </div>
