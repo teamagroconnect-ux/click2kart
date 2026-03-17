@@ -137,7 +137,7 @@ export default function Products() {
       subCategoryId: editing.subCategoryId || undefined,
       weight: Number(editing.weight || 0),
       hsnCode: editing.hsnCode || '',
-      gst: Number(editing.gst||0),
+      gst: Number(editing.gst || 0),
       mrp: editing.mrp ? Number(editing.mrp) : undefined,
       minOrderQty: Number(editing.minOrderQty || 0),
       highlights: (editing.highlights || []).map(h => String(h).trim()).filter(Boolean),
@@ -148,9 +148,6 @@ export default function Products() {
       store: editing.store || '',
       section: editing.section || '',
       attributes: editing.attributes || [],
-      hsnCode: editing.hsnCode || '',
-      gst: Number(editing.gst || 0),
-      weight: Number(editing.weight || 0),
       variants: (editing.variants || []).map(v => ({
         ...v,
         attributes: v.attributes instanceof Map ? Object.fromEntries(v.attributes) : v.attributes,
