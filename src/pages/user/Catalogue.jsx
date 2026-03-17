@@ -1269,10 +1269,24 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
     ? p.variants.filter(v => v.isActive !== false).reduce((sum, v) => sum + (v.stock || 0), 0)
     : (p.stock || 0)
   
+  // Find the lowest price among active variants
+  const minPrice = useMemo(() => {
+    if (!Array.isArray(p.variants) || p.variants.length === 0) return p.price;
+    const activeVariants = p.variants.filter(v => v.isActive !== false && v.price > 0);
+    if (activeVariants.length === 0) return p.price;
+    return Math.min(...activeVariants.map(v => v.price));
+  }, [p.variants, p.price]);
+
+  const hasMultiplePrices = useMemo(() => {
+    if (!Array.isArray(p.variants) || p.variants.length <= 1) return false;
+    const prices = new Set(p.variants.filter(v => v.isActive !== false && v.price > 0).map(v => v.price));
+    return prices.size > 1;
+  }, [p.variants]);
+
   const status   = getStockStatus(totalStock)
   const hasBulk  = p.bulkDiscountQuantity > 0
-  const discount = p.mrp && p.mrp > p.price
-    ? Math.round(((Number(p.mrp) - Number(p.price)) / Number(p.mrp)) * 100) : 0
+  const discount = p.mrp && p.mrp > minPrice
+    ? Math.round(((Number(p.mrp) - Number(minPrice)) / Number(p.mrp)) * 100) : 0
 
   const [wished, setWished] = useState(() => {
     try { return JSON.parse(localStorage.getItem('wishlist') || '[]').includes(p._id) } catch { return false }
@@ -1365,14 +1379,15 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
             {authed ? (
               <>
                 <div className="ct-price-authed">
-                  ₹{Number(p.price).toLocaleString()}
-                  {p.mrp > p.price && (
+                  {hasMultiplePrices && <span style={{fontSize:10,color:'#9ca3af',marginRight:4,textTransform:'uppercase',fontWeight:800}}>From</span>}
+                  ₹{Number(minPrice).toLocaleString()}
+                  {p.mrp > minPrice && (
                     <span className="ct-price-off">
-                      {Math.round(((p.mrp - p.price) / p.mrp) * 100)}% OFF
+                      {Math.round(((p.mrp - minPrice) / p.mrp) * 100)}% OFF
                     </span>
                   )}
                 </div>
-                {p.mrp > p.price && <div className="ct-price-mrp">MRP ₹{Number(p.mrp).toLocaleString()}</div>}
+                {p.mrp > minPrice && <div className="ct-price-mrp">MRP ₹{Number(p.mrp).toLocaleString()}</div>}
               </>
             ) : (
               <>

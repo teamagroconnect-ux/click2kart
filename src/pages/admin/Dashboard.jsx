@@ -13,42 +13,20 @@ export default function Dashboard() {
     const load = async () => {
       setLoading(true)
       try {
-        const [statsRes, productsRes, ordersRes, revenueRes] = await Promise.all([
+        const [statsRes, ordersRes, revenueRes] = await Promise.all([
           api.get('/api/admin/stats'),
-          api.get('/api/products', { params: { page: 1, limit: 5000 } }).catch(() => ({ data: { items: [] } })),
           api.get('/api/orders', { params: { page: 1, limit: 50 } }).catch(() => ({ data: { items: [] } })),
           api.get('/api/admin/revenue/summary').catch(() => ({ data: { totalRevenue: 0, thisMonthRevenue: 0, pendingOrders: 0, topProducts: [], topBuyers: [] } }))
         ])
-        setStats(statsRes.data)
+        const s = statsRes.data
+        setStats(s)
         setRevenue(revenueRes.data)
-
-        const products = productsRes.data?.items || []
-        const threshold = 5 // Standard threshold
-        
-        let totalSkus = 0
-        let totalUnits = 0
-        let outOfStock = 0
-        let lowStock = 0
-
-        products.forEach(p => {
-          if (p.variants && p.variants.length > 0) {
-            p.variants.forEach(v => {
-              if (v.isActive !== false) {
-                totalSkus++
-                totalUnits += (v.stock || 0)
-                if ((v.stock || 0) === 0) outOfStock++
-                else if ((v.stock || 0) <= threshold) lowStock++
-              }
-            })
-          } else {
-            totalSkus++
-            totalUnits += (p.stock || 0)
-            if ((p.stock || 0) === 0) outOfStock++
-            else if ((p.stock || 0) <= threshold) lowStock++
-          }
+        setInv({ 
+          totalSkus: s.totalProducts, 
+          totalUnits: s.totalUnits, 
+          outOfStock: s.outOfStock, 
+          lowStock: s.lowStockCount 
         })
-        
-        setInv({ totalSkus, totalUnits, outOfStock, lowStock })
 
         const items = ordersRes.data?.items || []
         const now = new Date()
