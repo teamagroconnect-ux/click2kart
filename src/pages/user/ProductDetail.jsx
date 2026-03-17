@@ -91,14 +91,14 @@ export default function ProductDetail() {
   /* variant selection */
   useEffect(() => {
     if (!p || !Array.isArray(p.variants) || !p.variants.length) { setActiveVariant(null); return }
-    const attrs = p.attributes || []
+    const attrs = Array.isArray(p.attributes) ? p.attributes : []
     const initial = {}
     attrs.forEach(a => {
       const vals = [...new Set(p.variants.map(v => {
-        const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+        const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
           ? v.attributes 
-          : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-        return vAttrs[a]
+          : (v && v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
+        return vAttrs ? vAttrs[a] : null
       }).filter(Boolean))]
       if (vals.length) initial[a] = vals[0]
     })
@@ -107,11 +107,14 @@ export default function ProductDetail() {
 
   useEffect(() => {
     if (!p || !Array.isArray(p.variants) || !p.variants.length) { setActiveVariant(null); return }
+    const attrs = Array.isArray(p.attributes) ? p.attributes : []
     const v = p.variants.find(v => {
-      const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+      const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
         ? v.attributes 
-        : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-      return Object.entries(selected).every(([k, val]) => {
+        : (v && v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
+      if (!vAttrs) return false
+      return attrs.every(k => {
+        const val = selected[k];
         if (!val) return true;
         return String(vAttrs[k] || '').toLowerCase() === String(val || '').toLowerCase()
       })
@@ -119,20 +122,23 @@ export default function ProductDetail() {
     
     if (!v && Object.keys(selected).length > 0) {
       // Fallback: try to find any variant that matches the first selected attribute
-      const firstKey = Object.keys(selected)[0]
-      const pick = p.variants.find(x => {
-        const xAttrs = (x.attributes && typeof x.attributes === 'object' && !(x.attributes instanceof Map)) 
-          ? x.attributes 
-          : (x.attributes instanceof Map ? Object.fromEntries(x.attributes) : {})
-        return String(xAttrs[firstKey] || '').toLowerCase() === String(selected[firstKey] || '').toLowerCase()
-      }) || p.variants[0]
-      
-      if (pick) {
-        const pickAttrs = (pick.attributes && typeof pick.attributes === 'object' && !(pick.attributes instanceof Map)) 
-          ? pick.attributes 
-          : (pick.attributes instanceof Map ? Object.fromEntries(pick.attributes) : {})
-        setSelected(pickAttrs)
-        return
+      const firstKey = attrs[0]
+      if (firstKey) {
+        const pick = p.variants.find(x => {
+          const xAttrs = (x && x.attributes && typeof x.attributes === 'object' && !(x.attributes instanceof Map)) 
+            ? x.attributes 
+            : (x && x.attributes instanceof Map ? Object.fromEntries(x.attributes) : {})
+          if (!xAttrs) return false
+          return String(xAttrs[firstKey] || '').toLowerCase() === String(selected[firstKey] || '').toLowerCase()
+        }) || p.variants[0]
+        
+        if (pick) {
+          const pickAttrs = (pick && pick.attributes && typeof pick.attributes === 'object' && !(pick.attributes instanceof Map)) 
+            ? pick.attributes 
+            : (pick && pick.attributes instanceof Map ? Object.fromEntries(pick.attributes) : {})
+          setSelected(pickAttrs || {})
+          return
+        }
       }
     }
     setActiveVariant(v); setActiveImg(0)
@@ -228,10 +234,13 @@ export default function ProductDetail() {
     })
   }
 
-  const variantAttrs = useMemo(() => p?.attributes || [], [p])
+  const variantAttrs = useMemo(() => {
+    if (!p?.attributes) return []
+    return Array.isArray(p.attributes) ? p.attributes : []
+  }, [p])
 
   const matchedVariant = useMemo(() => {
-    if (!p?.variants?.length) return null
+    if (!p?.variants?.length || !Array.isArray(p.variants)) return null
     return p.variants.find(v => {
       const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
         ? v.attributes 
