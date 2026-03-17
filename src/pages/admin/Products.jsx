@@ -15,6 +15,7 @@ export default function Products() {
   const [attrInput, setAttrInput] = useState('')
   const [hasVariants, setHasVariants] = useState(false)
   const [editing, setEditing] = useState(null)
+  const [viewing, setViewing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
   const [brands, setBrands] = useState([])
   const [categories, setCategories] = useState([])
@@ -147,6 +148,9 @@ export default function Products() {
       store: editing.store || '',
       section: editing.section || '',
       attributes: editing.attributes || [],
+      hsnCode: editing.hsnCode || '',
+      gst: Number(editing.gst || 0),
+      weight: Number(editing.weight || 0),
       variants: (editing.variants || []).map(v => ({
         ...v,
         attributes: v.attributes instanceof Map ? Object.fromEntries(v.attributes) : v.attributes,
@@ -210,10 +214,10 @@ export default function Products() {
                   <tbody className="divide-y divide-gray-50">
                     {!loading &&
                       items.map(p => (
-                        <tr key={p._id} className="group hover:bg-gray-50/50 transition-colors">
+                        <tr key={p._id} className="group hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => setViewing(p)}>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-12 w-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={() => { if (p.images?.[0]?.url) setPreview(p.images[0].url) }}>
+                              <div className="h-12 w-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={(e) => { e.stopPropagation(); if (p.images?.[0]?.url) setPreview(p.images[0].url) }}>
                                 {p.images?.[0]?.url ? (
                                   <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain p-1" />
                                 ) : (
@@ -250,13 +254,13 @@ export default function Products() {
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={() => openEdit(p)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title="Edit Product">
+                              <button onClick={(e) => { e.stopPropagation(); openEdit(p); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title="Edit Product">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                               </button>
-                              <button onClick={() => reduceStock(p._id)} className="p-2 text-amber-600 hover:bg-amber-50 rounded-xl transition-colors" title="Adjust Stock">
+                              <button onClick={(e) => { e.stopPropagation(); reduceStock(p._id); }} className="p-2 text-amber-600 hover:bg-amber-50 rounded-xl transition-colors" title="Adjust Stock">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" /></svg>
                               </button>
-                              <button onClick={() => remove(p)} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors" title="Delete Product">
+                              <button onClick={(e) => { e.stopPropagation(); remove(p); }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors" title="Delete Product">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                               </button>
                             </div>
@@ -880,6 +884,98 @@ export default function Products() {
         onConfirm={confirmDelete}
         onCancel={() => setToDelete(null)}
       />
+
+      {viewing && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 sm:p-8 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto">
+          <div className="bg-white border border-gray-100 rounded-[2rem] p-6 md:p-10 w-full max-w-4xl shadow-2xl space-y-8 animate-in zoom-in-95 duration-300 my-auto relative">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-6">
+              <div>
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight">{viewing.name}</h3>
+                <p className="text-[10px] text-blue-600 font-black uppercase tracking-[0.2em]">Product Details</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => { const p = viewing; setViewing(null); openEdit(p); }} 
+                  className="px-6 py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
+                >Edit</button>
+                <button type="button" onClick={() => setViewing(null)} className="p-3 hover:bg-gray-100 rounded-2xl transition-all text-gray-400 hover:text-gray-900">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-h-[70vh] overflow-y-auto pr-4 custom-scrollbar">
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-2xl">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Price</div>
+                    <div className="text-xl font-black text-gray-900">₹{viewing.price?.toLocaleString()}</div>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-2xl">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">MRP</div>
+                    <div className="text-xl font-black text-gray-400 line-through">₹{viewing.mrp?.toLocaleString()}</div>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-2xl">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Current Stock</div>
+                    <div className={`text-xl font-black ${viewing.stock <= 5 ? 'text-red-600' : 'text-emerald-600'}`}>{viewing.stock} Units</div>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-2xl">
+                    <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">HSN Code</div>
+                    <div className="text-xl font-black text-gray-900">{viewing.hsnCode || 'N/A'}</div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Description</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed bg-gray-50/50 p-4 rounded-2xl border border-gray-100 italic">{viewing.description || 'No description provided.'}</p>
+                </div>
+
+                {viewing.highlights?.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Highlights</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {viewing.highlights.map((h, i) => (
+                        <span key={i} className="px-3 py-1.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-lg border border-blue-100">{h}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-3">
+                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Product Images</h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    {viewing.images?.map((img, i) => (
+                      <div key={i} className="aspect-square bg-gray-50 border border-gray-100 rounded-2xl overflow-hidden cursor-zoom-in" onClick={() => setPreview(img.url)}>
+                        <img src={img.url} className="w-full h-full object-contain p-2" alt="" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {viewing.variants?.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Variants</h4>
+                    <div className="space-y-2">
+                      {viewing.variants.map((v, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                          <div className="flex flex-wrap gap-2">
+                            {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k, val]) => (
+                              <span key={k} className="text-[9px] font-black bg-white px-2 py-0.5 rounded-lg border border-gray-200 text-gray-600 uppercase"><span className="text-gray-400 mr-1">{k}:</span>{val}</span>
+                            ))}
+                          </div>
+                          <div className="text-[10px] font-black text-gray-900">₹{v.price} · {v.stock} in stock</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {preview && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-6" onClick={() => setPreview('')}>
           <div className="max-w-2xl w-full">
@@ -900,7 +996,13 @@ function VariantManager({ product, onChanged }) {
     e.preventDefault()
     if (!Object.keys(form.attributes).length) return notify('Select attributes','error')
     try {
-      const images = form.images.split(',').map(s=>s.trim()).filter(Boolean)
+      let images = form.images.split(',').map(s=>s.trim()).filter(Boolean);
+      
+      // If user checked "Use Product Image" and no specific variant images provided
+      if (form.useProductImage && images.length === 0) {
+        images = (product.images || []).map(img => img.url);
+      }
+
       await api.post(`/api/products/${product._id}/variants`, {
         attributes: form.attributes,
         price: Number(form.price||0),
@@ -908,10 +1010,10 @@ function VariantManager({ product, onChanged }) {
         stock: Number(form.stock||0),
         sku: form.sku || undefined,
         weight: Number(form.weight || 0),
-        images
+        images: images.map(url => ({ url }))
       })
       notify('Variant added','success')
-      setForm({ attributes: {}, price: product.price || '', mrp: product.mrp || '', stock: '', sku: '', weight: product.weight || '', images: '' })
+      setForm({ attributes: {}, price: product.price || '', mrp: product.mrp || '', stock: '', sku: '', weight: product.weight || '', images: '', useProductImage: false })
       onChanged && onChanged()
     } catch (err) { notify(err.response?.data?.error || 'Failed to add','error') }
   }
@@ -936,10 +1038,25 @@ function VariantManager({ product, onChanged }) {
   const addAttr = () => {
     const val = attrInput.trim().toLowerCase()
     if (!val) return
-    const newAttrs = [...new Set([...(product.attributes || []), val])]
+    const currentAttrs = Array.isArray(product.attributes) ? product.attributes : []
+    if (currentAttrs.includes(val)) return notify('Attribute already exists', 'error')
+    
+    const newAttrs = [...currentAttrs, val]
     api.put(`/api/products/${product._id}`, { attributes: newAttrs }).then(() => {
       setAttrInput('')
       onChanged && onChanged()
+    }).catch(err => {
+      notify(err.response?.data?.error || 'Failed to update attributes', 'error')
+    })
+  }
+
+  const removeAttr = (a) => {
+    const currentAttrs = Array.isArray(product.attributes) ? product.attributes : []
+    const next = currentAttrs.filter(x => x !== a)
+    api.put(`/api/products/${product._id}`, { attributes: next }).then(() => {
+      onChanged && onChanged()
+    }).catch(err => {
+      notify(err.response?.data?.error || 'Failed to remove attribute', 'error')
     })
   }
 
@@ -947,6 +1064,9 @@ function VariantManager({ product, onChanged }) {
     <div className="space-y-6">
       {/* Existing Variants List */}
       <div className="space-y-3">
+        {(product.variants || []).length > 0 && (
+          <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Current Variants</h5>
+        )}
         {(product.variants || []).map(v => (
           <div key={v._id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between group">
             <div className="flex-1">
@@ -977,24 +1097,36 @@ function VariantManager({ product, onChanged }) {
       {/* Attributes Definition */}
       <div className="p-5 bg-blue-50/30 border border-blue-100 rounded-3xl space-y-4">
         <div className="flex items-center justify-between">
-          <h5 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Product Attributes</h5>
+          <h5 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Product Attributes (Step 1)</h5>
           <div className="flex gap-2">
-            <input className="bg-white border border-blue-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Model" value={attrInput} onChange={e=>setAttrInput(e.target.value)} />
-            <button type="button" onClick={addAttr} className="p-2 bg-blue-600 text-white rounded-xl">
+            <input 
+              className="bg-white border border-blue-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500" 
+              placeholder="e.g. Color, Size" 
+              value={attrInput} 
+              onChange={e=>setAttrInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  addAttr();
+                }
+              }}
+            />
+            <button type="button" onClick={addAttr} className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
             </button>
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          {(product.attributes || []).map(a => (
-            <span key={a} className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-blue-100 rounded-xl text-[10px] font-black text-blue-600 uppercase">
-              {a}
-              <button type="button" onClick={() => {
-                const next = product.attributes.filter(x => x !== a)
-                api.put(`/api/products/${product._id}`, { attributes: next }).then(onChanged)
-              }}>✕</button>
-            </span>
-          ))}
+          {Array.isArray(product.attributes) && product.attributes.length > 0 ? (
+            product.attributes.map(a => (
+              <span key={a} className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-blue-100 rounded-xl text-[10px] font-black text-blue-600 uppercase shadow-sm">
+                {a}
+                <button type="button" onClick={() => removeAttr(a)} className="text-blue-400 hover:text-red-500 transition-colors">✕</button>
+              </span>
+            ))
+          ) : (
+            <div className="text-[10px] text-gray-400 font-bold italic ml-1">Define attributes first to create variants.</div>
+          )}
         </div>
       </div>
 
@@ -1030,8 +1162,20 @@ function VariantManager({ product, onChanged }) {
           </div>
           <div className="space-y-1">
             <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Images</label>
-            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none" value={form.images} onChange={e=>setForm({...form, images: e.target.value})} />
+            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none" value={form.images} onChange={e=>setForm({...form, images: e.target.value})} placeholder="URLs..." />
           </div>
+        </div>
+
+        <div className="flex items-center gap-3 px-1">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input 
+              type="checkbox" 
+              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
+              checked={form.useProductImage || false} 
+              onChange={e => setForm({ ...form, useProductImage: e.target.checked })} 
+            />
+            <span className="text-[10px] font-bold text-gray-500 group-hover:text-gray-700 transition-colors uppercase tracking-tight">Use Main Product Images</span>
+          </label>
         </div>
 
         <button 
