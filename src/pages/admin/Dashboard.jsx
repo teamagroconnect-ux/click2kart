@@ -8,6 +8,20 @@ export default function Dashboard() {
   const [orders, setOrders] = useState({ total: 0, open: 0, today: 0, recent: [] })
   const [revenue, setRevenue] = useState({ totalRevenue: 0, thisMonthRevenue: 0, pendingOrders: 0, topProducts: [], topBuyers: [] })
   const [loading, setLoading] = useState(true)
+  const [selectedProductSkus, setSelectedProductSkus] = useState(null)
+  const [loadingSkus, setLoadingSkus] = useState(false)
+
+  const fetchSkus = async (productId) => {
+    setLoadingSkus(true)
+    try {
+      const { data } = await api.get(`/api/admin/revenue/product/${productId}/skus`)
+      setSelectedProductSkus(data)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoadingSkus(false)
+    }
+  }
 
   useEffect(() => {
     const load = async () => {

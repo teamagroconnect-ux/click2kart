@@ -7,8 +7,8 @@ export default function InventoryPage() {
   const { notify } = useToast()
   const [q, setQ] = useState('')
   const [options, setOptions] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [selectedVariant, setSelectedVariant] = useState(null)
+  const [selectedProduct, setSelectedProduct] = useState(null)
+  const [selectedSku, setSelectedSku] = useState(null)
   const [qty, setQty] = useState('')
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -16,8 +16,63 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState({ kpis: { totalSkus:0, totalUnits:0, lowStockCount:0, totalAdded30d:0 }, daily: [], topProducts: [], lowStock: [] })
   const [overview, setOverview] = useState([])
+  const [showSkuModal, setShowSkuModal] = useState(false)
+  const [selectedProductForSkuView, setSelectedProductForSkuView] = useState(null)
+  const [topSkus, setTopSkus] = useState([])
 
-  const canSubmit = selected && Number.isInteger(Number(qty)) && Number(qty) > 0
+  useEffect(() => {
+    if (selectedProductForSkuView) {
+      const fetchTopSkus = async () => {
+        try {
+          const { data } = await api.get(`/api/products/${selectedProductForSkuView.productId}/top-skus`)
+          setTopSkus(data.items || [])
+        } catch (error) {
+          console.error('Failed to fetch top SKUs', error)
+        }
+      }
+      fetchTopSkus()
+    }
+  }, [selectedProductForSkuView])
+
+  const canSubmit = selectedSku && Number.isInteger(Number(qty)) && Number(qty) > 0
+
+  const productSkus = useMemo(() => {
+    if (!selectedProduct) return []
+    const list = []
+    if (selectedProduct.variants && selectedProduct.variants.length > 0) {
+      selectedProduct.variants.forEach(v => {
+        const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+          ? v.attributes 
+          : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
+        const attrLabel = Object.entries(vAttrs).map(([k,val]) => `${k}: ${val}`).join(', ')
+        list.push({
+          productId: selectedProduct._id,
+          productName: selectedProduct.name,
+          sku: v.sku,
+          attrLabel,
+          image: v.images?.[0]?.url || selectedProduct.images?.[0]?.url,
+          stock: v.stock,
+          isVariant: true,
+          variantId: v._id,
+        })
+      })
+    } else {
+      list.push({
+        productId: selectedProduct._id,
+        productName: selectedProduct.name,
+        sku: selectedProduct.sku || '',
+        image: selectedProduct.images?.[0]?.url,
+        stock: selectedProduct.stock,
+        isVariant: false,
+      })
+    }
+    return list
+  }, [selectedProduct])
+
+  // Filter overview to only show individual SKUs (variants or simple products)
+  const skuOverview = useMemo(() => {
+    return overview.filter(o => o.sku); // Only items with a specific identity
+  }, [overview]);
 
   useEffect(() => {
     const load = async () => {
@@ -69,26 +124,26 @@ export default function InventoryPage() {
     e.preventDefault()
     if (!canSubmit) return
     
-    // Strict variant selection check
-    if (selected.variants?.length > 0 && !selectedVariant) {
-      notify('Please select a specific variant SKU', 'error')
+    // Enforce SKU identity
+    if (!selectedSku.sku) {
+      notify('This item has no SKU. Please assign a SKU in Product Management first.', 'error')
       return
     }
 
     setSubmitting(true)
     try {
       await api.post('/api/inventory/in', {
-        productId: selected._id,
-        variantSku: selectedVariant?.sku || undefined,
+        productId: selectedProduct._id,
+        variantSku: selectedSku.sku,
         quantity: Number(qty),
         note
       })
-      notify(`Stock added to ${selectedVariant ? 'SKU: ' + selectedVariant.sku : 'Product'}`, 'success')
+      notify(`Stock added to SKU: ${selectedSku.sku}`, 'success')
       setQty('')
       setNote('')
       setQ('')
-      setSelected(null)
-      setSelectedVariant(null)
+      setSelectedProduct(null)
+      setSelectedSku(null)
       const { data } = await api.get('/api/inventory/history', { params: { limit: 20 } })
       setHistory(data.items || [])
     } catch (err) {
@@ -156,12 +211,46 @@ export default function InventoryPage() {
                 <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} angle={-30} textAnchor="end" height={60} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Bar dataKey="quantity" fill="#10b981" />
+                <Bar dataKey="quantity" fill="#10b981" onClick={(data) => { setSelectedProductForSkuView(data); setShowSkuModal(true); }} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
+
+      {showSkuModal && selectedProductForSkuView && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-5 shadow-xl w-full max-w-lg">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold text-gray-900">Top 5 SKUs for {selectedProductForSkuView.name}</h2>
+              <button onClick={() => setShowSkuModal(false)} className="text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="px-4 py-3 text-left">SKU</th>
+                    <th className="px-4 py-3 text-left">Quantity Sold</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {topSkus.map(sku => (
+                    <tr key={sku.sku}>
+                      <td className="px-4 py-3 font-semibold text-gray-900">{sku.sku}</td>
+                      <td className="px-4 py-3 text-gray-800">{sku.quantity}</td>
+                    </tr>
+                  ))}
+                  {topSkus.length === 0 && (
+                    <tr>
+                      <td colSpan="2" className="px-4 py-6 text-center text-gray-400">No SKU data available for this product.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-between mb-3">
@@ -178,7 +267,7 @@ export default function InventoryPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {overview.map(o => (
+              {skuOverview.map(o => (
                 <tr key={o.id}>
                   <td className="px-4 py-3 font-semibold text-gray-900">{o.sku ? `${o.name} (${o.sku})` : o.name}</td>
                   <td className="px-4 py-3 text-gray-800">{o.total}</td>
@@ -190,7 +279,7 @@ export default function InventoryPage() {
                   </td>
                 </tr>
               ))}
-              {overview.length === 0 && (<tr><td colSpan="4" className="px-4 py-6 text-center text-gray-400">No products</td></tr>)}
+              {skuOverview.length === 0 && (<tr><td colSpan="4" className="px-4 py-6 text-center text-gray-400">No SKUs available. Assign SKUs to products/variants to manage stock.</td></tr>)}
             </tbody>
           </table>
         </div>
@@ -201,31 +290,30 @@ export default function InventoryPage() {
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Select Product</label>
             <div className="relative">
-              {!selected ? (
+              {!selectedProduct ? (
                 <>
                   <input
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder="Search product by name"
+                    placeholder="Search product name..."
                     value={q}
                     onChange={e => setQ(e.target.value)}
                   />
                   {options.length > 0 && (
-                    <div className="absolute z-10 mt-2 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto">
+                    <div className="absolute z-10 mt-2 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 overflow-y-auto">
                       {options.map(p => (
                         <button
                           key={p._id}
                           type="button"
-                          onClick={() => { setSelected(p); setOptions([]); }}
-                          className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-3"
+                          onClick={() => { setSelectedProduct(p); setQ(''); setOptions([]); }}
+                          className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-3 border-b last:border-0 border-gray-50"
                         >
                           <div className="h-10 w-10 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
                             {p.images?.[0]?.url ? (
                               <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain" />
                             ) : <span className="text-[10px] text-gray-400">📦</span>}
                           </div>
-                          <div>
-                            <div className="text-sm font-semibold text-gray-900">{p.name} {p.sku && <span className="text-[10px] text-blue-600 font-black uppercase ml-1">({p.sku})</span>}</div>
-                            <div className="text-[11px] text-gray-500">Stock: {p.stock ?? 0}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-gray-900 truncate">{p.name}</div>
                           </div>
                         </button>
                       ))}
@@ -235,77 +323,62 @@ export default function InventoryPage() {
               ) : (
                 <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl bg-gray-50">
                   <div className="h-10 w-10 rounded-lg bg-white border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
-                    {selected.images?.[0]?.url ? (
-                      <img src={selected.images[0].url} alt={selected.name} className="h-full w-full object-contain" />
+                    {selectedProduct.images?.[0]?.url ? (
+                      <img src={selectedProduct.images[0].url} alt={selectedProduct.name} className="h-full w-full object-contain" />
                     ) : <span className="text-[10px] text-gray-400">📦</span>}
                   </div>
-                  <div className="flex-1">
-                  <div className="text-sm font-semibold text-gray-900">{selected.name} {selected.sku && <span className="text-[10px] text-blue-600 font-black uppercase ml-1">({selected.sku})</span>}</div>
-                  <div className="text-[11px] text-gray-500">Current stock: {selected.stock ?? 0}</div>
-                    {(selected.store || selected.section) && (
-                      <div className="text-[11px] text-gray-600">Location: {(selected.store || '-')}{selected.section ? `(${selected.section})` : ''}</div>
-                    )}
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-bold text-gray-900 truncate">{selectedProduct.name}</div>
                   </div>
-                  <button type="button" onClick={() => { setSelected(null); setQ(''); setSelectedVariant(null); }} className="px-3 py-1.5 rounded-lg bg-white border text-gray-600 hover:bg-gray-100 text-xs font-bold">Change</button>
+                  <button type="button" onClick={() => { setSelectedProduct(null); setSelectedSku(null); setQ(''); }} className="px-3 py-1.5 rounded-lg bg-white border text-gray-600 hover:bg-gray-100 text-xs font-bold">Change</button>
                 </div>
               )}
             </div>
-            {selected && selected.variants?.length > 0 && (
-              <div className="mt-3">
-                <label className="text-[10px] font-black uppercase tracking-widest text-red-500 mb-1 block">Select Variant (SKU Mandatory)</label>
-                <select 
-                  className="w-full bg-white border-2 border-blue-100 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
-                  value={selectedVariant?.sku || ''}
-                  onChange={e => {
-                    const v = selected.variants.find(vx => vx.sku === e.target.value);
-                    setSelectedVariant(v);
-                  }}
-                  required
-                >
-                  <option value="">-- Choose Variant / SKU --</option>
-                  {selected.variants.map(v => {
-                    const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
-                      ? v.attributes 
-                      : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-                    const attrLabel = Object.entries(vAttrs).map(([k,val]) => `${k}: ${val}`).join(', ');
-                    const label = `SKU: ${v.sku || 'N/A'} ${attrLabel ? `(${attrLabel})` : ''}`;
-                    return <option key={v.sku} value={v.sku}>{label} | Stock: {v.stock || 0}</option>
-                  })}
-                </select>
-                <p className="text-[10px] text-gray-400 mt-1 italic">* This product has variants. You must select a specific SKU to add stock.</p>
-              </div>
-            )}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Quantity</label>
-              <input
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                type="number" min="1" step="1"
-                placeholder="e.g. 100"
-                value={qty}
-                onChange={e => setQty(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Note (optional)</label>
-              <input
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                placeholder="e.g. GRN #123, supplier name"
-                value={note}
-                onChange={e => setNote(e.target.value)}
-              />
-            </div>
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Select SKU</label>
+            <select 
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50"
+              disabled={!selectedProduct || productSkus.length === 0}
+              value={selectedSku ? selectedSku.sku : ''}
+              onChange={e => setSelectedSku(productSkus.find(s => s.sku === e.target.value) || null)}
+            >
+              <option value="">{productSkus.length > 0 ? '-- Select SKU --' : (selectedProduct ? 'No SKUs for this product' : 'Select a product first')}</option>
+              {productSkus.map(s => (
+                <option key={s.sku} value={s.sku}>{s.attrLabel ? `${s.sku} (${s.attrLabel})` : s.sku} (Stock: {s.stock ?? 0})</option>
+              ))}
+            </select>
           </div>
         </div>
-        <div>
-          <button
-            type="submit"
-            disabled={!canSubmit || submitting}
-            className="px-5 py-3 rounded-xl bg-gray-900 text-white text-sm font-black uppercase tracking-widest disabled:opacity-40"
-          >
-            {submitting ? 'Saving...' : 'Add Stock'}
-          </button>
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-3">
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Quantity</label>
+            <input
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+              type="number" min="1" step="1"
+              placeholder="e.g. 100"
+              value={qty}
+              onChange={e => setQty(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Note (optional)</label>
+            <input
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="e.g. GRN #123, supplier name"
+              value={note}
+              onChange={e => setNote(e.target.value)}
+            />
+          </div>
+          <div className="flex items-end">
+            <button
+              type="submit"
+              disabled={!canSubmit || submitting}
+              className="px-5 py-3 rounded-xl bg-gray-900 text-white text-sm font-black uppercase tracking-widest disabled:opacity-40 w-full"
+            >
+              {submitting ? 'Saving...' : 'Add Stock'}
+            </button>
+          </div>
         </div>
       </form>
 

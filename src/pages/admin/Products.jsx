@@ -872,10 +872,14 @@ export default function Products() {
                 </div>
                 <VariantManager 
                   product={editing} 
-                  onChanged={() => { 
-                    api.get(`/api/products/${editing._id}`).then(({data}) => {
-                      openEdit(data)
-                    })
+                  onChanged={(updatedData) => { 
+                    if (updatedData) {
+                      openEdit(updatedData);
+                    } else {
+                      api.get(`/api/products/${editing._id}`).then(({data}) => {
+                        openEdit(data)
+                      })
+                    }
                   }} 
                 />
               </div>
@@ -1027,9 +1031,10 @@ function VariantManager({ product, onChanged }) {
     if (currentAttrs.includes(val)) return notify('Attribute already exists', 'error')
     
     const newAttrs = [...currentAttrs, val]
-    api.put(`/api/products/${product._id}`, { attributes: newAttrs }).then(() => {
+    api.put(`/api/products/${product._id}`, { attributes: newAttrs }).then(({ data }) => {
       setAttrInput('')
-      onChanged && onChanged()
+      // Pass the updated product data back to the parent to refresh the 'editing' state
+      if (onChanged) onChanged(data); 
     }).catch(err => {
       notify(err.response?.data?.error || 'Failed to update attributes', 'error')
     })
@@ -1038,8 +1043,8 @@ function VariantManager({ product, onChanged }) {
   const removeAttr = (a) => {
     const currentAttrs = Array.isArray(product.attributes) ? product.attributes : []
     const next = currentAttrs.filter(x => x !== a)
-    api.put(`/api/products/${product._id}`, { attributes: next }).then(() => {
-      onChanged && onChanged()
+    api.put(`/api/products/${product._id}`, { attributes: next }).then(({ data }) => {
+      if (onChanged) onChanged(data);
     }).catch(err => {
       notify(err.response?.data?.error || 'Failed to remove attribute', 'error')
     })
