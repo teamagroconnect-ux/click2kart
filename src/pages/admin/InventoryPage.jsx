@@ -180,7 +180,7 @@ export default function InventoryPage() {
             <tbody className="divide-y divide-gray-50">
               {overview.map(o => (
                 <tr key={o.id}>
-                  <td className="px-4 py-3 font-semibold text-gray-900">{o.name}</td>
+                  <td className="px-4 py-3 font-semibold text-gray-900">{o.sku ? `${o.name} (${o.sku})` : o.name}</td>
                   <td className="px-4 py-3 text-gray-800">{o.total}</td>
                   <td className="px-4 py-3 text-gray-800">{o.reserved}</td>
                   <td className="px-4 py-3">
@@ -224,7 +224,7 @@ export default function InventoryPage() {
                             ) : <span className="text-[10px] text-gray-400">📦</span>}
                           </div>
                           <div>
-                            <div className="text-sm font-semibold text-gray-900">{p.name}</div>
+                            <div className="text-sm font-semibold text-gray-900">{p.name} {p.sku && <span className="text-[10px] text-blue-600 font-black uppercase ml-1">({p.sku})</span>}</div>
                             <div className="text-[11px] text-gray-500">Stock: {p.stock ?? 0}</div>
                           </div>
                         </button>
@@ -240,8 +240,8 @@ export default function InventoryPage() {
                     ) : <span className="text-[10px] text-gray-400">📦</span>}
                   </div>
                   <div className="flex-1">
-                        <div className="text-sm font-semibold text-gray-900">{selected.name}</div>
-                    <div className="text-[11px] text-gray-500">Current stock: {selected.stock ?? 0}</div>
+                  <div className="text-sm font-semibold text-gray-900">{selected.name} {selected.sku && <span className="text-[10px] text-blue-600 font-black uppercase ml-1">({selected.sku})</span>}</div>
+                  <div className="text-[11px] text-gray-500">Current stock: {selected.stock ?? 0}</div>
                     {(selected.store || selected.section) && (
                       <div className="text-[11px] text-gray-600">Location: {(selected.store || '-')}{selected.section ? `(${selected.section})` : ''}</div>
                     )}
@@ -318,7 +318,7 @@ export default function InventoryPage() {
             <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="px-4 py-3 text-left">Date</th>
-                <th className="px-4 py-3 text-left">Product</th>
+                <th className="px-4 py-3 text-left">Product / SKU</th>
                 <th className="px-4 py-3 text-left">Quantity</th>
                 <th className="px-4 py-3 text-left">Location</th>
                 <th className="px-4 py-3 text-left">Note</th>
@@ -333,7 +333,10 @@ export default function InventoryPage() {
                 history.map((h) => (
                   <tr key={h.id}>
                     <td className="px-4 py-3 text-gray-600">{new Date(h.createdAt).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}</td>
-                    <td className="px-4 py-3 font-semibold text-gray-900">{h.productName || h.productId}</td>
+                    <td className="px-4 py-3">
+                      <div className="font-semibold text-gray-900 leading-tight">{h.productName || h.productId}</div>
+                      {h.variantSku && <div className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mt-0.5">SKU: {h.variantSku}</div>}
+                    </td>
                     <td className="px-4 py-3 text-emerald-700 font-bold">+{h.quantity}</td>
                     <td className="px-4 py-3 text-gray-600">{(h.store || '-')}{h.section ? `(${h.section})` : ''}</td>
                     <td className="px-4 py-3 text-gray-600">{h.note || '—'}</td>

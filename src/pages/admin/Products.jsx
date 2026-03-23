@@ -80,6 +80,7 @@ export default function Products() {
       gst: Number(form.gst||0), 
       mrp: form.mrp ? Number(form.mrp) : undefined,
       minOrderQty: Number(form.minOrderQty || 0),
+      sku: form.sku || undefined,
       highlights: (form.highlights || []).map(h => String(h).trim()).filter(Boolean),
       bulkDiscountQuantity: form.bulkTiers?.[0]?.quantity ? Number(form.bulkTiers[0].quantity) : Number(form.bulkDiscountQuantity||0),
       bulkDiscountPriceReduction: form.bulkTiers?.[0]?.priceReduction ? Number(form.bulkTiers[0].priceReduction) : Number(form.bulkDiscountPriceReduction||0),
@@ -96,7 +97,7 @@ export default function Products() {
         images: (v.images || '').split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
       }))
     })
-    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [], attributes: [] }); setHasVariants(false); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', hsnCode: '', sku: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [], attributes: [] }); setHasVariants(false); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -105,13 +106,14 @@ export default function Products() {
   }
 
   const openEdit = (p) => {
-    setEditing({ 
+    const ed = { 
       ...p, 
       brandId: p.brand?._id || p.brand || '',
       categoryId: p.category?._id || p.category || '',
       subCategoryId: p.subCategory?._id || p.subCategory || '',
       weight: p.weight || '',
       hsnCode: p.hsnCode || '',
+      sku: p.sku || '',
       images: (p.images||[]).map(i=>i.url||i).join(', '),
       attributes: Array.isArray(p.attributes) ? p.attributes : [],
       variants: (p.variants || []).map(v => ({
@@ -129,8 +131,10 @@ export default function Products() {
       highlights: Array.isArray(p.highlights) ? p.highlights : [],
       highlightInput: '',
       bulkTiers: Array.isArray(p.bulkTiers) ? p.bulkTiers.map(t => ({ quantity: t.quantity, priceReduction: t.priceReduction })) : []
-    })
+    }
+    setEditing(ed)
     setHasVariants(p.variants?.length > 0)
+    return ed
   }
   const saveEdit = async (e) => {
     e.preventDefault()
@@ -154,6 +158,7 @@ export default function Products() {
       store: editing.store || '',
       section: editing.section || '',
       attributes: editing.attributes || [],
+      sku: editing.sku || '',
       variants: (editing.variants || []).map(v => ({
         ...v,
         attributes: v.attributes instanceof Map ? Object.fromEntries(v.attributes) : v.attributes,
@@ -505,6 +510,10 @@ export default function Products() {
                   <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 8517" value={form.hsnCode} onChange={e => setForm({ ...form, hsnCode: e.target.value })} />
                 </div>
                 <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Product SKU (Simple Product)</label>
+                  <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. PROD-SKU-123" value={form.sku || ''} onChange={e => setForm({ ...form, sku: e.target.value })} />
+                </div>
+                <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Min Order Qty</label>
                   <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 5" value={form.minOrderQty} onChange={e => setForm({ ...form, minOrderQty: e.target.value })} />
                 </div>
@@ -771,6 +780,10 @@ export default function Products() {
                 <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 8517" value={editing.hsnCode || ''} onChange={e => setEditing({ ...editing, hsnCode: e.target.value })} />
               </div>
               <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Product SKU (Simple Product)</label>
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. PROD-SKU-123" value={editing.sku || ''} onChange={e => setEditing({ ...editing, sku: e.target.value })} />
+              </div>
+              <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Min Order Qty</label>
                 <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 5" value={editing.minOrderQty || ''} onChange={e => setEditing({ ...editing, minOrderQty: e.target.value })} />
               </div>
@@ -861,11 +874,7 @@ export default function Products() {
                   product={editing} 
                   onChanged={() => { 
                     api.get(`/api/products/${editing._id}`).then(({data}) => {
-                      setEditing(prev => ({ 
-                        ...prev, 
-                        variants: data.variants || [],
-                        attributes: data.attributes || prev.attributes || []
-                      }))
+                      openEdit(data)
                     })
                   }} 
                 />
@@ -1088,6 +1097,11 @@ function VariantManager({ product, onChanged }) {
             <div className="text-[10px] text-blue-400 font-bold italic ml-1">Add attributes to enable variants...</div>
           )}
         </div>
+        {(product.variants || []).length === 0 && Array.isArray(product.attributes) && product.attributes.length > 0 && (
+          <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl text-[10px] font-bold text-orange-600 italic">
+            Attributes defined! Now add your first variant below.
+          </div>
+        )}
       </div>
 
       {/* Step 2: Variant Generator (Flipkart Style) */}
