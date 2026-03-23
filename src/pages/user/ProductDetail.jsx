@@ -446,6 +446,26 @@ export default function ProductDetail() {
       .pd-thumb:not(.on):hover { border-color: rgba(124,58,237,.35); }
       .pd-thumb img { width: 100%; height: 100%; object-fit: contain; }
 
+      /* variant combinations below image */
+      .pd-img-variants { margin-top: 24px; padding: 16px; background: white; border-radius: 18px; border: 1px solid rgba(124,58,237,.1); box-shadow: 0 4px 15px rgba(124,58,237,.05); }
+      .pd-img-vars-title { font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: #9ca3af; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+      .pd-img-vars-title::after { content: ''; flex: 1; height: 1px; background: rgba(124,58,237,.1); }
+      .pd-img-vars-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+      .pd-img-var-card { 
+        padding: 8px; border-radius: 12px; border: 1.5px solid rgba(124,58,237,.08); 
+        background: #fdfcff; cursor: pointer; transition: all .2s;
+        display: flex; align-items: center; gap: 10px;
+      }
+      .pd-img-var-card:hover { border-color: #7c3aed; background: white; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(124,58,237,.1); }
+      .pd-img-var-card.active { border-color: #7c3aed; background: #f5f3ff; box-shadow: inset 0 0 0 1px #7c3aed; }
+      .pd-img-var-mini-img { width: 40px; height: 40px; border-radius: 8px; object-fit: contain; background: white; border: 1px solid rgba(124,58,237,.05); flex-shrink: 0; }
+      .pd-img-var-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+      .pd-img-var-attrs { font-size: 10px; font-weight: 700; color: #1e1b2e; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .pd-img-var-price { font-size: 12px; font-weight: 800; color: #7c3aed; font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.02em; }
+      .pd-img-var-stock { font-size: 8px; font-weight: 700; text-transform: uppercase; color: #9ca3af; }
+      .pd-img-var-stock.low { color: #d97706; }
+      .pd-img-var-stock.out { color: #dc2626; }
+
       /* ─── INFO PANEL ─── */
       .pd-info { display: flex; flex-direction: column; gap: 0; }
 
@@ -971,6 +991,45 @@ export default function ProductDetail() {
                     <img src={img.url} alt={`${p.name} ${i+1}`} loading="lazy"/>
                   </button>
                 ))}
+              </div>
+            )}
+
+            {/* VARIANT COMBINATIONS BELOW IMAGE */}
+            {Array.isArray(p.variants) && p.variants.length > 1 && (
+              <div className="pd-img-variants">
+                <div className="pd-img-vars-title">Variant Combinations</div>
+                <div className="pd-img-vars-grid">
+                  {p.variants.filter(v => v.isActive !== false).map((v, i) => {
+                    const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+                      ? v.attributes 
+                      : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
+                    
+                    const attrText = Object.entries(vAttrs).map(([k, val]) => `${val}`).join(' / ')
+                    const isActive = matchedVariant?._id === v._id
+                    const vImg = v.images?.[0]?.url || p.images?.[0]?.url
+
+                    return (
+                      <div 
+                        key={v._id || i} 
+                        className={`pd-img-var-card${isActive ? ' active' : ''}`}
+                        onClick={() => setSelected(vAttrs)}
+                      >
+                        <img src={vImg} className="pd-img-var-mini-img" alt={attrText} />
+                        <div className="pd-img-var-info">
+                          <span className="pd-img-var-attrs" title={attrText}>{attrText}</span>
+                          <span className="pd-img-var-price">₹{Number(v.price).toLocaleString()}</span>
+                          {v.stock <= 0 ? (
+                            <span className="pd-img-var-stock out">Out of stock</span>
+                          ) : v.stock <= 5 ? (
+                            <span className="pd-img-var-stock low">Only {v.stock} left</span>
+                          ) : (
+                            <span className="pd-img-var-stock">{v.stock} Units</span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
           </div>
