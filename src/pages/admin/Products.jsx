@@ -68,6 +68,18 @@ export default function Products() {
     api.get('/api/stores').then(({ data }) => setStores(data || [])).catch(()=>{})
   }, [])
 
+  // Auto-generate SKU for Simple Product
+  useEffect(() => {
+    if (!hasVariants && form.name && !editing) {
+      const cleanName = form.name.toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .trim()
+        .replace(/\s+/g, '-')
+      const generatedSku = `${cleanName}`.toUpperCase()
+      setForm(prev => ({ ...prev, sku: generatedSku }))
+    }
+  }, [form.name, hasVariants, editing])
+
   const create = async (e) => {
     e.preventDefault()
     const images = form.images.split(',').map(s=>s.trim()).filter(Boolean)
@@ -186,90 +198,91 @@ export default function Products() {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
       `}</style>
-      <div className="space-y-8 max-w-6xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Product Inventory</h1>
-            <p className="text-sm text-gray-500 font-medium">Manage your catalogue, track stock levels and adjust pricing.</p>
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Catalogue Management</h1>
+            <p className="text-sm text-gray-500 font-bold mt-1 uppercase tracking-widest opacity-60">Control your inventory and variants</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="relative group">
               <input
                 placeholder="Search products..."
-                className="bg-white border border-gray-200 text-gray-900 text-sm rounded-2xl pl-10 pr-4 py-2.5 w-64 outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all"
+                className="bg-gray-50 border-none text-gray-900 text-sm rounded-2xl pl-12 pr-6 py-4 w-72 outline-none focus:ring-2 focus:ring-blue-500 shadow-inner transition-all"
                 value={q}
                 onChange={e => setQ(e.target.value)}
               />
-              <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-4 flex flex-col h-[calc(100vh-12rem)]">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2 flex-shrink-0">Product List</h3>
-            <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm flex flex-col flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-7 space-y-4 flex flex-col h-[calc(100vh-16rem)]">
+            <div className="flex items-center justify-between px-2">
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Live Inventory ({total})</h3>
+              <div className="flex gap-2">
+                <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 uppercase">● In Stock</span>
+                <span className="flex items-center gap-1.5 text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100 uppercase">● Low Stock</span>
+              </div>
+            </div>
+            <div className="bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm flex flex-col flex-1">
               <div className="overflow-y-auto flex-1 custom-scrollbar">
                 <table className="w-full text-sm border-collapse relative">
-                  <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] sticky top-0 z-10 backdrop-blur-md">
+                  <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-400 font-black uppercase tracking-widest text-[9px] sticky top-0 z-10 backdrop-blur-md">
                     <tr>
-                      <th className="px-6 py-4 text-left">Product Info</th>
-                      <th className="px-6 py-4 text-left">Price & GST</th>
-                      <th className="px-6 py-4 text-left">Inventory</th>
-                      <th className="px-6 py-4 text-right">Actions</th>
+                      <th className="px-8 py-5 text-left">Product Identity</th>
+                      <th className="px-8 py-5 text-left">Commercials</th>
+                      <th className="px-8 py-5 text-left">Status</th>
+                      <th className="px-8 py-5 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {!loading &&
                       items.map(p => (
-                        <tr key={p._id} className="group hover:bg-gray-50/50 transition-colors cursor-pointer" onClick={() => setViewing(p)}>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="h-12 w-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center cursor-zoom-in" onClick={(e) => { e.stopPropagation(); if (p.images?.[0]?.url) setPreview(p.images[0].url) }}>
+                        <tr key={p._id} className="group hover:bg-blue-50/30 transition-all cursor-pointer" onClick={() => setViewing(p)}>
+                          <td className="px-8 py-5">
+                            <div className="flex items-center gap-4">
+                              <div className="h-16 w-16 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center cursor-zoom-in relative group/img" onClick={(e) => { e.stopPropagation(); if (p.images?.[0]?.url) setPreview(p.images[0].url) }}>
                                 {p.images?.[0]?.url ? (
-                                  <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain p-1" />
+                                  <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain p-2 group-hover/img:scale-110 transition-transform" />
                                 ) : (
-                                  <span className="text-[10px] text-gray-400">No Img</span>
+                                  <span className="text-[10px] text-gray-400 font-black uppercase">No Img</span>
                                 )}
                               </div>
-                      <div className="min-w-0">
-                                <div className="font-bold text-gray-900 truncate max-w-[240px]">{p.name}</div>
-                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.category?.name || (typeof p.category === 'string' ? p.category : 'General')}</div>
-                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{p.brand?.name || (typeof p.brand === 'string' ? p.brand : '')}</div>
-                        {(p.store || p.section) && (
-                          <div className="text-[10px] text-gray-500 font-bold">{p.store || ''}{p.section ? `(${p.section})` : ''}</div>
-                        )}
+                              <div className="min-w-0">
+                                <div className="font-black text-gray-900 truncate max-w-[200px] text-base leading-tight">{p.name}</div>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-[9px] text-blue-600 font-black uppercase tracking-widest bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{p.brand?.name || 'Unbranded'}</span>
+                                  <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">{p.category?.name || 'General'}</span>
+                                </div>
+                                {p.sku && <div className="text-[9px] font-mono text-gray-400 mt-1 uppercase tracking-tighter">SKU: {p.sku}</div>}
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="font-black text-gray-900">₹{p.price.toLocaleString()}</div>
-                            <div className="text-[10px] text-gray-400 font-bold">{p.gst}% GST</div>
-                    {((p.bulkTiers && p.bulkTiers.length > 0) || p.bulkDiscountQuantity > 0) && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {((p.bulkTiers && p.bulkTiers.length > 0) ? p.bulkTiers : [{ quantity: p.bulkDiscountQuantity, priceReduction: p.bulkDiscountPriceReduction }]).map((t, i) => (
-                          <div key={i} className="inline-flex items-center gap-1 text-[9px] font-black text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md border border-emerald-100 uppercase tracking-tight">
-                            {t.quantity}+: -₹{t.priceReduction}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black border ${p.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                              {p.stock} IN STOCK
+                          <td className="px-8 py-5">
+                            <div className="font-black text-gray-900 text-lg">₹{p.price.toLocaleString()}</div>
+                            <div className="text-[10px] text-gray-400 font-bold flex items-center gap-2 mt-0.5">
+                              <span className="line-through opacity-50">₹{p.mrp?.toLocaleString()}</span>
+                              <span className="text-emerald-600 font-black">{p.gst}% GST</span>
                             </div>
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button onClick={(e) => { e.stopPropagation(); openEdit(p); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title="Edit Product">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                          <td className="px-8 py-5">
+                            <div className={`inline-flex flex-col gap-0.5 px-3 py-1.5 rounded-2xl border ${p.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                              <span className="text-sm font-black leading-none">{p.stock}</span>
+                              <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Units Left</span>
+                            </div>
+                          </td>
+                          <td className="px-8 py-5">
+                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                              <button onClick={(e) => { e.stopPropagation(); openEdit(p); }} className="p-2.5 text-blue-600 bg-white hover:bg-blue-600 hover:text-white border border-blue-100 rounded-xl transition-all shadow-sm" title="Edit Product">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                               </button>
-                              <button onClick={(e) => { e.stopPropagation(); reduceStock(p._id); }} className="p-2 text-amber-600 hover:bg-amber-50 rounded-xl transition-colors" title="Adjust Stock">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" /></svg>
+                              <button onClick={(e) => { e.stopPropagation(); reduceStock(p._id); }} className="p-2.5 text-amber-600 bg-white hover:bg-amber-600 hover:text-white border border-amber-100 rounded-xl transition-all shadow-sm" title="Stock Adjustment">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20 12H4" /></svg>
                               </button>
-                              <button onClick={(e) => { e.stopPropagation(); remove(p); }} className="p-2 text-red-600 hover:bg-red-50 rounded-xl transition-colors" title="Delete Product">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                              <button onClick={(e) => { e.stopPropagation(); remove(p); }} className="p-2.5 text-red-600 bg-white hover:bg-red-600 hover:text-white border border-red-100 rounded-xl transition-all shadow-sm" title="Remove Item">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                               </button>
                             </div>
                           </td>
@@ -278,38 +291,41 @@ export default function Products() {
                   </tbody>
                 </table>
               </div>
-              <div className="flex justify-between items-center px-6 py-4 border-t border-gray-50 bg-gray-50/30">
-                <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  Page {page} of {Math.max(1, Math.ceil(total / limit))}
+              <div className="flex justify-between items-center px-8 py-5 border-t border-gray-50 bg-gray-50/30">
+                <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                  Catalogue Page <span className="text-gray-900">{page}</span> / {Math.max(1, Math.ceil(total / limit))}
                 </div>
-                <div className="flex gap-2">
-                  <button onClick={() => load(Math.max(1, page - 1))} className="p-2 border border-gray-200 rounded-xl hover:bg-white disabled:opacity-30 transition-all" disabled={page === 1}>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg>
+                <div className="flex gap-3">
+                  <button onClick={() => load(Math.max(1, page - 1))} className="p-3 border border-gray-200 rounded-2xl bg-white hover:bg-gray-50 disabled:opacity-30 transition-all shadow-sm" disabled={page === 1}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
                   </button>
-                  <button onClick={() => load(page + 1)} className="p-2 border border-gray-200 rounded-xl hover:bg-white disabled:opacity-30 transition-all" disabled={page * limit >= total}>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+                  <button onClick={() => load(page + 1)} className="p-3 border border-gray-200 rounded-2xl bg-white hover:bg-gray-50 disabled:opacity-30 transition-all shadow-sm" disabled={page * limit >= total}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
                   </button>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-6">
-              <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Add New Product</h3>
-              <form onSubmit={create} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Product Name</label>
-                  <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Classic Cotton Tee" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+          <div className="lg:col-span-5 space-y-6 overflow-y-auto h-[calc(100vh-16rem)] pr-2 custom-scrollbar">
+            <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-8">
+              <div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">New Product Entry</h3>
+                <p className="text-[10px] text-blue-600 font-black uppercase tracking-[0.2em] mt-1">Creation Wizard</p>
+              </div>
+              <form onSubmit={create} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Product Identity</label>
+                  <input className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-inner" placeholder="Enter product name..." value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Price (₹)</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="999" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Selling Price (₹)</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-inner" placeholder="0.00" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">MRP (₹)</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="1099" value={form.mrp} onChange={e => setForm({ ...form, mrp: e.target.value })} />
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Market Price (₹)</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-inner" placeholder="0.00" value={form.mrp} onChange={e => setForm({ ...form, mrp: e.target.value })} />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -323,7 +339,7 @@ export default function Products() {
                     <div className="flex items-center h-[46px]">
                       <label className="inline-flex items-center cursor-pointer">
                         <input type="checkbox" className="sr-only" checked={hasVariants} onChange={e => setHasVariants(e.target.checked)} />
-                        <span className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${hasVariants ? 'bg-gray-900' : 'bg-gray-300'}`}>
+                        <span className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${hasVariants ? 'bg-blue-600' : 'bg-gray-300'}`}>
                           <span className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${hasVariants ? 'translate-x-5' : 'translate-x-0'}`} />
                         </span>
                         <span className="ml-2 text-[11px] font-bold text-gray-700">{hasVariants ? 'Enabled' : 'Disabled'}</span>
@@ -332,144 +348,149 @@ export default function Products() {
                   </div>
                 </div>
 
-                {hasVariants && (
-                  <div className="space-y-4 p-5 bg-gray-50 rounded-3xl border border-gray-100 shadow-inner">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900">Variant Management</h4>
-                      <div className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-black uppercase rounded-md border border-blue-100">Dynamic Mode</div>
-                    </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category</label>
+                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value, subCategoryId: '' })} required>
+                      <option value="">Select Category...</option>
+                      {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Subcategory</label>
+                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.subCategoryId} onChange={e => setForm({ ...form, subCategoryId: e.target.value })}>
+                      <option value="">Select Subcategory...</option>
+                      {subcategories.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                </div>
 
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Define Attributes</label>
-                      <div className="flex gap-2">
-                        <input 
-                          className="flex-1 bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
-                          placeholder="e.g. Color, Size, RAM" 
-                          value={attrInput} 
-                          onChange={e => setAttrInput(e.target.value)} 
-                        />
-                        <button 
-                          type="button" 
-                          onClick={() => {
-                            if (attrInput.trim()) {
-                              setForm(f => ({ ...f, attributes: [...new Set([...(f.attributes||[]), attrInput.trim().toLowerCase()])] }))
-                              setAttrInput('')
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Store</label>
+                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.store} onChange={e => setForm({ ...form, store: e.target.value, section: '' })}>
+                      <option value="">Select store</option>
+                      {stores.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Section</label>
+                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.section} onChange={e => setForm({ ...form, section: e.target.value })}>
+                      <option value="">Select section</option>
+                      {(stores.find(s => s.name === form.store)?.sections || []).map(sec => <option key={sec} value={sec}>{sec}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12" value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Weight (g)</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 500" value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">HSN Code</label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 8517" value={form.hsnCode} onChange={e => setForm({ ...form, hsnCode: e.target.value })} />
+                  </div>
+                </div>
+
+                {!hasVariants && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1 flex justify-between">
+                      <span>Product SKU</span>
+                      {form.sku && <span className="text-blue-600 font-black">AUTO: {form.sku}</span>}
+                    </label>
+                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. PROD-SKU-123" value={form.sku || ''} onChange={e => setForm({ ...form, sku: e.target.value })} />
+                  </div>
+                )}
+
+                <div className="space-y-4 border-2 border-dashed border-gray-200 rounded-3xl p-6 bg-white/50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Step 1: Define Attributes</h4>
+                      <p className="text-[9px] text-gray-500 font-bold mt-1">e.g. Color, Size, RAM</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        className="bg-white border rounded-xl px-3 py-2 text-[11px] font-bold focus:ring-2 focus:ring-blue-500 outline-none w-24" 
+                        placeholder="e.g. Color" 
+                        value={attrInput} 
+                        onChange={e=>setAttrInput(e.target.value)} 
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const val = attrInput.trim().toLowerCase();
+                            if (val && !form.attributes.includes(val)) {
+                              setForm(f => ({ ...f, attributes: [...f.attributes, val] }));
+                              setAttrInput('');
                             }
-                          }}
-                          className="px-6 py-3 bg-gray-900 text-white text-[10px] font-black uppercase rounded-xl hover:bg-black transition-colors"
-                        >Add</button>
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        {(form.attributes || []).length === 0 ? (
-                          <div className="text-[10px] text-gray-400 font-medium italic ml-1">No attributes defined yet. Add them above.</div>
-                        ) : (
-                          (form.attributes || []).map(a => (
-                            <span key={a} className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-700 shadow-sm">
-                              <span className="capitalize">{a}</span>
-                              <button type="button" className="text-red-400 hover:text-red-600 transition-colors" onClick={() => setForm(f => ({ ...f, attributes: f.attributes.filter(x => x !== a) }))}>
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-                              </button>
-                            </span>
-                          ))
-                        )}
-                      </div>
+                          }
+                        }}
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          const val = attrInput.trim().toLowerCase();
+                          if (val && !form.attributes.includes(val)) {
+                            setForm(f => ({ ...f, attributes: [...f.attributes, val] }));
+                            setAttrInput('');
+                          }
+                        }}
+                        className="p-2 bg-gray-900 text-white rounded-xl"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
+                      </button>
                     </div>
+                  </div>
 
-                    <div className="pt-2 border-t border-gray-100">
-                      <div className="flex items-center justify-between mb-3">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Manage Variants</label>
-                        {(form.attributes || []).length > 0 && (
-                          <button 
-                            type="button"
-                            onClick={() => setForm(f => ({ ...f, variants: [...(f.variants||[]), { attributes: {}, stock: '', price: f.price, mrp: f.mrp, sku: '', weight: '', images: '' }] }))}
-                            className="text-[9px] font-black text-blue-600 uppercase tracking-widest hover:underline"
-                          >+ Add Variant</button>
-                        )}
-                      </div>
+                  {(form.attributes || []).length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      {form.attributes.map((a, i) => (
+                        <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-100 text-[10px] font-black text-blue-600 uppercase tracking-widest shadow-sm">
+                          {a}
+                          <button type="button" onClick={() => setForm(f => ({ ...f, attributes: f.attributes.filter((_, idx) => idx !== i) }))} className="text-blue-300 hover:text-red-500 transition-colors">✕</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
-                      {(form.variants || []).length === 0 ? (
-                        <div className="py-8 bg-white/50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center gap-2">
-                          <span className="text-2xl opacity-20">📦</span>
-                          <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No variants added yet</div>
-                          {(form.attributes || []).length === 0 && (
-                            <div className="text-[9px] text-gray-400 max-w-[180px] text-center font-medium">Define attributes like "Color" or "Size" first to start adding variants.</div>
-                          )}
-                        </div>
-                      ) : (
-                        <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                  {hasVariants && (
+                    <div className="space-y-4 pt-4 border-t border-gray-100 mt-4 animate-in slide-in-from-top-2 duration-300">
+                      <div className="text-[10px] font-black uppercase tracking-widest text-blue-600">Step 2: Add Individual Variants</div>
+                      {(form.variants || []).length > 0 && (
+                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
                           {form.variants.map((v, idx) => (
-                            <div key={idx} className="p-4 bg-white border border-gray-100 rounded-2xl shadow-sm space-y-4 relative group/v">
-                              <button 
-                                type="button" 
-                                className="absolute top-4 right-4 text-gray-300 hover:text-red-500 transition-colors"
-                                onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 border border-gray-100 hover:border-blue-200 transition-all group">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex flex-wrap gap-2">
+                                  {Object.entries(v.attributes || {}).map(([key, val]) => (
+                                    <span key={key} className="text-[9px] font-black bg-white px-2 py-0.5 rounded-lg border border-gray-200 text-gray-600 uppercase">
+                                      <span className="text-gray-400 mr-1">{key}:</span>{val}
+                                    </span>
+                                  ))}
+                                  {v.sku && <span className="text-[9px] font-black bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg border border-blue-100 uppercase">{v.sku}</span>}
+                                </div>
+                                <div className="text-[10px] font-black text-gray-900">₹{v.price} · {v.stock} in stock</div>
+                              </div>
+                              <button type="button" className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                               </button>
-
-                              <div className="grid grid-cols-2 gap-3 pr-8">
-                                {form.attributes.map(a => (
-                                  <div key={a} className="space-y-1">
-                                    <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">{a}</label>
-                                    <input 
-                                      className="w-full bg-gray-50 border border-transparent rounded-xl px-3 py-2 text-[11px] font-bold focus:bg-white focus:border-blue-100 transition-all outline-none" 
-                                      placeholder={`e.g. ${a === 'color' ? 'Red' : a === 'size' ? 'XL' : 'Value'}`}
-                                      value={v.attributes[a] || ''}
-                                      onChange={e => {
-                                        const next = [...form.variants]
-                                        next[idx].attributes = { ...next[idx].attributes, [a]: e.target.value }
-                                        setForm({ ...form, variants: next })
-                                      }}
-                                    />
-                                  </div>
-                                ))}
-                              </div>
-
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                <div className="space-y-1">
-                                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Price</label>
-                                  <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-100" placeholder="Price" value={v.price} onChange={e => {
-                                    const next = [...form.variants]; next[idx].price = e.target.value; setForm({ ...form, variants: next })
-                                  }} />
-                                </div>
-                                <div className="space-y-1">
-                                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Stock</label>
-                                  <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-100" placeholder="Qty" value={v.stock} onChange={e => {
-                                    const next = [...form.variants]; next[idx].stock = e.target.value; setForm({ ...form, variants: next })
-                                  }} />
-                                </div>
-                                <div className="space-y-1">
-                                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">SKU</label>
-                                  <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-100" placeholder="SKU" value={v.sku} onChange={e => {
-                                    const next = [...form.variants]; next[idx].sku = e.target.value; setForm({ ...form, variants: next })
-                                  }} />
-                                </div>
-                                <div className="space-y-1">
-                                  <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Weight (g)</label>
-                                  <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-100" placeholder="Grams" value={v.weight} onChange={e => {
-                                    const next = [...form.variants]; next[idx].weight = e.target.value; setForm({ ...form, variants: next })
-                                  }} />
-                                </div>
-                              </div>
-
-                              <div className="space-y-1">
-                                <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Images (comma URLs)</label>
-                                <input 
-                                  className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-1 focus:ring-blue-100" 
-                                  placeholder="https://img1.jpg, https://img2.jpg" 
-                                  value={v.images} 
-                                  onChange={e => {
-                                    const next = [...form.variants]; next[idx].images = e.target.value; setForm({ ...form, variants: next })
-                                  }} 
-                                />
-                              </div>
                             </div>
                           ))}
                         </div>
                       )}
+                      <VariantQuickAdd 
+                        onAdd={(v)=> setForm(f => ({ ...f, variants: [...(f.variants||[]), v] }))} 
+                        productAttributes={form.attributes} 
+                        productName={form.name}
+                        mainImages={form.images.split(',').map(s=>s.trim()).filter(Boolean)}
+                      />
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
                 <div className="grid grid-cols-1 gap-3">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Brand (Optional)</label>
