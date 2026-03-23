@@ -29,7 +29,7 @@ export default function Catalogue({ initialBrand, brandName }) {
   const [category,    setCategory]    = useState('')
   const [subCategory, setSubCategory] = useState('')
   const [browsePath,  setBrowsePath]  = useState(initialBrand ? 'brand' : null)
-  const [viewMode,    setViewMode]    = useState(initialBrand ? 'CATEGORIES' : 'START')
+  const [viewMode,    setViewMode]    = useState(initialBrand ? 'CATEGORIES' : 'PRODUCTS')
   const [sort,        setSort]        = useState('NEW')
   const [minPrice,    setMinPrice]    = useState('')
   const [maxPrice,    setMaxPrice]    = useState('')
@@ -61,7 +61,11 @@ export default function Catalogue({ initialBrand, brandName }) {
 
   useEffect(() => {
     if (q) setViewMode('PRODUCTS')
-    else if (!browsePath) setViewMode('PRODUCTS') // Show all products by default if no path
+    else if (!browsePath) setViewMode('PRODUCTS')
+    else if (!brand && !category) {
+      setViewMode('PRODUCTS')
+      // No need to setBrowsePath here to avoid loop, it's already null or will be set by clicks
+    }
     else if (browsePath === 'brand') {
       if (!brand) setViewMode('BRANDS')
       else if (!category) setViewMode('GROUPED') // Show products grouped by category for this brand
@@ -74,7 +78,7 @@ export default function Catalogue({ initialBrand, brandName }) {
     }
   }, [q, browsePath, brand, category, subCategory])
 
-  useEffect(() => { load(1) }, [q, brand, category, subCategory])
+  useEffect(() => { load(1) }, [q, brand, category, subCategory, viewMode])
   
   useEffect(() => {
     api.get('/api/brands', { params: { active: true } }).then(({ data }) => setBrands(data || []))
@@ -121,13 +125,21 @@ export default function Catalogue({ initialBrand, brandName }) {
   }, [q, category])
 
   const filteredSorted = useMemo(() => {
+    const getMinPrice = (p) => {
+      if (!Array.isArray(p.variants) || p.variants.length === 0) return p.price || 0;
+      const activeVariants = p.variants.filter(v => v.isActive !== false && v.price > 0);
+      if (activeVariants.length === 0) return p.price || 0;
+      return Math.min(...activeVariants.map(v => v.price));
+    };
+
     let list = [...items]
     if (authed) {
       const mn = Number(minPrice), mx = Number(maxPrice)
-      if (!isNaN(mn) && minPrice !== '') list = list.filter(p => (p.price ?? Infinity) >= mn)
-      if (!isNaN(mx) && maxPrice !== '') list = list.filter(p => (p.price ?? -Infinity) <= mx)
-      if (sort === 'PRICE_LOW')  list.sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
-      if (sort === 'PRICE_HIGH') list.sort((a, b) => (b.price ?? 0) - (a.price ?? 0))
+      if (!isNaN(mn) && minPrice !== '') list = list.filter(p => getMinPrice(p) >= mn)
+      if (!isNaN(mx) && maxPrice !== '') list = list.filter(p => getMinPrice(p) <= mx)
+      
+      if (sort === 'PRICE_LOW')  list.sort((a, b) => getMinPrice(a) - getMinPrice(b))
+      if (sort === 'PRICE_HIGH') list.sort((a, b) => getMinPrice(b) - getMinPrice(a))
     }
     if (sort === 'NEW') list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
     return list
@@ -792,7 +804,7 @@ export default function Catalogue({ initialBrand, brandName }) {
             <div>
               <div className="ct-sb-label">Categories</div>
               <div className="ct-sb-cats">
-                <button className={`ct-sb-cat-btn${category===''?' on':''}`} onClick={() => setCategory('')}>
+                <button className={`ct-sb-cat-btn${category===''?' on':''}`} onClick={() => { setCategory(''); setSubCategory(''); if(!brand) setBrowsePath(null) }}>
                   <div className="ct-sb-cat-img"><span style={{fontSize:17}}>📦</span></div>
                   <div style={{flex:1,textAlign:'left'}}>
                     <div style={{fontWeight:700,fontSize:13}}>All Categories</div>
@@ -800,7 +812,7 @@ export default function Catalogue({ initialBrand, brandName }) {
                   {category==='' && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7"/></svg></div>}
                 </button>
                 {categories.map(c => (
-                  <button key={c._id} className={`ct-sb-cat-btn${category===c._id?' on':''}`} onClick={() => setCategory(c._id)}>
+                  <button key={c._id} className={`ct-sb-cat-btn${category===c._id?' on':''}`} onClick={() => { setCategory(c._id); setBrowsePath('category') }}>
                     <div className="ct-sb-cat-img">
                       {c.image ? <img src={c.image} alt={c.name}/> : <span style={{fontSize:17}}>📦</span>}
                     </div>
@@ -835,7 +847,7 @@ export default function Catalogue({ initialBrand, brandName }) {
             <div>
               <div className="ct-sb-label">Filter by Brand</div>
               <div className="ct-sb-cats">
-                <button className={`ct-sb-cat-btn${brand===''?' on':''}`} onClick={() => setBrand('')}>
+                <button className={`ct-sb-cat-btn${brand===''?' on':''}`} onClick={() => { setBrand(''); if(!category) setBrowsePath(null) }}>
                   <div className="ct-sb-cat-img"><span style={{fontSize:17}}>🏷️</span></div>
                   <div style={{flex:1,textAlign:'left'}}>
                     <div style={{fontWeight:700,fontSize:13}}>All Brands</div>
@@ -843,7 +855,7 @@ export default function Catalogue({ initialBrand, brandName }) {
                   {brand==='' && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7"/></svg></div>}
                 </button>
                 {brands.map(b => (
-                  <button key={b._id} className={`ct-sb-cat-btn${brand===b._id?' on':''}`} onClick={() => setBrand(b._id)}>
+                  <button key={b._id} className={`ct-sb-cat-btn${brand===b._id?' on':''}`} onClick={() => { setBrand(b._id); setBrowsePath('brand') }}>
                     <div className="ct-sb-cat-img">
                       {b.logo ? <img src={b.logo} alt={b.name}/> : <span style={{fontSize:17}}>🏭</span>}
                     </div>
@@ -1416,10 +1428,17 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
           <button
             className="ct-atc"
             disabled={!authed || totalStock <= 0}
-            title={!authed ? 'Login to add' : totalStock <= 0 ? 'Out of stock' : 'Add to cart'}
+            title={!authed ? 'Login to add' : totalStock <= 0 ? 'Out of stock' : p.variants?.length > 0 ? 'Select options' : 'Add to cart'}
             onClick={async e => {
               e.stopPropagation(); e.preventDefault()
               if (!authed) { navigate('/login'); return }
+              
+              // If product has variants, redirect to detail page for selection
+              if (p.variants?.length > 0) {
+                navigate(`/products/${p._id}`)
+                return
+              }
+
               const ok = await addToCart(p)
               if (ok) {
                 try {
@@ -1431,11 +1450,17 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
               }
             }}
           >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M7 6h13l-1.2 7H9.2L7 6Z" strokeLinecap="round" strokeLinejoin="round"/>
-              <circle cx="10" cy="19" r="1.4" fill="currentColor"/>
-              <circle cx="17" cy="19" r="1.4" fill="currentColor"/>
-            </svg>
+            {p.variants?.length > 0 ? (
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            ) : (
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M7 6h13l-1.2 7H9.2L7 6Z" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="10" cy="19" r="1.4" fill="currentColor"/>
+                <circle cx="17" cy="19" r="1.4" fill="currentColor"/>
+              </svg>
+            )}
           </button>
         </div>
 

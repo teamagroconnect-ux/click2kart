@@ -60,6 +60,11 @@ export default function ProductDetail() {
     })
   }, [p, selected, variantAttrs])
 
+  const imgs = useMemo(() => {
+    if (matchedVariant?.images?.length > 0) return matchedVariant.images
+    return Array.isArray(p?.images) ? p.images : []
+  }, [p, matchedVariant])
+
   /* KYC / pincode */
   useEffect(() => {
     if (!authed) return
@@ -297,10 +302,6 @@ export default function ProductDetail() {
   const gstRate      = Number(p.gst || 0)
   const isBestseller = (p.ratingCount||0) >= 50
   const isHotDeal    = mrp > 0 && ((mrp - (p.price||0)) / mrp) * 100 >= 20
-  const imgs = useMemo(() => {
-    if (matchedVariant?.images?.length > 0) return matchedVariant.images
-    return Array.isArray(p?.images) ? p.images : []
-  }, [p, matchedVariant])
 
   const currentImg   = imgs[activeImg]?.url || imgs[0]?.url
   const stock        = currentStock ?? 0
