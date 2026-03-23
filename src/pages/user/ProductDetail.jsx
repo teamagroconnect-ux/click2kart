@@ -1004,7 +1004,7 @@ export default function ProductDetail() {
                       ? v.attributes 
                       : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
                     
-                    const attrText = Object.entries(vAttrs).map(([k, val]) => `${val}`).join(' / ')
+                    const attrText = Object.entries(vAttrs).map(([k, val]) => `${k}: ${val}`).join(' / ')
                     const isActive = matchedVariant?._id === v._id
                     const vImg = v.images?.[0]?.url || p.images?.[0]?.url
 

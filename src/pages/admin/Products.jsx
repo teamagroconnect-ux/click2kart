@@ -198,27 +198,28 @@ export default function Products() {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
       `}</style>
-      <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm">
+      <div className="space-y-6 max-w-[1600px] mx-auto px-4 py-6">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Catalogue Management</h1>
-            <p className="text-sm text-gray-500 font-bold mt-1 uppercase tracking-widest opacity-60">Control your inventory and variants</p>
+            <h1 className="text-2xl font-bold text-gray-900">Product Catalogue</h1>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">Manage inventory, pricing, and variants</p>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="relative group">
+          <div className="flex items-center gap-3">
+            <div className="relative">
               <input
                 placeholder="Search products..."
-                className="bg-gray-50 border-none text-gray-900 text-sm rounded-2xl pl-12 pr-6 py-4 w-72 outline-none focus:ring-2 focus:ring-blue-500 shadow-inner transition-all"
+                className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl pl-10 pr-4 py-2.5 w-64 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 value={q}
                 onChange={e => setQ(e.target.value)}
               />
-              <svg className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+              <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-7 space-y-4 flex flex-col h-[calc(100vh-16rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-8 space-y-4 flex flex-col h-[calc(100vh-14rem)]">
             <div className="flex items-center justify-between px-2">
               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Live Inventory ({total})</h3>
               <div className="flex gap-2">
@@ -226,62 +227,59 @@ export default function Products() {
                 <span className="flex items-center gap-1.5 text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100 uppercase">● Low Stock</span>
               </div>
             </div>
-            <div className="bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm flex flex-col flex-1">
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm flex flex-col flex-1">
               <div className="overflow-y-auto flex-1 custom-scrollbar">
                 <table className="w-full text-sm border-collapse relative">
-                  <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-400 font-black uppercase tracking-widest text-[9px] sticky top-0 z-10 backdrop-blur-md">
+                  <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] sticky top-0 z-10">
                     <tr>
-                      <th className="px-8 py-5 text-left">Product Identity</th>
-                      <th className="px-8 py-5 text-left">Commercials</th>
-                      <th className="px-8 py-5 text-left">Status</th>
-                      <th className="px-8 py-5 text-right">Actions</th>
+                      <th className="px-6 py-4 text-left">Product Details</th>
+                      <th className="px-6 py-4 text-left">Price & GST</th>
+                      <th className="px-6 py-4 text-left">Stock</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
                     {!loading &&
                       items.map(p => (
-                        <tr key={p._id} className="group hover:bg-blue-50/30 transition-all cursor-pointer" onClick={() => setViewing(p)}>
-                          <td className="px-8 py-5">
+                        <tr key={p._id} className="group hover:bg-gray-50/50 transition-all cursor-pointer" onClick={() => setViewing(p)}>
+                          <td className="px-6 py-4">
                             <div className="flex items-center gap-4">
-                              <div className="h-16 w-16 rounded-2xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center cursor-zoom-in relative group/img" onClick={(e) => { e.stopPropagation(); if (p.images?.[0]?.url) setPreview(p.images[0].url) }}>
+                              <div className="h-14 w-14 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center p-1" onClick={(e) => { e.stopPropagation(); if (p.images?.[0]?.url) setPreview(p.images[0].url) }}>
                                 {p.images?.[0]?.url ? (
-                                  <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain p-2 group-hover/img:scale-110 transition-transform" />
+                                  <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain" />
                                 ) : (
-                                  <span className="text-[10px] text-gray-400 font-black uppercase">No Img</span>
+                                  <span className="text-[9px] text-gray-400 font-bold">NO IMG</span>
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <div className="font-black text-gray-900 truncate max-w-[200px] text-base leading-tight">{p.name}</div>
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-[9px] text-blue-600 font-black uppercase tracking-widest bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">{p.brand?.name || 'Unbranded'}</span>
-                                  <span className="text-[9px] text-gray-400 font-black uppercase tracking-widest">{p.category?.name || 'General'}</span>
+                                <div className="font-bold text-gray-900 truncate max-w-[240px] text-sm">{p.name}</div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[9px] text-blue-600 font-bold uppercase">{p.brand?.name || 'Unbranded'}</span>
+                                  <span className="text-[9px] text-gray-400 font-medium">{p.category?.name || 'General'}</span>
                                 </div>
-                                {p.sku && <div className="text-[9px] font-mono text-gray-400 mt-1 uppercase tracking-tighter">SKU: {p.sku}</div>}
+                                {p.sku && <div className="text-[9px] font-mono text-gray-400 mt-0.5">SKU: {p.sku}</div>}
                               </div>
                             </div>
                           </td>
-                          <td className="px-8 py-5">
-                            <div className="font-black text-gray-900 text-lg">₹{p.price.toLocaleString()}</div>
-                            <div className="text-[10px] text-gray-400 font-bold flex items-center gap-2 mt-0.5">
-                              <span className="line-through opacity-50">₹{p.mrp?.toLocaleString()}</span>
-                              <span className="text-emerald-600 font-black">{p.gst}% GST</span>
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-gray-900">₹{p.price.toLocaleString()}</div>
+                            <div className="text-[10px] text-gray-400 font-medium">MRP: ₹{p.mrp?.toLocaleString()} · {p.gst}% GST</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className={`inline-flex flex-col px-3 py-1 rounded-lg border ${p.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                              <span className="text-xs font-bold">{p.stock}</span>
+                              <span className="text-[8px] font-bold uppercase opacity-60">Units</span>
                             </div>
                           </td>
-                          <td className="px-8 py-5">
-                            <div className={`inline-flex flex-col gap-0.5 px-3 py-1.5 rounded-2xl border ${p.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                              <span className="text-sm font-black leading-none">{p.stock}</span>
-                              <span className="text-[8px] font-black uppercase tracking-widest opacity-60">Units Left</span>
-                            </div>
-                          </td>
-                          <td className="px-8 py-5">
-                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                              <button onClick={(e) => { e.stopPropagation(); openEdit(p); }} className="p-2.5 text-blue-600 bg-white hover:bg-blue-600 hover:text-white border border-blue-100 rounded-xl transition-all shadow-sm" title="Edit Product">
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+                              <button onClick={(e) => { e.stopPropagation(); openEdit(p); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                               </button>
-                              <button onClick={(e) => { e.stopPropagation(); reduceStock(p._id); }} className="p-2.5 text-amber-600 bg-white hover:bg-amber-600 hover:text-white border border-amber-100 rounded-xl transition-all shadow-sm" title="Stock Adjustment">
+                              <button onClick={(e) => { e.stopPropagation(); reduceStock(p._id); }} className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="Stock">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20 12H4" /></svg>
                               </button>
-                              <button onClick={(e) => { e.stopPropagation(); remove(p); }} className="p-2.5 text-red-600 bg-white hover:bg-red-600 hover:text-white border border-red-100 rounded-xl transition-all shadow-sm" title="Remove Item">
+                              <button onClick={(e) => { e.stopPropagation(); remove(p); }} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                               </button>
                             </div>
@@ -291,15 +289,15 @@ export default function Products() {
                   </tbody>
                 </table>
               </div>
-              <div className="flex justify-between items-center px-8 py-5 border-t border-gray-50 bg-gray-50/30">
-                <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                  Catalogue Page <span className="text-gray-900">{page}</span> / {Math.max(1, Math.ceil(total / limit))}
+              <div className="flex justify-between items-center px-6 py-4 border-t border-gray-50 bg-gray-50/30">
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  Page {page} of {Math.max(1, Math.ceil(total / limit))}
                 </div>
-                <div className="flex gap-3">
-                  <button onClick={() => load(Math.max(1, page - 1))} className="p-3 border border-gray-200 rounded-2xl bg-white hover:bg-gray-50 disabled:opacity-30 transition-all shadow-sm" disabled={page === 1}>
+                <div className="flex gap-2">
+                  <button onClick={() => load(Math.max(1, page - 1))} className="p-2 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 disabled:opacity-30 transition-all shadow-sm" disabled={page === 1}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
                   </button>
-                  <button onClick={() => load(page + 1)} className="p-3 border border-gray-200 rounded-2xl bg-white hover:bg-gray-50 disabled:opacity-30 transition-all shadow-sm" disabled={page * limit >= total}>
+                  <button onClick={() => load(page + 1)} className="p-2 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 disabled:opacity-30 transition-all shadow-sm" disabled={page * limit >= total}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
                   </button>
                 </div>
@@ -307,27 +305,29 @@ export default function Products() {
             </div>
           </div>
 
-          <div className="lg:col-span-5 space-y-6 overflow-y-auto h-[calc(100vh-16rem)] pr-2 custom-scrollbar">
-            <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-8">
-              <div>
-                <h3 className="text-xl font-black text-gray-900 tracking-tight">New Product Entry</h3>
-                <p className="text-[10px] text-blue-600 font-black uppercase tracking-[0.2em] mt-1">Creation Wizard</p>
+          {/* Creation Section */}
+          <div className="lg:col-span-4 flex flex-col h-[calc(100vh-14rem)] bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden overflow-y-auto custom-scrollbar">
+            <div className="p-6 border-b border-gray-50">
+              <h3 className="text-lg font-bold text-gray-900">Add New Product</h3>
+              <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mt-0.5">Catalogue wizard</p>
+            </div>
+            
+            <form onSubmit={create} className="p-6 space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Product Name</label>
+                <input className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="Enter name..." value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
               </div>
-              <form onSubmit={create} className="space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Product Identity</label>
-                  <input className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-inner" placeholder="Enter product name..." value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Price (₹)</label>
+                  <input className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0.00" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Selling Price (₹)</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-inner" placeholder="0.00" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Market Price (₹)</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all shadow-inner" placeholder="0.00" value={form.mrp} onChange={e => setForm({ ...form, mrp: e.target.value })} />
-                  </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">MRP (₹)</label>
+                  <input className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0.00" value={form.mrp} onChange={e => setForm({ ...form, mrp: e.target.value })} />
                 </div>
+              </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Stock</label>
