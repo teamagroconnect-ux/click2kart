@@ -50,9 +50,15 @@ export default function Products() {
       
       // Auto load attributes from category
       const cat = categories.find(c => c._id === categoryId)
-      if (cat && cat.attributes) {
-        if (editing) setEditing(prev => ({ ...prev, attributes: cat.attributes }))
-        else setForm(prev => ({ ...prev, attributes: cat.attributes }))
+      if (cat && Array.isArray(cat.attributes) && cat.attributes.length > 0) {
+        if (editing) {
+          // Only set if editing.attributes is empty or we just changed category
+          if (!editing.attributes || editing.attributes.length === 0) {
+            setEditing(prev => ({ ...prev, attributes: cat.attributes }))
+          }
+        } else {
+          setForm(prev => ({ ...prev, attributes: cat.attributes }))
+        }
       }
     } else {
       setSubcategories([])
@@ -987,33 +993,6 @@ export default function Products() {
 function VariantManager({ product, onChanged }) {
   const { notify } = useToast()
   const [attrInput, setAttrInput] = useState('')
-  const [form, setForm] = useState({ attributes: {}, price: product.price || '', mrp: product.mrp || '', stock: '', sku: '', weight: product.weight || '', images: '' })
-
-  const addVariant = async (e) => {
-    e.preventDefault()
-    if (!Object.keys(form.attributes).length) return notify('Select attributes','error')
-    try {
-      let images = form.images.split(',').map(s=>s.trim()).filter(Boolean);
-      
-      // If user checked "Use Product Image" and no specific variant images provided
-      if (form.useProductImage && images.length === 0) {
-        images = (product.images || []).map(img => img.url);
-      }
-
-      await api.post(`/api/products/${product._id}/variants`, {
-        attributes: form.attributes,
-        price: Number(form.price||0),
-        mrp: form.mrp ? Number(form.mrp) : undefined,
-        stock: Number(form.stock||0),
-        sku: form.sku || undefined,
-        weight: Number(form.weight || 0),
-        images: images.map(url => ({ url }))
-      })
-      notify('Variant added','success')
-      setForm({ attributes: {}, price: product.price || '', mrp: product.mrp || '', stock: '', sku: '', weight: product.weight || '', images: '', useProductImage: false })
-      onChanged && onChanged()
-    } catch (err) { notify(err.response?.data?.error || 'Failed to add','error') }
-  }
 
   const toggleActive = async (v) => {
     try {
@@ -1057,58 +1036,42 @@ function VariantManager({ product, onChanged }) {
     })
   }
 
+  const handleQuickAdd = async (v) => {
+    try {
+      const images = v.images.split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }));
+      
+      await api.post(`/api/products/${product._id}/variants`, {
+        attributes: v.attributes,
+        price: Number(v.price),
+        mrp: v.mrp ? Number(v.mrp) : undefined,
+        stock: Number(v.stock),
+        sku: v.sku || undefined,
+        weight: Number(v.weight || 0),
+        images: images
+      })
+      notify('Variant added','success')
+      onChanged && onChanged()
+    } catch (err) { notify(err.response?.data?.error || 'Failed to add','error') }
+  }
+
   return (
     <div className="space-y-6">
-      {/* Existing Variants List */}
-      <div className="space-y-3">
-        {(product.variants || []).length > 0 && (
-          <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Current Variants</h5>
-        )}
-        {(product.variants || []).map(v => (
-          <div key={v._id} className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between group">
-            <div className="flex-1">
-              <div className="flex flex-wrap gap-2 mb-1">
-                {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k,val]) => (
-                  <span key={k} className="text-[9px] font-black bg-white px-2 py-0.5 rounded-lg border border-gray-200 text-gray-600 uppercase">
-                    <span className="text-gray-400 mr-1">{k}:</span>{val}
-                  </span>
-                ))}
-              </div>
-              <div className="text-[10px] font-bold text-gray-900">
-                ₹{v.price} <span className="text-gray-400 mx-1">·</span> {v.stock} in stock
-                {v.sku && <span className="text-gray-400 ml-2">({v.sku})</span>}
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button type="button" onClick={() => toggleActive(v)} className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase transition-all ${v.isActive ? 'text-emerald-600 bg-emerald-50' : 'text-gray-400 bg-gray-100'}`}>
-                {v.isActive ? 'Active' : 'Hidden'}
-              </button>
-              <button type="button" onClick={() => deleteVariant(v)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Attributes Definition */}
-      <div className="p-5 bg-blue-50/30 border border-blue-100 rounded-3xl space-y-4">
+      {/* Step 1: Attributes Definition */}
+      <div className="p-6 bg-blue-50/40 border border-blue-100 rounded-[2rem] space-y-4">
         <div className="flex items-center justify-between">
-          <h5 className="text-[10px] font-black uppercase tracking-widest text-blue-600">Product Attributes (Step 1)</h5>
+          <div>
+            <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-600">Step 1: Define Attributes</h5>
+            <p className="text-[9px] text-blue-400 font-bold mt-1">Add keys like Color, Size, RAM etc.</p>
+          </div>
           <div className="flex gap-2">
             <input 
-              className="bg-white border border-blue-100 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500" 
-              placeholder="e.g. Color, Size" 
+              className="bg-white border border-blue-100 rounded-xl px-4 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-blue-500 w-32 shadow-sm" 
+              placeholder="e.g. Color" 
               value={attrInput} 
               onChange={e=>setAttrInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  addAttr();
-                }
-              }}
+              onKeyDown={e => e.key === 'Enter' && addAttr()}
             />
-            <button type="button" onClick={addAttr} className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-sm shadow-blue-200">
+            <button type="button" onClick={addAttr} className="p-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md shadow-blue-100">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
             </button>
           </div>
@@ -1116,73 +1079,68 @@ function VariantManager({ product, onChanged }) {
         <div className="flex flex-wrap gap-2">
           {Array.isArray(product.attributes) && product.attributes.length > 0 ? (
             product.attributes.map(a => (
-              <span key={a} className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-blue-100 rounded-xl text-[10px] font-black text-blue-600 uppercase shadow-sm">
+              <span key={a} className="inline-flex items-center gap-2 px-3 py-2 bg-white border border-blue-100 rounded-xl text-[10px] font-black text-blue-600 uppercase shadow-sm group">
                 {a}
-                <button type="button" onClick={() => removeAttr(a)} className="text-blue-400 hover:text-red-500 transition-colors">✕</button>
+                <button type="button" onClick={() => removeAttr(a)} className="text-blue-300 hover:text-red-500 transition-colors">✕</button>
               </span>
             ))
           ) : (
-            <div className="text-[10px] text-gray-400 font-bold italic ml-1">Define attributes first to create variants.</div>
+            <div className="text-[10px] text-blue-400 font-bold italic ml-1">Add attributes to enable variants...</div>
           )}
         </div>
       </div>
 
-      {/* Add New Variant Form */}
-      <form onSubmit={addVariant} className="space-y-4 border-t border-gray-100 pt-6">
-        <div className="grid grid-cols-2 gap-3">
-          {(product.attributes || []).map(a => (
-            <div key={a} className="space-y-1">
-              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{a}</label>
-              <input 
-                className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500" 
-                placeholder={`Value for ${a}`}
-                value={form.attributes[a] || ''}
-                onChange={e => setForm({ ...form, attributes: { ...form.attributes, [a]: e.target.value } })}
-                required
-              />
+      {/* Step 2: Variant Generator (Flipkart Style) */}
+      {Array.isArray(product.attributes) && product.attributes.length > 0 && (
+        <div className="space-y-4">
+          <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 ml-1">Step 2: Add New Variant</h5>
+          <VariantQuickAdd 
+            onAdd={handleQuickAdd} 
+            productAttributes={product.attributes} 
+            productName={product.name}
+            mainImages={product.images}
+          />
+        </div>
+      )}
+
+      {/* Step 3: Generated Variants */}
+      <div className="space-y-4 pt-4 border-t border-gray-100">
+        {(product.variants || []).length > 0 && (
+          <div className="flex items-center justify-between px-1">
+            <h5 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Step 3: Active Variants ({product.variants.length})</h5>
+            <span className="text-[9px] text-gray-400 font-bold italic">Identity based on SKU</span>
+          </div>
+        )}
+        <div className="grid grid-cols-1 gap-3">
+          {(product.variants || []).map(v => (
+            <div key={v._id} className="p-4 bg-gray-50/50 rounded-2xl border border-gray-100 flex items-center justify-between group hover:border-blue-100 hover:bg-white transition-all">
+              <div className="flex-1">
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k,val]) => (
+                    <span key={k} className="text-[9px] font-black bg-white px-2 py-1 rounded-lg border border-gray-200 text-gray-600 uppercase shadow-sm">
+                      <span className="text-gray-400 mr-1">{k}:</span>{val}
+                    </span>
+                  ))}
+                  {v.sku && <span className="text-[9px] font-black bg-blue-50 px-2 py-1 rounded-lg border border-blue-100 text-blue-600 uppercase">{v.sku}</span>}
+                </div>
+                <div className="text-[11px] font-bold text-gray-900 flex items-center gap-3">
+                  <span className="text-blue-600">₹{v.price.toLocaleString()}</span>
+                  <span className="h-1 w-1 bg-gray-300 rounded-full"></span>
+                  <span className={v.stock <= 5 ? 'text-red-500' : 'text-emerald-600'}>{v.stock} in stock</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => toggleActive(v)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all shadow-sm ${v.isActive ? 'text-emerald-600 bg-white border border-emerald-100' : 'text-gray-400 bg-gray-100 border border-transparent'}`}>
+                  {v.isActive ? 'Active' : 'Hidden'}
+                </button>
+                <button type="button" onClick={() => deleteVariant(v)} className="p-2.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </div>
             </div>
           ))}
         </div>
-        
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Price</label>
-            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none" value={form.price} onChange={e=>setForm({...form, price: e.target.value})} />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Stock</label>
-            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none" value={form.stock} onChange={e=>setForm({...form, stock: e.target.value})} required />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[9px] font-black text-gray-400 uppercase ml-1">SKU</label>
-            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none" value={form.sku} onChange={e=>setForm({...form, sku: e.target.value})} />
-          </div>
-          <div className="space-y-1">
-            <label className="text-[9px] font-black text-gray-400 uppercase ml-1">Images</label>
-            <input className="w-full bg-gray-50 border-none rounded-xl px-3 py-2 text-[11px] font-bold outline-none" value={form.images} onChange={e=>setForm({...form, images: e.target.value})} placeholder="URLs..." />
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 px-1">
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input 
-              type="checkbox" 
-              className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" 
-              checked={form.useProductImage || false} 
-              onChange={e => setForm({ ...form, useProductImage: e.target.checked })} 
-            />
-            <span className="text-[10px] font-bold text-gray-500 group-hover:text-gray-700 transition-colors uppercase tracking-tight">Use Main Product Images</span>
-          </label>
-        </div>
-
-        <button 
-          type="submit"
-          disabled={!product.attributes?.length} 
-          className="w-full bg-gray-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-lg hover:bg-black hover:-translate-y-0.5 active:scale-95 transition-all disabled:opacity-30 disabled:pointer-events-none"
-        >
-          Add Variant
-        </button>
-      </form>
+      </div>
     </div>
   )
 }

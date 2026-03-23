@@ -50,6 +50,7 @@ export function CartProvider({ children }) {
           for (const item of localItems) {
             await api.post('/api/cart/add', {
               productId: item._id,
+              variantSku: item.variantSku,
               quantity: item.quantity || 1
             })
           }
@@ -165,7 +166,12 @@ export function CartProvider({ children }) {
     try {
       // remove all items one by one
       for (const item of cart) {
-        await api.delete('/api/cart/remove', { data: { productId: item.productId || item._id } })
+        await api.delete('/api/cart/remove', { 
+          data: { 
+            productId: item.productId || item._id,
+            variantSku: item.variantSku
+          } 
+        })
       }
       setCart([])
     } catch (err) {

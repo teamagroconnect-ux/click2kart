@@ -49,10 +49,12 @@ export default function ProductDetail() {
       const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
         ? v.attributes 
         : (v && v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-      if (!vAttrs) return false
+      if (!vAttrs || v.isActive === false) return false
+      
+      // A variant is a match only if ALL product attributes match the selection
       return variantAttrs.every(attr => {
         const val = selected[attr];
-        if (!val) return false;
+        if (!val) return false; // Incomplete selection
         return String(vAttrs[attr] || '').toLowerCase() === String(val || '').toLowerCase()
       })
     })
@@ -228,10 +230,12 @@ export default function ProductDetail() {
   )
 
   /* variant helpers */
+  // Variant selection helper: get available values for a specific attribute key
   const variantOpts = (key) => {
     if (!p?.variants?.length) return []
     const set = new Set()
     p.variants.forEach(v => {
+      if (v.isActive === false) return;
       const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
         ? v.attributes 
         : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
@@ -240,18 +244,34 @@ export default function ProductDetail() {
     return Array.from(set).sort()
   }
 
+  // Flipkart Style Logic: Check if an option is enabled based on current other selections
   const isOptEnabled = (key, val) => {
     if (!p?.variants?.length) return true
-    const testSelected = { ...selected, [key]: val }
+    
+    // We want to know if there's ANY variant that has this 'val' for 'key'
+    // AND matches the OTHER currently selected attributes.
+    const otherSelections = { ...selected };
+    delete otherSelections[key]; 
+
     return p.variants.some(v => {
-      const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+      if (v.isActive === false) return false;
+      const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
         ? v.attributes 
-        : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-      return Object.entries(testSelected).every(([k, vVal]) => {
-        if (!vVal) return true
-        return String(vAttrs[k] || '').toLowerCase() === String(vVal || '').toLowerCase()
-      })
-    })
+        : (v && v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
+      if (!vAttrs) return false;
+      
+      // Must match the value we're checking
+      if (String(vAttrs[key] || '').toLowerCase() !== String(val || '').toLowerCase()) return false;
+
+      // Must match all other selected attributes
+      const matchOthers = Object.entries(otherSelections).every(([k, vVal]) => {
+        if (!vVal) return true;
+        return String(vAttrs[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
+      });
+
+      // Flipkart style: also check if it's in stock for it to be "available"
+      return matchOthers && (v.stock > 0);
+    });
   }
 
   const currentPrice = matchedVariant?.price ?? p?.price
@@ -277,7 +297,11 @@ export default function ProductDetail() {
   const gstRate      = Number(p.gst || 0)
   const isBestseller = (p.ratingCount||0) >= 50
   const isHotDeal    = mrp > 0 && ((mrp - (p.price||0)) / mrp) * 100 >= 20
-  const imgs         = matchedVariant?.images?.length ? matchedVariant.images : (p.images||[])
+  const imgs = useMemo(() => {
+    if (matchedVariant?.images?.length > 0) return matchedVariant.images
+    return Array.isArray(p?.images) ? p.images : []
+  }, [p, matchedVariant])
+
   const currentImg   = imgs[activeImg]?.url || imgs[0]?.url
   const stock        = currentStock ?? 0
   const stockSt      = getStockStatus(stock)
@@ -553,8 +577,28 @@ export default function ProductDetail() {
         cursor: pointer; transition: all .15s; font-family: 'DM Sans', sans-serif;
       }
       .pd-var-btn.on { background: #7c3aed; border-color: #7c3aed; color: white; box-shadow: 0 3px 10px rgba(124,58,237,.25); }
-      .pd-var-btn:not(.on):not(:disabled):hover { border-color: #7c3aed; color: #7c3aed; }
-      .pd-var-btn:disabled { opacity: .35; cursor: not-allowed; background: #f5f3ff; }
+      .pd-var-btn:not(.on):not(.disabled):hover { border-color: #7c3aed; color: #7c3aed; }
+      .pd-var-btn.disabled { 
+        opacity: 0.4; 
+        cursor: not-allowed; 
+        background: #f9fafb; 
+        border-style: dashed; 
+        border-color: #d1d5db; 
+        color: #9ca3af;
+        position: relative;
+        overflow: hidden;
+      }
+      .pd-var-btn.disabled::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background: #9ca3af;
+        transform: rotate(-25deg);
+        pointer-events: none;
+      }
       .pd-sku { font-size: 11px; color: #9ca3af; font-weight: 600; margin-top: 8px; }
 
       /* ─── STOCK STATUS ─── */
@@ -983,16 +1027,20 @@ export default function ProductDetail() {
                     <div key={attrKey} className="pd-var-sec">
                       <div className="pd-var-lbl" style={{ textTransform: 'capitalize' }}>{attrKey}</div>
                       <div className="pd-var-opts">
-                        {options.map((opt, i) => (
-                          <button 
-                            key={i} 
-                            disabled={!isOptEnabled(attrKey, opt)}
-                            className={`pd-var-btn${selected[attrKey] === opt ? ' on' : ''}`}
-                            onClick={() => isOptEnabled(attrKey, opt) && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
-                          >
-                            {opt}
-                          </button>
-                        ))}
+                        {options.map((opt, i) => {
+                          const enabled = isOptEnabled(attrKey, opt)
+                          const on = selected[attrKey] === opt
+                          return (
+                            <button 
+                              key={i} 
+                              className={`pd-var-btn${on ? ' on' : ''}${!enabled ? ' disabled' : ''}`}
+                              onClick={() => enabled && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
+                              title={!enabled ? 'Out of Stock / Unavailable' : ''}
+                            >
+                              {opt}
+                            </button>
+                          )
+                        })}
                       </div>
                     </div>
                   )

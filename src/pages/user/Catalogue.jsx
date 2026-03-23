@@ -1264,7 +1264,7 @@ export default function Catalogue({ initialBrand, brandName }) {
    PRODUCT CARD
 ══════════════════════════════════════════ */
 function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRecItems }) {
-  // Use sum of variant stocks if variants exist, otherwise use top-level stock
+  // Calculate overall stock status based on variants
   const totalStock = Array.isArray(p.variants) && p.variants.length > 0
     ? p.variants.filter(v => v.isActive !== false).reduce((sum, v) => sum + (v.stock || 0), 0)
     : (p.stock || 0)
@@ -1277,6 +1277,13 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
     return Math.min(...activeVariants.map(v => v.price));
   }, [p.variants, p.price]);
 
+  // Find the MRP corresponding to the min price or the highest MRP
+  const displayMrp = useMemo(() => {
+    if (!Array.isArray(p.variants) || p.variants.length === 0) return p.mrp || p.price;
+    const variantWithMinPrice = p.variants.find(v => v.isActive !== false && v.price === minPrice);
+    return variantWithMinPrice?.mrp || p.mrp || minPrice;
+  }, [p.variants, minPrice, p.mrp]);
+
   const hasMultiplePrices = useMemo(() => {
     if (!Array.isArray(p.variants) || p.variants.length <= 1) return false;
     const prices = new Set(p.variants.filter(v => v.isActive !== false && v.price > 0).map(v => v.price));
@@ -1285,8 +1292,8 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
 
   const status   = getStockStatus(totalStock)
   const hasBulk  = p.bulkDiscountQuantity > 0
-  const discount = p.mrp && p.mrp > minPrice
-    ? Math.round(((Number(p.mrp) - Number(minPrice)) / Number(p.mrp)) * 100) : 0
+  const discount = displayMrp > minPrice
+    ? Math.round(((displayMrp - minPrice) / displayMrp) * 100) : 0
 
   const [wished, setWished] = useState(() => {
     try { return JSON.parse(localStorage.getItem('wishlist') || '[]').includes(p._id) } catch { return false }
@@ -1381,13 +1388,13 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
                 <div className="ct-price-authed">
                   {hasMultiplePrices && <span style={{fontSize:10,color:'#9ca3af',marginRight:4,textTransform:'uppercase',fontWeight:800}}>From</span>}
                   ₹{Number(minPrice).toLocaleString()}
-                  {p.mrp > minPrice && (
+                  {displayMrp > minPrice && (
                     <span className="ct-price-off">
-                      {Math.round(((p.mrp - minPrice) / p.mrp) * 100)}% OFF
+                      {Math.round(((displayMrp - minPrice) / displayMrp) * 100)}% OFF
                     </span>
                   )}
                 </div>
-                {p.mrp > minPrice && <div className="ct-price-mrp">MRP ₹{Number(p.mrp).toLocaleString()}</div>}
+                {displayMrp > minPrice && <div className="ct-price-mrp">MRP ₹{Number(displayMrp).toLocaleString()}</div>}
               </>
             ) : (
               <>
