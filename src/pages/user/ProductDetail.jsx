@@ -140,7 +140,7 @@ export default function ProductDetail() {
     
     // On first load, find the first active variant that is in stock, otherwise just first active
     const defaultVariant = p.variants.find(v => v.isActive !== false && v.stock > 0) || p.variants.find(v => v.isActive !== false)
-    if (defaultVariant) {
+    if (defaultVariant && Object.keys(selected).length === 0) {
       const vAttrs = (defaultVariant.attributes && typeof defaultVariant.attributes === 'object' && !(defaultVariant.attributes instanceof Map)) 
         ? defaultVariant.attributes 
         : (defaultVariant.attributes instanceof Map ? Object.fromEntries(defaultVariant.attributes) : {})
@@ -269,7 +269,7 @@ export default function ProductDetail() {
     const set = new Set()
     
     // 1. Get from predefined values in product.attributes
-    const attrEntry = (p?.attributes || []).find(a => a.startsWith(`${key}:`))
+    const attrEntry = (p?.attributes || []).find(a => a.toLowerCase().startsWith(`${key.toLowerCase()}:`))
     if (attrEntry) {
       const vals = attrEntry.split(':')[1]?.split(',').filter(Boolean) || []
       vals.forEach(v => set.add(v.trim()))
@@ -282,7 +282,10 @@ export default function ProductDetail() {
         const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
           ? v.attributes 
           : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-        if (vAttrs[key]) set.add(vAttrs[key])
+        
+        // Find matching key case-insensitively
+        const actualKey = Object.keys(vAttrs).find(k => k.toLowerCase() === key.toLowerCase())
+        if (actualKey && vAttrs[actualKey]) set.add(vAttrs[actualKey])
       })
     }
     return Array.from(set).sort()
@@ -296,7 +299,7 @@ export default function ProductDetail() {
     delete otherSelections[key]; 
 
     return p.variants.some(v => {
-      if (v.isActive === false) return false;
+      if (v.isActive === false || v.stock <= 0) return false;
       const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
         ? v.attributes 
         : (v && v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
@@ -305,12 +308,10 @@ export default function ProductDetail() {
       if (String(vAttrs[key] || '').toLowerCase() !== String(val || '').toLowerCase()) return false;
 
       // Must match all other selected attributes
-      const matchOthers = Object.entries(otherSelections).every(([k, vVal]) => {
+      return Object.entries(otherSelections).every(([k, vVal]) => {
         if (!vVal) return true;
         return String(vAttrs[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
       });
-
-      return matchOthers && (v.stock > 0);
     });
   }
 
@@ -344,7 +345,14 @@ export default function ProductDetail() {
 
   const handleAddToCart = async () => {
     if (!authed) { navigate('/login'); return }
-    if (variantAttrs.length > 0 && !matchedVariant) return
+    if (variantAttrs.length > 0 && !matchedVariant) {
+      notify('Please select all options', 'error')
+      return
+    }
+    if (matchedVariant && matchedVariant.stock <= 0) {
+      notify('This variant is out of stock', 'error')
+      return
+    }
     const ok = await addToCart({ ...p, minOrderQty: Math.max(minTierQty, qty) }, matchedVariant||undefined)
     if (ok) {
       try {
@@ -516,11 +524,12 @@ export default function ProductDetail() {
       .pd-var-img-btn img { width: 100%; height: 52px; object-fit: contain; border-radius: 8px; }
       .pd-var-img-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 8px 20px rgba(124,58,237,0.12); transform: translateY(-1px); }
       .pd-var-img-btn:hover:not(.on) { border-color: #7c3aed; transform: translateY(-1px); }
-      .pd-var-others { opacity: 0.6; border-style: dashed; }
+      .pd-var-others { opacity: 0.4; border-style: dashed; }
+      .pd-var-img-btn.disabled { cursor: not-allowed; filter: grayscale(1); }
       .pd-var-msg { font-size: 7px; color: #ef4444; text-align: center; margin-top: 4px; font-weight: 800; line-height: 1; text-transform: uppercase; }
 
       .pd-var-btn.disabled {
-        opacity: .6; cursor: pointer; border-style: dashed; background: #f9fafb;
+        opacity: .4; cursor: not-allowed; border-style: dashed; background: #f9fafb;
       }
       .pd-var-btn.disabled .pd-var-val { color: #9ca3af; }
       
@@ -1096,12 +1105,12 @@ export default function ProductDetail() {
                             return (
                               <div 
                                 key={i}
-                                className={`pd-var-img-btn${on ? ' on' : ''}${!enabled ? ' pd-var-others' : ''}`}
-                                onClick={() => setSelected(prev => ({ ...prev, [attrKey]: opt }))}
+                                className={`pd-var-img-btn${on ? ' on' : ''}${!enabled ? ' pd-var-others disabled' : ''}`}
+                                onClick={() => enabled && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
                                 title={opt}
                               >
                                 {imgUrl ? <img src={imgUrl} alt={opt} /> : <span className="text-[10px] uppercase font-bold">{opt[0]}</span>}
-                                {!enabled && <div className="pd-var-msg">Available in others</div>}
+                                {!enabled && <div className="pd-var-msg">Out of Stock</div>}
                               </div>
                             )
                           }
@@ -1110,13 +1119,13 @@ export default function ProductDetail() {
                             <button 
                               key={i} 
                               className={`pd-var-btn${on ? ' on' : ''}${!enabled ? ' disabled' : ''}`}
-                              onClick={() => setSelected(prev => ({ ...prev, [attrKey]: opt }))}
+                              onClick={() => enabled && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
                             >
                               <span className="pd-var-val">{opt}</span>
                               {enabled ? (
                                 <span className="pd-var-price">₹{(repVariant?.price || p.price).toLocaleString()}</span>
                               ) : (
-                                <span className="pd-var-oos">Unavailable</span>
+                                <span className="pd-var-oos">Out of Stock</span>
                               )}
                             </button>
                           )
@@ -1126,13 +1135,10 @@ export default function ProductDetail() {
                   )
                 })}
 
-                {matchedVariant && (
+                {matchedVariant && matchedVariant.weight > 0 && (
                   <div className="pd-sku-line">
-                    <span className="pd-sku-label">Item Code:</span>
-                    <span className="pd-sku-val">{matchedVariant.sku || 'N/A'}</span>
-                    {matchedVariant.weight > 0 && (
-                      <span className="pd-weight-val">{matchedVariant.weight}g</span>
-                    )}
+                    <span className="pd-sku-label">Shipping Weight:</span>
+                    <span className="pd-weight-val">{matchedVariant.weight}g</span>
                   </div>
                 )}
               </div>
@@ -1351,7 +1357,7 @@ export default function ProductDetail() {
                   <circle cx="10" cy="19" r="1.4" fill="currentColor"/>
                   <circle cx="17" cy="19" r="1.4" fill="currentColor"/>
                 </svg>
-                {!authed ? 'Login to Buy' : !isAvailable ? 'Out of Stock' : (variantAttrs.length > 0 && !matchedVariant) ? 'Select Options' : (sortedAsc.length > 0 && qty < minTierQty) ? `Min Order ${minTierQty}` : 'Add to Cart'}
+                {!authed ? 'Login to Buy' : !isAvailable ? 'Out of Stock' : (variantAttrs.length > 0 && !matchedVariant) ? 'Choose Product Options' : (sortedAsc.length > 0 && qty < minTierQty) ? `Min Order ${minTierQty}` : 'Add to Cart'}
               </button>
             </div>
 
