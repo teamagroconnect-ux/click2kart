@@ -24,6 +24,15 @@ export default function ProductDetail() {
     Object.entries(obj).forEach(([k, v]) => {
       if (k) result[k.toLowerCase().trim()] = String(v || '').trim()
     })
+
+    // 🚀 SKU Parsing Fallback: If attributes are empty, extract from SKU (e.g. O8SV-BLACK-80)
+    if (Object.keys(result).length === 0 && attrs.sku) {
+      const parts = attrs.sku.split('-');
+      if (parts.length >= 3) {
+        result['color'] = parts[1].toLowerCase();
+        result['watt'] = parts[2].toLowerCase();
+      }
+    }
     return result
   }
 
@@ -76,12 +85,15 @@ export default function ProductDetail() {
     }
     
     const result = Array.from(set)
-    // FORCE: If no attributes found but variants exist, always return 'Option' as fallback
+    
+    // 🚀 ULTIMATE FORCE: If no attributes found in DB, extract 'Color' and 'Watt' from your SKUs
     if (result.length === 0 && Array.isArray(p.variants) && p.variants.length > 0) {
-      console.log("DEBUG: No attributes found, using 'Option' fallback for", p.variants.length, "variants");
+      const firstSku = p.variants[0].sku || '';
+      if (firstSku.includes('-')) {
+        return ['Color', 'Watt']; 
+      }
       return ['Option']
     }
-    console.log("DEBUG: Final variantAttrs discovered:", result);
     return result
   }, [p])
 
