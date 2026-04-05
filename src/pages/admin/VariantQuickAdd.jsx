@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-export default function VariantQuickAdd({ onAdd, productAttributes = [], productName = '', mainImages = [] }) {
+export default function VariantQuickAdd({ onAdd, productAttributes = [], productName = '', mainImages = [], existingVariants = [] }) {
   const [v, setV] = useState({ 
     attributes: {}, 
     price: '', 
@@ -8,8 +8,19 @@ export default function VariantQuickAdd({ onAdd, productAttributes = [], product
     stock: '', 
     sku: '', 
     images: '',
+    weight: '',
     useProductImage: false
   })
+
+  // Extract unique existing values for each attribute to provide suggestions
+  const getSuggestions = (attrKey) => {
+    const values = new Set();
+    existingVariants.forEach(variant => {
+      const val = variant.attributes?.[attrKey.toLowerCase().trim()];
+      if (val) values.add(val);
+    });
+    return Array.from(values);
+  };
 
   // Initialize attributes based on product attributes
   useEffect(() => {
@@ -110,18 +121,25 @@ export default function VariantQuickAdd({ onAdd, productAttributes = [], product
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {productAttributes.map(attr => (
-          <div key={attr} className="space-y-1">
-            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{attr}</label>
-            <input 
-              className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-100 rounded-xl px-3 py-2.5 text-[11px] font-bold outline-none transition-all" 
-              placeholder={`e.g. ${attr.toLowerCase().includes('color') ? 'Black' : 'Value'}`}
-              value={v.attributes[attr.toLowerCase().trim()] || ''} 
-              onChange={e => handleAttrChange(attr, e.target.value)}
-              required
-            />
-          </div>
-        ))}
+        {productAttributes.map(attr => {
+          const suggestions = getSuggestions(attr);
+          return (
+            <div key={attr} className="space-y-1">
+              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{attr}</label>
+              <input 
+                className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-100 rounded-xl px-3 py-2.5 text-[11px] font-bold outline-none transition-all" 
+                placeholder={`e.g. ${attr.toLowerCase().includes('color') ? 'Black' : 'Value'}`}
+                value={v.attributes[attr.toLowerCase().trim()] || ''} 
+                onChange={e => handleAttrChange(attr, e.target.value)}
+                list={`list-${attr}`}
+                required
+              />
+              <datalist id={`list-${attr}`}>
+                {suggestions.map(s => <option key={s} value={s} />)}
+              </datalist>
+            </div>
+          )
+        })}
       </div>
 
       <div className="grid grid-cols-3 gap-3 pt-3 border-t border-gray-50">

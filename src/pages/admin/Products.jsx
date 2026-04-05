@@ -646,32 +646,61 @@ export default function Products() {
 
                   {hasVariants && (
                     <div className="space-y-4 animate-in slide-in-from-top-2 duration-300">
-                      <div className="text-[10px] font-black uppercase tracking-widest text-blue-600">Step 3: Add Individual Variants</div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-blue-600">Step 3: Add Individual Variants</div>
+                        <div className="text-[9px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded-lg border border-gray-100 uppercase">Total: {(form.variants || []).length}</div>
+                      </div>
+                      
                       {(form.variants || []).length > 0 && (
-                        <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                          {form.variants.map((v, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 border border-gray-100 hover:border-blue-200 transition-colors">
-                              <div className="flex flex-col gap-1">
-                                <div className="flex flex-wrap gap-2">
-                                  {Object.entries(v.attributes || {}).map(([key, val]) => (
-                                    <span key={key} className="text-[9px] font-bold bg-white px-2 py-0.5 rounded-lg border border-gray-200 text-gray-600">
-                                      <span className="text-gray-400 uppercase mr-1">{key}:</span>{val}
-                                    </span>
-                                  ))}
-                                </div>
-                                <div className="text-[10px] font-black text-gray-900">₹{v.price} · {v.stock} in stock</div>
-                              </div>
-                              <button type="button" className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                              </button>
-                            </div>
-                          ))}
+                        <div className="bg-gray-50/50 rounded-2xl border border-gray-100 overflow-hidden">
+                          <table className="w-full text-[10px]">
+                            <thead className="bg-gray-100/50 text-gray-500 font-bold uppercase tracking-tighter">
+                              <tr>
+                                <th className="px-3 py-2 text-left">Combination</th>
+                                <th className="px-3 py-2 text-left">Price/Stock</th>
+                                <th className="px-3 py-2 text-right"></th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {form.variants.map((v, idx) => (
+                                <tr key={idx} className="group hover:bg-white transition-colors">
+                                  <td className="px-3 py-2">
+                                    <div className="flex flex-wrap gap-1">
+                                      {Object.entries(v.attributes || {}).map(([key, val]) => (
+                                        <span key={key} className="bg-white px-1.5 py-0.5 rounded border border-gray-200 font-bold text-gray-700">
+                                          <span className="text-gray-400 uppercase mr-1">{key.slice(0,3)}:</span>{val}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </td>
+                                  <td className="px-3 py-2">
+                                    <div className="font-black text-gray-900">₹{v.price} <span className="text-gray-400 font-normal">/</span> {v.stock} pcs</div>
+                                  </td>
+                                  <td className="px-3 py-2 text-right">
+                                    <button type="button" className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>
+                                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       )}
+                      
                       <VariantQuickAdd 
-                        onAdd={(v)=> setForm(f => ({ ...f, variants: [...(f.variants||[]), v] }))} 
+                        onAdd={(v)=> {
+                          // Check for duplicate combination
+                          const isDup = (form.variants || []).some(ex => 
+                            Object.entries(v.attributes).every(([k, val]) => String(ex.attributes[k]).toLowerCase() === String(val).toLowerCase())
+                          );
+                          if (isDup) return notify('Variant already exists in list', 'error');
+                          setForm(f => ({ ...f, variants: [...(f.variants||[]), v] }))
+                        }} 
                         productAttributes={form.attributes} 
                         productName={form.name}
+                        mainImages={form.images.split(',').map(s=>s.trim()).filter(Boolean)}
+                        existingVariants={form.variants}
                       />
                     </div>
                   )}
