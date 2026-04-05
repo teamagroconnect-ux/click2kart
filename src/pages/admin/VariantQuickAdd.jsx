@@ -15,7 +15,8 @@ export default function VariantQuickAdd({ onAdd, productAttributes = [], product
   // Extract unique existing values for each attribute to provide suggestions
   const getSuggestions = (attrKey) => {
     const values = new Set();
-    existingVariants.forEach(variant => {
+    const variantsArr = Array.isArray(existingVariants) ? existingVariants : []
+    variantsArr.forEach(variant => {
       const val = variant.attributes?.[attrKey.toLowerCase().trim()];
       if (val) values.add(val);
     });
@@ -73,8 +74,9 @@ export default function VariantQuickAdd({ onAdd, productAttributes = [], product
     }
     
     let images = v.images.split(',').map(s=>s.trim()).filter(Boolean);
+    const imagesArr = Array.isArray(mainImages) ? mainImages : []
     if (v.useProductImage && images.length === 0) {
-      images = mainImages.map(img => typeof img === 'string' ? img : img.url).filter(Boolean);
+      images = imagesArr.map(img => typeof img === 'string' ? img : img.url).filter(Boolean);
     }
 
     onAdd?.({

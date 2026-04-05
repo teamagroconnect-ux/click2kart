@@ -1175,7 +1175,7 @@ function VariantManager({ product, setEditing, onChanged }) {
             onAdd={handleQuickAdd} 
             productAttributes={product.attributes} 
             productName={product.name}
-            mainImages={product.images}
+            mainImages={typeof product.images === 'string' ? product.images.split(',').map(s=>s.trim()).filter(Boolean) : (product.images || [])}
           />
         </div>
       )}
