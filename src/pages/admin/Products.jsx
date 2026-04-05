@@ -1727,40 +1727,77 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
       )}
 
       {/* Step 3: Inventory */}
-      <div className="space-y-3 pt-3 border-t border-gray-50">
+      <div className="space-y-2 pt-3 border-t border-gray-50">
         {(product.variants || []).length > 0 && (
-          <h5 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">3. Inventory / Active Variants ({product.variants.length})</h5>
+          <div className="px-1 flex items-center justify-between">
+            <h5 className="text-[9px] font-black uppercase tracking-widest text-gray-400">3. Inventory / Active Variants ({product.variants.length})</h5>
+          </div>
         )}
+
+        <div className="space-y-2">
+          {/* Header for table-like layout */}
+          {(product.variants || []).length > 0 && (
+            <div className="hidden md:flex items-center gap-4 px-4 py-1.5 text-[8px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">
+              <div className="w-[180px]">Attributes & Values</div>
+              <div className="w-[80px]">Price</div>
+              <div className="w-[80px]">Stock</div>
+              <div className="w-[60px]">Weight</div>
+              <div className="flex-1">SKU</div>
+              <div className="w-[120px] text-right">Actions</div>
+            </div>
+          )}
+
           {(product.variants || []).map(v => (
-            <div key={v._id} className="p-4 bg-white rounded-2xl border border-gray-100 flex items-center justify-between group hover:border-blue-100 transition-all">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="flex flex-wrap gap-1.5">
-                    {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k,val]) => (
-                      <span key={k} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-black rounded-lg uppercase border border-blue-100/50">
+            <div key={v._id} className="p-3 bg-white rounded-xl border border-gray-100 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 group hover:border-blue-100 transition-all">
+              <div className="flex-1 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 overflow-hidden">
+                {/* Attributes */}
+                <div className="flex flex-wrap gap-2 w-full md:w-[180px]">
+                  {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k,val]) => (
+                    <div key={k} className="flex flex-col md:flex-row md:items-center gap-1">
+                      <span className="text-[7px] md:hidden font-black text-gray-400 uppercase">{k}</span>
+                      <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-black rounded-lg uppercase border border-blue-100/50">
                         {val}
                       </span>
-                    ))}
-                  </div>
-                  <div className="h-4 w-[1px] bg-gray-100" />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Price */}
+                <div className="flex flex-col md:w-[80px]">
+                  <span className="text-[7px] md:hidden font-black text-gray-400 uppercase">Price</span>
                   <div className="text-[12px] font-black text-gray-900">
                     ₹{v.price.toLocaleString()}
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-3 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
-                  <span className={v.stock <= 0 ? 'text-red-500' : 'text-emerald-600'}>{v.stock} in stock</span>
-                  <span className="w-1 h-1 rounded-full bg-gray-200" />
-                  <span>{v.weight || 0}g</span>
-                  {v.sku && (
-                    <>
-                      <span className="w-1 h-1 rounded-full bg-gray-200" />
-                      <span className="font-mono lowercase text-[8px] tracking-normal">{v.sku}</span>
-                    </>
-                  )}
+
+                {/* Stock */}
+                <div className="flex flex-col md:w-[80px]">
+                  <span className="text-[7px] md:hidden font-black text-gray-400 uppercase">Stock</span>
+                  <div className={`text-[11px] font-black ${v.stock <= 0 ? 'text-red-500' : 'text-emerald-600'}`}>
+                    {v.stock} pcs
+                  </div>
                 </div>
+
+                {/* Weight */}
+                <div className="flex flex-col md:w-[60px]">
+                  <span className="text-[7px] md:hidden font-black text-gray-400 uppercase">Weight</span>
+                  <div className="text-[11px] font-black text-gray-500">
+                    {v.weight || 0}g
+                  </div>
+                </div>
+
+                {/* SKU */}
+                {v.sku && (
+                  <div className="flex flex-col flex-1 min-w-[100px]">
+                    <span className="text-[7px] md:hidden font-black text-gray-400 uppercase">SKU</span>
+                    <div className="font-mono lowercase text-[9px] text-gray-400 truncate">
+                      {v.sku}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-1.5">
+
+              <div className="flex items-center gap-1.5 justify-end md:w-[120px]">
                 <button type="button" onClick={() => setEditingVariant({ 
                   ...v, 
                   attributes: v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {}),
@@ -1778,6 +1815,7 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
             </div>
           ))}
         </div>
+      </div>
 
       {/* Edit Variant Modal */}
       {editingVariant && (
