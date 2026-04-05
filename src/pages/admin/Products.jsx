@@ -3,7 +3,6 @@ import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import ConfirmModal from '../../components/ConfirmModal'
 import ImageUpload from '../../components/ImageUpload'
-import VariantQuickAdd from './VariantQuickAdd.jsx'
 
 export default function Products() {
   const { notify } = useToast()
@@ -193,6 +192,87 @@ export default function Products() {
   }
   const remove = (p) => setToDelete(p)
   const confirmDelete = async () => { if (!toDelete) return; await api.delete(`/api/products/${toDelete._id}`); setToDelete(null); load(page); notify('Product deleted','success') }
+
+  const getMissingCombos = (attrsArr, existingVars) => {
+    const attrs = (attrsArr || []).map(a => {
+      const [name, valuesStr] = a.split(':');
+      const values = valuesStr ? valuesStr.split(',').filter(Boolean) : [];
+      return { name, values };
+    }).filter(a => a.values.length > 0);
+
+    if (attrs.length === 0) return [];
+
+    const combine = (index, current) => {
+      if (index === attrs.length) return [current];
+      const result = [];
+      for (const val of attrs[index].values) {
+        result.push(...combine(index + 1, { ...current, [attrs[index].name]: val }));
+      }
+      return result;
+    };
+
+    const all = combine(0, {});
+    const existing = (existingVars || []).map(v => {
+      const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {});
+      const normalized = {};
+      Object.entries(vAttrs).forEach(([k, val]) => { normalized[k.toLowerCase()] = String(val).toLowerCase() });
+      return JSON.stringify(normalized);
+    });
+
+    return all.filter(combo => {
+      const normalized = {};
+      Object.entries(combo).forEach(([k, val]) => { normalized[k.toLowerCase()] = String(val).toLowerCase() });
+      return !existing.includes(JSON.stringify(normalized));
+    });
+  };
+
+  const generateSku = (productName, combo) => {
+    const nameParts = productName.split(' ').filter(Boolean)
+    let nameCode = ''
+    if (nameParts.length >= 2) {
+      nameCode = nameParts.map(p => p[0]).join('').substring(0, 4)
+    } else {
+      nameCode = productName.substring(0, 3)
+    }
+    const cleanValues = Object.values(combo).map(val => 
+      val.toLowerCase().replace(/[^a-z0-9]/g, '').trim()
+    ).join('-')
+    return `${nameCode.toUpperCase()}-${cleanValues.toUpperCase()}`
+  }
+
+  const handleAddComboToForm = (combo) => {
+    const sku = generateSku(form.name, combo)
+    const images = form.images.split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
+    const newVar = {
+      attributes: combo,
+      price: Number(form.price || 0),
+      mrp: form.mrp ? Number(form.mrp) : undefined,
+      stock: 0,
+      weight: Number(form.weight || 0),
+      images: images,
+      sku: sku,
+      isActive: true
+    }
+    setForm(f => ({ ...f, variants: [...(f.variants || []), newVar] }))
+  }
+
+  const handleAddAllCombosToForm = (combos) => {
+    const nextVars = [...(form.variants || [])]
+    const images = form.images.split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
+    combos.forEach(combo => {
+      nextVars.push({
+        attributes: combo,
+        price: Number(form.price || 0),
+        mrp: form.mrp ? Number(form.mrp) : undefined,
+        stock: 0,
+        weight: Number(form.weight || 0),
+        images: images,
+        sku: generateSku(form.name, combo),
+        isActive: true
+      })
+    })
+    setForm(f => ({ ...f, variants: nextVars }))
+  }
 
   return (
     <>
@@ -429,7 +509,7 @@ export default function Products() {
                 <div className="space-y-4 border-2 border-dashed border-gray-200 rounded-3xl p-6 bg-white/50">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Step 1: Define Attributes</h4>
+                      <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Step 1: Define Attributes & Values</h4>
                       <p className="text-[9px] text-gray-500 font-bold mt-1">e.g. Color, Size, RAM</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -442,8 +522,8 @@ export default function Products() {
                           if (e.key === 'Enter') {
                             e.preventDefault();
                             const val = attrInput.trim().toLowerCase();
-                            if (val && !form.attributes.includes(val)) {
-                              setForm(f => ({ ...f, attributes: [...f.attributes, val] }));
+                            if (val && !form.attributes.some(a => a.split(':')[0] === val)) {
+                              setForm(f => ({ ...f, attributes: [...f.attributes, `${val}:`] }));
                               setAttrInput('');
                             }
                           }
@@ -453,8 +533,8 @@ export default function Products() {
                         type="button" 
                         onClick={() => {
                           const val = attrInput.trim().toLowerCase();
-                          if (val && !form.attributes.includes(val)) {
-                            setForm(f => ({ ...f, attributes: [...f.attributes, val] }));
+                          if (val && !form.attributes.some(a => a.split(':')[0] === val)) {
+                            setForm(f => ({ ...f, attributes: [...f.attributes, `${val}:`] }));
                             setAttrInput('');
                           }
                         }}
@@ -466,49 +546,131 @@ export default function Products() {
                   </div>
 
                   {(form.attributes || []).length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {form.attributes.map((a, i) => (
-                        <span key={i} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-100 text-[10px] font-black text-blue-600 uppercase tracking-widest shadow-sm">
-                          {a}
-                          <button type="button" onClick={() => setForm(f => ({ ...f, attributes: f.attributes.filter((_, idx) => idx !== i) }))} className="text-blue-300 hover:text-red-500 transition-colors">✕</button>
-                        </span>
-                      ))}
+                    <div className="space-y-2 mt-3">
+                      {form.attributes.map((a, i) => {
+                        const [name, valuesStr] = a.split(':');
+                        const values = valuesStr ? valuesStr.split(',').filter(Boolean) : [];
+                        return (
+                          <div key={i} className="bg-white p-3 rounded-2xl border border-gray-100 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[9px] font-black text-blue-600 uppercase">{name}</span>
+                              <button type="button" onClick={() => setForm(f => ({ ...f, attributes: f.attributes.filter((_, idx) => idx !== i) }))} className="text-gray-300 hover:text-red-500">✕</button>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {values.map(v => (
+                                <span key={v} className="px-2 py-0.5 rounded-lg bg-gray-50 border border-gray-100 text-[8px] font-bold text-gray-500 flex items-center gap-1">
+                                  {v}
+                                  <button type="button" onClick={() => {
+                                    const next = [...form.attributes];
+                                    const vArr = values.filter(x => x !== v);
+                                    next[i] = `${name}:${vArr.join(',')}`;
+                                    setForm(f => ({ ...f, attributes: next }));
+                                  }} className="hover:text-red-500">✕</button>
+                                </span>
+                              ))}
+                              <input 
+                                className="bg-gray-50 border rounded-lg px-2 py-0.5 text-[8px] font-bold outline-none w-20" 
+                                placeholder="+ Value"
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const val = e.target.value.trim();
+                                    if (val && !values.includes(val)) {
+                                      const next = [...form.attributes];
+                                      next[i] = `${name}:${[...values, val].join(',')}`;
+                                      setForm(f => ({ ...f, attributes: next }));
+                                      e.target.value = '';
+                                    }
+                                  }
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   )}
 
                   {hasVariants && (
                     <div className="space-y-4 pt-4 border-t border-gray-100 mt-4 animate-in slide-in-from-top-2 duration-300">
-                      <div className="text-[10px] font-black uppercase tracking-widest text-blue-600">Step 2: Add Individual Variants</div>
-                      {(form.variants || []).length > 0 && (
-                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                          {form.variants.map((v, idx) => (
-                            <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-gray-50 border border-gray-100 hover:border-blue-200 transition-all group">
-                              <div className="flex flex-col gap-1">
-                                <div className="flex flex-wrap gap-2">
-                                  {Object.entries(v.attributes || {}).map(([key, val]) => (
-                                    <span key={key} className="text-[9px] font-black bg-white px-2 py-0.5 rounded-lg border border-gray-200 text-gray-600 uppercase">
-                                      <span className="text-gray-400 mr-1">{key}:</span>{val}
-                                    </span>
-                                  ))}
-                                  {v.sku && <span className="text-[9px] font-black bg-blue-50 text-blue-600 px-2 py-0.5 rounded-lg border border-blue-100 uppercase">{v.sku}</span>}
-                                </div>
-                                <div className="text-[10px] font-black text-gray-900">₹{v.price} · {v.stock} in stock</div>
+                      <div className="flex items-center justify-between">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-blue-600">Step 2: Create Variants</div>
+                        {getMissingCombos(form.attributes, form.variants).length > 1 && (
+                          <button 
+                            type="button"
+                            onClick={() => handleAddAllCombosToForm(getMissingCombos(form.attributes, form.variants))}
+                            className="px-4 py-1.5 bg-blue-600 text-white text-[9px] font-black uppercase rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-50"
+                          >Create All ({getMissingCombos(form.attributes, form.variants).length})</button>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {getMissingCombos(form.attributes, form.variants).length > 0 ? (
+                          getMissingCombos(form.attributes, form.variants).map((combo, i) => (
+                            <button
+                              key={i}
+                              type="button"
+                              onClick={() => handleAddComboToForm(combo)}
+                              className="group flex flex-col items-start p-3 bg-white border border-gray-100 rounded-2xl hover:border-blue-200 hover:bg-blue-50 transition-all text-left min-w-[120px]"
+                            >
+                              <div className="flex flex-wrap gap-1 mb-2">
+                                {Object.entries(combo).map(([k, v]) => (
+                                  <span key={k} className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">
+                                    {v}
+                                  </span>
+                                ))}
                               </div>
-                              <button type="button" className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      <VariantQuickAdd 
-                        onAdd={(v)=> setForm(f => ({ ...f, variants: [...(f.variants||[]), v] }))} 
-                        productAttributes={form.attributes} 
-                        productName={form.name}
-                        mainImages={form.images.split(',').map(s=>s.trim()).filter(Boolean)}
-                        price={form.price}
-                        weight={form.weight}
-                      />
+                              <div className="flex items-center justify-between w-full">
+                                <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">+ Add</span>
+                                <svg className="w-3 h-3 text-blue-400 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/></svg>
+                              </div>
+                            </button>
+                          ))
+                        ) : (
+                          <div className="w-full py-4 text-center border-2 border-dashed border-gray-100 rounded-2xl">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">All combinations created!</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-4 border-t border-gray-100 space-y-2">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Created Variants ({(form.variants || []).length})</div>
+                        {(form.variants || []).length > 0 ? (
+                          <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                            {form.variants.map((v, idx) => (
+                              <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-white border border-gray-100 hover:border-blue-200 transition-all group">
+                                <div className="flex-1">
+                                  <div className="flex flex-wrap gap-2 mb-1">
+                                    {Object.entries(v.attributes || {}).map(([key, val]) => (
+                                      <div key={key} className="flex flex-col">
+                                        <span className="text-[6px] font-black text-gray-400 uppercase tracking-tighter">{key}</span>
+                                        <span className="text-[9px] font-black text-blue-600 uppercase leading-none">{val}</span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                  <div className="text-[10px] font-black text-gray-900 flex items-center gap-3">
+                                    <span className="text-blue-600">₹{v.price}</span>
+                                    <span className="text-gray-300">|</span>
+                                    <span>{v.stock} pcs</span>
+                                    {v.weight > 0 && (
+                                      <>
+                                        <span className="text-gray-300">|</span>
+                                        <span>{v.weight}g</span>
+                                      </>
+                                    )}
+                                  </div>
+                                  {v.sku && <div className="text-[7px] font-mono text-gray-400 mt-1 uppercase tracking-wider">SKU: {v.sku}</div>}
+                                </div>
+                                <button type="button" className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-[9px] text-gray-400 italic font-bold text-center py-2">No variants created yet...</div>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -743,50 +905,82 @@ export default function Products() {
                         </div>
 
                         {form.attributes.length > 0 && (
-                          <div className="space-y-3 pt-3 border-t border-gray-100">
-                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">2. Add Variant Combination</label>
-                            <VariantQuickAdd 
-                              onAdd={(v)=> {
-                                const isDup = (form.variants || []).some(ex => Object.entries(v.attributes).every(([k, val]) => String(ex.attributes[k]).toLowerCase() === String(val).toLowerCase()));
-                                if (isDup) return notify('Variant already exists', 'error');
-                                setForm(f => ({ ...f, variants: [...(form.variants||[]), v] }))
-                              }} 
-                              productAttributes={form.attributes} 
-                              productName={form.name}
-                              mainImages={form.images.split(',').map(s=>s.trim()).filter(Boolean)}
-                              existingVariants={form.variants}
-                            />
-                            
-                            {(form.variants || []).length > 0 && (
-                              <div className="max-h-[150px] overflow-y-auto pr-1 custom-scrollbar space-y-2">
-                                {form.variants.map((v, idx) => (
-                                  <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-100 text-[10px]">
-                                    <div className="flex-1">
-                                      <div className="flex flex-wrap gap-1.5 mb-1">
-                                        {Object.entries(v.attributes || {}).map(([key, val]) => (
-                                          <div key={key} className="flex flex-col">
-                                            <span className="text-[6px] font-black text-gray-400 uppercase tracking-tighter">{key}</span>
-                                            <span className="text-[9px] font-black text-blue-600 uppercase leading-none">{val}</span>
-                                          </div>
-                                        ))}
-                                      </div>
-                                      <div className="flex items-center gap-2 text-[9px] font-bold text-gray-500">
-                                        <span>₹{v.price}</span>
-                                        <span className="opacity-30">|</span>
-                                        <span>{v.stock} pcs</span>
-                                        {v.weight > 0 && (
-                                          <>
-                                            <span className="opacity-30">|</span>
-                                            <span>{v.weight}g</span>
-                                          </>
-                                        )}
-                                      </div>
+                          <div className="space-y-4 pt-4 border-t border-gray-100">
+                            <div className="flex items-center justify-between">
+                              <h5 className="text-[9px] font-black uppercase tracking-widest text-blue-600">2. Create Variants</h5>
+                              {getMissingCombos(form.attributes, form.variants).length > 1 && (
+                                <button 
+                                  type="button"
+                                  onClick={() => handleAddAllCombosToForm(getMissingCombos(form.attributes, form.variants))}
+                                  className="px-4 py-1.5 bg-blue-600 text-white text-[9px] font-black uppercase rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-50"
+                                >Create All ({getMissingCombos(form.attributes, form.variants).length})</button>
+                              )}
+                            </div>
+
+                            <div className="flex flex-wrap gap-2">
+                              {getMissingCombos(form.attributes, form.variants).length > 0 ? (
+                                getMissingCombos(form.attributes, form.variants).map((combo, i) => (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    onClick={() => handleAddComboToForm(combo)}
+                                    className="group flex flex-col items-start p-3 bg-white border border-gray-100 rounded-2xl hover:border-blue-200 hover:bg-blue-50 transition-all text-left min-w-[120px]"
+                                  >
+                                    <div className="flex flex-wrap gap-1 mb-2">
+                                      {Object.entries(combo).map(([k, v]) => (
+                                        <span key={k} className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">
+                                          {v}
+                                        </span>
+                                      ))}
                                     </div>
-                                    <button type="button" className="text-red-400 p-1.5 hover:bg-red-50 rounded-lg transition-colors" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>✕</button>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                                    <div className="flex items-center justify-between w-full">
+                                      <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">+ Add</span>
+                                      <svg className="w-3 h-3 text-blue-400 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/></svg>
+                                    </div>
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="w-full py-4 text-center border-2 border-dashed border-gray-100 rounded-2xl">
+                                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">All combinations created!</p>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="pt-4 border-t border-gray-100 space-y-2">
+                              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Created Variants ({(form.variants || []).length})</div>
+                              {(form.variants || []).length > 0 ? (
+                                <div className="max-h-[150px] overflow-y-auto pr-1 custom-scrollbar space-y-2">
+                                  {form.variants.map((v, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-100 text-[10px]">
+                                      <div className="flex-1">
+                                        <div className="flex flex-wrap gap-1.5 mb-1">
+                                          {Object.entries(v.attributes || {}).map(([key, val]) => (
+                                            <div key={key} className="flex flex-col">
+                                              <span className="text-[6px] font-black text-gray-400 uppercase tracking-tighter">{key}</span>
+                                              <span className="text-[9px] font-black text-blue-600 uppercase leading-none">{val}</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-[9px] font-bold text-gray-500">
+                                          <span>₹{v.price}</span>
+                                          <span className="opacity-30">|</span>
+                                          <span>{v.stock} pcs</span>
+                                          {v.weight > 0 && (
+                                            <>
+                                              <span className="opacity-30">|</span>
+                                              <span>{v.weight}g</span>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <button type="button" className="text-red-400 p-1.5 hover:bg-red-50 rounded-lg transition-colors" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>✕</button>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-[9px] text-gray-400 italic font-bold text-center py-2">No variants created yet...</div>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1271,6 +1465,86 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
     } catch (err) { notify(err.response?.data?.error || 'Failed to update','error') }
   }
 
+  const generateCombinations = () => {
+    const attrs = (product.attributes || []).map(a => {
+      const [name, valuesStr] = a.split(':');
+      const values = valuesStr ? valuesStr.split(',').filter(Boolean) : [];
+      return { name, values };
+    }).filter(a => a.values.length > 0);
+
+    if (attrs.length === 0) return [];
+
+    const combine = (index, current) => {
+      if (index === attrs.length) return [current];
+      const result = [];
+      for (const val of attrs[index].values) {
+        result.push(...combine(index + 1, { ...current, [attrs[index].name]: val }));
+      }
+      return result;
+    };
+
+    const all = combine(0, {});
+    const existing = (product.variants || []).map(v => {
+      const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {});
+      const normalized = {};
+      Object.entries(vAttrs).forEach(([k, val]) => { normalized[k.toLowerCase()] = String(val).toLowerCase() });
+      return JSON.stringify(normalized);
+    });
+
+    return all.filter(combo => {
+      const normalized = {};
+      Object.entries(combo).forEach(([k, val]) => { normalized[k.toLowerCase()] = String(val).toLowerCase() });
+      return !existing.includes(JSON.stringify(normalized));
+    });
+  };
+
+  const missingCombinations = generateCombinations();
+
+  const addCombination = async (combo) => {
+    try {
+      const images = typeof product.images === 'string' 
+        ? product.images.split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
+        : (product.images || []);
+
+      await api.post(`/api/products/${product._id}/variants`, {
+        attributes: combo,
+        price: Number(price || 0),
+        mrp: product.mrp ? Number(product.mrp) : undefined,
+        stock: 0,
+        weight: Number(weight || 0),
+        images: images,
+        isActive: true
+      });
+      notify('Variant added', 'success');
+      onChanged && onChanged();
+    } catch (err) { notify(err.response?.data?.error || 'Failed to add', 'error'); }
+  };
+
+  const addAllCombinations = async () => {
+    if (!window.confirm(`Create ${missingCombinations.length} variant(s)?`)) return;
+    let success = 0;
+    for (const combo of missingCombinations) {
+      try {
+        const images = typeof product.images === 'string' 
+          ? product.images.split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
+          : (product.images || []);
+
+        await api.post(`/api/products/${product._id}/variants`, {
+          attributes: combo,
+          price: Number(price || 0),
+          mrp: product.mrp ? Number(product.mrp) : undefined,
+          stock: 0,
+          weight: Number(weight || 0),
+          images: images,
+          isActive: true
+        });
+        success++;
+      } catch (e) { console.error(e); }
+    }
+    notify(`Created ${success} variants`, 'success');
+    onChanged && onChanged();
+  };
+
   return (
     <div className="space-y-6">
       {/* Step 1: Define Attributes */}
@@ -1334,22 +1608,51 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
         </div>
       </div>
 
-      {/* Step 2: Add New Variant */}
+      {/* Step 2: Create Variants */}
       {Array.isArray(product.attributes) && product.attributes.length > 0 && (
-        <div className="space-y-3">
-          <h5 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">2. Add Variant Combination</h5>
-          <VariantQuickAdd 
-            onAdd={handleQuickAdd} 
-            productAttributes={product.attributes} 
-            productName={product.name}
-            mainImages={typeof product.images === 'string' ? product.images.split(',').map(s=>s.trim()).filter(Boolean) : (product.images || [])}
-            price={price}
-            weight={weight}
-          />
+        <div className="p-4 bg-white border border-gray-100 rounded-3xl space-y-4">
+          <div className="flex items-center justify-between">
+            <h5 className="text-[9px] font-black uppercase tracking-widest text-gray-400">2. Create Variants from Values</h5>
+            {missingCombinations.length > 1 && (
+              <button 
+                onClick={addAllCombinations}
+                className="px-4 py-1.5 bg-blue-600 text-white text-[9px] font-black uppercase rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-50"
+              >Create All ({missingCombinations.length})</button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {missingCombinations.length > 0 ? (
+              missingCombinations.map((combo, i) => (
+                <button
+                  key={i}
+                  onClick={() => addCombination(combo)}
+                  className="group flex flex-col items-start p-3 bg-gray-50 border border-gray-100 rounded-2xl hover:border-blue-200 hover:bg-blue-50 transition-all text-left min-w-[120px]"
+                >
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {Object.entries(combo).map(([k, v]) => (
+                      <span key={k} className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">
+                        {v}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">+ Add</span>
+                    <svg className="w-3 h-3 text-blue-400 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/></svg>
+                  </div>
+                </button>
+              ))
+            ) : (
+              <div className="w-full py-4 text-center border-2 border-dashed border-gray-50 rounded-2xl">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">All combinations created!</p>
+                <p className="text-[8px] text-gray-300 mt-1">Define more values in Step 1 to create more variants.</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Step 3: Active Variants */}
+      {/* Step 3: Inventory */}
       <div className="space-y-3 pt-3 border-t border-gray-50">
         {(product.variants || []).length > 0 && (
           <h5 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">3. Inventory / Active Variants ({product.variants.length})</h5>
