@@ -74,24 +74,12 @@ export default function ProductDetail() {
       })
     }
     
-    const result = Array.from(set)
-    // If no attributes found but variants exist, we use 'Option' as a virtual attribute
-    if (result.length === 0 && Array.isArray(p.variants) && p.variants.length > 0) {
-      return ['Option']
-    }
-    return result
+    return Array.from(set)
   }, [p])
 
   const matchedVariant = useMemo(() => {
     if (!p || !p.variants || !Array.isArray(p.variants) || !p.variants.length) return null
     
-    // Special case for virtual 'Option' attribute
-    if (variantAttrs.length === 1 && variantAttrs[0] === 'Option') {
-      const val = selected['option'];
-      if (!val) return null;
-      return p.variants.find(v => v.isActive !== false && (v.sku === val || v._id === val)) || null;
-    }
-
     return p.variants.find(v => {
       if (v.isActive === false) return false
       const vAttrs = normalizeAttrs(v.attributes)
@@ -165,6 +153,24 @@ export default function ProductDetail() {
   useEffect(() => {
     if (!p || !Array.isArray(p.variants) || !p.variants.length) { setActiveVariant(null); return }
     
+    // URL Sync: Load initial selection from URL params
+    const params = new URLSearchParams(location.search)
+    const initialSelected = {}
+    let hasParams = false
+    variantAttrs.forEach(attr => {
+      const lowAttr = attr.toLowerCase().trim()
+      const val = params.get(lowAttr)
+      if (val) {
+        initialSelected[lowAttr] = val
+        hasParams = true
+      }
+    })
+
+    if (hasParams) {
+      setSelected(initialSelected)
+      return
+    }
+
     // On first load, find the variant with the highest stock among active variants
     if (Object.keys(selected).length === 0) {
       const bestVariant = [...p.variants]
@@ -172,15 +178,36 @@ export default function ProductDetail() {
         .sort((a, b) => (b.stock || 0) - (a.stock || 0))[0]
       
       if (bestVariant) {
-        // If we're using the virtual 'Option' attribute, set it accordingly
-        if (variantAttrs.length === 1 && variantAttrs[0] === 'Option') {
-          setSelected({ option: bestVariant.sku || bestVariant._id });
-        } else {
-          setSelected(normalizeAttrs(bestVariant.attributes))
-        }
+        setSelected(normalizeAttrs(bestVariant.attributes))
       }
     }
   }, [p, variantAttrs])
+
+  // Update URL when selection changes
+  useEffect(() => {
+    if (!p) return
+    const params = new URLSearchParams(location.search)
+    let changed = false
+    Object.entries(selected).forEach(([k, v]) => {
+      if (v && params.get(k) !== v) {
+        params.set(k, v)
+        changed = true
+      }
+    })
+    // Remove params that are no longer selected
+    const selectedKeys = Object.keys(selected)
+    const paramsKeys = Array.from(params.keys())
+    paramsKeys.forEach(pk => {
+      if (!selectedKeys.includes(pk)) {
+        params.delete(pk)
+        changed = true
+      }
+    })
+
+    if (changed) {
+      navigate({ search: params.toString() }, { replace: true })
+    }
+  }, [selected, p, navigate, location.search])
 
   useEffect(() => {
     if (!p || !Array.isArray(p.variants) || !p.variants.length) { setActiveVariant(null); return }
@@ -293,14 +320,6 @@ export default function ProductDetail() {
     const set = new Set()
     const lowKey = key.toLowerCase().trim()
     
-    // Special case for virtual 'Option' when attributes are missing
-    if (lowKey === 'option' && Array.isArray(p?.variants)) {
-      p.variants.forEach(v => {
-        if (v.isActive !== false) set.add(v.sku || v._id)
-      })
-      return Array.from(set)
-    }
-
     // 1. Get from predefined values in product.attributes (Format: "Color:Black,Blue")
     const attrEntry = (p?.attributes || []).find(a => {
       const parts = a.split(':');
@@ -320,7 +339,6 @@ export default function ProductDetail() {
       })
     }
     const result = Array.from(set).sort();
-    console.log(`ProductDetail: Values for ${key}:`, result);
     return result;
   }
 
@@ -329,11 +347,6 @@ export default function ProductDetail() {
     if (!p?.variants?.length) return true
     const lowKey = key.toLowerCase().trim()
     
-    // Special case for virtual 'Option'
-    if (lowKey === 'option') {
-      return p.variants.some(v => v.isActive !== false && v.stock > 0 && (v.sku === val || v._id === val));
-    }
-
     const otherSelections = { ...selected };
     delete otherSelections[lowKey]; 
 
@@ -396,6 +409,14 @@ export default function ProductDetail() {
       notify('This variant is out of stock', 'error')
       return
     }
+    
+    // Construct simplified product object for cart
+    const cartProduct = {
+      productId: p._id,
+      sku: matchedVariant?.sku || p.sku,
+      quantity: qty
+    };
+
     const ok = await addToCart({ ...p, minOrderQty: Math.max(minTierQty, qty) }, matchedVariant||undefined)
     if (ok) {
       try {
@@ -1119,7 +1140,7 @@ export default function ProductDetail() {
             )}
 
             {/* VARIANTS (Move under images as requested) */}
-            {(Array.isArray(p.variants) && p.variants.length > 0) || (Array.isArray(p.attributes) && p.attributes.length > 0) ? (
+            {Array.isArray(p.variants) && p.variants.length > 0 && (
               <div className="pd-variants">
                 {variantAttrs.map(attrKey => {
                   const lowKey = attrKey.toLowerCase().trim()
@@ -1131,7 +1152,7 @@ export default function ProductDetail() {
                   return (
                     <div key={attrKey} className="pd-var-sec">
                       <div className="pd-var-lbl">
-                        <span className="pd-var-name">{attrKey === 'Option' ? 'Select Type' : attrKey}</span>
+                        <span className="pd-var-name">{attrKey}</span>
                         {currentVal && <span className="pd-var-selected">: {currentVal}</span>}
                       </div>
                       <div className="pd-var-opts">
@@ -1142,14 +1163,12 @@ export default function ProductDetail() {
                           // Find a representative variant for this option to show price/image
                           const repVariant = p.variants?.find(v => 
                             v.isActive !== false &&
-                            (lowKey === 'option' ? (v.sku === opt || v._id === opt) : (
-                              String(normalizeAttrs(v.attributes)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
-                              Object.entries(selected).every(([k, vVal]) => {
-                                if (k === lowKey || !vVal) return true;
-                                return String(normalizeAttrs(v.attributes)[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
-                              })
-                            ))
-                          ) || p.variants?.find(v => v.isActive !== false && (lowKey === 'option' ? (v.sku === opt || v._id === opt) : String(normalizeAttrs(v.attributes)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase()));
+                            String(normalizeAttrs(v.attributes)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
+                            Object.entries(selected).every(([k, vVal]) => {
+                              if (k === lowKey || !vVal) return true;
+                              return String(normalizeAttrs(v.attributes)[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
+                            })
+                          ) || p.variants?.find(v => v.isActive !== false && String(normalizeAttrs(v.attributes)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase());
 
                           if (isColor) {
                             const imgUrl = (repVariant?.images?.[0]?.url) || (Array.isArray(p.images) ? p.images[0]?.url : null);
@@ -1196,7 +1215,7 @@ export default function ProductDetail() {
                   )
                 })}
               </div>
-            ) : null}
+            )}
           </div>
 
           {/* ══ RIGHT — INFO PANEL ══ */}
