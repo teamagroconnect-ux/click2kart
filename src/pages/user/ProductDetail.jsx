@@ -39,10 +39,27 @@ export default function ProductDetail() {
   const authed = !!localStorage.getItem('token')
 
   const variantAttrs = useMemo(() => {
-    if (!p || !p.attributes) return []
+    if (!p) return []
+    const set = new Set()
+    
+    // 1. Get from product.attributes if available
     const attrs = Array.isArray(p.attributes) ? p.attributes : []
-    // Support "name:v1,v2" format or simple "name"
-    return attrs.map(a => a.split(':')[0])
+    attrs.forEach(a => {
+      const name = a.split(':')[0]
+      if (name) set.add(name.toLowerCase().trim())
+    })
+
+    // 2. Also check variants to ensure we don't miss any attributes
+    if (p.variants?.length) {
+      p.variants.forEach(v => {
+        const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+          ? v.attributes 
+          : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
+        Object.keys(vAttrs || {}).forEach(k => set.add(k.toLowerCase().trim()))
+      })
+    }
+    
+    return Array.from(set)
   }, [p])
 
   const matchedVariant = useMemo(() => {

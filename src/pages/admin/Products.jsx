@@ -760,16 +760,29 @@ export default function Products() {
                             {(form.variants || []).length > 0 && (
                               <div className="max-h-[150px] overflow-y-auto pr-1 custom-scrollbar space-y-2">
                                 {form.variants.map((v, idx) => (
-                                  <div key={idx} className="flex items-center justify-between p-2 rounded-xl bg-white border border-gray-100 text-[10px]">
-                                    <div className="flex flex-wrap gap-1">
-                                      {Object.entries(v.attributes || {}).map(([key, val]) => (
-                                        <span key={key} className="bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100 text-gray-500 font-bold">
-                                          {val}
-                                        </span>
-                                      ))}
-                                      <span className="font-black text-blue-600 ml-1">₹{v.price} / {v.stock}</span>
+                                  <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-100 text-[10px]">
+                                    <div className="flex-1">
+                                      <div className="flex flex-wrap gap-1.5 mb-1">
+                                        {Object.entries(v.attributes || {}).map(([key, val]) => (
+                                          <div key={key} className="flex flex-col">
+                                            <span className="text-[6px] font-black text-gray-400 uppercase tracking-tighter">{key}</span>
+                                            <span className="text-[9px] font-black text-blue-600 uppercase leading-none">{val}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <div className="flex items-center gap-2 text-[9px] font-bold text-gray-500">
+                                        <span>₹{v.price}</span>
+                                        <span className="opacity-30">|</span>
+                                        <span>{v.stock} pcs</span>
+                                        {v.weight > 0 && (
+                                          <>
+                                            <span className="opacity-30">|</span>
+                                            <span>{v.weight}g</span>
+                                          </>
+                                        )}
+                                      </div>
                                     </div>
-                                    <button type="button" className="text-red-400 p-1" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>✕</button>
+                                    <button type="button" className="text-red-400 p-1.5 hover:bg-red-50 rounded-lg transition-colors" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>✕</button>
                                   </div>
                                 ))}
                               </div>
@@ -1164,26 +1177,34 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
     } catch { notify('Delete failed','error') }
   }
 
-  const addAttr = () => {
+  const updateAttributes = async (next) => {
+    try {
+      await api.put(`/api/products/${product._id}`, { attributes: next })
+      setEditing(prev => ({ ...prev, attributes: next }))
+      // No need for notify here to avoid spamming, but we can if preferred
+    } catch { notify('Failed to save attributes', 'error') }
+  }
+
+  const addAttr = async () => {
     const val = attrInput.trim().toLowerCase()
     if (!val) return
     const currentAttrs = Array.isArray(product.attributes) ? product.attributes : []
-    // Support both simple string and "name:v1,v2" format
     const attrNames = currentAttrs.map(a => a.split(':')[0])
     if (attrNames.includes(val)) return notify('Attribute already exists', 'error')
     
     const next = [...currentAttrs, `${val}:`]
-    setEditing(prev => ({ ...prev, attributes: next }))
+    await updateAttributes(next)
     setAttrInput('')
   }
 
-  const removeAttr = (a) => {
+  const removeAttr = async (a) => {
+    if (!window.confirm('Remove this attribute and all its values?')) return
     const currentAttrs = Array.isArray(product.attributes) ? product.attributes : []
     const next = currentAttrs.filter(x => x !== a)
-    setEditing(prev => ({ ...prev, attributes: next }))
+    await updateAttributes(next)
   }
 
-  const addAttrValue = (attrName, value) => {
+  const addAttrValue = async (attrName, value) => {
     const val = value.trim()
     if (!val) return
     const currentAttrs = [...(product.attributes || [])]
@@ -1195,11 +1216,11 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
     if (values.includes(val)) return notify('Value already exists', 'error')
     
     currentAttrs[idx] = `${name}:${[...values, val].join(',')}`
-    setEditing(prev => ({ ...prev, attributes: currentAttrs }))
+    await updateAttributes(currentAttrs)
     setValInput(prev => ({ ...prev, [attrName]: '' }))
   }
 
-  const removeAttrValue = (attrName, valToRemove) => {
+  const removeAttrValue = async (attrName, valToRemove) => {
     const currentAttrs = [...(product.attributes || [])]
     const idx = currentAttrs.findIndex(a => a.startsWith(`${attrName}:`))
     if (idx === -1) return
@@ -1208,7 +1229,7 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
     const values = valuesStr.split(',').filter(v => v !== valToRemove)
     
     currentAttrs[idx] = `${name}:${values.join(',')}`
-    setEditing(prev => ({ ...prev, attributes: currentAttrs }))
+    await updateAttributes(currentAttrs)
   }
 
   const handleQuickAdd = async (v) => {
@@ -1333,28 +1354,34 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
         {(product.variants || []).length > 0 && (
           <h5 className="text-[9px] font-black uppercase tracking-widest text-gray-400 ml-1">3. Inventory / Active Variants ({product.variants.length})</h5>
         )}
-        <div className="space-y-2">
           {(product.variants || []).map(v => (
-            <div key={v._id} className="p-3 bg-white rounded-2xl border border-gray-100 flex items-center justify-between group hover:border-blue-100 transition-all">
+            <div key={v._id} className="p-4 bg-white rounded-2xl border border-gray-100 flex items-center justify-between group hover:border-blue-100 transition-all">
               <div className="flex-1">
-                <div className="flex flex-wrap gap-1.5 mb-1">
+                <div className="flex flex-wrap gap-2 mb-2">
                   {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k,val]) => (
-                    <span key={k} className="text-[8px] font-bold bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100 text-gray-500 uppercase">
-                      {val}
-                    </span>
+                    <div key={k} className="flex flex-col">
+                      <span className="text-[7px] font-black text-gray-400 uppercase tracking-tighter">{k}</span>
+                      <span className="text-[10px] font-black text-blue-600 uppercase leading-none">{val}</span>
+                    </div>
                   ))}
                 </div>
-                <div className="text-[10px] font-black text-gray-900 flex items-center gap-2">
-                  <span className="text-blue-600">₹{v.price}</span>
-                  <span className="text-gray-300">|</span>
-                  <span className={v.stock <= 5 ? 'text-red-500' : 'text-emerald-600'}>{v.stock} pcs</span>
-                  {v.weight > 0 && (
-                    <>
-                      <span className="text-gray-300">|</span>
-                      <span className="text-gray-500">{v.weight}g</span>
-                    </>
-                  )}
+                <div className="text-[11px] font-black text-gray-900 flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-gray-400 text-[9px] uppercase tracking-widest">Price</span>
+                    <span className="text-blue-600">₹{v.price}</span>
+                  </div>
+                  <div className="w-1 h-1 rounded-full bg-gray-200" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-gray-400 text-[9px] uppercase tracking-widest">Stock</span>
+                    <span>{v.stock} pcs</span>
+                  </div>
+                  <div className="w-1 h-1 rounded-full bg-gray-200" />
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-gray-400 text-[9px] uppercase tracking-widest">Weight</span>
+                    <span>{v.weight || 0}g</span>
+                  </div>
                 </div>
+                {v.sku && <div className="text-[8px] font-mono text-gray-400 mt-2 uppercase tracking-wider">SKU: {v.sku}</div>}
               </div>
               <div className="flex items-center gap-1.5">
                 <button type="button" onClick={() => setEditingVariant({ 
