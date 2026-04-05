@@ -540,7 +540,7 @@ export default function ProductDetail() {
       .pd-img-chip.hd { background: linear-gradient(135deg, #f59e0b, #d97706); box-shadow: 0 3px 10px rgba(217,119,6,.3); }
 
       /* thumbnails */
-      .pd-thumbs { display: flex; gap: 8px; padding: 12px 0 2px; overflow-x: auto; scrollbar-width: none; }
+      .pd-thumbs { display: flex; gap: 8px; padding: 12px 0 24px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid rgba(124,58,237,.05); margin-bottom: 24px; }
       .pd-thumbs::-webkit-scrollbar { display: none; }
       .pd-thumb {
         width: 68px; height: 68px; flex-shrink: 0; background: white;
@@ -1141,7 +1141,16 @@ export default function ProductDetail() {
 
             {/* VARIANTS (Move under images as requested) */}
             {Array.isArray(p.variants) && p.variants.length > 0 && (
-              <div className="pd-variants">
+              <div className="pd-variants" style={{ 
+                marginTop: 24, 
+                padding: '24px', 
+                background: 'white', 
+                borderRadius: '24px', 
+                border: '1px solid #eee',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+                position: 'relative',
+                zIndex: 10 
+              }}>
                 {variantAttrs.map(attrKey => {
                   const lowKey = attrKey.toLowerCase().trim()
                   const options = variantOpts(attrKey)
