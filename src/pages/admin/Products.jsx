@@ -945,8 +945,9 @@ export default function Products() {
                   </div>
                 )}
               </div>
+            </div>
 
-              <div className="flex gap-4 pt-6 border-t border-gray-100">
+            <div className="flex gap-4 pt-6 border-t border-gray-100">
                 <button type="button" onClick={() => setEditing(null)} className="flex-1 bg-gray-50 text-gray-500 py-4 rounded-3xl text-xs font-black hover:bg-gray-100 transition-all uppercase tracking-[0.2em] border-2 border-transparent">Cancel</button>
                 <button className="flex-[2] bg-blue-600 text-white py-4 px-12 rounded-3xl text-xs font-black shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 active:scale-95 transition-all uppercase tracking-[0.2em]">Update Product</button>
               </div>
