@@ -17,6 +17,8 @@ export default function Products() {
   const [editing, setEditing] = useState(null)
   const [viewing, setViewing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
+  const [managingVariants, setManagingVariants] = useState(null)
+  const [editingVariant, setEditingVariant] = useState(null)
   const [brands, setBrands] = useState([])
   const [categories, setCategories] = useState([])
   const [subcategories, setSubcategories] = useState([])
@@ -275,6 +277,9 @@ export default function Products() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+                              <button onClick={(e) => { e.stopPropagation(); setManagingVariants(p); }} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Manage Variants">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                              </button>
                               <button onClick={(e) => { e.stopPropagation(); openEdit(p); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                               </button>
@@ -489,6 +494,8 @@ export default function Products() {
                         productAttributes={form.attributes} 
                         productName={form.name}
                         mainImages={form.images.split(',').map(s=>s.trim()).filter(Boolean)}
+                        price={form.price}
+                        weight={form.weight}
                       />
                     </div>
                   )}
@@ -939,32 +946,40 @@ export default function Products() {
                 )}
               </div>
 
-              <div className="md:col-span-3 pt-6 border-t border-gray-50">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Variant Management</h4>
-                  <div className="text-[9px] font-bold text-gray-400">Manage Dynamic Variants</div>
-                </div>
-                <VariantManager 
-                  product={editing} 
-                  setEditing={setEditing}
-                  onChanged={(updatedData) => { 
-                    if (updatedData) {
-                      openEdit(updatedData);
-                    } else {
-                      api.get(`/api/products/${editing._id}`).then(({data}) => {
-                        openEdit(data)
-                      })
-                    }
-                  }} 
-                />
+              <div className="flex gap-4 pt-6 border-t border-gray-100">
+                <button type="button" onClick={() => setEditing(null)} className="flex-1 bg-gray-50 text-gray-500 py-4 rounded-3xl text-xs font-black hover:bg-gray-100 transition-all uppercase tracking-[0.2em] border-2 border-transparent">Cancel</button>
+                <button className="flex-[2] bg-blue-600 text-white py-4 px-12 rounded-3xl text-xs font-black shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 active:scale-95 transition-all uppercase tracking-[0.2em]">Update Product</button>
               </div>
-            </div>
+            </form>
+          </div>
+        )}
 
-            <div className="flex gap-4 pt-6 border-t border-gray-100">
-              <button type="button" onClick={() => setEditing(null)} className="flex-1 bg-gray-50 text-gray-500 py-4 rounded-3xl text-xs font-black hover:bg-gray-100 transition-all uppercase tracking-[0.2em] border-2 border-transparent">Cancel</button>
-              <button className="flex-[2] bg-blue-600 text-white py-4 px-12 rounded-3xl text-xs font-black shadow-xl shadow-blue-200 hover:bg-blue-700 hover:-translate-y-1 active:scale-95 transition-all uppercase tracking-[0.2em]">Update Product</button>
+      {managingVariants && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md overflow-y-auto">
+          <div className="bg-white rounded-[2rem] p-6 md:p-8 w-full max-w-2xl shadow-2xl animate-in zoom-in-95 my-auto relative">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+              <div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">Manage Variants</h3>
+                <p className="text-[9px] text-blue-600 font-black uppercase tracking-widest">{managingVariants.name}</p>
+              </div>
+              <button type="button" onClick={() => setManagingVariants(null)} className="p-2 hover:bg-gray-100 rounded-xl text-gray-400">✕</button>
             </div>
-          </form>
+            
+            <VariantManager 
+              product={managingVariants} 
+              setEditing={setManagingVariants}
+              editingVariant={editingVariant}
+              setEditingVariant={setEditingVariant}
+              onChanged={() => { 
+                api.get(`/api/products/${managingVariants._id}`).then(({data}) => {
+                  setManagingVariants(data)
+                  load(page)
+                })
+              }} 
+              price={managingVariants.price}
+              weight={managingVariants.weight}
+            />
+          </div>
         </div>
       )}
 
@@ -1078,7 +1093,7 @@ export default function Products() {
   )
 }
 
-function VariantManager({ product, setEditing, onChanged }) {
+function VariantManager({ product, setEditing, onChanged, editingVariant, setEditingVariant, price = '', weight = '' }) {
   const { notify } = useToast()
   const [attrInput, setAttrInput] = useState('')
 
@@ -1134,6 +1149,27 @@ function VariantManager({ product, setEditing, onChanged }) {
     } catch (err) { notify(err.response?.data?.error || 'Failed to add','error') }
   }
 
+  const handleUpdateVariant = async (e) => {
+    e.preventDefault()
+    try {
+      const images = typeof editingVariant.images === 'string' 
+        ? editingVariant.images.split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
+        : editingVariant.images;
+
+      await api.put(`/api/products/${product._id}/variants/${editingVariant._id}`, {
+        ...editingVariant,
+        price: Number(editingVariant.price),
+        mrp: editingVariant.mrp ? Number(editingVariant.mrp) : undefined,
+        stock: Number(editingVariant.stock),
+        weight: Number(editingVariant.weight || 0),
+        images: images
+      })
+      notify('Variant updated','success')
+      setEditingVariant(null)
+      onChanged && onChanged()
+    } catch (err) { notify(err.response?.data?.error || 'Failed to update','error') }
+  }
+
   return (
     <div className="space-y-6">
       {/* Step 1: Define Attributes */}
@@ -1176,6 +1212,8 @@ function VariantManager({ product, setEditing, onChanged }) {
             productAttributes={product.attributes} 
             productName={product.name}
             mainImages={typeof product.images === 'string' ? product.images.split(',').map(s=>s.trim()).filter(Boolean) : (product.images || [])}
+            price={price}
+            weight={weight}
           />
         </div>
       )}
@@ -1200,9 +1238,22 @@ function VariantManager({ product, setEditing, onChanged }) {
                   <span className="text-blue-600">₹{v.price}</span>
                   <span className="text-gray-300">|</span>
                   <span className={v.stock <= 5 ? 'text-red-500' : 'text-emerald-600'}>{v.stock} pcs</span>
+                  {v.weight > 0 && (
+                    <>
+                      <span className="text-gray-300">|</span>
+                      <span className="text-gray-500">{v.weight}g</span>
+                    </>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
+                <button type="button" onClick={() => setEditingVariant({ 
+                  ...v, 
+                  attributes: v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {}),
+                  images: (v.images || []).map(img => img.url).join(', ') 
+                })} className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                </button>
                 <button type="button" onClick={() => toggleActive(v)} className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase transition-all ${v.isActive ? 'text-emerald-600 bg-emerald-50' : 'text-gray-400 bg-gray-50'}`}>
                   {v.isActive ? 'Live' : 'Hidden'}
                 </button>
@@ -1214,6 +1265,61 @@ function VariantManager({ product, setEditing, onChanged }) {
           ))}
         </div>
       </div>
+
+      {/* Edit Variant Modal */}
+      {editingVariant && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[60] backdrop-blur-sm p-4">
+          <form onSubmit={handleUpdateVariant} className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between">
+              <h6 className="text-sm font-black uppercase tracking-widest text-gray-900">Edit Variant</h6>
+              <button type="button" onClick={() => setEditingVariant(null)} className="text-gray-400">✕</button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              {(product.attributes || []).map(attr => (
+                <div key={attr} className="space-y-1">
+                  <label className="text-[9px] font-bold text-gray-400 uppercase">{attr}</label>
+                  <input 
+                    className="w-full bg-gray-50 rounded-xl px-3 py-2 text-xs font-bold" 
+                    value={editingVariant.attributes?.[attr] || ''} 
+                    onChange={e => setEditingVariant({
+                      ...editingVariant,
+                      attributes: {
+                        ...(editingVariant.attributes || {}),
+                        [attr]: e.target.value
+                      }
+                    })} 
+                    required 
+                  />
+                </div>
+              ))}
+              <div className="space-y-1">
+                <label className="text-[9px] font-bold text-gray-400 uppercase">Price</label>
+                <input className="w-full bg-gray-50 rounded-xl px-3 py-2 text-xs font-bold" value={editingVariant.price} onChange={e=>setEditingVariant({...editingVariant, price: e.target.value})} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-bold text-gray-400 uppercase">MRP</label>
+                <input className="w-full bg-gray-50 rounded-xl px-3 py-2 text-xs font-bold" value={editingVariant.mrp || ''} onChange={e=>setEditingVariant({...editingVariant, mrp: e.target.value})} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-bold text-gray-400 uppercase">Stock</label>
+                <input className="w-full bg-gray-50 rounded-xl px-3 py-2 text-xs font-bold" value={editingVariant.stock} onChange={e=>setEditingVariant({...editingVariant, stock: e.target.value})} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[9px] font-bold text-gray-400 uppercase">Weight (g)</label>
+                <input className="w-full bg-gray-50 rounded-xl px-3 py-2 text-xs font-bold" value={editingVariant.weight || ''} onChange={e=>setEditingVariant({...editingVariant, weight: e.target.value})} />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[9px] font-bold text-gray-400 uppercase">Images (Comma separated)</label>
+              <textarea className="w-full bg-gray-50 rounded-xl px-3 py-2 text-xs font-bold min-h-[60px]" value={editingVariant.images} onChange={e=>setEditingVariant({...editingVariant, images: e.target.value})} />
+            </div>
+
+            <button className="w-full py-3 bg-gray-900 text-white rounded-xl text-xs font-black uppercase tracking-widest">Update Variant</button>
+          </form>
+        </div>
+      )}
     </div>
   )
 }

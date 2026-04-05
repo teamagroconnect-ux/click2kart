@@ -457,37 +457,37 @@ export default function ProductDetail() {
       .pd-thumb img { width: 100%; height: 100%; object-fit: contain; }
 
       /* VARIANTS (Industry Standard Style) */
-      .pd-variants { display: flex; flex-direction: column; gap: 24px; margin-bottom: 24px; padding: 24px; background: white; border-radius: 24px; border: 1px solid rgba(124,58,237,.1); }
-      .pd-var-sec { display: flex; flex-direction: column; gap: 14px; }
+      .pd-variants { display: flex; flex-direction: column; gap: 20px; margin-top: 24px; padding: 20px; background: white; border-radius: 20px; border: 1px solid rgba(124,58,237,.1); }
+      .pd-var-sec { display: flex; flex-direction: column; gap: 10px; }
       .pd-var-lbl { font-size: 13px; font-weight: 700; color: #374151; display: flex; align-items: center; gap: 6px; }
       .pd-var-selected { color: #6b7280; font-weight: 500; }
-      .pd-var-opts { display: flex; flex-wrap: wrap; gap: 10px; }
+      .pd-var-opts { display: flex; flex-wrap: wrap; gap: 8px; }
       
       /* Standard variant button (like GB, Size) */
       .pd-var-btn {
-        min-width: 100px; padding: 10px 14px;
+        min-width: 90px; padding: 8px 12px;
         background: white; border: 1.5px solid #e5e7eb;
-        border-radius: 12px; transition: all .2s cubic-bezier(.4,0,.2,1);
-        display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+        border-radius: 10px; transition: all .2s cubic-bezier(.4,0,.2,1);
+        display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
         cursor: pointer; position: relative;
       }
       .pd-var-btn:hover:not(.disabled) { border-color: #7c3aed; background: #fdfcff; }
-      .pd-var-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 4px 12px rgba(124,58,237,.1); }
+      .pd-var-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 4px 10px rgba(124,58,237,.1); }
       
-      .pd-var-val { font-size: 13px; font-weight: 800; color: #1e1b2e; }
-      .pd-var-price { font-size: 11px; font-weight: 700; color: #7c3aed; }
-      .pd-var-oos { font-size: 11px; font-weight: 700; color: #ef4444; }
+      .pd-var-val { font-size: 12px; font-weight: 800; color: #1e1b2e; }
+      .pd-var-price { font-size: 10px; font-weight: 700; color: #7c3aed; }
+      .pd-var-oos { font-size: 10px; font-weight: 700; color: #ef4444; }
 
       .pd-var-btn.on .pd-var-val { color: #7c3aed; }
 
       /* Color selection with images */
       .pd-var-img-btn {
-        width: 64px; height: 84px; border-radius: 12px; border: 2px solid #e5e7eb;
+        width: 60px; height: 75px; border-radius: 10px; border: 2px solid #e5e7eb;
         overflow: hidden; cursor: pointer; transition: all .2s; background: #f9fafb;
-        padding: 4px; display: flex; align-items: center; justify-content: center;
+        padding: 3px; display: flex; align-items: center; justify-content: center;
       }
-      .pd-var-img-btn img { width: 100%; height: 100%; object-fit: contain; border-radius: 8px; }
-      .pd-var-img-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 4px 12px rgba(124,58,237,.15); }
+      .pd-var-img-btn img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
+      .pd-var-img-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 4px 10px rgba(124,58,237,.15); }
       .pd-var-img-btn:hover:not(.on) { border-color: #7c3aed; }
 
       .pd-var-btn.disabled {
@@ -495,7 +495,11 @@ export default function ProductDetail() {
       }
       .pd-var-btn.disabled .pd-var-val { color: #9ca3af; }
       
-      .pd-sku { margin-top: 12px; padding-top: 12px; border-top: 1px solid #f3f4f6; }
+      .pd-sku-line { margin-top: 16px; display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px dashed rgba(124,58,237,.15); }
+      .pd-sku-label { font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: .08em; }
+      .pd-sku-val { font-size: 12px; font-weight: 800; color: #1e1b2e; font-family: monospace; }
+      .pd-weight-val { font-size: 11px; font-weight: 700; color: #7c3aed; background: rgba(124,58,237,.08); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(124,58,237,.1); display: inline-flex; align-items: center; gap: 4px; }
+      .pd-weight-val::before { content: '⚖️'; font-size: 10px; }
 
 
       /* ─── INFO PANEL ─── */
@@ -1025,6 +1029,82 @@ export default function ProductDetail() {
                 ))}
               </div>
             )}
+
+            {/* VARIANTS (Industry Standard Style) - Positioned below images */}
+            {Array.isArray(p.variants) && p.variants.length > 0 && (
+              <div className="pd-variants">
+                {variantAttrs.map(attrKey => {
+                  const options = variantOpts(attrKey)
+                  if (!options.length) return null
+                  const currentVal = selected[attrKey]
+                  const isColor = attrKey.toLowerCase().includes('color')
+                  
+                  return (
+                    <div key={attrKey} className="pd-var-sec">
+                      <div className="pd-var-lbl">
+                        <span>{attrKey}:</span>
+                        {currentVal && <span className="pd-var-selected">{currentVal}</span>}
+                      </div>
+                      <div className="pd-var-opts">
+                        {options.map((opt, i) => {
+                          const enabled = isOptEnabled(attrKey, opt)
+                          const on = selected[attrKey] === opt
+                          
+                          // Find a representative variant for this option to show price/image
+                          const repVariant = p.variants.find(v => 
+                            v.isActive !== false &&
+                            String(v.attributes[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
+                            Object.entries(selected).every(([k, vVal]) => {
+                              if (k === attrKey || !vVal) return true;
+                              return String(v.attributes[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
+                            })
+                          ) || p.variants.find(v => String(v.attributes[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase());
+
+                          if (isColor) {
+                            const imgUrl = repVariant?.images?.split(',')[0]?.trim() || imgs[0]?.url;
+                            return (
+                              <div 
+                                key={i}
+                                className={`pd-var-img-btn${on ? ' on' : ''}`}
+                                onClick={() => setSelected(prev => ({ ...prev, [attrKey]: opt }))}
+                                title={opt}
+                              >
+                                <img src={imgUrl} alt={opt} />
+                              </div>
+                            )
+                          }
+
+                          return (
+                            <button 
+                              key={i} 
+                              className={`pd-var-btn${on ? ' on' : ''}${!enabled ? ' disabled' : ''}`}
+                              onClick={() => enabled && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
+                            >
+                              <span className="pd-var-val">{opt}</span>
+                              {enabled ? (
+                                <span className="pd-var-price">₹{repVariant?.price || p.price}</span>
+                              ) : (
+                                <span className="pd-var-oos">Out of stock</span>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+                
+                {matchedVariant && (
+                  <div className="pd-sku-line">
+                    <span className="pd-sku-label">Item Code:</span>
+                    <span className="pd-sku-val">{matchedVariant.sku || 'N/A'}</span>
+                    {matchedVariant.weight > 0 && (
+                      <span className="pd-weight-val">{matchedVariant.weight}g</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* ══ RIGHT — INFO PANEL ══ */}
@@ -1128,82 +1208,7 @@ export default function ProductDetail() {
               )}
             </div>
 
-            {/* VARIANTS (Industry Standard Style) */}
-            {Array.isArray(p.variants) && p.variants.length > 0 && (
-              <div className="pd-variants">
-                {variantAttrs.map(attrKey => {
-                  const options = variantOpts(attrKey)
-                  if (!options.length) return null
-                  const currentVal = selected[attrKey]
-                  const isColor = attrKey.toLowerCase().includes('color')
-                  
-                  return (
-                    <div key={attrKey} className="pd-var-sec">
-                      <div className="pd-var-lbl">
-                        <span>{attrKey}:</span>
-                        {currentVal && <span className="pd-var-selected">{currentVal}</span>}
-                      </div>
-                      <div className="pd-var-opts">
-                        {options.map((opt, i) => {
-                          const enabled = isOptEnabled(attrKey, opt)
-                          const on = selected[attrKey] === opt
-                          
-                          // Find a representative variant for this option to show price/image
-                          const repVariant = p.variants.find(v => 
-                            v.isActive !== false &&
-                            String(v.attributes[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
-                            Object.entries(selected).every(([k, vVal]) => {
-                              if (k === attrKey || !vVal) return true;
-                              return String(v.attributes[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
-                            })
-                          ) || p.variants.find(v => String(v.attributes[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase());
 
-                          if (isColor) {
-                            const imgUrl = repVariant?.images?.split(',')[0]?.trim() || imgs[0]?.url;
-                            return (
-                              <div 
-                                key={i}
-                                className={`pd-var-img-btn${on ? ' on' : ''}`}
-                                onClick={() => setSelected(prev => ({ ...prev, [attrKey]: opt }))}
-                                title={opt}
-                              >
-                                <img src={imgUrl} alt={opt} />
-                              </div>
-                            )
-                          }
-
-                          return (
-                            <button 
-                              key={i} 
-                              className={`pd-var-btn${on ? ' on' : ''}${!enabled ? ' disabled' : ''}`}
-                              onClick={() => enabled && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
-                            >
-                              <span className="pd-var-val">{opt}</span>
-                              {enabled ? (
-                                <span className="pd-var-price">₹{repVariant?.price || p.price}</span>
-                              ) : (
-                                <span className="pd-var-oos">Out of stock</span>
-                              )}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
-                
-                {matchedVariant && (
-                  <div className="pd-sku">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#9ca3af', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.05em' }}>Item Code: {matchedVariant.sku || 'N/A'}</span>
-                      {matchedVariant.weight > 0 && (
-                        <span style={{ color: '#6b7280', fontSize: 11, fontWeight: 600 }}>{matchedVariant.weight}g</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
 
             {/* DELIVERY PANEL */}
             <div className="pd-delivery">

@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 
-export default function VariantQuickAdd({ onAdd, productAttributes = [], productName = '', mainImages = [], existingVariants = [] }) {
+export default function VariantQuickAdd({ onAdd, productAttributes = [], productName = '', mainImages = [], existingVariants = [], price = '', weight = '' }) {
   const [v, setV] = useState({ 
     attributes: {}, 
-    price: '', 
+    price: price || '', 
     mrp: '', 
     stock: '', 
     sku: '', 
     images: '',
-    weight: '',
+    weight: weight || '',
     useProductImage: false
   })
 
@@ -30,8 +30,14 @@ export default function VariantQuickAdd({ onAdd, productAttributes = [], product
       const key = attr.toLowerCase().trim();
       if (key) attrs[key] = v.attributes[key] || '';
     })
-    setV(prev => ({ ...prev, attributes: attrs }))
-  }, [productAttributes])
+    // Default price and weight to main product values if not set
+    setV(prev => ({ 
+      ...prev, 
+      attributes: attrs,
+      price: prev.price || price || '',
+      weight: prev.weight || weight || ''
+    }))
+  }, [productAttributes, price, weight])
 
   // Auto-generate SKU when attributes or productName changes
   useEffect(() => {
