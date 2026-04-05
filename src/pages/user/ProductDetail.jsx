@@ -544,11 +544,7 @@ export default function ProductDetail() {
         background: linear-gradient(45deg, transparent 48%, #9ca3af 50%, transparent 52%);
       }
       .pd-var-msg { font-size: 8px; color: #ef4444; text-align: center; margin-top: 4px; font-weight: 800; line-height: 1; text-transform: uppercase; }
-      
-      .pd-sku-line { margin-top: 16px; display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px dashed rgba(124,58,237,.15); }
-      .pd-sku-label { font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: .08em; }
-      .pd-sku-val { font-size: 12px; font-weight: 800; color: #1e1b2e; font-family: monospace; }
-      .pd-weight-val { font-size: 10px; font-weight: 700; color: #7c3aed; background: rgba(124,58,237,.08); padding: 2px 6px; border-radius: 5px; }
+
       .pd-weight-val { font-size: 11px; font-weight: 700; color: #7c3aed; background: rgba(124,58,237,.08); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(124,58,237,.1); display: inline-flex; align-items: center; gap: 4px; }
       .pd-weight-val::before { content: '⚖️'; font-size: 10px; }
 
@@ -708,7 +704,6 @@ export default function ProductDetail() {
         transform: rotate(-25deg);
         pointer-events: none;
       }
-      .pd-sku { font-size: 11px; color: #9ca3af; font-weight: 600; margin-top: 8px; }
 
       /* ─── STOCK STATUS ─── */
       .pd-stock {
@@ -1081,47 +1076,10 @@ export default function ProductDetail() {
                 ))}
               </div>
             )}
-          </div>
 
-          {/* ══ RIGHT — INFO PANEL ══ */}
-          <div className="pd-info">
-
-            {/* badges */}
-            <div className="pd-badges">
-              {p.category && <span className="pd-badge pd-badge-v">{p.category?.name || p.category}</span>}
-              <span className="pd-badge pd-badge-g">✓ GST Invoice</span>
-              <span className="pd-badge pd-badge-a">⚡ Fast Dispatch</span>
-            </div>
-
-            {/* STOCK STATUS */}
-            <div className="pd-stock" style={{
-              background: stock>0?(stock<=5?'rgba(245,158,11,.1)':'rgba(5,150,105,.1)'):'rgba(220,38,38,.1)',
-              border: `1px solid ${stock>0?(stock<=5?'rgba(245,158,11,.25)':'rgba(5,150,105,.25)'):'rgba(220,38,38,.25)'}`,
-              color: stock>0?(stock<=5?'#d97706':'#059669'):'#dc2626',
-              marginBottom: 12
-            }}>
-              <span className="pd-stock-dot" style={{
-                background: stock>0?(stock<=5?'#d97706':'#10b981'):'#ef4444',
-                boxShadow: `0 0 5px ${stock>0?(stock<=5?'#d97706':'#10b981'):'#ef4444'}`,
-                animation: stock<=5 && stock>0 ? 'pdStockPulse 2s infinite' : 'none',
-              }}/>
-              {stockSt.text}
-              {stock > 0 && stock <= 10 && <span style={{fontWeight:500,opacity:.7,textTransform:'none',letterSpacing:0}}> — only {stock} left</span>}
-            </div>
-
-            {/* name */}
-            <h1 className="pd-name">
-              {p.name}
-              {matchedVariant && (
-                <span className="pd-name-variant">
-                  {' '}({Object.values(matchedVariant.attributes instanceof Map ? Object.fromEntries(matchedVariant.attributes) : (matchedVariant.attributes || {})).join(', ')})
-                </span>
-              )}
-            </h1>
-
-            {/* VARIANTS (Flipkart Style) */}
+            {/* VARIANTS (Move under images as requested) */}
             {Array.isArray(p.variants) && p.variants.length > 0 && (
-              <div className="pd-variants" style={{ marginBottom: 24 }}>
+              <div className="pd-variants" style={{ marginTop: 24 }}>
                 {variantAttrs.map(attrKey => {
                   const options = variantOpts(attrKey)
                   if (!options.length) return null
@@ -1193,20 +1151,45 @@ export default function ProductDetail() {
                     </div>
                   )
                 })}
-                
-                {currentSku && (
-                  <div className="pd-sku-line">
-                    <div className="flex flex-col">
-                      <span className="pd-sku-label">SKU</span>
-                      <span className="pd-sku-val">{currentSku}</span>
-                    </div>
-                    <div className="ml-auto">
-                      <span className="pd-weight-val">{matchedVariant?.weight || p.weight || 0}g</span>
-                    </div>
-                  </div>
-                )}
               </div>
             )}
+          </div>
+
+          {/* ══ RIGHT — INFO PANEL ══ */}
+          <div className="pd-info">
+
+            {/* badges */}
+            <div className="pd-badges">
+              {p.category && <span className="pd-badge pd-badge-v">{p.category?.name || p.category}</span>}
+              <span className="pd-badge pd-badge-g">✓ GST Invoice</span>
+              <span className="pd-badge pd-badge-a">⚡ Fast Dispatch</span>
+            </div>
+
+            {/* STOCK STATUS */}
+            <div className="pd-stock" style={{
+              background: stock>0?(stock<=5?'rgba(245,158,11,.1)':'rgba(5,150,105,.1)'):'rgba(220,38,38,.1)',
+              border: `1px solid ${stock>0?(stock<=5?'rgba(245,158,11,.25)':'rgba(5,150,105,.25)'):'rgba(220,38,38,.25)'}`,
+              color: stock>0?(stock<=5?'#d97706':'#059669'):'#dc2626',
+              marginBottom: 12
+            }}>
+              <span className="pd-stock-dot" style={{
+                background: stock>0?(stock<=5?'#d97706':'#10b981'):'#ef4444',
+                boxShadow: `0 0 5px ${stock>0?(stock<=5?'#d97706':'#10b981'):'#ef4444'}`,
+                animation: stock<=5 && stock>0 ? 'pdStockPulse 2s infinite' : 'none',
+              }}/>
+              {stockSt.text}
+              {stock > 0 && stock <= 10 && <span style={{fontWeight:500,opacity:.7,textTransform:'none',letterSpacing:0}}> — only {stock} left</span>}
+            </div>
+
+            {/* name */}
+            <h1 className="pd-name">
+              {p.name}
+              {matchedVariant && (
+                <span className="pd-name-variant">
+                  {' '}({Object.values(matchedVariant.attributes instanceof Map ? Object.fromEntries(matchedVariant.attributes) : (matchedVariant.attributes || {})).join(', ')})
+                </span>
+              )}
+            </h1>
 
             {/* rating */}
             <div className="pd-rat-row">
