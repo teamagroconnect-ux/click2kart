@@ -16,6 +16,17 @@ export default function ProductDetail() {
   const { addToCart } = useCart()
   const { notify }    = useToast()
 
+  // Normalize an attributes object to lowercase keys
+  const normalizeAttrs = (attrs) => {
+    if (!attrs || typeof attrs !== 'object') return {}
+    const obj = attrs instanceof Map ? Object.fromEntries(attrs) : attrs
+    const result = {}
+    Object.entries(obj).forEach(([k, v]) => {
+      if (k) result[k.toLowerCase().trim()] = String(v || '').trim()
+    })
+    return result
+  }
+
   const [p, setP]                         = useState(null)
   const [error, setError]                 = useState(null)
   const [selected, setSelected]           = useState({})
@@ -61,17 +72,6 @@ export default function ProductDetail() {
     
     return Array.from(set)
   }, [p])
-
-  // Normalize an attributes object to lowercase keys
-  const normalizeAttrs = (attrs) => {
-    if (!attrs || typeof attrs !== 'object') return {}
-    const obj = attrs instanceof Map ? Object.fromEntries(attrs) : attrs
-    const result = {}
-    Object.entries(obj).forEach(([k, v]) => {
-      if (k) result[k.toLowerCase().trim()] = String(v || '').trim()
-    })
-    return result
-  }
 
   const matchedVariant = useMemo(() => {
     if (!p || !p.variants || !Array.isArray(p.variants) || !p.variants.length) return null
