@@ -1134,13 +1134,6 @@ export default function ProductDetail() {
                     </div>
                   )
                 })}
-
-                {matchedVariant && matchedVariant.weight > 0 && (
-                  <div className="pd-sku-line">
-                    <span className="pd-sku-label">Shipping Weight:</span>
-                    <span className="pd-weight-val">{matchedVariant.weight}g</span>
-                  </div>
-                )}
               </div>
             )}
           </div>
