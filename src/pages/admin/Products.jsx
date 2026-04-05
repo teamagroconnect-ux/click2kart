@@ -1344,26 +1344,26 @@ export default function Products() {
                       {viewing.variants.map((v, i) => (
                         <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                           <div className="flex-1">
-                            <div className="flex flex-wrap gap-2 mb-1">
-                              {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k, val]) => (
-                                <div key={k} className="flex flex-col">
-                                  <span className="text-[7px] font-black text-gray-400 uppercase tracking-tighter">{k}</span>
-                                  <span className="text-[10px] font-black text-blue-600 uppercase leading-none">{val}</span>
-                                </div>
-                              ))}
+                            <div className="flex items-center gap-3 mb-1">
+                              <div className="flex flex-wrap gap-1.5">
+                                {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k, val]) => (
+                                  <span key={k} className="px-2 py-0.5 bg-white text-gray-700 text-[9px] font-black rounded border border-gray-200 uppercase">
+                                    {val}
+                                  </span>
+                                ))}
+                              </div>
+                              <div className="h-3 w-[1px] bg-gray-200" />
+                              <div className="text-[11px] font-black text-gray-900">₹{v.price.toLocaleString()}</div>
                             </div>
-                            <div className="text-[10px] font-black text-gray-900 flex items-center gap-3">
-                              <span>₹{v.price}</span>
-                              <span className="text-gray-300">|</span>
-                              <span>{v.stock} pcs</span>
-                              {v.weight > 0 && (
+                            <div className="text-[9px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                              <span className={v.stock <= 0 ? 'text-red-500' : 'text-emerald-600'}>{v.stock} in stock</span>
+                              {v.sku && (
                                 <>
-                                  <span className="text-gray-300">|</span>
-                                  <span>{v.weight}g</span>
+                                  <span className="w-1 h-1 rounded-full bg-gray-300" />
+                                  <span className="font-mono lowercase text-[8px] tracking-normal">{v.sku}</span>
                                 </>
                               )}
                             </div>
-                            {v.sku && <div className="text-[7px] font-mono text-gray-400 mt-1 uppercase tracking-wider">SKU: {v.sku}</div>}
                           </div>
                         </div>
                       ))}
@@ -1734,31 +1734,31 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
           {(product.variants || []).map(v => (
             <div key={v._id} className="p-4 bg-white rounded-2xl border border-gray-100 flex items-center justify-between group hover:border-blue-100 transition-all">
               <div className="flex-1">
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k,val]) => (
-                    <div key={k} className="flex flex-col">
-                      <span className="text-[7px] font-black text-gray-400 uppercase tracking-tighter">{k}</span>
-                      <span className="text-[10px] font-black text-blue-600 uppercase leading-none">{val}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="text-[11px] font-black text-gray-900 flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400 text-[9px] uppercase tracking-widest">Price</span>
-                    <span className="text-blue-600">₹{v.price}</span>
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k,val]) => (
+                      <span key={k} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-black rounded-lg uppercase border border-blue-100/50">
+                        {val}
+                      </span>
+                    ))}
                   </div>
-                  <div className="w-1 h-1 rounded-full bg-gray-200" />
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400 text-[9px] uppercase tracking-widest">Stock</span>
-                    <span>{v.stock} pcs</span>
-                  </div>
-                  <div className="w-1 h-1 rounded-full bg-gray-200" />
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400 text-[9px] uppercase tracking-widest">Weight</span>
-                    <span>{v.weight || 0}g</span>
+                  <div className="h-4 w-[1px] bg-gray-100" />
+                  <div className="text-[12px] font-black text-gray-900">
+                    ₹{v.price.toLocaleString()}
                   </div>
                 </div>
-                {v.sku && <div className="text-[8px] font-mono text-gray-400 mt-2 uppercase tracking-wider">SKU: {v.sku}</div>}
+                
+                <div className="flex items-center gap-3 text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+                  <span className={v.stock <= 0 ? 'text-red-500' : 'text-emerald-600'}>{v.stock} in stock</span>
+                  <span className="w-1 h-1 rounded-full bg-gray-200" />
+                  <span>{v.weight || 0}g</span>
+                  {v.sku && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-gray-200" />
+                      <span className="font-mono lowercase text-[8px] tracking-normal">{v.sku}</span>
+                    </>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-1.5">
                 <button type="button" onClick={() => setEditingVariant({ 
