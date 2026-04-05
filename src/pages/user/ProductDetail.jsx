@@ -150,10 +150,7 @@ export default function ProductDetail() {
     // On first load, find the first active variant that is in stock, otherwise just first active
     const defaultVariant = p.variants.find(v => v.isActive !== false && v.stock > 0) || p.variants.find(v => v.isActive !== false)
     if (defaultVariant && Object.keys(selected).length === 0) {
-      const vAttrs = (defaultVariant.attributes && typeof defaultVariant.attributes === 'object' && !(defaultVariant.attributes instanceof Map)) 
-        ? defaultVariant.attributes 
-        : (defaultVariant.attributes instanceof Map ? Object.fromEntries(defaultVariant.attributes) : {})
-      setSelected(vAttrs || {})
+      setSelected(normalizeAttrs(defaultVariant.attributes))
     }
   }, [p])
 
@@ -320,6 +317,11 @@ export default function ProductDetail() {
 
   /* ── PRICE CALCULATIONS ── */
   const basePrice  = Number(currentPrice ?? 0)
+  const mrp          = Number(currentMrp ?? 0)
+  
+  // Calculate savings based on the actual price (variant or base)
+  const unitSave     = mrp > 0 ? Math.max(0, mrp - basePrice) : 0
+  
   const sortedAsc  = Array.isArray(p.bulkTiers) ? p.bulkTiers.slice().sort((a,b) => a.quantity-b.quantity) : []
   const sortedDesc = Array.isArray(p.bulkTiers) ? p.bulkTiers.slice().sort((a,b) => b.quantity-a.quantity) : []
   const minTierQty = sortedAsc.length > 0 ? Math.max(1, Number(sortedAsc[0].quantity||1)) : (p.bulkDiscountQuantity||1)
@@ -328,8 +330,7 @@ export default function ProductDetail() {
   if (hitTier) effPrice = Math.max(0, basePrice - Number(hitTier.priceReduction||0))
   else if (p.bulkDiscountQuantity > 0 && qty >= Number(p.bulkDiscountQuantity)) effPrice = Math.max(0, basePrice - Number(p.bulkDiscountPriceReduction||0))
   const savingsTotal = Math.max(0, (basePrice - effPrice) * qty)
-  const mrp          = Number(currentMrp ?? 0)
-  const unitSave     = mrp > 0 ? Math.max(0, mrp - effPrice) : Math.max(0, basePrice - effPrice)
+  
   const gstRate      = Number(p.gst || 0)
   const isBestseller = (p.ratingCount||0) >= 50
   const isHotDeal    = mrp > 0 && ((mrp - (p.price||0)) / mrp) * 100 >= 20
@@ -485,16 +486,26 @@ export default function ProductDetail() {
       .pd-thumb img { width: 100%; height: 100%; object-fit: contain; }
 
       /* VARIANTS (Industry Standard Style) */
-      .pd-variants { display: flex; flex-direction: column; gap: 20px; margin-top: 24px; padding: 24px; background: white; border-radius: 24px; border: 1px solid rgba(124,58,237,.12); box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+      .pd-variants { 
+        display: flex; flex-direction: column; gap: 24px; 
+        margin-top: 24px; padding: 24px; background: white; 
+        border-radius: 24px; border: 1px solid rgba(124,58,237,.12); 
+        box-shadow: 0 4px 20px rgba(0,0,0,0.02); 
+      }
       .pd-var-sec { display: flex; flex-direction: column; gap: 12px; }
-      .pd-var-lbl { font-size: 13px; font-weight: 700; color: #374151; display: flex; align-items: center; gap: 4px; }
-      .pd-var-name { text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; font-size: 11px; }
-      .pd-var-selected { color: #1e1b2e; font-weight: 800; }
+      .pd-var-lbl { 
+        font-size: 11px; font-weight: 800; color: #9ca3af; 
+        text-transform: uppercase; letter-spacing: .12em;
+        display: flex; align-items: center; gap: 8px;
+      }
+      .pd-var-lbl::after { content: ''; flex: 1; height: 1px; background: rgba(124,58,237,.08); }
+      .pd-var-selected { color: #7c3aed; font-weight: 900; }
+      
       .pd-var-opts { display: flex; flex-wrap: wrap; gap: 10px; }
       
-      /* Standard variant button (like GB, Size) */
+      /* Standard variant button (Chips) */
       .pd-var-btn {
-        min-width: 100px; padding: 10px 16px;
+        min-width: 80px; padding: 10px 16px;
         background: white; border: 2px solid #f3f4f6;
         border-radius: 14px; transition: all .2s cubic-bezier(.4,0,.2,1);
         display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -504,29 +515,35 @@ export default function ProductDetail() {
       .pd-var-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 8px 20px rgba(124,58,237,0.12); }
       
       .pd-var-val { font-size: 13px; font-weight: 800; color: #1e1b2e; }
-      .pd-var-price { font-size: 11px; font-weight: 700; color: #7c3aed; }
-      .pd-var-oos { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
+      .pd-var-price { font-size: 10px; font-weight: 700; color: #7c3aed; opacity: 0.8; }
+      .pd-var-oos { font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
 
       .pd-var-btn.on .pd-var-val { color: #7c3aed; }
-
-      /* Color selection with images */
-      .pd-var-img-btn {
-        width: 64px; height: 80px; border-radius: 14px; border: 2px solid #f3f4f6;
-        overflow: hidden; cursor: pointer; transition: all .2s; background: white;
-        padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-        position: relative;
-      }
-      .pd-var-img-btn img { width: 100%; height: 52px; object-fit: contain; border-radius: 8px; }
-      .pd-var-img-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 8px 20px rgba(124,58,237,0.12); transform: translateY(-1px); }
-      .pd-var-img-btn:hover:not(.on) { border-color: #7c3aed; transform: translateY(-1px); }
-      .pd-var-others { opacity: 0.4; border-style: dashed; }
-      .pd-var-img-btn.disabled { cursor: not-allowed; filter: grayscale(1); }
-      .pd-var-msg { font-size: 7px; color: #ef4444; text-align: center; margin-top: 4px; font-weight: 800; line-height: 1; text-transform: uppercase; }
 
       .pd-var-btn.disabled {
         opacity: .4; cursor: not-allowed; border-style: dashed; background: #f9fafb;
       }
-      .pd-var-btn.disabled .pd-var-val { color: #9ca3af; }
+      .pd-var-btn.disabled::after {
+        content: ''; position: absolute; top: 50%; left: 0; right: 0;
+        height: 1.5px; background: #9ca3af; transform: rotate(-15deg);
+      }
+      
+      /* Color selection with images */
+      .pd-var-img-btn {
+        width: 68px; height: 84px; border-radius: 14px; border: 2px solid #f3f4f6;
+        overflow: hidden; cursor: pointer; transition: all .2s; background: white;
+        padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        position: relative;
+      }
+      .pd-var-img-btn img { width: 100%; height: 56px; object-fit: contain; border-radius: 8px; }
+      .pd-var-img-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 8px 20px rgba(124,58,237,0.12); transform: translateY(-1px); }
+      .pd-var-img-btn:hover:not(.on):not(.disabled) { border-color: #7c3aed; transform: translateY(-1px); }
+      .pd-var-img-btn.disabled { cursor: not-allowed; filter: grayscale(1); opacity: 0.4; border-style: dashed; }
+      .pd-var-img-btn.disabled::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(45deg, transparent 48%, #9ca3af 50%, transparent 52%);
+      }
+      .pd-var-msg { font-size: 8px; color: #ef4444; text-align: center; margin-top: 4px; font-weight: 800; line-height: 1; text-transform: uppercase; }
       
       .pd-sku-line { margin-top: 16px; display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px dashed rgba(124,58,237,.15); }
       .pd-sku-label { font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: .08em; }
@@ -1137,8 +1154,13 @@ export default function ProductDetail() {
                             return (
                               <div 
                                 key={i}
-                                className={`pd-var-img-btn${on ? ' on' : ''}${!enabled ? ' pd-var-others disabled' : ''}`}
-                                onClick={() => enabled && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
+                                className={`pd-var-img-btn${on ? ' on' : ''}${!enabled ? ' disabled' : ''}`}
+                                onClick={() => enabled && setSelected(prev => {
+                                  const next = { ...prev };
+                                  if (on) delete next[attrKey];
+                                  else next[attrKey] = opt;
+                                  return next;
+                                })}
                                 title={opt}
                               >
                                 {imgUrl ? <img src={imgUrl} alt={opt} /> : <span className="text-[10px] uppercase font-bold">{opt[0]}</span>}
@@ -1151,7 +1173,12 @@ export default function ProductDetail() {
                             <button 
                               key={i} 
                               className={`pd-var-btn${on ? ' on' : ''}${!enabled ? ' disabled' : ''}`}
-                              onClick={() => enabled && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
+                              onClick={() => enabled && setSelected(prev => {
+                                const next = { ...prev };
+                                if (on) delete next[attrKey];
+                                else next[attrKey] = opt;
+                                return next;
+                              })}
                             >
                               <span className="pd-var-val">{opt}</span>
                               {enabled ? (
@@ -1166,6 +1193,18 @@ export default function ProductDetail() {
                     </div>
                   )
                 })}
+                
+                {currentSku && (
+                  <div className="pd-sku-line">
+                    <div className="flex flex-col">
+                      <span className="pd-sku-label">SKU</span>
+                      <span className="pd-sku-val">{currentSku}</span>
+                    </div>
+                    <div className="ml-auto">
+                      <span className="pd-weight-val">{matchedVariant?.weight || p.weight || 0}g</span>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
