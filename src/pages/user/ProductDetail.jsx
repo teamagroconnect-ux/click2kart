@@ -1070,6 +1070,64 @@ export default function ProductDetail() {
               {authed && <button className="pd-rev-btn" onClick={() => setReviewOpen(true)}>Write a Review</button>}
             </div>
 
+            {/* PRICE BLOCK moved below variants */}
+            <div className="pd-price-block">
+              {authed ? (
+                <>
+                  <div className="pd-price-row">
+                    <div className="pd-price-main">
+                      ₹{effPrice.toLocaleString()}<span className="pd-unit">/unit</span>
+                    </div>
+                    {mrp > 0 && <span className="pd-price-mrp">MRP ₹{mrp.toLocaleString()}</span>}
+                    {unitSave > 0 && <span className="pd-price-save">Save ₹{unitSave.toLocaleString()}/unit</span>}
+                    {p.priceTrend !== undefined && (
+                      <div className={`pd-price-trend ${p.priceTrend === 0 ? 'pd-trend-down' : 'pd-trend-up'}`}>
+                        <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
+                          {p.priceTrend === 0
+                            ? <path strokeLinecap="round" strokeLinejoin="round" d="M7 13l5 5 5-5M12 18V6"/>
+                            : <path strokeLinecap="round" strokeLinejoin="round" d="M7 11l5-5 5 5M12 6v12"/>}
+                        </svg>
+                        {p.priceTrend === 0 ? 'Price Drop' : 'Trending Up'}
+                      </div>
+                    )}
+                  </div>
+                  <div className="pd-price-gst">Inclusive of {gstRate}% GST</div>
+
+                  {/* qty */}
+                  <div className="pd-qty-row">
+                    <div className="pd-qty">
+                      <button className="pd-qty-btn"
+                        disabled={qty <= Math.max(1, Number(p.minOrderQty||1))}
+                        onClick={() => setQty(q => Math.max(Math.max(1, Number(p.minOrderQty||1)), q - 1))}>−</button>
+                      <div className="pd-qty-val">{qty}</div>
+                      <button className="pd-qty-btn" onClick={() => setQty(q => q + 1)}>+</button>
+                    </div>
+                    {savingsTotal > 0 && (
+                      <span className="pd-save-tag">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Saving ₹{savingsTotal.toLocaleString()} total
+                      </span>
+                    )}
+                    {sortedAsc.length > 0 && qty < minTierQty && (
+                      <span className="pd-mintier-tag">Min {minTierQty} units for bulk price</span>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" className="pd-price-mask" onClick={e => e.stopPropagation()}>
+                    <span className="pd-mask-rupee">₹</span>
+                    <span className="pd-mask-stars">*****</span>
+                    <svg className="pd-mask-eye" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                  </Link>
+                  <div className="pd-mask-hint">🔒 Login to view B2B wholesale price</div>
+                </>
+              )}
+            </div>
+
             {/* VARIANTS (Industry Standard Style) */}
             {Array.isArray(p.variants) && p.variants.length > 0 && (
               <div className="pd-variants">
@@ -1146,64 +1204,6 @@ export default function ProductDetail() {
                 )}
               </div>
             )}
-
-            {/* PRICE BLOCK */}
-            <div className="pd-price-block">
-              {authed ? (
-                <>
-                  <div className="pd-price-row">
-                    <div className="pd-price-main">
-                      ₹{effPrice.toLocaleString()}<span className="pd-unit">/unit</span>
-                    </div>
-                    {mrp > 0 && <span className="pd-price-mrp">MRP ₹{mrp.toLocaleString()}</span>}
-                    {unitSave > 0 && <span className="pd-price-save">Save ₹{unitSave.toLocaleString()}/unit</span>}
-                    {p.priceTrend !== undefined && (
-                      <div className={`pd-price-trend ${p.priceTrend === 0 ? 'pd-trend-down' : 'pd-trend-up'}`}>
-                        <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
-                          {p.priceTrend === 0
-                            ? <path strokeLinecap="round" strokeLinejoin="round" d="M7 13l5 5 5-5M12 18V6"/>
-                            : <path strokeLinecap="round" strokeLinejoin="round" d="M7 11l5-5 5 5M12 6v12"/>}
-                        </svg>
-                        {p.priceTrend === 0 ? 'Price Drop' : 'Trending Up'}
-                      </div>
-                    )}
-                  </div>
-                  <div className="pd-price-gst">Inclusive of {gstRate}% GST</div>
-
-                  {/* qty */}
-                  <div className="pd-qty-row">
-                    <div className="pd-qty">
-                      <button className="pd-qty-btn"
-                        disabled={qty <= Math.max(1, Number(p.minOrderQty||1))}
-                        onClick={() => setQty(q => Math.max(Math.max(1, Number(p.minOrderQty||1)), q - 1))}>−</button>
-                      <div className="pd-qty-val">{qty}</div>
-                      <button className="pd-qty-btn" onClick={() => setQty(q => q + 1)}>+</button>
-                    </div>
-                    {savingsTotal > 0 && (
-                      <span className="pd-save-tag">
-                        <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        Saving ₹{savingsTotal.toLocaleString()} total
-                      </span>
-                    )}
-                    {sortedAsc.length > 0 && qty < minTierQty && (
-                      <span className="pd-mintier-tag">Min {minTierQty} units for bulk price</span>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <Link to="/login" className="pd-price-mask" onClick={e => e.stopPropagation()}>
-                    <span className="pd-mask-rupee">₹</span>
-                    <span className="pd-mask-stars">*****</span>
-                    <svg className="pd-mask-eye" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                    </svg>
-                  </Link>
-                  <div className="pd-mask-hint">🔒 Login to view B2B wholesale price</div>
-                </>
-              )}
-            </div>
 
             {/* DELIVERY PANEL */}
             <div className="pd-delivery">
