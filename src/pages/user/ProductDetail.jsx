@@ -64,17 +64,26 @@ export default function ProductDetail() {
     if (Array.isArray(p.variants)) {
       p.variants.forEach(v => {
         if (!v.attributes) return;
-        const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : v.attributes;
+        // Use a very robust discovery - look at both Map and plain object
+        let vAttrs = {};
+        try {
+          vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : v.attributes;
+        } catch(e) { vAttrs = v.attributes || {}; }
+
         Object.keys(vAttrs).forEach(k => {
-          if (k) {
-            const existing = Array.from(set).find(s => s.toLowerCase() === k.toLowerCase().trim())
+          if (k && typeof k === 'string') {
+            const lowK = k.toLowerCase().trim();
+            // Don't add if already in set (case-insensitive check)
+            const existing = Array.from(set).find(s => s.toLowerCase().trim() === lowK)
             if (!existing) set.add(k.trim())
           }
         })
       })
     }
     
-    return Array.from(set)
+    const result = Array.from(set)
+    console.log("DEBUG: Final variantAttrs:", result);
+    return result
   }, [p])
 
   const matchedVariant = useMemo(() => {
@@ -89,7 +98,14 @@ export default function ProductDetail() {
         const lowAttr = attr.toLowerCase().trim()
         const val = selected[lowAttr];
         if (!val) return false; 
-        return String(vAttrs[lowAttr] || '').toLowerCase() === String(val || '').toLowerCase()
+        
+        let match = false;
+        Object.entries(vAttrs).forEach(([vk, vv]) => {
+          if (vk.toLowerCase().trim() === lowAttr && String(vv || '').toLowerCase().trim() === String(val || '').toLowerCase().trim()) {
+            match = true;
+          }
+        });
+        return match;
       })
     })
   }, [p, selected, variantAttrs])
@@ -335,7 +351,12 @@ export default function ProductDetail() {
       p.variants.forEach(v => {
         if (v.isActive === false) return;
         const vAttrs = normalizeAttrs(v.attributes)
-        if (vAttrs[lowKey]) set.add(vAttrs[lowKey])
+        // Check all keys in vAttrs for a case-insensitive match with lowKey
+        Object.entries(vAttrs).forEach(([vk, vv]) => {
+          if (vk.toLowerCase().trim() === lowKey && vv) {
+            set.add(vv.trim())
+          }
+        })
       })
     }
     const result = Array.from(set).sort();
@@ -355,11 +376,24 @@ export default function ProductDetail() {
       const vAttrs = normalizeAttrs(v.attributes)
       
       // Must match the value we're checking
-      if (String(vAttrs[lowKey] || '').toLowerCase() === String(val || '').toLowerCase()) {
+      let matchVal = false;
+      Object.entries(vAttrs).forEach(([vk, vv]) => {
+        if (vk.toLowerCase().trim() === lowKey && String(vv || '').toLowerCase().trim() === String(val || '').toLowerCase().trim()) {
+          matchVal = true;
+        }
+      });
+
+      if (matchVal) {
         // Must match all other selected attributes
-        return Object.entries(otherSelections).every(([k, vVal]) => {
-          if (!vVal) return true;
-          return String(vAttrs[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
+        return Object.entries(otherSelections).every(([ok, ov]) => {
+          if (!ov) return true;
+          let matchOther = false;
+          Object.entries(vAttrs).forEach(([vk, vv]) => {
+            if (vk.toLowerCase().trim() === ok.toLowerCase().trim() && String(vv || '').toLowerCase().trim() === String(ov || '').toLowerCase().trim()) {
+              matchOther = true;
+            }
+          });
+          return matchOther;
         });
       }
       return false;
@@ -1267,6 +1301,47 @@ export default function ProductDetail() {
                 </span>
               )}
             </h1>
+
+            {/* VARIANTS (FORCED RENDER HERE TO TEST VISIBILITY) */}
+            <div className="pd-variants-test" style={{ marginBottom: 24 }}>
+                {variantAttrs.map(attrKey => {
+                  const lowKey = attrKey.toLowerCase().trim()
+                  const options = variantOpts(attrKey)
+                  if (!options.length) return null
+                  const currentVal = selected[lowKey]
+                  const isColor = lowKey.includes('color')
+                  
+                  return (
+                    <div key={attrKey} className="pd-var-sec" style={{ marginBottom: 16 }}>
+                      <div className="pd-var-lbl">
+                        <span className="pd-var-name">{attrKey}</span>
+                        {currentVal && <span className="pd-var-selected">: {currentVal}</span>}
+                      </div>
+                      <div className="pd-var-opts">
+                        {options.map((opt, i) => {
+                          const enabled = isOptEnabled(attrKey, opt)
+                          const on = selected[lowKey] === opt
+                          
+                          return (
+                            <button 
+                              key={i} 
+                              className={`pd-var-btn${on ? ' on' : ''}${!enabled ? ' disabled' : ''}`}
+                              onClick={() => enabled && setSelected(prev => {
+                                const next = { ...prev };
+                                if (on) delete next[lowKey];
+                                else next[lowKey] = opt;
+                                return next;
+                              })}
+                            >
+                              <span className="pd-var-val">{opt}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+            </div>
 
             {/* rating */}
             <div className="pd-rat-row">
