@@ -350,6 +350,11 @@ export default function Products() {
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="text-[9px] text-blue-600 font-bold uppercase">{p.brand?.name || 'Unbranded'}</span>
                                   <span className="text-[9px] text-gray-400 font-medium">{p.category?.name || 'General'}</span>
+                                  {p.variants?.length > 0 && (
+                                    <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-black rounded uppercase border border-blue-100">
+                                      {p.variants.length} Variants
+                                    </span>
+                                  )}
                                 </div>
                                 {p.variants?.length > 0 && (
                                   <div className="flex flex-wrap gap-1 mt-1">
@@ -1590,6 +1595,7 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
       ? product.images.split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
       : (product.images || []);
 
+    // Create variants sequentially to avoid race conditions/duplicate errors
     for (const combo of missingCombinations) {
       try {
         await api.post(`/api/products/${product._id}/variants`, {
@@ -1603,7 +1609,9 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
           isActive: true
         });
         success++;
-      } catch (e) { console.error(e); }
+      } catch (e) { 
+        console.error("Failed to create variant:", combo, e); 
+      }
     }
     notify(`Created ${success} variants`, 'success');
     onChanged && onChanged();

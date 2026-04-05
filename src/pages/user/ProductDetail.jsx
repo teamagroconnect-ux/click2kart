@@ -1321,7 +1321,7 @@ export default function ProductDetail() {
                     const values = Object.values(attrs);
                     if (values.length > 0) return values.join(', ');
                     if (matchedVariant.sku) return matchedVariant.sku;
-                    return 'Variant';
+                    return 'Selected';
                   })()})
                 </span>
               )}
