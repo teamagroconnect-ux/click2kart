@@ -1401,7 +1401,6 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
             </div>
           ))}
         </div>
-      </div>
 
       {/* Edit Variant Modal */}
       {editingVariant && (
