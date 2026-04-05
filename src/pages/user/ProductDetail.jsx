@@ -53,40 +53,42 @@ export default function ProductDetail() {
     if (!p) return []
     const set = new Set()
     
-    // 1. Get from product.attributes if available
+    // 1. Get from product.attributes if available (Predefined order)
     const attrs = Array.isArray(p.attributes) ? p.attributes : []
     attrs.forEach(a => {
       const name = a.split(':')[0]
-      if (name) set.add(name.toLowerCase().trim())
+      if (name) set.add(name.trim())
     })
 
     // 2. Also check variants to ensure we don't miss any attributes
     if (p.variants?.length) {
       p.variants.forEach(v => {
-        const vAttrs = normalizeAttrs(v.attributes)
-        Object.keys(vAttrs || {}).forEach(k => {
-          if (k) set.add(k.toLowerCase().trim())
+        const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+        Object.keys(vAttrs).forEach(k => {
+          if (k) {
+            // Find existing key in set that matches case-insensitive, or add new one
+            const existing = Array.from(set).find(s => s.toLowerCase() === k.toLowerCase().trim())
+            if (!existing) set.add(k.trim())
+          }
         })
-      } )
+      })
     }
     
-    // Sort attributes by importance/predefined order if needed
-    const result = Array.from(set)
-    console.log("ProductDetail: Discovered attributes:", result)
-    return result
+    return Array.from(set)
   }, [p])
 
   const matchedVariant = useMemo(() => {
     if (!p || !p.variants || !Array.isArray(p.variants) || !p.variants.length) return null
     return p.variants.find(v => {
-      const vAttrs = normalizeAttrs(v.attributes)
       if (v.isActive === false) return false
+      const vAttrs = normalizeAttrs(v.attributes)
       
       // A variant is a match only if ALL discovered attributes match the selection
       return variantAttrs.every(attr => {
-        const val = selected[attr];
+        const lowAttr = attr.toLowerCase().trim()
+        const val = selected[lowAttr];
         if (!val) return false; 
-        return String(vAttrs[attr] || '').toLowerCase() === String(val || '').toLowerCase()
+        return String(vAttrs[lowAttr] || '').toLowerCase() === String(val || '').toLowerCase()
       })
     })
   }, [p, selected, variantAttrs])
@@ -150,10 +152,15 @@ export default function ProductDetail() {
   useEffect(() => {
     if (!p || !Array.isArray(p.variants) || !p.variants.length) { setActiveVariant(null); return }
     
-    // On first load, find the first active variant that is in stock, otherwise just first active
-    const defaultVariant = p.variants.find(v => v.isActive !== false && v.stock > 0) || p.variants.find(v => v.isActive !== false)
-    if (defaultVariant && Object.keys(selected).length === 0) {
-      setSelected(normalizeAttrs(defaultVariant.attributes))
+    // On first load, find the variant with the highest stock among active variants
+    if (Object.keys(selected).length === 0) {
+      const bestVariant = [...p.variants]
+        .filter(v => v.isActive !== false)
+        .sort((a, b) => (b.stock || 0) - (a.stock || 0))[0]
+      
+      if (bestVariant) {
+        setSelected(normalizeAttrs(bestVariant.attributes))
+      }
     }
   }, [p])
 
@@ -345,7 +352,8 @@ export default function ProductDetail() {
 
   const currentImg   = imgs[activeImg]?.url || imgs[0]?.url
   const stock        = currentStock ?? 0
-  const stockSt      = getStockStatus(stock)
+  const stockStRaw   = getStockStatus(stock)
+  const stockSt      = { ...stockStRaw, text: stockStRaw.text.includes('Only') ? 'Limited Stock' : stockStRaw.text }
 
   const handleAddToCart = async () => {
     if (!authed) { navigate('/login'); return }
@@ -495,63 +503,57 @@ export default function ProductDetail() {
 
       /* VARIANTS (Industry Standard Style) */
       .pd-variants { 
-        display: flex; flex-direction: column; gap: 24px; 
-        margin-top: 24px; padding: 24px; background: white; 
-        border-radius: 24px; border: 1px solid rgba(124,58,237,.12); 
-        box-shadow: 0 4px 20px rgba(0,0,0,0.02); 
+        display: flex; flex-direction: column; gap: 20px; 
+        margin-top: 20px; padding: 20px; background: #ffffff; 
+        border-radius: 20px; border: 1px solid #f0f0f0; 
+        box-shadow: 0 2px 12px rgba(0,0,0,0.03); 
       }
-      .pd-var-sec { display: flex; flex-direction: column; gap: 12px; }
+      .pd-var-sec { display: flex; flex-direction: column; gap: 10px; }
       .pd-var-lbl { 
-        font-size: 11px; font-weight: 800; color: #9ca3af; 
-        text-transform: uppercase; letter-spacing: .12em;
-        display: flex; align-items: center; gap: 8px;
+        font-size: 12px; font-weight: 700; color: #666; 
+        text-transform: uppercase; letter-spacing: .05em;
+        display: flex; align-items: center; gap: 6px;
       }
-      .pd-var-lbl::after { content: ''; flex: 1; height: 1px; background: rgba(124,58,237,.08); }
-      .pd-var-selected { color: #7c3aed; font-weight: 900; }
+      .pd-var-lbl::after { content: ''; flex: 1; height: 1px; background: #eee; }
+      .pd-var-selected { color: #2874f0; font-weight: 800; text-transform: none; letter-spacing: 0; }
       
-      .pd-var-opts { display: flex; flex-wrap: wrap; gap: 10px; }
+      .pd-var-opts { display: flex; flex-wrap: wrap; gap: 8px; }
       
-      /* Standard variant button (Chips) */
+      /* Flipkart Style Chip */
       .pd-var-btn {
-        min-width: 80px; padding: 10px 16px;
-        background: white; border: 2px solid #f3f4f6;
-        border-radius: 14px; transition: all .2s cubic-bezier(.4,0,.2,1);
-        display: flex; flex-direction: column; align-items: center; gap: 2px;
+        min-width: 64px; padding: 8px 16px;
+        background: #fff; border: 1px solid #e0e0e0;
+        border-radius: 4px; transition: all .2s;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
         cursor: pointer; position: relative;
       }
-      .pd-var-btn:hover:not(.disabled) { border-color: #7c3aed; background: #fdfcff; transform: translateY(-1px); }
-      .pd-var-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 8px 20px rgba(124,58,237,0.12); }
+      .pd-var-btn:hover:not(.disabled) { border-color: #2874f0; color: #2874f0; }
+      .pd-var-btn.on { border-color: #2874f0; border-width: 2px; color: #2874f0; font-weight: 700; padding: 7px 15px; }
       
-      .pd-var-val { font-size: 13px; font-weight: 800; color: #1e1b2e; }
-      .pd-var-price { font-size: 10px; font-weight: 700; color: #7c3aed; opacity: 0.8; }
-      .pd-var-oos { font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
-
-      .pd-var-btn.on .pd-var-val { color: #7c3aed; }
+      .pd-var-val { font-size: 13px; color: inherit; }
+      .pd-var-price { font-size: 10px; margin-top: 2px; opacity: 0.7; }
+      .pd-var-oos { font-size: 9px; color: #ff6161; font-weight: 600; margin-top: 2px; }
 
       .pd-var-btn.disabled {
-        opacity: .4; cursor: not-allowed; border-style: dashed; background: #f9fafb;
+        opacity: .5; cursor: not-allowed; background: #fbfbfb; border-style: dashed;
       }
       .pd-var-btn.disabled::after {
         content: ''; position: absolute; top: 50%; left: 0; right: 0;
-        height: 1.5px; background: #9ca3af; transform: rotate(-15deg);
+        height: 1px; background: #d0d0d0; transform: rotate(-15deg);
       }
       
       /* Color selection with images */
       .pd-var-img-btn {
-        width: 68px; height: 84px; border-radius: 14px; border: 2px solid #f3f4f6;
-        overflow: hidden; cursor: pointer; transition: all .2s; background: white;
-        padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        width: 56px; height: 72px; border-radius: 4px; border: 1px solid #e0e0e0;
+        overflow: hidden; cursor: pointer; transition: all .2s; background: #fff;
+        padding: 2px; display: flex; flex-direction: column; align-items: center; justify-content: center;
         position: relative;
       }
-      .pd-var-img-btn img { width: 100%; height: 56px; object-fit: contain; border-radius: 8px; }
-      .pd-var-img-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 8px 20px rgba(124,58,237,0.12); transform: translateY(-1px); }
-      .pd-var-img-btn:hover:not(.on):not(.disabled) { border-color: #7c3aed; transform: translateY(-1px); }
-      .pd-var-img-btn.disabled { cursor: not-allowed; filter: grayscale(1); opacity: 0.4; border-style: dashed; }
-      .pd-var-img-btn.disabled::after {
-        content: ''; position: absolute; inset: 0;
-        background: linear-gradient(45deg, transparent 48%, #9ca3af 50%, transparent 52%);
-      }
-      .pd-var-msg { font-size: 8px; color: #ef4444; text-align: center; margin-top: 4px; font-weight: 800; line-height: 1; text-transform: uppercase; }
+      .pd-var-img-btn img { width: 100%; height: 48px; object-fit: contain; border-radius: 2px; }
+      .pd-var-img-btn.on { border-color: #2874f0; border-width: 2px; padding: 1px; }
+      .pd-var-img-btn:hover:not(.on):not(.disabled) { border-color: #2874f0; }
+      .pd-var-img-btn.disabled { cursor: not-allowed; filter: grayscale(1); opacity: 0.5; border-style: dashed; }
+      .pd-var-msg { font-size: 8px; color: #ff6161; text-align: center; margin-top: 2px; font-weight: 700; text-transform: uppercase; }
 
       .pd-weight-val { font-size: 11px; font-weight: 700; color: #7c3aed; background: rgba(124,58,237,.08); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(124,58,237,.1); display: inline-flex; align-items: center; gap: 4px; }
       .pd-weight-val::before { content: '⚖️'; font-size: 10px; }
@@ -1087,12 +1089,13 @@ export default function ProductDetail() {
 
             {/* VARIANTS (Move under images as requested) */}
             {(Array.isArray(p.variants) && p.variants.length > 0) || (Array.isArray(p.attributes) && p.attributes.length > 0) ? (
-              <div className="pd-variants" style={{ marginTop: 24 }}>
+              <div className="pd-variants">
                 {variantAttrs.map(attrKey => {
+                  const lowKey = attrKey.toLowerCase().trim()
                   const options = variantOpts(attrKey)
                   if (!options.length) return null
-                  const currentVal = selected[attrKey]
-                  const isColor = attrKey.toLowerCase().includes('color')
+                  const currentVal = selected[lowKey]
+                  const isColor = lowKey.includes('color')
                   
                   return (
                     <div key={attrKey} className="pd-var-sec">
@@ -1103,17 +1106,17 @@ export default function ProductDetail() {
                       <div className="pd-var-opts">
                         {options.map((opt, i) => {
                           const enabled = isOptEnabled(attrKey, opt)
-                          const on = selected[attrKey] === opt
+                          const on = selected[lowKey] === opt
                           
                           // Find a representative variant for this option to show price/image
                           const repVariant = p.variants?.find(v => 
                             v.isActive !== false &&
-                            String(normalizeAttrs(v.attributes)[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
+                            String(normalizeAttrs(v.attributes)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
                             Object.entries(selected).every(([k, vVal]) => {
-                              if (k === attrKey || !vVal) return true;
+                              if (k === lowKey || !vVal) return true;
                               return String(normalizeAttrs(v.attributes)[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
                             })
-                          ) || p.variants?.find(v => v.isActive !== false && String(normalizeAttrs(v.attributes)[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase());
+                          ) || p.variants?.find(v => v.isActive !== false && String(normalizeAttrs(v.attributes)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase());
 
                           if (isColor) {
                             const imgUrl = (repVariant?.images?.[0]?.url) || (Array.isArray(p.images) ? p.images[0]?.url : null);
@@ -1123,8 +1126,8 @@ export default function ProductDetail() {
                                 className={`pd-var-img-btn${on ? ' on' : ''}${!enabled ? ' disabled' : ''}`}
                                 onClick={() => enabled && setSelected(prev => {
                                   const next = { ...prev };
-                                  if (on) delete next[attrKey];
-                                  else next[attrKey] = opt;
+                                  if (on) delete next[lowKey];
+                                  else next[lowKey] = opt;
                                   return next;
                                 })}
                                 title={opt}
@@ -1141,8 +1144,8 @@ export default function ProductDetail() {
                               className={`pd-var-btn${on ? ' on' : ''}${!enabled ? ' disabled' : ''}`}
                               onClick={() => enabled && setSelected(prev => {
                                 const next = { ...prev };
-                                if (on) delete next[attrKey];
-                                else next[attrKey] = opt;
+                                if (on) delete next[lowKey];
+                                else next[lowKey] = opt;
                                 return next;
                               })}
                             >
