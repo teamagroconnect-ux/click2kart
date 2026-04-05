@@ -67,10 +67,13 @@ export default function ProductDetail() {
         Object.keys(vAttrs || {}).forEach(k => {
           if (k) set.add(k.toLowerCase().trim())
         })
-      })
+      } )
     }
     
-    return Array.from(set)
+    // Sort attributes by importance/predefined order if needed
+    const result = Array.from(set)
+    console.log("ProductDetail: Discovered attributes:", result)
+    return result
   }, [p])
 
   const matchedVariant = useMemo(() => {
@@ -265,14 +268,17 @@ export default function ProductDetail() {
     const set = new Set()
     const lowKey = key.toLowerCase().trim()
     
-    // 1. Get from predefined values in product.attributes
-    const attrEntry = (p?.attributes || []).find(a => a.toLowerCase().startsWith(`${lowKey}:`))
+    // 1. Get from predefined values in product.attributes (Format: "Color:Black,Blue")
+    const attrEntry = (p?.attributes || []).find(a => {
+      const parts = a.split(':');
+      return parts[0]?.toLowerCase().trim() === lowKey;
+    })
     if (attrEntry) {
       const vals = attrEntry.split(':')[1]?.split(',').filter(Boolean) || []
       vals.forEach(v => set.add(v.trim()))
     }
 
-    // 2. Add from variants actually exist
+    // 2. Add from variants that actually exist
     if (p?.variants?.length) {
       p.variants.forEach(v => {
         if (v.isActive === false) return;
@@ -280,7 +286,9 @@ export default function ProductDetail() {
         if (vAttrs[lowKey]) set.add(vAttrs[lowKey])
       })
     }
-    return Array.from(set).sort()
+    const result = Array.from(set).sort();
+    console.log(`ProductDetail: Values for ${key}:`, result);
+    return result;
   }
 
   // Flipkart Style Logic: Check if an option is enabled based on current other selections
@@ -1078,7 +1086,7 @@ export default function ProductDetail() {
             )}
 
             {/* VARIANTS (Move under images as requested) */}
-            {Array.isArray(p.variants) && p.variants.length > 0 && (
+            {(Array.isArray(p.variants) && p.variants.length > 0) || (Array.isArray(p.attributes) && p.attributes.length > 0) ? (
               <div className="pd-variants" style={{ marginTop: 24 }}>
                 {variantAttrs.map(attrKey => {
                   const options = variantOpts(attrKey)
@@ -1098,14 +1106,14 @@ export default function ProductDetail() {
                           const on = selected[attrKey] === opt
                           
                           // Find a representative variant for this option to show price/image
-                          const repVariant = p.variants.find(v => 
+                          const repVariant = p.variants?.find(v => 
                             v.isActive !== false &&
                             String(normalizeAttrs(v.attributes)[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
                             Object.entries(selected).every(([k, vVal]) => {
                               if (k === attrKey || !vVal) return true;
                               return String(normalizeAttrs(v.attributes)[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
                             })
-                          ) || p.variants.find(v => v.isActive !== false && String(normalizeAttrs(v.attributes)[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase());
+                          ) || p.variants?.find(v => v.isActive !== false && String(normalizeAttrs(v.attributes)[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase());
 
                           if (isColor) {
                             const imgUrl = (repVariant?.images?.[0]?.url) || (Array.isArray(p.images) ? p.images[0]?.url : null);
@@ -1152,7 +1160,7 @@ export default function ProductDetail() {
                   )
                 })}
               </div>
-            )}
+            ) : null}
           </div>
 
           {/* ══ RIGHT — INFO PANEL ══ */}
@@ -1178,7 +1186,6 @@ export default function ProductDetail() {
                 animation: stock<=5 && stock>0 ? 'pdStockPulse 2s infinite' : 'none',
               }}/>
               {stockSt.text}
-              {stock > 0 && stock <= 10 && <span style={{fontWeight:500,opacity:.7,textTransform:'none',letterSpacing:0}}> — only {stock} left</span>}
             </div>
 
             {/* name */}
