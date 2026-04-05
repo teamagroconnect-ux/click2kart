@@ -27,7 +27,8 @@ export default function VariantQuickAdd({ onAdd, productAttributes = [], product
   useEffect(() => {
     const attrs = {}
     productAttributes.forEach(attr => {
-      const key = attr.toLowerCase().trim();
+      const [name] = attr.split(':');
+      const key = name.toLowerCase().trim();
       if (key) attrs[key] = v.attributes[key] || '';
     })
     // Default price and weight to main product values if not set
@@ -42,24 +43,29 @@ export default function VariantQuickAdd({ onAdd, productAttributes = [], product
   // Auto-generate SKU when attributes or productName changes
   useEffect(() => {
     const values = productAttributes
-      .map(attr => (v.attributes[attr.toLowerCase().trim()] || '').trim())
+      .map(attr => {
+        const [name] = attr.split(':');
+        return (v.attributes[name.toLowerCase().trim()] || '').trim()
+      })
       .filter(Boolean)
     
     if (productName && values.length > 0) {
-      // Clean product name and attribute values for SKU
-      const cleanName = productName.toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '') // Remove special chars
-        .trim()
-        .replace(/\s+/g, '-') // Replace spaces with -
-      
+      // Create a short code from product name (first letter of each word or first 3 letters)
+      const nameParts = productName.split(' ').filter(Boolean)
+      let nameCode = ''
+      if (nameParts.length >= 2) {
+        nameCode = nameParts.map(p => p[0]).join('').substring(0, 4)
+      } else {
+        nameCode = productName.substring(0, 3)
+      }
+
       const cleanValues = values.map(val => 
         val.toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/[^a-z0-9]/g, '')
           .trim()
-          .replace(/\s+/g, '-')
       ).join('-')
 
-      const generatedSku = `${cleanName}-${cleanValues}`.toUpperCase()
+      const generatedSku = `${nameCode.toUpperCase()}-${cleanValues.toUpperCase()}`
       setV(prev => ({ ...prev, sku: generatedSku }))
     }
   }, [v.attributes, productName, productAttributes])
@@ -128,23 +134,50 @@ export default function VariantQuickAdd({ onAdd, productAttributes = [], product
         {v.sku && <span className="text-[8px] font-black bg-blue-50 text-blue-600 px-2 py-0.5 rounded uppercase">Auto SKU: {v.sku}</span>}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {productAttributes.map(attr => {
-          const suggestions = getSuggestions(attr);
+          const [name, valuesStr] = attr.split(':');
+          const predefinedValues = valuesStr ? valuesStr.split(',').filter(Boolean) : [];
+          const attrKey = name.toLowerCase().trim();
+          const suggestions = getSuggestions(name);
+          const currentVal = v.attributes[attrKey] || '';
+
           return (
-            <div key={attr} className="space-y-1">
-              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{attr}</label>
-              <input 
-                className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-100 rounded-xl px-3 py-2.5 text-[11px] font-bold outline-none transition-all" 
-                placeholder={`e.g. ${attr.toLowerCase().includes('color') ? 'Black' : 'Value'}`}
-                value={v.attributes[attr.toLowerCase().trim()] || ''} 
-                onChange={e => handleAttrChange(attr, e.target.value)}
-                list={`list-${attr}`}
-                required
-              />
-              <datalist id={`list-${attr}`}>
-                {suggestions.map(s => <option key={s} value={s} />)}
-              </datalist>
+            <div key={name} className="space-y-2">
+              <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">{name}</label>
+              
+              {predefinedValues.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {predefinedValues.map(pv => (
+                    <button
+                      key={pv}
+                      type="button"
+                      onClick={() => handleAttrChange(name, pv)}
+                      className={`px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase transition-all border-2 ${
+                        currentVal.toLowerCase() === pv.toLowerCase()
+                          ? 'bg-blue-600 border-blue-600 text-white shadow-md'
+                          : 'bg-white border-gray-100 text-gray-600 hover:border-blue-200'
+                      }`}
+                    >
+                      {pv}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex gap-2">
+                <input 
+                  className="flex-1 bg-gray-50 border-2 border-transparent focus:border-blue-100 rounded-xl px-3 py-2.5 text-[11px] font-bold outline-none transition-all" 
+                  placeholder={`Type or select ${name}...`}
+                  value={currentVal} 
+                  onChange={e => handleAttrChange(name, e.target.value)}
+                  list={`list-${name}`}
+                  required
+                />
+                <datalist id={`list-${name}`}>
+                  {[...new Set([...predefinedValues, ...suggestions])].map(s => <option key={s} value={s} />)}
+                </datalist>
+              </div>
             </div>
           )
         })}

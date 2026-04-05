@@ -40,7 +40,9 @@ export default function ProductDetail() {
 
   const variantAttrs = useMemo(() => {
     if (!p || !p.attributes) return []
-    return Array.isArray(p.attributes) ? p.attributes : []
+    const attrs = Array.isArray(p.attributes) ? p.attributes : []
+    // Support "name:v1,v2" format or simple "name"
+    return attrs.map(a => a.split(':')[0])
   }, [p])
 
   const matchedVariant = useMemo(() => {
@@ -247,15 +249,25 @@ export default function ProductDetail() {
   /* variant helpers */
   // Variant selection helper: get available values for a specific attribute key
   const variantOpts = (key) => {
-    if (!p?.variants?.length) return []
     const set = new Set()
-    p.variants.forEach(v => {
-      if (v.isActive === false) return;
-      const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
-        ? v.attributes 
-        : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-      if (vAttrs[key]) set.add(vAttrs[key])
-    })
+    
+    // 1. Get from predefined values in product.attributes
+    const attrEntry = (p?.attributes || []).find(a => a.startsWith(`${key}:`))
+    if (attrEntry) {
+      const vals = attrEntry.split(':')[1]?.split(',').filter(Boolean) || []
+      vals.forEach(v => set.add(v.trim()))
+    }
+
+    // 2. Add from variants actually exist
+    if (p?.variants?.length) {
+      p.variants.forEach(v => {
+        if (v.isActive === false) return;
+        const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
+          ? v.attributes 
+          : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
+        if (vAttrs[key]) set.add(vAttrs[key])
+      })
+    }
     return Array.from(set).sort()
   }
 
@@ -263,8 +275,6 @@ export default function ProductDetail() {
   const isOptEnabled = (key, val) => {
     if (!p?.variants?.length) return true
     
-    // We want to know if there's ANY variant that has this 'val' for 'key'
-    // AND matches the OTHER currently selected attributes.
     const otherSelections = { ...selected };
     delete otherSelections[key]; 
 
@@ -273,7 +283,6 @@ export default function ProductDetail() {
       const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
         ? v.attributes 
         : (v && v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-      if (!vAttrs) return false;
       
       // Must match the value we're checking
       if (String(vAttrs[key] || '').toLowerCase() !== String(val || '').toLowerCase()) return false;
@@ -284,7 +293,6 @@ export default function ProductDetail() {
         return String(vAttrs[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
       });
 
-      // Flipkart style: also check if it's in stock for it to be "available"
       return matchOthers && (v.stock > 0);
     });
   }
@@ -457,47 +465,52 @@ export default function ProductDetail() {
       .pd-thumb img { width: 100%; height: 100%; object-fit: contain; }
 
       /* VARIANTS (Industry Standard Style) */
-      .pd-variants { display: flex; flex-direction: column; gap: 20px; margin-top: 24px; padding: 20px; background: white; border-radius: 20px; border: 1px solid rgba(124,58,237,.1); }
-      .pd-var-sec { display: flex; flex-direction: column; gap: 10px; }
-      .pd-var-lbl { font-size: 13px; font-weight: 700; color: #374151; display: flex; align-items: center; gap: 6px; }
-      .pd-var-selected { color: #6b7280; font-weight: 500; }
-      .pd-var-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+      .pd-variants { display: flex; flex-direction: column; gap: 20px; margin-top: 24px; padding: 24px; background: white; border-radius: 24px; border: 1px solid rgba(124,58,237,.12); box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+      .pd-var-sec { display: flex; flex-direction: column; gap: 12px; }
+      .pd-var-lbl { font-size: 13px; font-weight: 700; color: #374151; display: flex; align-items: center; gap: 4px; }
+      .pd-var-name { text-transform: uppercase; letter-spacing: 0.05em; color: #9ca3af; font-size: 11px; }
+      .pd-var-selected { color: #1e1b2e; font-weight: 800; }
+      .pd-var-opts { display: flex; flex-wrap: wrap; gap: 10px; }
       
       /* Standard variant button (like GB, Size) */
       .pd-var-btn {
-        min-width: 90px; padding: 8px 12px;
-        background: white; border: 1.5px solid #e5e7eb;
-        border-radius: 10px; transition: all .2s cubic-bezier(.4,0,.2,1);
-        display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+        min-width: 100px; padding: 10px 16px;
+        background: white; border: 2px solid #f3f4f6;
+        border-radius: 14px; transition: all .2s cubic-bezier(.4,0,.2,1);
+        display: flex; flex-direction: column; align-items: center; gap: 2px;
         cursor: pointer; position: relative;
       }
-      .pd-var-btn:hover:not(.disabled) { border-color: #7c3aed; background: #fdfcff; }
-      .pd-var-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 4px 10px rgba(124,58,237,.1); }
+      .pd-var-btn:hover:not(.disabled) { border-color: #7c3aed; background: #fdfcff; transform: translateY(-1px); }
+      .pd-var-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 8px 20px rgba(124,58,237,0.12); }
       
-      .pd-var-val { font-size: 12px; font-weight: 800; color: #1e1b2e; }
-      .pd-var-price { font-size: 10px; font-weight: 700; color: #7c3aed; }
-      .pd-var-oos { font-size: 10px; font-weight: 700; color: #ef4444; }
+      .pd-var-val { font-size: 13px; font-weight: 800; color: #1e1b2e; }
+      .pd-var-price { font-size: 11px; font-weight: 700; color: #7c3aed; }
+      .pd-var-oos { font-size: 10px; font-weight: 700; color: #9ca3af; text-transform: uppercase; }
 
       .pd-var-btn.on .pd-var-val { color: #7c3aed; }
 
       /* Color selection with images */
       .pd-var-img-btn {
-        width: 60px; height: 75px; border-radius: 10px; border: 2px solid #e5e7eb;
-        overflow: hidden; cursor: pointer; transition: all .2s; background: #f9fafb;
-        padding: 3px; display: flex; align-items: center; justify-content: center;
+        width: 64px; height: 80px; border-radius: 14px; border: 2px solid #f3f4f6;
+        overflow: hidden; cursor: pointer; transition: all .2s; background: white;
+        padding: 4px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        position: relative;
       }
-      .pd-var-img-btn img { width: 100%; height: 100%; object-fit: contain; border-radius: 6px; }
-      .pd-var-img-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 4px 10px rgba(124,58,237,.15); }
-      .pd-var-img-btn:hover:not(.on) { border-color: #7c3aed; }
+      .pd-var-img-btn img { width: 100%; height: 52px; object-fit: contain; border-radius: 8px; }
+      .pd-var-img-btn.on { border-color: #7c3aed; background: #f5f3ff; box-shadow: 0 8px 20px rgba(124,58,237,0.12); transform: translateY(-1px); }
+      .pd-var-img-btn:hover:not(.on) { border-color: #7c3aed; transform: translateY(-1px); }
+      .pd-var-others { opacity: 0.6; border-style: dashed; }
+      .pd-var-msg { font-size: 7px; color: #ef4444; text-align: center; margin-top: 4px; font-weight: 800; line-height: 1; text-transform: uppercase; }
 
       .pd-var-btn.disabled {
-        opacity: .5; cursor: not-allowed; border-style: dashed; background: #f9fafb;
+        opacity: .6; cursor: pointer; border-style: dashed; background: #f9fafb;
       }
       .pd-var-btn.disabled .pd-var-val { color: #9ca3af; }
       
       .pd-sku-line { margin-top: 16px; display: flex; align-items: center; gap: 10px; padding-top: 14px; border-top: 1px dashed rgba(124,58,237,.15); }
       .pd-sku-label { font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: .08em; }
       .pd-sku-val { font-size: 12px; font-weight: 800; color: #1e1b2e; font-family: monospace; }
+      .pd-weight-val { font-size: 10px; font-weight: 700; color: #7c3aed; background: rgba(124,58,237,.08); padding: 2px 6px; border-radius: 5px; }
       .pd-weight-val { font-size: 11px; font-weight: 700; color: #7c3aed; background: rgba(124,58,237,.08); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(124,58,237,.1); display: inline-flex; align-items: center; gap: 4px; }
       .pd-weight-val::before { content: '⚖️'; font-size: 10px; }
 
@@ -523,6 +536,7 @@ export default function ProductDetail() {
         color: #1e1b2e; letter-spacing: .02em; line-height: 1.05;
         margin-bottom: 12px;
       }
+      .pd-name-variant { color: #7c3aed; font-size: clamp(20px, 3vw, 32px); opacity: 0.8; font-family: 'DM Sans', sans-serif; font-weight: 600; }
 
       /* rating row */
       .pd-rat-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
@@ -1030,7 +1044,7 @@ export default function ProductDetail() {
               </div>
             )}
 
-            {/* VARIANTS (Industry Standard Style) - Positioned below images */}
+            {/* VARIANTS (Flipkart Style) */}
             {Array.isArray(p.variants) && p.variants.length > 0 && (
               <div className="pd-variants">
                 {variantAttrs.map(attrKey => {
@@ -1042,8 +1056,8 @@ export default function ProductDetail() {
                   return (
                     <div key={attrKey} className="pd-var-sec">
                       <div className="pd-var-lbl">
-                        <span>{attrKey}:</span>
-                        {currentVal && <span className="pd-var-selected">{currentVal}</span>}
+                        <span className="pd-var-name">{attrKey}</span>
+                        {currentVal && <span className="pd-var-selected">: {currentVal}</span>}
                       </div>
                       <div className="pd-var-opts">
                         {options.map((opt, i) => {
@@ -1058,18 +1072,19 @@ export default function ProductDetail() {
                               if (k === attrKey || !vVal) return true;
                               return String(v.attributes[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
                             })
-                          ) || p.variants.find(v => String(v.attributes[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase());
+                          ) || p.variants.find(v => v.isActive !== false && String(v.attributes[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase());
 
                           if (isColor) {
-                            const imgUrl = repVariant?.images?.split(',')[0]?.trim() || imgs[0]?.url;
+                            const imgUrl = (repVariant?.images?.[0]?.url) || (Array.isArray(p.images) ? p.images[0]?.url : null);
                             return (
                               <div 
                                 key={i}
-                                className={`pd-var-img-btn${on ? ' on' : ''}`}
+                                className={`pd-var-img-btn${on ? ' on' : ''}${!enabled ? ' pd-var-others' : ''}`}
                                 onClick={() => setSelected(prev => ({ ...prev, [attrKey]: opt }))}
                                 title={opt}
                               >
-                                <img src={imgUrl} alt={opt} />
+                                {imgUrl ? <img src={imgUrl} alt={opt} /> : <span className="text-[10px] uppercase font-bold">{opt[0]}</span>}
+                                {!enabled && <div className="pd-var-msg">Available in others</div>}
                               </div>
                             )
                           }
@@ -1078,13 +1093,13 @@ export default function ProductDetail() {
                             <button 
                               key={i} 
                               className={`pd-var-btn${on ? ' on' : ''}${!enabled ? ' disabled' : ''}`}
-                              onClick={() => enabled && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
+                              onClick={() => setSelected(prev => ({ ...prev, [attrKey]: opt }))}
                             >
                               <span className="pd-var-val">{opt}</span>
                               {enabled ? (
-                                <span className="pd-var-price">₹{repVariant?.price || p.price}</span>
+                                <span className="pd-var-price">₹{(repVariant?.price || p.price).toLocaleString()}</span>
                               ) : (
-                                <span className="pd-var-oos">Out of stock</span>
+                                <span className="pd-var-oos">Unavailable</span>
                               )}
                             </button>
                           )
@@ -1093,7 +1108,7 @@ export default function ProductDetail() {
                     </div>
                   )
                 })}
-                
+
                 {matchedVariant && (
                   <div className="pd-sku-line">
                     <span className="pd-sku-label">Item Code:</span>
@@ -1134,7 +1149,14 @@ export default function ProductDetail() {
             </div>
 
             {/* name */}
-            <h1 className="pd-name">{p.name}</h1>
+            <h1 className="pd-name">
+              {p.name}
+              {matchedVariant && (
+                <span className="pd-name-variant">
+                  {' '}({Object.values(matchedVariant.attributes instanceof Map ? Object.fromEntries(matchedVariant.attributes) : (matchedVariant.attributes || {})).join(', ')})
+                </span>
+              )}
+            </h1>
 
             {/* rating */}
             <div className="pd-rat-row">

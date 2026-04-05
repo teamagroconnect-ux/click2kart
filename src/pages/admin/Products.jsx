@@ -256,11 +256,23 @@ export default function Products() {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <div className="font-bold text-gray-900 truncate max-w-[240px] text-sm">{p.name}</div>
+                                <div className="font-bold text-gray-900 truncate max-w-[240px] text-sm">
+                                  {p.name}
+                                </div>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="text-[9px] text-blue-600 font-bold uppercase">{p.brand?.name || 'Unbranded'}</span>
                                   <span className="text-[9px] text-gray-400 font-medium">{p.category?.name || 'General'}</span>
                                 </div>
+                                {p.variants?.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {p.variants.slice(0, 3).map((v, idx) => (
+                                      <span key={idx} className="text-[8px] bg-gray-100 px-1 rounded text-gray-500 font-bold">
+                                        ({Object.values(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).join(', ')})
+                                      </span>
+                                    ))}
+                                    {p.variants.length > 3 && <span className="text-[8px] text-gray-400">+{p.variants.length - 3} more</span>}
+                                  </div>
+                                )}
                                 {p.sku && <div className="text-[9px] font-mono text-gray-400 mt-0.5">SKU: {p.sku}</div>}
                               </div>
                             </div>
@@ -652,7 +664,7 @@ export default function Products() {
                     {hasVariants ? (
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">1. Define Attributes (e.g. Color, Size)</label>
+                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">1. Define Attributes & Values</label>
                           <div className="flex gap-2">
                             <input 
                               className="flex-1 bg-white border rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500" 
@@ -663,8 +675,8 @@ export default function Products() {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
                                   const v = attrInput.trim().toLowerCase();
-                                  if (v && !form.attributes.includes(v)) {
-                                    setForm(f => ({ ...f, attributes: [...f.attributes, v] }));
+                                  if (v && !form.attributes.some(a => a.split(':')[0] === v)) {
+                                    setForm(f => ({ ...f, attributes: [...f.attributes, `${v}:`] }));
                                     setAttrInput('');
                                   }
                                 }
@@ -674,8 +686,8 @@ export default function Products() {
                               type="button" 
                               onClick={() => { 
                                 const v = attrInput.trim().toLowerCase(); 
-                                if (v && !form.attributes.includes(v)) { 
-                                  setForm(f => ({ ...f, attributes: [...f.attributes, v] })); 
+                                if (v && !form.attributes.some(a => a.split(':')[0] === v)) { 
+                                  setForm(f => ({ ...f, attributes: [...f.attributes, `${v}:`] })); 
                                   setAttrInput(''); 
                                 } 
                               }} 
@@ -684,24 +696,60 @@ export default function Products() {
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
                             </button>
                           </div>
-                          <div className="flex flex-wrap gap-1">
-                            {form.attributes.map((a, i) => (
-                              <span key={i} className="px-2 py-1 rounded-lg bg-blue-50 text-blue-600 text-[9px] font-black uppercase border border-blue-100 flex items-center gap-1 group">
-                                {a} 
-                                <button type="button" onClick={() => setForm(f => ({ ...f, attributes: f.attributes.filter((_, idx) => idx !== i) }))} className="text-blue-300 hover:text-red-500 transition-colors">✕</button>
-                              </span>
-                            ))}
+                          
+                          <div className="space-y-2">
+                            {form.attributes.map((a, i) => {
+                              const [name, valuesStr] = a.split(':');
+                              const values = valuesStr ? valuesStr.split(',').filter(Boolean) : [];
+                              return (
+                                <div key={i} className="bg-white p-2 rounded-xl border border-gray-100 space-y-1.5">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-[9px] font-black text-blue-600 uppercase">{name}</span>
+                                    <button type="button" onClick={() => setForm(f => ({ ...f, attributes: f.attributes.filter((_, idx) => idx !== i) }))} className="text-gray-300 hover:text-red-500">✕</button>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1">
+                                    {values.map(v => (
+                                      <span key={v} className="px-1.5 py-0.5 rounded bg-gray-50 border border-gray-100 text-[8px] font-bold text-gray-500 flex items-center gap-1">
+                                        {v}
+                                        <button type="button" onClick={() => {
+                                          const next = [...form.attributes];
+                                          const vArr = values.filter(x => x !== v);
+                                          next[i] = `${name}:${vArr.join(',')}`;
+                                          setForm(f => ({ ...f, attributes: next }));
+                                        }} className="hover:text-red-500">✕</button>
+                                      </span>
+                                    ))}
+                                    <input 
+                                      className="bg-gray-50 border rounded px-1.5 py-0.5 text-[8px] font-bold outline-none w-16" 
+                                      placeholder="+ Val"
+                                      onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                          e.preventDefault();
+                                          const val = e.target.value.trim();
+                                          if (val && !values.includes(val)) {
+                                            const next = [...form.attributes];
+                                            next[i] = `${name}:${[...values, val].join(',')}`;
+                                            setForm(f => ({ ...f, attributes: next }));
+                                            e.target.value = '';
+                                          }
+                                        }
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              )
+                            })}
                           </div>
                         </div>
 
                         {form.attributes.length > 0 && (
                           <div className="space-y-3 pt-3 border-t border-gray-100">
-                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">2. Add Variant Values</label>
+                            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">2. Add Variant Combination</label>
                             <VariantQuickAdd 
                               onAdd={(v)=> {
                                 const isDup = (form.variants || []).some(ex => Object.entries(v.attributes).every(([k, val]) => String(ex.attributes[k]).toLowerCase() === String(val).toLowerCase()));
                                 if (isDup) return notify('Variant already exists', 'error');
-                                setForm(f => ({ ...f, variants: [...(f.variants||[]), v] }))
+                                setForm(f => ({ ...f, variants: [...(form.variants||[]), v] }))
                               }} 
                               productAttributes={form.attributes} 
                               productName={form.name}
@@ -1097,6 +1145,7 @@ export default function Products() {
 function VariantManager({ product, setEditing, onChanged, editingVariant, setEditingVariant, price = '', weight = '' }) {
   const { notify } = useToast()
   const [attrInput, setAttrInput] = useState('')
+  const [valInput, setValInput] = useState({}) // { attrName: 'currentInput' }
 
   const toggleActive = async (v) => {
     try {
@@ -1119,9 +1168,11 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
     const val = attrInput.trim().toLowerCase()
     if (!val) return
     const currentAttrs = Array.isArray(product.attributes) ? product.attributes : []
-    if (currentAttrs.includes(val)) return notify('Attribute already exists', 'error')
+    // Support both simple string and "name:v1,v2" format
+    const attrNames = currentAttrs.map(a => a.split(':')[0])
+    if (attrNames.includes(val)) return notify('Attribute already exists', 'error')
     
-    const next = [...currentAttrs, val]
+    const next = [...currentAttrs, `${val}:`]
     setEditing(prev => ({ ...prev, attributes: next }))
     setAttrInput('')
   }
@@ -1130,6 +1181,34 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
     const currentAttrs = Array.isArray(product.attributes) ? product.attributes : []
     const next = currentAttrs.filter(x => x !== a)
     setEditing(prev => ({ ...prev, attributes: next }))
+  }
+
+  const addAttrValue = (attrName, value) => {
+    const val = value.trim()
+    if (!val) return
+    const currentAttrs = [...(product.attributes || [])]
+    const idx = currentAttrs.findIndex(a => a.startsWith(`${attrName}:`))
+    if (idx === -1) return
+
+    const [name, valuesStr] = currentAttrs[idx].split(':')
+    const values = valuesStr ? valuesStr.split(',').filter(Boolean) : []
+    if (values.includes(val)) return notify('Value already exists', 'error')
+    
+    currentAttrs[idx] = `${name}:${[...values, val].join(',')}`
+    setEditing(prev => ({ ...prev, attributes: currentAttrs }))
+    setValInput(prev => ({ ...prev, [attrName]: '' }))
+  }
+
+  const removeAttrValue = (attrName, valToRemove) => {
+    const currentAttrs = [...(product.attributes || [])]
+    const idx = currentAttrs.findIndex(a => a.startsWith(`${attrName}:`))
+    if (idx === -1) return
+
+    const [name, valuesStr] = currentAttrs[idx].split(':')
+    const values = valuesStr.split(',').filter(v => v !== valToRemove)
+    
+    currentAttrs[idx] = `${name}:${values.join(',')}`
+    setEditing(prev => ({ ...prev, attributes: currentAttrs }))
   }
 
   const handleQuickAdd = async (v) => {
@@ -1174,9 +1253,9 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
   return (
     <div className="space-y-6">
       {/* Step 1: Define Attributes */}
-      <div className="p-4 bg-gray-50 border border-gray-100 rounded-3xl space-y-3">
+      <div className="p-4 bg-gray-50 border border-gray-100 rounded-3xl space-y-4">
         <div className="flex items-center justify-between">
-          <h5 className="text-[9px] font-black uppercase tracking-widest text-gray-400">1. Define Attributes</h5>
+          <h5 className="text-[9px] font-black uppercase tracking-widest text-gray-400">1. Define Attributes & Values</h5>
           <div className="flex gap-2">
             <input 
               className="bg-white border rounded-xl px-3 py-1.5 text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500 w-28" 
@@ -1190,16 +1269,46 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
             </button>
           </div>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        
+        <div className="space-y-3">
           {Array.isArray(product.attributes) && product.attributes.length > 0 ? (
-            product.attributes.map(a => (
-              <span key={a} className="inline-flex items-center gap-1.5 px-2 py-1 bg-white border border-gray-100 rounded-lg text-[9px] font-black text-blue-600 uppercase shadow-sm group">
-                {a}
-                <button type="button" onClick={() => removeAttr(a)} className="text-gray-300 hover:text-red-500 transition-colors">✕</button>
-              </span>
-            ))
+            product.attributes.map(attr => {
+              const [name, valuesStr] = attr.split(':');
+              const values = valuesStr ? valuesStr.split(',').filter(Boolean) : [];
+              return (
+                <div key={name} className="bg-white p-3 rounded-2xl border border-gray-100 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-blue-600 uppercase">{name}</span>
+                    <button type="button" onClick={() => removeAttr(attr)} className="text-gray-300 hover:text-red-500">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-1.5">
+                    {values.map(v => (
+                      <span key={v} className="inline-flex items-center gap-1.5 px-2 py-0.5 bg-gray-50 border border-gray-100 rounded-lg text-[9px] font-bold text-gray-600 uppercase">
+                        {v}
+                        <button type="button" onClick={() => removeAttrValue(name, v)} className="text-gray-300 hover:text-red-500">✕</button>
+                      </span>
+                    ))}
+                    <div className="flex gap-1 items-center ml-1">
+                      <input 
+                        className="bg-gray-50 border rounded-lg px-2 py-0.5 text-[10px] font-bold outline-none w-20" 
+                        placeholder="Add value..."
+                        value={valInput[name] || ''}
+                        onChange={e => setValInput(prev => ({ ...prev, [name]: e.target.value }))}
+                        onKeyDown={e => e.key === 'Enter' && addAttrValue(name, valInput[name])}
+                      />
+                      <button type="button" onClick={() => addAttrValue(name, valInput[name])} className="p-0.5 text-blue-600 hover:scale-110">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/></svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
           ) : (
-            <div className="text-[9px] text-gray-400 font-bold italic">Add attributes to start...</div>
+            <div className="text-[9px] text-gray-400 font-bold italic text-center py-2">Add attributes to start...</div>
           )}
         </div>
       </div>
