@@ -215,14 +215,22 @@ export default function Products() {
     const existing = (existingVars || []).map(v => {
       const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {});
       const normalized = {};
-      Object.entries(vAttrs).forEach(([k, val]) => { normalized[k.toLowerCase()] = String(val).toLowerCase() });
-      return JSON.stringify(normalized);
+      Object.entries(vAttrs).forEach(([k, val]) => { normalized[k.toLowerCase().trim()] = String(val).toLowerCase().trim() });
+      const sorted = Object.keys(normalized).sort().reduce((obj, key) => {
+        obj[key] = normalized[key];
+        return obj;
+      }, {});
+      return JSON.stringify(sorted);
     });
 
     return all.filter(combo => {
       const normalized = {};
-      Object.entries(combo).forEach(([k, val]) => { normalized[k.toLowerCase()] = String(val).toLowerCase() });
-      return !existing.includes(JSON.stringify(normalized));
+      Object.entries(combo).forEach(([k, val]) => { normalized[k.toLowerCase().trim()] = String(val).toLowerCase().trim() });
+      const sorted = Object.keys(normalized).sort().reduce((obj, key) => {
+        obj[key] = normalized[key];
+        return obj;
+      }, {});
+      return !existing.includes(JSON.stringify(sorted));
     });
   };
 
@@ -594,7 +602,17 @@ export default function Products() {
                   {hasVariants && (
                     <div className="space-y-4 pt-4 border-t border-gray-100 mt-4 animate-in slide-in-from-top-2 duration-300">
                       <div className="flex items-center justify-between">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-blue-600">Step 2: Create Variants</div>
+                        <div>
+                          <div className="text-[10px] font-black uppercase tracking-widest text-blue-600">Step 2: Create Variants</div>
+                          {form.attributes.filter(a => a.split(':')[1]).length > 0 && (
+                            <p className="text-[8px] font-black text-gray-400 uppercase mt-1">
+                              {form.attributes.filter(a => a.split(':')[1]).map(a => {
+                                const [name, vals] = a.split(':');
+                                return `${vals.split(',').filter(Boolean).length} ${name}`;
+                              }).join(' x ')} = {getMissingCombos(form.attributes, form.variants).length + (form.variants || []).length} Total Combinations
+                            </p>
+                          )}
+                        </div>
                         {getMissingCombos(form.attributes, form.variants).length > 1 && (
                           <button 
                             type="button"
@@ -887,13 +905,16 @@ export default function Products() {
                                       onKeyDown={e => {
                                         if (e.key === 'Enter') {
                                           e.preventDefault();
-                                          const val = e.target.value.trim();
-                                          if (val && !values.includes(val)) {
-                                            const next = [...form.attributes];
-                                            next[i] = `${name}:${[...values, val].join(',')}`;
-                                            setForm(f => ({ ...f, attributes: next }));
-                                            e.target.value = '';
-                                          }
+                                          const raw = e.target.value.trim();
+                                          if (!raw) return;
+                                          const newVals = raw.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
+                                          const existing = values.map(v => v.toLowerCase());
+                                          const combined = [...new Set([...existing, ...newVals])];
+                                          
+                                          const next = [...form.attributes];
+                                          next[i] = `${name}:${combined.join(',')}`;
+                                          setForm(f => ({ ...f, attributes: next }));
+                                          e.target.value = '';
                                         }
                                       }}
                                     />
@@ -1322,12 +1343,28 @@ export default function Products() {
                     <div className="space-y-2">
                       {viewing.variants.map((v, i) => (
                         <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                          <div className="flex flex-wrap gap-2">
-                            {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k, val]) => (
-                              <span key={k} className="text-[9px] font-black bg-white px-2 py-0.5 rounded-lg border border-gray-200 text-gray-600 uppercase"><span className="text-gray-400 mr-1">{k}:</span>{val}</span>
-                            ))}
+                          <div className="flex-1">
+                            <div className="flex flex-wrap gap-2 mb-1">
+                              {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k, val]) => (
+                                <div key={k} className="flex flex-col">
+                                  <span className="text-[7px] font-black text-gray-400 uppercase tracking-tighter">{k}</span>
+                                  <span className="text-[10px] font-black text-blue-600 uppercase leading-none">{val}</span>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="text-[10px] font-black text-gray-900 flex items-center gap-3">
+                              <span>₹{v.price}</span>
+                              <span className="text-gray-300">|</span>
+                              <span>{v.stock} pcs</span>
+                              {v.weight > 0 && (
+                                <>
+                                  <span className="text-gray-300">|</span>
+                                  <span>{v.weight}g</span>
+                                </>
+                              )}
+                            </div>
+                            {v.sku && <div className="text-[7px] font-mono text-gray-400 mt-1 uppercase tracking-wider">SKU: {v.sku}</div>}
                           </div>
-                          <div className="text-[10px] font-black text-gray-900">₹{v.price} · {v.stock} in stock</div>
                         </div>
                       ))}
                     </div>
@@ -1399,17 +1436,20 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
   }
 
   const addAttrValue = async (attrName, value) => {
-    const val = value.trim()
-    if (!val) return
+    const rawVal = value.trim()
+    if (!rawVal) return
+    const newVals = rawVal.split(',').map(v => v.trim().toLowerCase()).filter(Boolean)
+    
     const currentAttrs = [...(product.attributes || [])]
     const idx = currentAttrs.findIndex(a => a.startsWith(`${attrName}:`))
     if (idx === -1) return
 
     const [name, valuesStr] = currentAttrs[idx].split(':')
-    const values = valuesStr ? valuesStr.split(',').filter(Boolean) : []
-    if (values.includes(val)) return notify('Value already exists', 'error')
+    const existingValues = valuesStr ? valuesStr.split(',').filter(Boolean).map(v => v.toLowerCase()) : []
     
-    currentAttrs[idx] = `${name}:${[...values, val].join(',')}`
+    const finalValues = [...new Set([...existingValues, ...newVals])]
+    
+    currentAttrs[idx] = `${name}:${finalValues.join(',')}`
     await updateAttributes(currentAttrs)
     setValInput(prev => ({ ...prev, [attrName]: '' }))
   }
@@ -1487,18 +1527,40 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
     const existing = (product.variants || []).map(v => {
       const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {});
       const normalized = {};
-      Object.entries(vAttrs).forEach(([k, val]) => { normalized[k.toLowerCase()] = String(val).toLowerCase() });
-      return JSON.stringify(normalized);
+      Object.entries(vAttrs).forEach(([k, val]) => { normalized[k.toLowerCase().trim()] = String(val).toLowerCase().trim() });
+      const sorted = Object.keys(normalized).sort().reduce((obj, key) => {
+        obj[key] = normalized[key];
+        return obj;
+      }, {});
+      return JSON.stringify(sorted);
     });
 
     return all.filter(combo => {
       const normalized = {};
-      Object.entries(combo).forEach(([k, val]) => { normalized[k.toLowerCase()] = String(val).toLowerCase() });
-      return !existing.includes(JSON.stringify(normalized));
+      Object.entries(combo).forEach(([k, val]) => { normalized[k.toLowerCase().trim()] = String(val).toLowerCase().trim() });
+      const sorted = Object.keys(normalized).sort().reduce((obj, key) => {
+        obj[key] = normalized[key];
+        return obj;
+      }, {});
+      return !existing.includes(JSON.stringify(sorted));
     });
   };
 
   const missingCombinations = generateCombinations();
+
+  const getSku = (combo) => {
+    const nameParts = product.name.split(' ').filter(Boolean)
+    let nameCode = ''
+    if (nameParts.length >= 2) {
+      nameCode = nameParts.map(p => p[0]).join('').substring(0, 4)
+    } else {
+      nameCode = product.name.substring(0, 3)
+    }
+    const cleanValues = Object.values(combo).map(val => 
+      val.toLowerCase().replace(/[^a-z0-9]/g, '').trim()
+    ).join('-')
+    return `${nameCode.toUpperCase()}-${cleanValues.toUpperCase()}`
+  }
 
   const addCombination = async (combo) => {
     try {
@@ -1513,6 +1575,7 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
         stock: 0,
         weight: Number(weight || 0),
         images: images,
+        sku: getSku(combo),
         isActive: true
       });
       notify('Variant added', 'success');
@@ -1523,12 +1586,12 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
   const addAllCombinations = async () => {
     if (!window.confirm(`Create ${missingCombinations.length} variant(s)?`)) return;
     let success = 0;
+    const images = typeof product.images === 'string' 
+      ? product.images.split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
+      : (product.images || []);
+
     for (const combo of missingCombinations) {
       try {
-        const images = typeof product.images === 'string' 
-          ? product.images.split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
-          : (product.images || []);
-
         await api.post(`/api/products/${product._id}/variants`, {
           attributes: combo,
           price: Number(price || 0),
@@ -1536,6 +1599,7 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
           stock: 0,
           weight: Number(weight || 0),
           images: images,
+          sku: getSku(combo),
           isActive: true
         });
         success++;
@@ -1612,7 +1676,17 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
       {Array.isArray(product.attributes) && product.attributes.length > 0 && (
         <div className="p-4 bg-white border border-gray-100 rounded-3xl space-y-4">
           <div className="flex items-center justify-between">
-            <h5 className="text-[9px] font-black uppercase tracking-widest text-gray-400">2. Create Variants from Values</h5>
+            <div>
+              <h5 className="text-[9px] font-black uppercase tracking-widest text-gray-400">2. Create Variants from Values</h5>
+              {product.attributes.filter(a => a.split(':')[1]).length > 0 && (
+                <p className="text-[8px] font-black text-blue-600 uppercase mt-1">
+                  {product.attributes.filter(a => a.split(':')[1]).map(a => {
+                    const [name, vals] = a.split(':');
+                    return `${vals.split(',').filter(Boolean).length} ${name}`;
+                  }).join(' x ')} = {missingCombinations.length + (product.variants || []).length} Total Combinations
+                </p>
+              )}
+            </div>
             {missingCombinations.length > 1 && (
               <button 
                 onClick={addAllCombinations}

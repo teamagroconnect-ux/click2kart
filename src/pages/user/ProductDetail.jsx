@@ -52,28 +52,37 @@ export default function ProductDetail() {
     // 2. Also check variants to ensure we don't miss any attributes
     if (p.variants?.length) {
       p.variants.forEach(v => {
-        const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
-          ? v.attributes 
-          : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-        Object.keys(vAttrs || {}).forEach(k => set.add(k.toLowerCase().trim()))
+        const vAttrs = normalizeAttrs(v.attributes)
+        Object.keys(vAttrs || {}).forEach(k => {
+          if (k) set.add(k.toLowerCase().trim())
+        })
       })
     }
     
     return Array.from(set)
   }, [p])
 
+  // Normalize an attributes object to lowercase keys
+  const normalizeAttrs = (attrs) => {
+    if (!attrs || typeof attrs !== 'object') return {}
+    const obj = attrs instanceof Map ? Object.fromEntries(attrs) : attrs
+    const result = {}
+    Object.entries(obj).forEach(([k, v]) => {
+      if (k) result[k.toLowerCase().trim()] = String(v || '').trim()
+    })
+    return result
+  }
+
   const matchedVariant = useMemo(() => {
     if (!p || !p.variants || !Array.isArray(p.variants) || !p.variants.length) return null
     return p.variants.find(v => {
-      const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
-        ? v.attributes 
-        : (v && v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-      if (!vAttrs || v.isActive === false) return false
+      const vAttrs = normalizeAttrs(v.attributes)
+      if (v.isActive === false) return false
       
-      // A variant is a match only if ALL product attributes match the selection
+      // A variant is a match only if ALL discovered attributes match the selection
       return variantAttrs.every(attr => {
         const val = selected[attr];
-        if (!val) return false; // Incomplete selection
+        if (!val) return false; 
         return String(vAttrs[attr] || '').toLowerCase() === String(val || '').toLowerCase()
       })
     })
@@ -151,18 +160,13 @@ export default function ProductDetail() {
   useEffect(() => {
     if (!p || !Array.isArray(p.variants) || !p.variants.length) { setActiveVariant(null); return }
     
-    const attrs = Array.isArray(p.attributes) ? p.attributes : []
-    
     // Find variant that exactly matches current selection
     const v = p.variants.find(v => {
       if (v.isActive === false) return false
-      const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
-        ? v.attributes 
-        : (v && v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-      if (!vAttrs) return false
-      return attrs.every(k => {
+      const vAttrs = normalizeAttrs(v.attributes)
+      return variantAttrs.every(k => {
         const val = selected[k];
-        if (!val) return true; // Treat missing as wildcard for matching, but we usually want full match
+        if (!val) return true; 
         return String(vAttrs[k] || '').toLowerCase() === String(val || '').toLowerCase()
       })
     }) || null
@@ -172,13 +176,11 @@ export default function ProductDetail() {
     if (!v && Object.keys(selected).length > 0) {
       let currentMatch = null
       // Try to match attributes one by one from first to last
-      for (let i = attrs.length; i > 0; i--) {
-        const subAttrs = attrs.slice(0, i)
+      for (let i = variantAttrs.length; i > 0; i--) {
+        const subAttrs = variantAttrs.slice(0, i)
         const partialMatch = p.variants.find(vx => {
           if (vx.isActive === false) return false
-          const vxAttrs = (vx && vx.attributes && typeof vx.attributes === 'object' && !(vx.attributes instanceof Map)) 
-            ? vx.attributes 
-            : (vx && vx.attributes instanceof Map ? Object.fromEntries(vx.attributes) : {})
+          const vxAttrs = normalizeAttrs(vx.attributes)
           return subAttrs.every(k => String(vxAttrs[k] || '').toLowerCase() === String(selected[k] || '').toLowerCase())
         })
         if (partialMatch) {
@@ -188,17 +190,14 @@ export default function ProductDetail() {
       }
       
       if (currentMatch) {
-        const mAttrs = (currentMatch.attributes && typeof currentMatch.attributes === 'object' && !(currentMatch.attributes instanceof Map)) 
-          ? currentMatch.attributes 
-          : (currentMatch.attributes instanceof Map ? Object.fromEntries(currentMatch.attributes) : {})
-        setSelected(mAttrs || {})
+        setSelected(normalizeAttrs(currentMatch.attributes))
         return
       }
     }
 
     setActiveVariant(v); 
     if (v) setActiveImg(0) // Reset image to first of variant if variant changed
-  }, [selected, p])
+  }, [selected, p, variantAttrs])
 
   /* SEO */
   useEffect(() => {
@@ -267,9 +266,10 @@ export default function ProductDetail() {
   // Variant selection helper: get available values for a specific attribute key
   const variantOpts = (key) => {
     const set = new Set()
+    const lowKey = key.toLowerCase().trim()
     
     // 1. Get from predefined values in product.attributes
-    const attrEntry = (p?.attributes || []).find(a => a.toLowerCase().startsWith(`${key.toLowerCase()}:`))
+    const attrEntry = (p?.attributes || []).find(a => a.toLowerCase().startsWith(`${lowKey}:`))
     if (attrEntry) {
       const vals = attrEntry.split(':')[1]?.split(',').filter(Boolean) || []
       vals.forEach(v => set.add(v.trim()))
@@ -279,13 +279,8 @@ export default function ProductDetail() {
     if (p?.variants?.length) {
       p.variants.forEach(v => {
         if (v.isActive === false) return;
-        const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
-          ? v.attributes 
-          : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-        
-        // Find matching key case-insensitively
-        const actualKey = Object.keys(vAttrs).find(k => k.toLowerCase() === key.toLowerCase())
-        if (actualKey && vAttrs[actualKey]) set.add(vAttrs[actualKey])
+        const vAttrs = normalizeAttrs(v.attributes)
+        if (vAttrs[lowKey]) set.add(vAttrs[lowKey])
       })
     }
     return Array.from(set).sort()
@@ -294,24 +289,24 @@ export default function ProductDetail() {
   // Flipkart Style Logic: Check if an option is enabled based on current other selections
   const isOptEnabled = (key, val) => {
     if (!p?.variants?.length) return true
+    const lowKey = key.toLowerCase().trim()
     
     const otherSelections = { ...selected };
-    delete otherSelections[key]; 
+    delete otherSelections[lowKey]; 
 
     return p.variants.some(v => {
       if (v.isActive === false || v.stock <= 0) return false;
-      const vAttrs = (v && v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
-        ? v.attributes 
-        : (v && v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
+      const vAttrs = normalizeAttrs(v.attributes)
       
       // Must match the value we're checking
-      if (String(vAttrs[key] || '').toLowerCase() !== String(val || '').toLowerCase()) return false;
-
-      // Must match all other selected attributes
-      return Object.entries(otherSelections).every(([k, vVal]) => {
-        if (!vVal) return true;
-        return String(vAttrs[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
-      });
+      if (String(vAttrs[lowKey] || '').toLowerCase() === String(val || '').toLowerCase()) {
+        // Must match all other selected attributes
+        return Object.entries(otherSelections).every(([k, vVal]) => {
+          if (!vVal) return true;
+          return String(vAttrs[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
+        });
+      }
+      return false;
     });
   }
 
@@ -1069,73 +1064,6 @@ export default function ProductDetail() {
                 ))}
               </div>
             )}
-
-            {/* VARIANTS (Flipkart Style) */}
-            {Array.isArray(p.variants) && p.variants.length > 0 && (
-              <div className="pd-variants">
-                {variantAttrs.map(attrKey => {
-                  const options = variantOpts(attrKey)
-                  if (!options.length) return null
-                  const currentVal = selected[attrKey]
-                  const isColor = attrKey.toLowerCase().includes('color')
-                  
-                  return (
-                    <div key={attrKey} className="pd-var-sec">
-                      <div className="pd-var-lbl">
-                        <span className="pd-var-name">{attrKey}</span>
-                        {currentVal && <span className="pd-var-selected">: {currentVal}</span>}
-                      </div>
-                      <div className="pd-var-opts">
-                        {options.map((opt, i) => {
-                          const enabled = isOptEnabled(attrKey, opt)
-                          const on = selected[attrKey] === opt
-                          
-                          // Find a representative variant for this option to show price/image
-                          const repVariant = p.variants.find(v => 
-                            v.isActive !== false &&
-                            String(v.attributes[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
-                            Object.entries(selected).every(([k, vVal]) => {
-                              if (k === attrKey || !vVal) return true;
-                              return String(v.attributes[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
-                            })
-                          ) || p.variants.find(v => v.isActive !== false && String(v.attributes[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase());
-
-                          if (isColor) {
-                            const imgUrl = (repVariant?.images?.[0]?.url) || (Array.isArray(p.images) ? p.images[0]?.url : null);
-                            return (
-                              <div 
-                                key={i}
-                                className={`pd-var-img-btn${on ? ' on' : ''}${!enabled ? ' pd-var-others disabled' : ''}`}
-                                onClick={() => enabled && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
-                                title={opt}
-                              >
-                                {imgUrl ? <img src={imgUrl} alt={opt} /> : <span className="text-[10px] uppercase font-bold">{opt[0]}</span>}
-                                {!enabled && <div className="pd-var-msg">Out of Stock</div>}
-                              </div>
-                            )
-                          }
-
-                          return (
-                            <button 
-                              key={i} 
-                              className={`pd-var-btn${on ? ' on' : ''}${!enabled ? ' disabled' : ''}`}
-                              onClick={() => enabled && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
-                            >
-                              <span className="pd-var-val">{opt}</span>
-                              {enabled ? (
-                                <span className="pd-var-price">₹{(repVariant?.price || p.price).toLocaleString()}</span>
-                              ) : (
-                                <span className="pd-var-oos">Out of Stock</span>
-                              )}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
           </div>
 
           {/* ══ RIGHT — INFO PANEL ══ */}
@@ -1173,6 +1101,73 @@ export default function ProductDetail() {
                 </span>
               )}
             </h1>
+
+            {/* VARIANTS (Flipkart Style) */}
+            {Array.isArray(p.variants) && p.variants.length > 0 && (
+              <div className="pd-variants" style={{ marginBottom: 24 }}>
+                {variantAttrs.map(attrKey => {
+                  const options = variantOpts(attrKey)
+                  if (!options.length) return null
+                  const currentVal = selected[attrKey]
+                  const isColor = attrKey.toLowerCase().includes('color')
+                  
+                  return (
+                    <div key={attrKey} className="pd-var-sec">
+                      <div className="pd-var-lbl">
+                        <span className="pd-var-name">{attrKey}</span>
+                        {currentVal && <span className="pd-var-selected">: {currentVal}</span>}
+                      </div>
+                      <div className="pd-var-opts">
+                        {options.map((opt, i) => {
+                          const enabled = isOptEnabled(attrKey, opt)
+                          const on = selected[attrKey] === opt
+                          
+                          // Find a representative variant for this option to show price/image
+                          const repVariant = p.variants.find(v => 
+                            v.isActive !== false &&
+                            String(normalizeAttrs(v.attributes)[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
+                            Object.entries(selected).every(([k, vVal]) => {
+                              if (k === attrKey || !vVal) return true;
+                              return String(normalizeAttrs(v.attributes)[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
+                            })
+                          ) || p.variants.find(v => v.isActive !== false && String(normalizeAttrs(v.attributes)[attrKey] || '').toLowerCase() === String(opt || '').toLowerCase());
+
+                          if (isColor) {
+                            const imgUrl = (repVariant?.images?.[0]?.url) || (Array.isArray(p.images) ? p.images[0]?.url : null);
+                            return (
+                              <div 
+                                key={i}
+                                className={`pd-var-img-btn${on ? ' on' : ''}${!enabled ? ' pd-var-others disabled' : ''}`}
+                                onClick={() => enabled && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
+                                title={opt}
+                              >
+                                {imgUrl ? <img src={imgUrl} alt={opt} /> : <span className="text-[10px] uppercase font-bold">{opt[0]}</span>}
+                                {!enabled && <div className="pd-var-msg">Out of Stock</div>}
+                              </div>
+                            )
+                          }
+
+                          return (
+                            <button 
+                              key={i} 
+                              className={`pd-var-btn${on ? ' on' : ''}${!enabled ? ' disabled' : ''}`}
+                              onClick={() => enabled && setSelected(prev => ({ ...prev, [attrKey]: opt }))}
+                            >
+                              <span className="pd-var-val">{opt}</span>
+                              {enabled ? (
+                                <span className="pd-var-price">₹{(repVariant?.price || p.price).toLocaleString()}</span>
+                              ) : (
+                                <span className="pd-var-oos">Out of Stock</span>
+                              )}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
 
             {/* rating */}
             <div className="pd-rat-row">
