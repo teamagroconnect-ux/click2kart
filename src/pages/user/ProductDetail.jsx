@@ -60,13 +60,13 @@ export default function ProductDetail() {
       if (name) set.add(name.trim())
     })
 
-    // 2. Also check variants to ensure we don't miss any attributes
-    if (p.variants?.length) {
+    // 2. Scan ALL variants for ANY extra attributes
+    if (Array.isArray(p.variants)) {
       p.variants.forEach(v => {
-        const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
+        if (!v.attributes) return;
+        const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : v.attributes;
         Object.keys(vAttrs).forEach(k => {
           if (k) {
-            // Find existing key in set that matches case-insensitive, or add new one
             const existing = Array.from(set).find(s => s.toLowerCase() === k.toLowerCase().trim())
             if (!existing) set.add(k.trim())
           }
@@ -74,7 +74,11 @@ export default function ProductDetail() {
       })
     }
     
-    return Array.from(set)
+    const result = Array.from(set)
+    if (result.length === 0 && Array.isArray(p.variants) && p.variants.length > 0) {
+      console.warn("ProductDetail: Product has variants but no attributes defined.")
+    }
+    return result
   }, [p])
 
   const matchedVariant = useMemo(() => {

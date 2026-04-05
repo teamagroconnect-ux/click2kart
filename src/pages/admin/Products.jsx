@@ -1752,14 +1752,19 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
               <div className="flex-1 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 overflow-hidden">
                 {/* Attributes */}
                 <div className="flex flex-wrap gap-2 w-full md:w-[180px]">
-                  {Object.entries(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).map(([k,val]) => (
-                    <div key={k} className="flex flex-col md:flex-row md:items-center gap-1">
-                      <span className="text-[7px] md:hidden font-black text-gray-400 uppercase">{k}</span>
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-black rounded-lg uppercase border border-blue-100/50">
-                        {val}
-                      </span>
-                    </div>
-                  ))}
+                  {(() => {
+                    const attrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {});
+                    const entries = Object.entries(attrs);
+                    if (entries.length === 0) return <span className="text-[9px] text-gray-300 italic">No attributes</span>;
+                    return entries.map(([k,val]) => (
+                      <div key={k} className="flex flex-col md:flex-row md:items-center gap-1">
+                        <span className="text-[7px] md:hidden font-black text-gray-400 uppercase">{k}</span>
+                        <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-black rounded-lg uppercase border border-blue-100/50">
+                          {val}
+                        </span>
+                      </div>
+                    ));
+                  })()}
                 </div>
 
                 {/* Price */}
