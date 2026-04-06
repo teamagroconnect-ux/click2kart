@@ -19,6 +19,7 @@ export default function Enquiry() {
         quantity:  item.quantity,
         name:      item.name,
         price:     item.price,
+        gst:       item.gst || 0,
         mrp:       item.mrp || item.price,
         image:     item.image || item.images?.[0]?.url,
         attributes: item.attributes,
@@ -27,7 +28,7 @@ export default function Enquiry() {
         bulkTiers: item.bulkTiers,
         weight:    item.weight || 0,
       }))
-    : (loc.state?.productId ? [{ productId: loc.state.productId, quantity: 1, name: loc.state.name, mrp: loc.state.mrp || loc.state.price, price: loc.state.price }] : [])
+    : (loc.state?.productId ? [{ productId: loc.state.productId, quantity: 1, name: loc.state.name, mrp: loc.state.mrp || loc.state.price, price: loc.state.price, gst: loc.state.gst || 0 }] : [])
 
   const [items,          setItems]          = useState(initialItems)
   const [profile,        setProfile]        = useState({ name:'', phone:'', email:'', kyc:{} })
@@ -74,7 +75,7 @@ export default function Enquiry() {
   useEffect(() => {
     if (cart.length > 0) setItems(cart.map(item => ({
       productId: item.productId||item._id, variantSku: item.variantSku, quantity: item.quantity,
-      name: item.name, price: item.price, mrp: item.mrp || item.price, image: item.image||item.images?.[0]?.url,
+      name: item.name, price: item.price, gst: item.gst || 0, mrp: item.mrp || item.price, image: item.image||item.images?.[0]?.url,
       attributes: item.attributes, bulkQty: item.bulkDiscountQuantity||item.bulkQty||0,
       bulkRed: item.bulkDiscountPriceReduction||item.bulkRed||0, bulkTiers: item.bulkTiers,
       weight: item.weight || 0,
@@ -112,7 +113,7 @@ export default function Enquiry() {
     })
   }
 
-  const unitPrice = (it) => {
+  const getLineDetails = (it) => {
     let p = Number(it.price||0)
     const qty = Math.max(1, Number(it.quantity||1))
     if (Array.isArray(it.bulkTiers)&&it.bulkTiers.length) {
@@ -122,9 +123,18 @@ export default function Enquiry() {
     } else if (Number(it.bulkQty||it.bulkDiscountQuantity)>0) {
       if (qty >= Number(it.bulkQty||it.bulkDiscountQuantity)) p = Math.max(0, p - Number(it.bulkRed||it.bulkDiscountPriceReduction||0))
     }
-    return p
+    const lineSubtotal = p * qty
+    const lineGst = Number(((lineSubtotal * Number(it.gst||0)) / 100).toFixed(2))
+    const lineTotal = lineSubtotal + lineGst
+    return { unitBase: p, lineSubtotal, lineGst, lineTotal }
   }
-  const lineTotal = (it) => unitPrice(it) * Math.max(1, Number(it.quantity||1))
+
+  const unitPrice = (it) => {
+    const details = getLineDetails(it)
+    return Number(((details.lineTotal) / Math.max(1, Number(it.quantity||1))).toFixed(2))
+  }
+  
+  const lineTotal = (it) => getLineDetails(it).lineTotal
   const computedVisibleTotal = (arr) => arr.filter(it=>typeof it.productId==='string'&&it.productId.length>=12).reduce((s,it)=>s+lineTotal(it),0)
   const subTotal = computedVisibleTotal(items)
   const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0
@@ -229,7 +239,12 @@ export default function Enquiry() {
   const visibleTotal = computedVisibleTotal(items)
   const minLeft      = Math.max(0, minAmount - visibleTotal)
   
-  const mrpTotal     = items.reduce((s, it) => s + Number(it.mrp || it.price || 0) * Math.max(1, Number(it.quantity || 1)), 0)
+  const mrpTotal     = items.reduce((s, it) => {
+    const qty = Math.max(1, Number(it.quantity || 1))
+    const baseMrp = Number(it.mrp || it.price || 0)
+    const mrpWithGst = baseMrp + (baseMrp * Number(it.gst || 0) / 100)
+    return s + (mrpWithGst * qty)
+  }, 0)
   const bulkSavings  = Math.max(0, mrpTotal - subTotal)
   const totalSavings = bulkSavings + couponDiscount + (ship.amount || 0)
 

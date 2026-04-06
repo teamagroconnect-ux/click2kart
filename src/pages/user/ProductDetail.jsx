@@ -628,30 +628,35 @@ export default function ProductDetail() {
       .pd-thumb img { width: 100%; height: 100%; object-fit: contain; }
 
       /* ============================================
-         PREMIUM VARIANT SELECTOR - VERTICAL LAYOUT
+         ULTRA PREMIUM VARIANT SELECTOR
          ============================================ */
       .pd-variants {
         display: flex;
         flex-direction: column;
         gap: 28px;
         margin-top: 24px;
-        padding: 28px 24px;
-        background: linear-gradient(145deg, #ffffff, #fefeff);
-        border-radius: 28px;
-        border: 1px solid rgba(124, 58, 237, 0.12);
-        box-shadow: 0 8px 32px rgba(124, 58, 237, 0.06);
+        padding: 32px 28px;
+        background: rgba(255, 255, 255, 0.65);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-radius: 32px;
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 16px 40px -8px rgba(124, 58, 237, 0.12),
+                    inset 0 1px 1px rgba(255, 255, 255, 1);
         position: relative;
         z-index: 10;
+        overflow: hidden;
       }
       
       .pd-variants::before {
         content: '';
         position: absolute;
         top: 0;
-        left: 20px;
-        right: 20px;
-        height: 2px;
-        background: linear-gradient(90deg, transparent, rgba(124, 58, 237, 0.25), transparent);
+        left: 0;
+        right: 0;
+        height: 200px;
+        background: radial-gradient(ellipse at top, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
+        pointer-events: none;
       }
       
       .pd-var-sec {
@@ -744,36 +749,53 @@ export default function ProductDetail() {
       /* Premium Option Button */
       .pd-var-btn {
         min-width: 80px;
-        padding: 12px 20px;
-        background: #ffffff;
-        border: 1.5px solid rgba(124, 58, 237, 0.15);
-        border-radius: 14px;
-        transition: all 0.2s cubic-bezier(0.34, 1.2, 0.64, 1);
+        padding: 14px 24px;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1.5px solid rgba(124, 58, 237, 0.1);
+        border-radius: 18px;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         cursor: pointer;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 4px;
+        gap: 6px;
         position: relative;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.015);
+        overflow: hidden;
+      }
+      
+      .pd-var-btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.4s ease;
       }
       
       .pd-var-btn:hover:not(.disabled):not(.on) {
-        border-color: #7c3aed;
-        background: linear-gradient(145deg, #ffffff, #faf8ff);
-        transform: translateY(-2px);
-        box-shadow: 0 6px 14px rgba(124, 58, 237, 0.12);
+        border-color: rgba(124, 58, 237, 0.4);
+        background: rgba(255, 255, 255, 0.95);
+        transform: translateY(-3px);
+        box-shadow: 0 12px 24px -6px rgba(124, 58, 237, 0.15);
       }
       
       .pd-var-btn.on {
-        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        background: linear-gradient(135deg, #7c3aed, #5b21b6);
         border-color: #7c3aed;
-        box-shadow: 0 6px 18px rgba(124, 58, 237, 0.3);
+        box-shadow: 0 12px 32px -8px rgba(124, 58, 237, 0.4),
+                    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+      }
+      
+      .pd-var-btn.on::before {
+        opacity: 1;
       }
       
       .pd-var-btn.on .pd-var-val {
         color: white;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.2);
       }
       
       .pd-var-btn.on .pd-var-price {
@@ -781,17 +803,21 @@ export default function ProductDetail() {
       }
       
       .pd-var-val {
-        font-size: 13px;
-        font-weight: 700;
+        font-size: 14px;
+        font-weight: 800;
         color: #1e1b2e;
-        transition: color 0.2s;
+        transition: color 0.3s;
+        position: relative;
+        z-index: 2;
       }
       
       .pd-var-price {
-        font-size: 10px;
-        font-weight: 600;
+        font-size: 11px;
+        font-weight: 700;
         color: #7c3aed;
         letter-spacing: 0.02em;
+        position: relative;
+        z-index: 2;
       }
       
       .pd-var-btn.on .pd-var-price {
@@ -831,36 +857,43 @@ export default function ProductDetail() {
       /* Color/Image option button */
       .pd-var-img-btn {
         min-width: 80px;
-        padding: 8px 12px;
-        background: #ffffff;
-        border: 1.5px solid rgba(124, 58, 237, 0.15);
-        border-radius: 14px;
-        transition: all 0.2s ease;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1.5px solid rgba(124, 58, 237, 0.1);
+        border-radius: 16px;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         cursor: pointer;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 6px;
+        gap: 8px;
         position: relative;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.015);
       }
       
       .pd-var-img-btn img {
-        width: 48px;
-        height: 48px;
+        width: 52px;
+        height: 52px;
         object-fit: contain;
-        border-radius: 8px;
+        border-radius: 12px;
+        transition: transform 0.4s ease;
+      }
+      
+      .pd-var-img-btn:hover:not(.disabled):not(.on) img {
+        transform: scale(1.1);
       }
       
       .pd-var-img-btn .pd-var-val {
-        font-size: 11px;
+        font-size: 12px;
       }
       
       .pd-var-img-btn.on {
         border-color: #7c3aed;
-        border-width: 2px;
-        background: linear-gradient(145deg, #ffffff, #faf8ff);
-        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.15);
+        background: rgba(124, 58, 237, 0.04);
+        box-shadow: 0 12px 24px -8px rgba(124, 58, 237, 0.25),
+                    0 0 0 1px #7c3aed;
+        transform: translateY(-2px);
       }
       
       .pd-var-img-btn.disabled {
