@@ -123,16 +123,14 @@ export default function Enquiry() {
     } else if (Number(it.bulkQty||it.bulkDiscountQuantity)>0) {
       if (qty >= Number(it.bulkQty||it.bulkDiscountQuantity)) p = Math.max(0, p - Number(it.bulkRed||it.bulkDiscountPriceReduction||0))
     }
-    const lineSubtotal = p * qty
-    const lineGst = Number(((lineSubtotal * Number(it.gst||0)) / 100).toFixed(2))
-    const lineTotal = lineSubtotal + lineGst
+    const lineTotal = p * qty
+    const rate = Number(it.gst||0)
+    const lineGst = rate > 0 ? Number((lineTotal - (lineTotal / (1 + rate / 100))).toFixed(2)) : 0
+    const lineSubtotal = Number((lineTotal - lineGst).toFixed(2))
     return { unitBase: p, lineSubtotal, lineGst, lineTotal }
   }
 
-  const unitPrice = (it) => {
-    const details = getLineDetails(it)
-    return Number(((details.lineTotal) / Math.max(1, Number(it.quantity||1))).toFixed(2))
-  }
+  const unitPrice = (it) => getLineDetails(it).unitBase
   
   const lineTotal = (it) => getLineDetails(it).lineTotal
   const computedVisibleTotal = (arr) => arr.filter(it=>typeof it.productId==='string'&&it.productId.length>=12).reduce((s,it)=>s+lineTotal(it),0)
@@ -242,8 +240,7 @@ export default function Enquiry() {
   const mrpTotal     = items.reduce((s, it) => {
     const qty = Math.max(1, Number(it.quantity || 1))
     const baseMrp = Number(it.mrp || it.price || 0)
-    const mrpWithGst = baseMrp + (baseMrp * Number(it.gst || 0) / 100)
-    return s + (mrpWithGst * qty)
+    return s + (baseMrp * qty)
   }, 0)
   const bulkSavings  = Math.max(0, mrpTotal - subTotal)
   const totalSavings = bulkSavings + couponDiscount + (ship.amount || 0)
