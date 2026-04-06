@@ -17,17 +17,19 @@ export default function ProductDetail() {
   const { notify }    = useToast()
 
   // Normalize an attributes object to lowercase keys
-  const normalizeAttrs = (attrs) => {
-    if (!attrs || typeof attrs !== 'object') return {}
-    const obj = attrs instanceof Map ? Object.fromEntries(attrs) : attrs
+  const normalizeAttrs = (attrs, sku = '') => {
     const result = {}
-    Object.entries(obj).forEach(([k, v]) => {
-      if (k) result[k.toLowerCase().trim()] = String(v || '').trim()
-    })
+    if (attrs && typeof attrs === 'object') {
+      const obj = attrs instanceof Map ? Object.fromEntries(attrs) : attrs
+      Object.entries(obj).forEach(([k, v]) => {
+        if (k && k !== 'sku') result[k.toLowerCase().trim()] = String(v || '').trim()
+      })
+    }
 
     // 🚀 SKU Parsing Fallback: If attributes are empty, extract from SKU (e.g. O8SV-BLACK-80)
-    if (Object.keys(result).length === 0 && attrs.sku) {
-      const parts = attrs.sku.split('-');
+    const targetSku = sku || (attrs && typeof attrs === 'object' ? attrs.sku : null);
+    if (Object.keys(result).length === 0 && targetSku) {
+      const parts = targetSku.split('-');
       if (parts.length >= 3) {
         result['color'] = parts[1].toLowerCase();
         result['watt'] = parts[2].toLowerCase();
@@ -109,7 +111,7 @@ export default function ProductDetail() {
 
     return p.variants.find(v => {
       if (v.isActive === false) return false
-      const vAttrs = normalizeAttrs(v.attributes)
+      const vAttrs = normalizeAttrs(v.attributes, v.sku)
       
       return variantAttrs.every(attr => {
         const lowAttr = attr.toLowerCase().trim()
@@ -215,7 +217,7 @@ export default function ProductDetail() {
         if (variantAttrs.length === 1 && variantAttrs[0] === 'Option') {
           setSelected({ option: bestVariant.sku || bestVariant._id });
         } else {
-          setSelected(normalizeAttrs(bestVariant.attributes))
+          setSelected(normalizeAttrs(bestVariant.attributes, bestVariant.sku))
         }
       }
     }
@@ -253,7 +255,7 @@ export default function ProductDetail() {
     // Find variant that exactly matches current selection
     const v = p.variants.find(v => {
       if (v.isActive === false) return false
-      const vAttrs = normalizeAttrs(v.attributes)
+      const vAttrs = normalizeAttrs(v.attributes, v.sku)
       return variantAttrs.every(k => {
         const val = selected[k];
         if (!val) return true; 
@@ -270,7 +272,7 @@ export default function ProductDetail() {
         const subAttrs = variantAttrs.slice(0, i)
         const partialMatch = p.variants.find(vx => {
           if (vx.isActive === false) return false
-          const vxAttrs = normalizeAttrs(vx.attributes)
+          const vxAttrs = normalizeAttrs(vx.attributes, vx.sku)
           return subAttrs.every(k => String(vxAttrs[k] || '').toLowerCase() === String(selected[k] || '').toLowerCase())
         })
         if (partialMatch) {
@@ -280,7 +282,7 @@ export default function ProductDetail() {
       }
       
       if (currentMatch) {
-        setSelected(normalizeAttrs(currentMatch.attributes))
+        setSelected(normalizeAttrs(currentMatch.attributes, currentMatch.sku))
         return
       }
     }
@@ -380,7 +382,7 @@ export default function ProductDetail() {
     if (p?.variants?.length) {
       p.variants.forEach(v => {
         if (v.isActive === false) return;
-        const vAttrs = normalizeAttrs(v.attributes)
+        const vAttrs = normalizeAttrs(v.attributes, v.sku)
         // Check all keys in vAttrs for a case-insensitive match with lowKey
         Object.entries(vAttrs).forEach(([vk, vv]) => {
           if (vk.toLowerCase().trim() === lowKey && vv) {
@@ -408,7 +410,7 @@ export default function ProductDetail() {
 
     return p.variants.some(v => {
       if (v.isActive === false || v.stock <= 0) return false;
-      const vAttrs = normalizeAttrs(v.attributes)
+      const vAttrs = normalizeAttrs(v.attributes, v.sku)
       
       // Must match the value we're checking
       let matchVal = false;
@@ -1218,7 +1220,12 @@ export default function ProductDetail() {
                 border: '1px solid #eee',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
                 position: 'relative',
-                zIndex: 10 
+                zIndex: 10,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '20px',
+                visibility: 'visible',
+                opacity: 1
               }}>
                 {variantAttrs.map(attrKey => {
                   const lowKey = attrKey.toLowerCase().trim()
@@ -1242,13 +1249,13 @@ export default function ProductDetail() {
                           const repVariant = p.variants?.find(v => 
                             v.isActive !== false &&
                             (lowKey === 'option' ? (v.sku === opt || v._id === opt) : (
-                              String(normalizeAttrs(v.attributes)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
+                              String(normalizeAttrs(v.attributes, v.sku)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
                               Object.entries(selected).every(([k, vVal]) => {
                                 if (k === lowKey || !vVal) return true;
-                                return String(normalizeAttrs(v.attributes)[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
+                                return String(normalizeAttrs(v.attributes, v.sku)[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
                               })
                             ))
-                          ) || p.variants?.find(v => v.isActive !== false && (lowKey === 'option' ? (v.sku === opt || v._id === opt) : String(normalizeAttrs(v.attributes)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase()));
+                          ) || p.variants?.find(v => v.isActive !== false && (lowKey === 'option' ? (v.sku === opt || v._id === opt) : String(normalizeAttrs(v.attributes, v.sku)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase()));
 
                           if (isColor) {
                             const imgUrl = (repVariant?.images?.[0]?.url) || (Array.isArray(p.images) ? p.images[0]?.url : null);
@@ -1329,7 +1336,7 @@ export default function ProductDetail() {
               {matchedVariant && (
                 <span className="pd-name-variant">
                   {' '}({(() => {
-                    const attrs = normalizeAttrs(matchedVariant.attributes);
+                    const attrs = normalizeAttrs(matchedVariant.attributes, matchedVariant.sku);
                     const values = Object.values(attrs);
                     if (values.length > 0) return values.join(', ');
                     if (matchedVariant.sku) return matchedVariant.sku;
