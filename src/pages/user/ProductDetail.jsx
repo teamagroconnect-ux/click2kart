@@ -502,32 +502,38 @@ export default function ProductDetail() {
   return (
     <>
       <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&family=Outfit:wght@400;500;600;700&display=swap');
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
       /* ─── ROOT ─── */
       .pd {
-        font-family: 'DM Sans', system-ui, sans-serif;
-        background: #f5f3ff; color: #1e1b2e;
+        font-family: 'Outfit', 'DM Sans', system-ui, sans-serif;
+        background:
+          radial-gradient(ellipse 120% 80% at 0% 0%, rgba(124,58,237,.12), transparent 50%),
+          radial-gradient(ellipse 90% 70% at 100% 10%, rgba(99,102,241,.09), transparent 45%),
+          linear-gradient(180deg, #faf9ff 0%, #f3f0ff 38%, #ebe7f7 100%);
+        color: #1e1b2e;
         min-height: 100vh; overflow-x: hidden;
         padding-bottom: env(safe-area-inset-bottom, 0px);
       }
       .pd::before {
         content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
         background-image:
-          linear-gradient(rgba(139,92,246,.035) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(139,92,246,.035) 1px, transparent 1px);
-        background-size: 60px 60px;
+          linear-gradient(rgba(139,92,246,.028) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(139,92,246,.028) 1px, transparent 1px);
+        background-size: 72px 72px;
+        opacity: .85;
       }
-      .pd-glow1 { position:fixed;top:-200px;left:-150px;width:580px;height:580px;border-radius:50%;background:radial-gradient(ellipse,rgba(139,92,246,.1),transparent 65%);pointer-events:none;z-index:0; }
-      .pd-glow2 { position:fixed;bottom:-180px;right:-120px;width:480px;height:480px;border-radius:50%;background:radial-gradient(ellipse,rgba(99,102,241,.08),transparent 65%);pointer-events:none;z-index:0; }
+      .pd-glow1 { position:fixed;top:-220px;left:-180px;width:640px;height:640px;border-radius:50%;background:radial-gradient(ellipse,rgba(139,92,246,.14),transparent 68%);pointer-events:none;z-index:0;filter:blur(2px); }
+      .pd-glow2 { position:fixed;bottom:-200px;right:-140px;width:520px;height:520px;border-radius:50%;background:radial-gradient(ellipse,rgba(79,70,229,.1),transparent 68%);pointer-events:none;z-index:0;filter:blur(3px); }
 
       /* ─── TOPBAR ─── */
       .pd-topbar {
         position: sticky; top: 0; z-index: 50;
-        background: rgba(245,243,255,.93); backdrop-filter: blur(18px);
-        border-bottom: 1px solid rgba(139,92,246,.12);
-        box-shadow: 0 2px 20px rgba(124,58,237,.07);
+        background: rgba(255,255,255,.72); backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-bottom: 1px solid rgba(139,92,246,.1);
+        box-shadow: 0 4px 30px rgba(15,23,42,.06), 0 1px 0 rgba(255,255,255,.8) inset;
         padding: 13px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
       }
       @media (min-width: 768px) { .pd-topbar { padding: 14px 32px; } }
@@ -560,7 +566,22 @@ export default function ProductDetail() {
         .pd-grid { grid-template-columns: 460px 1fr; gap: 40px; align-items: start; }
       }
       @media (min-width: 1100px) {
-        .pd-grid { grid-template-columns: 500px 1fr; gap: 52px; }
+        .pd-grid { grid-template-columns: 520px 1fr; gap: 56px; }
+      }
+
+      @media (min-width: 900px) {
+        .pd-info {
+          background: rgba(255,255,255,.78);
+          backdrop-filter: blur(20px) saturate(160%);
+          -webkit-backdrop-filter: blur(20px) saturate(160%);
+          border: 1px solid rgba(255,255,255,.85);
+          border-radius: 28px;
+          padding: 28px 26px 32px;
+          box-shadow:
+            0 1px 0 rgba(255,255,255,.95) inset,
+            0 20px 50px -12px rgba(76,29,149,.12),
+            0 8px 24px -8px rgba(15,23,42,.06);
+        }
       }
 
       /* ─── IMAGE PANEL ─── */
@@ -568,14 +589,25 @@ export default function ProductDetail() {
       @media (min-width: 900px) { .pd-img-panel { position: sticky; top: 76px; } }
 
       .pd-img-main {
-        background: white; border: 1px solid rgba(124,58,237,.1);
-        border-radius: 22px; overflow: hidden; aspect-ratio: 1;
+        background: linear-gradient(145deg, #ffffff 0%, #faf9ff 50%, #f5f3ff 100%);
+        border: 1px solid rgba(124,58,237,.12);
+        border-radius: 28px; overflow: hidden; aspect-ratio: 1;
         position: relative; cursor: zoom-in;
         display: flex; align-items: center; justify-content: center;
-        transition: box-shadow .3s, border-color .3s;
-        box-shadow: 0 4px 24px rgba(124,58,237,.07);
+        transition: box-shadow .4s cubic-bezier(.34,1.2,.64,1), border-color .3s, transform .35s;
+        box-shadow:
+          0 1px 0 rgba(255,255,255,.9) inset,
+          0 12px 40px -8px rgba(76,29,149,.15),
+          0 4px 16px rgba(124,58,237,.08);
       }
-      .pd-img-main:hover { box-shadow: 0 12px 44px rgba(124,58,237,.13); border-color: rgba(124,58,237,.2); }
+      .pd-img-main:hover {
+        box-shadow:
+          0 1px 0 rgba(255,255,255,.95) inset,
+          0 24px 56px -10px rgba(76,29,149,.22),
+          0 8px 24px rgba(124,58,237,.12);
+        border-color: rgba(124,58,237,.28);
+        transform: translateY(-2px);
+      }
       .pd-img-main img {
         width: 100%; height: 100%; object-fit: contain; padding: 20px;
         transition: transform .35s cubic-bezier(.34,1.2,.64,1);
@@ -984,14 +1016,18 @@ export default function ProductDetail() {
 
       /* ─── PRICE BLOCK ─── */
       .pd-price-block {
-        background: white; border: 1px solid rgba(124,58,237,.12);
-        border-radius: 18px; padding: 20px 22px 18px;
-        margin-bottom: 18px; position: relative; overflow: hidden;
-        box-shadow: 0 4px 20px rgba(124,58,237,.06);
+        background: linear-gradient(165deg, rgba(255,255,255,.95) 0%, rgba(250,245,255,.92) 100%);
+        border: 1px solid rgba(124,58,237,.14);
+        border-radius: 22px; padding: 22px 24px 20px;
+        margin-bottom: 20px; position: relative; overflow: hidden;
+        box-shadow:
+          0 1px 0 rgba(255,255,255,.9) inset,
+          0 12px 32px -8px rgba(76,29,149,.12);
       }
       .pd-price-block::before {
-        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-        background: linear-gradient(90deg, transparent, #7c3aed 40%, #a78bfa 70%, transparent);
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+        background: linear-gradient(90deg, transparent, #7c3aed 25%, #c4b5fd 55%, #7c3aed 75%, transparent);
+        opacity: .95;
       }
       .pd-price-main {
         font-family: 'Bebas Neue', sans-serif;
@@ -1148,22 +1184,33 @@ export default function ProductDetail() {
 
       /* ─── SECTION CARD ─── */
       .pd-card {
-        background: white; border: 1px solid rgba(124,58,237,.1);
-        border-radius: 18px; overflow: hidden; margin-bottom: 16px;
-        box-shadow: 0 4px 20px rgba(124,58,237,.05); position: relative;
+        background: linear-gradient(180deg, rgba(255,255,255,.98) 0%, rgba(250,249,255,.96) 100%);
+        border: 1px solid rgba(124,58,237,.11);
+        border-radius: 22px; overflow: hidden; margin-bottom: 14px;
+        box-shadow:
+          0 1px 0 rgba(255,255,255,.9) inset,
+          0 10px 36px -12px rgba(76,29,149,.1);
+        position: relative;
       }
       .pd-card::before {
-        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-        background: linear-gradient(90deg, transparent, rgba(124,58,237,.25), transparent);
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, transparent, rgba(124,58,237,.35), rgba(167,139,250,.4), transparent);
+        opacity: .9;
       }
       .pd-card-head {
-        padding: 16px 20px 14px; border-bottom: 1px solid rgba(124,58,237,.07);
-        display: flex; align-items: center; gap: 10px;
+        padding: 18px 22px 15px; border-bottom: 1px solid rgba(124,58,237,.06);
+        display: flex; align-items: center; gap: 12px;
+        background: linear-gradient(180deg, rgba(124,58,237,.03), transparent);
       }
-      .pd-card-head-ico { width: 34px; height: 34px; border-radius: 9px; background: rgba(124,58,237,.08); display: flex; align-items: center; justify-content: center; color: #7c3aed; flex-shrink: 0; }
-      .pd-card-head-label { font-size: 8px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #9ca3af; }
-      .pd-card-head-title { font-size: 15px; font-weight: 800; color: #1e1b2e; margin-top: 1px; }
-      .pd-card-body { padding: 18px 20px; }
+      .pd-card-head-ico {
+        width: 40px; height: 40px; border-radius: 12px;
+        background: linear-gradient(135deg, rgba(124,58,237,.14), rgba(99,102,241,.1));
+        display: flex; align-items: center; justify-content: center; color: #6d28d9; flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(124,58,237,.12);
+      }
+      .pd-card-head-label { font-size: 9px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: #a1a1aa; }
+      .pd-card-head-title { font-family: 'Bebas Neue', sans-serif; font-size: 19px; font-weight: 400; color: #18181b; margin-top: 2px; letter-spacing: .04em; }
+      .pd-card-body { padding: 20px 22px 22px; }
 
       /* ─── BULK PRICING TABLE ─── */
       .pd-bulk-table { width: 100%; border-collapse: separate; border-spacing: 0; }
@@ -1214,20 +1261,32 @@ export default function ProductDetail() {
       .pd-bulk-prog-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #a78bfa); border-radius: 100px; transition: width .4s cubic-bezier(.34,1.56,.64,1); }
 
       /* ─── HIGHLIGHTS ─── */
-      .pd-highlights { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-      @media (max-width: 480px) { .pd-highlights { grid-template-columns: 1fr; } }
-      .pd-hl-item { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; color: #374151; font-weight: 500; line-height: 1.4; padding: 10px 12px; background: #f9f7ff; border-radius: 10px; border: 1px solid rgba(124,58,237,.07); }
-      .pd-hl-dot { width: 7px; height: 7px; border-radius: 50%; background: #7c3aed; margin-top: 4px; flex-shrink: 0; }
+      .pd-hl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+      @media (max-width: 520px) { .pd-hl-grid { grid-template-columns: 1fr; } }
+      .pd-hl-item {
+        display: flex; align-items: flex-start; gap: 10px;
+        font-size: 13px; color: #3f3f46; font-weight: 500; line-height: 1.45;
+        padding: 14px 14px 14px 16px;
+        background: linear-gradient(135deg, rgba(124,58,237,.06), rgba(255,255,255,.9));
+        border-radius: 14px;
+        border: 1px solid rgba(124,58,237,.1);
+        box-shadow: 0 2px 8px rgba(124,58,237,.04);
+      }
+      .pd-hl-dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: linear-gradient(135deg, #7c3aed, #a78bfa);
+        margin-top: 5px; flex-shrink: 0;
+        box-shadow: 0 0 0 3px rgba(124,58,237,.12);
+      }
 
       /* ─── DESCRIPTION ─── */
-      .pd-desc { font-size: 14px; color: #4b5563; font-weight: 400; line-height: 1.9; white-space: pre-line; }
-      .pd-highlights { margin: 0; padding-left: 1.15rem; font-size: 14px; color: #374151; line-height: 1.75; }
-      .pd-highlights li { margin-bottom: 0.35rem; }
+      .pd-desc { font-size: 14.5px; color: #52525b; font-weight: 400; line-height: 1.92; white-space: pre-line; letter-spacing: .01em; }
       .pd-spec-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-      .pd-spec-table tr { border-bottom: 1px solid rgba(139,92,246,0.08); }
-      .pd-spec-table td { padding: 10px 0; vertical-align: top; }
-      .pd-spec-table td:first-child { color: #6b7280; font-weight: 600; width: 38%; padding-right: 12px; }
-      .pd-spec-table td:last-child { color: #1f2937; font-weight: 500; }
+      .pd-spec-table tr { border-bottom: 1px solid rgba(124,58,237,.07); transition: background .15s; }
+      .pd-spec-table tr:hover { background: rgba(124,58,237,.03); }
+      .pd-spec-table td { padding: 12px 0; vertical-align: top; }
+      .pd-spec-table td:first-child { color: #71717a; font-weight: 600; width: 38%; padding-right: 14px; font-size: 12.5px; letter-spacing: .02em; }
+      .pd-spec-table td:last-child { color: #18181b; font-weight: 600; }
 
       /* ─── SIMILAR PRODUCTS (SCROLLABLE) ─── */
       .pd-sim-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
@@ -1860,17 +1919,17 @@ export default function ProductDetail() {
                 <div className="pd-card" style={{ marginTop: 16 }}>
                   <div className="pd-card-head">
                     <div className="pd-card-head-ico">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
                     <div>
-                      <div className="pd-card-head-label">Quick Facts</div>
-                      <div className="pd-card-head-title">Product Highlights</div>
+                      <div className="pd-card-head-label">At a glance</div>
+                      <div className="pd-card-head-title">Highlights</div>
                     </div>
                   </div>
                   <div className="pd-card-body">
-                    <div className="pd-highlights">
+                    <div className="pd-hl-grid">
                       {p.highlights.map((h, i) => (
                         <div key={i} className="pd-hl-item">
                           <span className="pd-hl-dot" />
@@ -1878,30 +1937,6 @@ export default function ProductDetail() {
                         </div>
                       ))}
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {/* HIGHLIGHTS */}
-              {Array.isArray(p.highlights) && p.highlights.length > 0 && (
-                <div className="pd-card" style={{ marginTop: 16 }}>
-                  <div className="pd-card-head">
-                    <div className="pd-card-head-ico">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="pd-card-head-label">Key points</div>
-                      <div className="pd-card-head-title">Highlights</div>
-                    </div>
-                  </div>
-                  <div className="pd-card-body">
-                    <ul className="pd-highlights">
-                      {p.highlights.map((h, i) => (
-                        <li key={i}>{h}</li>
-                      ))}
-                    </ul>
                   </div>
                 </div>
               )}

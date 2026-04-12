@@ -10,7 +10,7 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', sku: '' })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'' })
   const [editing, setEditing] = useState(null)
   const [viewing, setViewing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -67,18 +67,6 @@ export default function Products() {
     api.get('/api/stores').then(({ data }) => setStores(data || [])).catch(()=>{})
   }, [])
 
-  // Auto-generate SKU for new simple products
-  useEffect(() => {
-    if (form.name && !editing) {
-      const cleanName = form.name.toLowerCase()
-        .replace(/[^a-z0-9\s-]/g, '')
-        .trim()
-        .replace(/\s+/g, '-')
-      const generatedSku = `${cleanName}`.toUpperCase()
-      setForm(prev => ({ ...prev, sku: generatedSku }))
-    }
-  }, [form.name, editing])
-
   const create = async (e) => {
     e.preventDefault()
     const images = form.images.split(',').map(s=>s.trim()).filter(Boolean)
@@ -91,7 +79,6 @@ export default function Products() {
       gst: Number(form.gst||0), 
       mrp: form.mrp ? Number(form.mrp) : undefined,
       minOrderQty: Number(form.minOrderQty || 0),
-      sku: form.sku || undefined,
       description: form.description || '',
       highlights: (form.highlights || []).map(h => String(h).trim()).filter(Boolean),
       specifications: (form.specifications || []).map(s => ({ key: String(s.key||'').trim(), value: String(s.value||'').trim() })).filter(s => s.key && s.value),
@@ -108,7 +95,7 @@ export default function Products() {
       attributes: [],
       variants: []
     })
-    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', hsnCode: '', sku: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'' }); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'' }); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -124,7 +111,6 @@ export default function Products() {
       subCategoryId: p.subCategory?._id || p.subCategory || '',
       weight: p.weight || '',
       hsnCode: p.hsnCode || '',
-      sku: p.sku || '',
       images: (p.images||[]).map(i=>i.url||i).join(', '),
       attributes: Array.isArray(p.attributes) ? p.attributes : [],
       variants: (p.variants || []).map(v => ({
@@ -172,7 +158,6 @@ export default function Products() {
       store: editing.store || '',
       section: editing.section || '',
       attributes: editing.attributes || [],
-      sku: editing.sku || '',
       variants: (editing.variants || []).map(v => ({
         ...v,
         attributes: v.attributes instanceof Map ? Object.fromEntries(v.attributes) : v.attributes,
@@ -220,8 +205,8 @@ export default function Products() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-8 space-y-4 flex flex-col h-[calc(100vh-14rem)]">
+        <div className="flex flex-col gap-6">
+          <div className="space-y-4 flex flex-col min-h-[320px] max-h-[min(56vh,520px)] lg:max-h-[min(52vh,560px)]">
             <div className="flex items-center justify-between px-2">
               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Live Inventory ({total})</h3>
               <div className="flex gap-2">
@@ -276,7 +261,6 @@ export default function Products() {
                                     {p.variants.length > 3 && <span className="text-[8px] text-gray-400">+{p.variants.length - 3} more</span>}
                                   </div>
                                 )}
-                                {p.sku && <div className="text-[9px] font-mono text-gray-400 mt-0.5">SKU: {p.sku}</div>}
                               </div>
                             </div>
                           </td>
@@ -327,17 +311,19 @@ export default function Products() {
             </div>
           </div>
 
-          {/* Creation Section */}
-          <div className="lg:col-span-4 flex flex-col h-[calc(100vh-14rem)] bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden overflow-y-auto custom-scrollbar">
-            <div className="p-6 border-b border-gray-50">
-              <h3 className="text-lg font-bold text-gray-900">Add New Product</h3>
-              <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mt-0.5">Catalogue wizard</p>
+          {/* Creation Section — full width, dense grid (SKUs live on variants after save) */}
+          <div className="flex flex-col bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-5 sm:p-6 border-b border-gray-50 flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">Add New Product</h3>
+                <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mt-0.5">Catalogue wizard</p>
+              </div>
+              <p className="text-[11px] text-gray-500 max-w-xl">Variants and per-option SKUs are added from <span className="font-bold text-indigo-600">Manage Variants</span> on the product row after this product is saved.</p>
             </div>
             
-            <form onSubmit={create} className="p-6 space-y-5">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Left Column: Basic Info */}
-                  <div className="space-y-4">
+            <form onSubmit={create} className="p-5 sm:p-6 space-y-5 overflow-y-auto max-h-[70vh] custom-scrollbar">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="space-y-4 sm:col-span-2 xl:col-span-3">
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Product Name</label>
                       <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. iPhone 16" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
@@ -403,14 +389,6 @@ export default function Products() {
                       </div>
                     </div>
                     
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1 flex justify-between">
-                        <span>Product SKU</span>
-                        {form.sku && <span className="text-blue-600 font-black">AUTO: {form.sku}</span>}
-                      </label>
-                      <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. PROD-SKU-123" value={form.sku || ''} onChange={e => setForm({ ...form, sku: e.target.value })} />
-                    </div>
-                    
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Min Order Qty</label>
@@ -452,14 +430,6 @@ export default function Products() {
                         </div>
                       )}
                     </div>
-                  </div>
-
-                  {/* Right column: variants after save */}
-                  <div className="space-y-4 bg-gray-50/50 p-4 rounded-3xl border border-gray-100 flex flex-col justify-center min-h-[200px]">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Variants</div>
-                    <p className="text-[12px] text-gray-600 leading-relaxed">
-                      New products are added as a single SKU. After saving, use <span className="font-black text-blue-600">Manage Variants</span> on the product row to add colours, sizes, separate prices and stock.
-                    </p>
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -597,9 +567,8 @@ export default function Products() {
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">HSN Code</label>
                 <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 8517" value={editing.hsnCode || ''} onChange={e => setEditing({ ...editing, hsnCode: e.target.value })} />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Product SKU (Simple Product)</label>
-                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. PROD-SKU-123" value={editing.sku || ''} onChange={e => setEditing({ ...editing, sku: e.target.value })} />
+              <div className="space-y-1 md:col-span-3">
+                <p className="text-[11px] text-gray-500 bg-violet-50/80 border border-violet-100 rounded-xl px-3 py-2">Option SKUs and variant stock are managed in <span className="font-bold text-violet-700">Manage Variants</span>, not here.</p>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Min Order Qty</label>
