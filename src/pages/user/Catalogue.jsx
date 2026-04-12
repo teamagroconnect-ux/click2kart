@@ -694,6 +694,45 @@ export default function Catalogue({ initialBrand, brandName }) {
       }
       .ct-sheet-apply:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(124,58,237,.36); }
 
+      @media (min-width: 480px) {
+        .ct-sheet-cats {
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+          gap: 9px;
+        }
+        .ct-sheet-cat { padding: 12px 11px; font-size: 12.5px; }
+      }
+      @media (min-width: 600px) {
+        .ct-sheet {
+          left: 50%;
+          right: auto;
+          transform: translateX(-50%);
+          width: min(420px, calc(100vw - 32px));
+          max-width: 420px;
+          bottom: max(12px, env(safe-area-inset-bottom, 0px));
+          border-radius: 22px;
+          max-height: min(82vh, 620px);
+          box-shadow: 0 24px 60px rgba(0,0,0,.18);
+        }
+        .ct-sheet-handle { padding-top: 10px; }
+        .ct-sheet-head { padding: 2px 22px 12px; }
+        .ct-sheet-body { padding: 16px 22px 22px; gap: 18px; }
+        .ct-sheet-title { font-size: 24px; }
+      }
+      @media (min-width: 900px) {
+        .ct-sheet {
+          width: min(460px, calc(100vw - 48px));
+          max-width: 460px;
+          max-height: min(78vh, 640px);
+        }
+        .ct-sheet-cats {
+          grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+        }
+      }
+      @media (max-width: 360px) {
+        .ct-sheet-cats { grid-template-columns: 1fr; }
+        .ct-sheet-cat { font-size: 11.5px; padding: 10px; }
+      }
+
       /* ─── ANIMATIONS ─── */
       @keyframes ctFadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
       @keyframes ctShim     { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }

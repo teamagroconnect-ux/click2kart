@@ -55,6 +55,7 @@ export default function ProductDetail() {
   const [countdown, setCountdown] = useState({ h: 0, m: 0, s: 0 })
   const [kycData, setKycData] = useState(null)
   const [kycLoading, setKycLoading] = useState(false)
+  const [hlSpecTab, setHlSpecTab] = useState('highlights')
   const authed = !!localStorage.getItem('token')
 
   const variantAttrs = useMemo(() => {
@@ -211,6 +212,14 @@ export default function ProductDetail() {
     api.get(`/api/recommendations/similar/${id}`).then(({ data }) => setSimilar(data || [])).catch(() => { })
     api.get(`/api/recommendations/frequently-bought/${id}?limit=6`).then(({ data }) => setRecItems(data || [])).catch(() => { })
   }, [id])
+
+  useEffect(() => {
+    if (!p) return
+    const hasH = Array.isArray(p.highlights) && p.highlights.length > 0
+    const hasS = Array.isArray(p.specifications) && p.specifications.length > 0
+    if (hasH) setHlSpecTab('highlights')
+    else if (hasS) setHlSpecTab('specs')
+  }, [p?._id])
 
   /* variant selection logic (Flipkart Style) */
   useEffect(() => {
@@ -500,6 +509,11 @@ export default function ProductDetail() {
   const stockStRaw = getStockStatus(stock)
   const stockSt = { ...stockStRaw, text: stockStRaw.text.includes('Only') ? 'Limited Stock' : stockStRaw.text }
 
+  const hasHighlights = Array.isArray(p.highlights) && p.highlights.length > 0
+  const hasSpecifications = Array.isArray(p.specifications) && p.specifications.length > 0
+  const showHighlightsBlock = hasHighlights && (hlSpecTab === 'highlights' || !hasSpecifications)
+  const showSpecificationsBlock = hasSpecifications && (hlSpecTab === 'specs' || !hasHighlights)
+
   const handleAddToCart = async () => {
     if (!authed) { navigate('/login'); return }
     if (variantAttrs.length > 0 && !matchedVariant) {
@@ -646,7 +660,7 @@ export default function ProductDetail() {
             0 1px 0 rgba(255,255,255,.9) inset,
             0 16px 40px -12px rgba(76,29,149,.1);
         }
-        .pd-badge { font-size: 10px; padding: 6px 12px; }
+        .pd-badge { font-size: 9px; padding: 4px 10px; }
         .pd-name { font-size: clamp(30px, 6.5vw, 44px); }
         .pd-price-main { font-size: clamp(34px, 7vw, 50px); }
         .pd-rat-row .pd-rat-ct { font-size: 13px; }
@@ -1090,11 +1104,15 @@ export default function ProductDetail() {
       .pd-info { display: flex; flex-direction: column; gap: 0; }
 
       /* badges row */
-      .pd-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+      .pd-meta-compact {
+        display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px;
+        margin-bottom: 10px;
+      }
+      .pd-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 0; align-items: center; }
       .pd-badge {
-        display: inline-flex; align-items: center; gap: 4px;
-        font-size: 9px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-        padding: 4px 10px; border-radius: 100px;
+        display: inline-flex; align-items: center; gap: 3px;
+        font-size: 8px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+        padding: 3px 8px; border-radius: 100px; line-height: 1.2;
       }
       .pd-badge-v  { background: rgba(124,58,237,.09); border: 1px solid rgba(124,58,237,.2); color: #7c3aed; }
       .pd-badge-g  { background: rgba(5,150,105,.09);  border: 1px solid rgba(5,150,105,.2);  color: #059669; }
@@ -1210,11 +1228,42 @@ export default function ProductDetail() {
 
       /* ─── STOCK STATUS ─── */
       .pd-stock {
-        display: inline-flex; align-items: center; gap: 7px;
-        font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-        padding: 6px 14px; border-radius: 100px; margin-bottom: 16px;
+        display: inline-flex; align-items: center; gap: 5px;
+        font-size: 8px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+        padding: 3px 10px; border-radius: 100px; margin-bottom: 0; line-height: 1.25;
+        max-width: 100%;
       }
-      .pd-stock-dot { width: 6px; height: 6px; border-radius: 50%; }
+      .pd-stock-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+      /* ─── HIGHLIGHTS / SPECS (single card, tabbed) ─── */
+      .pd-hl-spec-tabs {
+        display: flex; gap: 0;
+        padding: 0 10px;
+        border-bottom: 1px solid rgba(124,58,237,.08);
+        background: linear-gradient(180deg, rgba(124,58,237,.04), transparent);
+      }
+      .pd-hl-spec-tabs button {
+        flex: 1;
+        padding: 9px 12px;
+        border: none; background: transparent; cursor: pointer; font-family: 'DM Sans', sans-serif;
+        font-size: 9px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+        color: #a1a1aa;
+        border-bottom: 2px solid transparent; margin-bottom: -1px;
+        transition: color .2s, border-color .2s;
+      }
+      .pd-hl-spec-tabs button.on {
+        color: #7c3aed;
+        border-bottom-color: #7c3aed;
+      }
+      .pd-hl-spec-card .pd-card-body { padding: 14px 16px 16px; }
+      .pd-hl-spec-card .pd-hl-item {
+        padding: 10px 12px;
+        font-size: 12px;
+        gap: 8px;
+      }
+      .pd-hl-spec-card .pd-hl-dot { width: 6px; height: 6px; margin-top: 4px; }
+      .pd-hl-spec-card .pd-spec-table td { padding: 8px 0; font-size: 12px; }
+      .pd-hl-spec-card .pd-spec-table td:first-child { font-size: 11px; width: 40%; }
       @keyframes pdStockPulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.4;transform:scale(.65);} }
 
       /* ─── CTA BUTTONS ─── */
@@ -1714,26 +1763,25 @@ export default function ProductDetail() {
             {/* ══ RIGHT — INFO PANEL ══ */}
             <div className="pd-info pd-reveal pd-reveal-delay">
 
-              {/* badges */}
-              <div className="pd-badges">
-                {p.category && <span className="pd-badge pd-badge-v">{p.category?.name || p.category}</span>}
-                <span className="pd-badge pd-badge-g">✓ GST Invoice</span>
-                <span className="pd-badge pd-badge-a">⚡ Fast Dispatch</span>
-              </div>
-
-              {/* STOCK STATUS */}
-              <div className="pd-stock" style={{
-                background: stock > 0 ? (stock <= 5 ? 'rgba(245,158,11,.1)' : 'rgba(5,150,105,.1)') : 'rgba(220,38,38,.1)',
-                border: `1px solid ${stock > 0 ? (stock <= 5 ? 'rgba(245,158,11,.25)' : 'rgba(5,150,105,.25)') : 'rgba(220,38,38,.25)'}`,
-                color: stock > 0 ? (stock <= 5 ? '#d97706' : '#059669') : '#dc2626',
-                marginBottom: 12
-              }}>
-                <span className="pd-stock-dot" style={{
-                  background: stock > 0 ? (stock <= 5 ? '#d97706' : '#10b981') : '#ef4444',
-                  boxShadow: `0 0 5px ${stock > 0 ? (stock <= 5 ? '#d97706' : '#10b981') : '#ef4444'}`,
-                  animation: stock <= 5 && stock > 0 ? 'pdStockPulse 2s infinite' : 'none',
-                }} />
-                {stockSt.text}
+              {/* badges + stock — one compact strip */}
+              <div className="pd-meta-compact">
+                <div className="pd-badges">
+                  {p.category && <span className="pd-badge pd-badge-v">{p.category?.name || p.category}</span>}
+                  <span className="pd-badge pd-badge-g">✓ GST</span>
+                  <span className="pd-badge pd-badge-a">⚡ Dispatch</span>
+                </div>
+                <div className="pd-stock" style={{
+                  background: stock > 0 ? (stock <= 5 ? 'rgba(245,158,11,.1)' : 'rgba(5,150,105,.1)') : 'rgba(220,38,38,.1)',
+                  border: `1px solid ${stock > 0 ? (stock <= 5 ? 'rgba(245,158,11,.25)' : 'rgba(5,150,105,.25)') : 'rgba(220,38,38,.25)'}`,
+                  color: stock > 0 ? (stock <= 5 ? '#d97706' : '#059669') : '#dc2626',
+                }}>
+                  <span className="pd-stock-dot" style={{
+                    background: stock > 0 ? (stock <= 5 ? '#d97706' : '#10b981') : '#ef4444',
+                    boxShadow: `0 0 4px ${stock > 0 ? (stock <= 5 ? '#d97706' : '#10b981') : '#ef4444'}`,
+                    animation: stock <= 5 && stock > 0 ? 'pdStockPulse 2s infinite' : 'none',
+                  }} />
+                  {stockSt.text}
+                </div>
               </div>
 
               {/* name */}
@@ -2032,29 +2080,38 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* HIGHLIGHTS */}
-              {Array.isArray(p.highlights) && p.highlights.length > 0 && (
-                <div className="pd-card" style={{ marginTop: 16 }}>
-                  <div className="pd-card-head">
-                    <div className="pd-card-head-ico">
-                      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
+              {/* HIGHLIGHTS + SPECIFICATIONS — single card, tab toggle */}
+              {(hasHighlights || hasSpecifications) && (
+                <div className="pd-card pd-hl-spec-card" style={{ marginTop: 16 }}>
+                  {hasHighlights && hasSpecifications && (
+                    <div className="pd-hl-spec-tabs" role="tablist" aria-label="Product details">
+                      <button type="button" role="tab" aria-selected={hlSpecTab === 'highlights'} className={hlSpecTab === 'highlights' ? 'on' : ''} onClick={() => setHlSpecTab('highlights')}>Highlights</button>
+                      <button type="button" role="tab" aria-selected={hlSpecTab === 'specs'} className={hlSpecTab === 'specs' ? 'on' : ''} onClick={() => setHlSpecTab('specs')}>Specifications</button>
                     </div>
-                    <div>
-                      <div className="pd-card-head-label">At a glance</div>
-                      <div className="pd-card-head-title">Highlights</div>
-                    </div>
-                  </div>
-                  <div className="pd-card-body">
-                    <div className="pd-hl-grid">
-                      {p.highlights.map((h, i) => (
-                        <div key={i} className="pd-hl-item">
-                          <span className="pd-hl-dot" />
-                          <span>{h}</span>
-                        </div>
-                      ))}
-                    </div>
+                  )}
+                  <div className="pd-card-body" role="tabpanel">
+                    {showHighlightsBlock && (
+                      <div className="pd-hl-grid">
+                        {p.highlights.map((h, i) => (
+                          <div key={i} className="pd-hl-item">
+                            <span className="pd-hl-dot" />
+                            <span>{h}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {showSpecificationsBlock && (
+                      <table className="pd-spec-table">
+                        <tbody>
+                          {p.specifications.map((row, i) => (
+                            <tr key={i}>
+                              <td>{row.key}</td>
+                              <td>{row.value}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </div>
               )}
@@ -2075,35 +2132,6 @@ export default function ProductDetail() {
                   </div>
                   <div className="pd-card-body">
                     <p className="pd-desc">{p.description}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* SPECIFICATIONS */}
-              {Array.isArray(p.specifications) && p.specifications.length > 0 && (
-                <div className="pd-card" style={{ marginTop: 16 }}>
-                  <div className="pd-card-head">
-                    <div className="pd-card-head-ico">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="pd-card-head-label">Technical</div>
-                      <div className="pd-card-head-title">Specifications</div>
-                    </div>
-                  </div>
-                  <div className="pd-card-body">
-                    <table className="pd-spec-table">
-                      <tbody>
-                        {p.specifications.map((row, i) => (
-                          <tr key={i}>
-                            <td>{row.key}</td>
-                            <td>{row.value}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
                   </div>
                 </div>
               )}

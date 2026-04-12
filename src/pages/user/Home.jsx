@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { CONFIG } from '../../shared/lib/config.js'
 import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
@@ -88,6 +88,24 @@ export default function Home() {
     api.get('/api/recommendations/trending').then(({ data }) => setRecs(data || [])).catch(() => setRecs([]))
     api.get('/api/offers?activeOnly=true').then(({ data }) => setOffers(data || [])).catch(() => setOffers([]))
   }, [])
+
+  const tickerLoop = useMemo(() => {
+    const fromApi = (offers || [])
+      .filter(o => o && (o.title || o.bannerImage))
+      .map(o => ({
+        key: o._id || o.title,
+        label: String(o.title || 'Offer').trim(),
+        pill: o.discountPercent != null && o.discountPercent !== '' ? `${o.discountPercent}% off` : 'Live offer',
+      }))
+    const neutral = [
+      { key: 'n1', label: 'GST-ready invoicing · bulk price tiers', pill: 'B2B' },
+      { key: 'n2', label: 'Pan-India dispatch on stocked SKUs', pill: 'Logistics' },
+      { key: 'n3', label: 'Login for wholesale rates on the catalogue', pill: 'Secure' },
+      { key: 'n4', label: 'Verified catalogue · partner onboarding', pill: 'Click2Kart' },
+    ]
+    const base = fromApi.length > 0 ? fromApi : neutral
+    return [...base, ...base]
+  }, [offers])
 
   return (
     <>
@@ -746,16 +764,15 @@ export default function Home() {
           </section>
         )}
 
-        {/* ── OFFER TICKER ── */}
+        {/* ── TICKER: live offers from API, else neutral B2B copy (no hardcoded promos) ── */}
         <div className="hm-ticker-section">
           <div className="hm-ticker-inner">
-            {[...Array(10)].map((_, i) => (
-              <div key={i} className="hm-ticker-item">
-                <span className="fire">🔥</span>
-                Limited Time Deals
-                <span className="highlight">10% OFF HOLI</span>
-                Special Offers
-                <Link to="/products" style={{ color: 'inherit', textDecoration: 'underline' }}>Shop Now</Link>
+            {tickerLoop.map((row, i) => (
+              <div key={`${row.key}-${i}`} className="hm-ticker-item">
+                <span className="fire">✦</span>
+                <span>{row.label}</span>
+                <span className="highlight">{row.pill}</span>
+                <Link to="/products" style={{ color: 'inherit', textDecoration: 'underline', fontWeight: 800 }}>Catalogue</Link>
               </div>
             ))}
           </div>
