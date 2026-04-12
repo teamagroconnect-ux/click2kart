@@ -60,7 +60,17 @@ export default function AdminLayout() {
         </div>
 
         <div className="pt-8 mt-8 border-t border-gray-50">
-          <button onClick={logout} className="w-full bg-red-50 text-red-600 py-4 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] hover:bg-red-600 hover:text-white transition-all shadow-sm">Logout Console</button>
+          <button
+            type="button"
+            onClick={logout}
+            title="Sign out"
+            aria-label="Sign out"
+            className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border border-red-100 bg-red-50/80 text-red-600 transition-all hover:bg-red-600 hover:text-white hover:border-red-600 shadow-sm"
+          >
+            <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
         </div>
       </aside>
       <main className="p-4 md:p-6 overflow-x-auto bg-gray-50">

@@ -808,8 +808,16 @@ export default function Partner() {
           {data && (
             <div style={{ animation: 'prFadeUp 0.6s ease both' }}>
               <div className="flex justify-end mb-6">
-                <button onClick={logout} className="px-6 py-2.5 bg-white border border-red-100 text-red-500 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-50 transition-all shadow-sm">
-                  Logout Session
+                <button
+                  type="button"
+                  onClick={logout}
+                  title="Sign out"
+                  aria-label="Sign out"
+                  className="h-11 w-11 inline-flex items-center justify-center rounded-xl border border-red-100 bg-white text-red-500 shadow-sm transition-all hover:bg-red-50 hover:shadow-md active:scale-95"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
                 </button>
               </div>
 

@@ -266,11 +266,70 @@ export default function Home() {
           100%{transform:scaleY(0);transform-origin:bottom}
         }
 
-        /* ────────────── BRANDS ────────────── */
-        .hm-brand-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 30px rgba(124,58,237,0.12);
-          border-color: rgba(124,58,237,0.3) !important;
+        /* ────────────── BRANDS (logo-only) ────────────── */
+        .hm-brands-inner { max-width: 1180px; margin: 0 auto; }
+        .hm-brands-head { text-align: center; margin-bottom: 40px; }
+        .hm-brands-kicker {
+          display: inline-flex; align-items: center; gap: 10px;
+          font-size: 10px; font-weight: 800; letter-spacing: 0.28em;
+          text-transform: uppercase; color: #7c3aed; margin-bottom: 12px;
+        }
+        .hm-brands-kicker::before, .hm-brands-kicker::after {
+          content: ''; width: 24px; height: 1px; background: linear-gradient(90deg, transparent, rgba(124,58,237,0.5));
+        }
+        .hm-brands-kicker::after { background: linear-gradient(90deg, rgba(124,58,237,0.5), transparent); }
+        .hm-brands-title {
+          font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 52px);
+          color: #1e1b2e; letter-spacing: 0.03em; line-height: 1.05; margin-bottom: 10px;
+        }
+        .hm-brands-sub { color: #6b7280; font-size: 14px; font-weight: 500; max-width: 480px; margin: 0 auto; line-height: 1.5; }
+        .hm-brands-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+          gap: 14px;
+        }
+        @media (min-width: 640px) {
+          .hm-brands-grid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 18px; }
+        }
+        @media (min-width: 1024px) {
+          .hm-brands-grid { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 22px; }
+        }
+        .hm-brand-logo-card {
+          position: relative;
+          aspect-ratio: 1;
+          border-radius: 22px;
+          background: linear-gradient(145deg, #ffffff 0%, #faf8ff 100%);
+          border: 1px solid rgba(124,58,237,0.1);
+          box-shadow: 0 4px 20px rgba(76,29,149,0.06), 0 1px 0 rgba(255,255,255,0.9) inset;
+          display: flex; align-items: center; justify-content: center;
+          padding: 18px 16px;
+          text-decoration: none;
+          overflow: hidden;
+          transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1), box-shadow 0.35s, border-color 0.25s;
+        }
+        .hm-brand-logo-card::after {
+          content: ''; position: absolute; inset: 0;
+          background: radial-gradient(circle at 30% 20%, rgba(124,58,237,0.08), transparent 55%);
+          pointer-events: none; opacity: 0; transition: opacity 0.35s;
+        }
+        .hm-brand-logo-card:hover {
+          transform: translateY(-5px) scale(1.02);
+          border-color: rgba(124,58,237,0.28);
+          box-shadow: 0 16px 40px rgba(124,58,237,0.14), 0 8px 24px rgba(76,29,149,0.08);
+        }
+        .hm-brand-logo-card:hover::after { opacity: 1; }
+        .hm-brand-logo-card img {
+          max-width: 100%; max-height: 100%; width: auto; height: auto;
+          object-fit: contain;
+          filter: grayscale(0.15) opacity(0.92);
+          transition: filter 0.35s, transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+        }
+        .hm-brand-logo-card:hover img {
+          filter: grayscale(0) opacity(1);
+          transform: scale(1.06);
+        }
+        .hm-brand-logo-fallback {
+          font-size: 36px; line-height: 1; opacity: 0.35;
         }
 
         /* ────────────── STATS BAND ────────────── */
@@ -661,23 +720,25 @@ export default function Home() {
 
         {/* ── BRANDS SECTION ── */}
         {brands.length > 0 && (
-          <section className="hm-brands-section" style={{ padding: '80px 24px', background: '#faf8ff', position: 'relative', zIndex: 1 }}>
-            <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-              <div style={{ textAlign: 'center', marginBottom: 48 }}>
-                <h2 style={{ fontFamily: 'Bebas Neue', fontSize: 42, color: '#1e1b2e', letterSpacing: '0.02em', marginBottom: 8 }}>Top Authorized Brands</h2>
-                <p style={{ color: '#6b7280', fontSize: 14, fontWeight: 500 }}>Direct wholesale access to premium tech manufacturers</p>
+          <section className="hm-brands-section" style={{ padding: '88px 20px 96px', background: 'linear-gradient(180deg, #faf8ff 0%, #f3efff 50%, #faf8ff 100%)', position: 'relative', zIndex: 1 }}>
+            <div className="hm-brands-inner">
+              <div className="hm-brands-head">
+                <div className="hm-brands-kicker">Trusted supply</div>
+                <h2 className="hm-brands-title">Authorized brand partners</h2>
+                <p className="hm-brands-sub">Tap a mark to open that brand&apos;s wholesale catalogue — logos only, same verified inventory.</p>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 24 }}>
+              <div className="hm-brands-grid">
                 {brands.map(b => (
-                  <Link key={b._id} to={`/brand/${b.slug}`} className="hm-brand-card" style={{ 
-                    background: 'white', border: '1px solid rgba(124,58,237,0.1)', borderRadius: 24, padding: '32px 24px', 
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
-                    transition: 'all 0.3s', textDecoration: 'none'
-                  }}>
-                    <div style={{ height: 48, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {b.logo ? <img src={b.logo} alt={b.name} style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }} /> : <span style={{ fontSize: 32 }}>🏭</span>}
-                    </div>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: '#1e1b2e', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{b.name}</span>
+                  <Link
+                    key={b._id}
+                    to={`/brand/${b.slug}`}
+                    className="hm-brand-logo-card"
+                    aria-label={`Open ${b.name} catalogue`}
+                    title={b.name}
+                  >
+                    {b.logo
+                      ? <img src={b.logo} alt="" loading="lazy" decoding="async" />
+                      : <span className="hm-brand-logo-fallback" aria-hidden="true">✦</span>}
                   </Link>
                 ))}
               </div>

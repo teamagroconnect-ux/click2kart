@@ -100,10 +100,15 @@ export default function UserLayout() {
                       </Link>
                     </div>
                     <button
+                      type="button"
                       onClick={handleLogout}
-                      className="px-6 py-3 rounded-2xl bg-gray-50 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all"
+                      title="Sign out"
+                      aria-label="Sign out"
+                      className="h-12 w-12 inline-flex items-center justify-center rounded-2xl border border-gray-100 bg-white text-gray-400 shadow-sm transition-all hover:border-red-100 hover:bg-red-50 hover:text-red-600 hover:shadow-md active:scale-95"
                     >
-                      Logout
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
                     </button>
                   </div>
                 ) : (
