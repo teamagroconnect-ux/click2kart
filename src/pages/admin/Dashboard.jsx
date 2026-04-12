@@ -89,14 +89,21 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card to="/admin/products" iconBg="bg-blue-50" icon="📦" title="Total Products" value={stats?.totalProducts ?? inv.totalSkus} />
-        <Card to="/admin/customers" iconBg="bg-yellow-50" icon="⏳" title="Pending New Customer Approval" value={stats?.pendingCustomers ?? 0} />
+        <Card 
+          to="/admin/products" 
+          iconBg="bg-blue-50" 
+          icon="📦" 
+          title="Total Products" 
+          value={stats?.actualProductsCount ?? (stats?.totalProducts ?? inv.totalSkus)} 
+          subtext={`Across ${stats?.totalProducts ?? inv.totalSkus} SKUs`} 
+        />
+        <Card to="/admin/customers" iconBg="bg-yellow-50" icon="⏳" title="Pending Customer Approvals" value={stats?.pendingCustomers ?? 0} />
         <Card to="/admin/inventory" iconBg="bg-amber-50" icon="⚠️" title="Low Stock Alerts" value={inv.lowStock} />
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Card to="/admin/orders" iconBg="bg-blue-50" icon="🛒" title="New Order Requests" value={stats?.newOrders ?? 0} />
-        <Card to="/admin/payment-verification" iconBg="bg-purple-50" icon="💼" title="Payment Verification" value={stats?.pendingCash ?? 0} />
+        <Card to="/admin/orders" iconBg="bg-emerald-50" icon="🛒" title="New Order Requests" value={stats?.newOrders ?? 0} />
+        <Card to="/admin/payment-verification" iconBg="bg-purple-50" icon="💼" title="Payments to Verify" value={stats?.pendingCash ?? 0} subtext="Manual Transfer / UPI" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -202,7 +209,7 @@ export default function Dashboard() {
   )
 }
 
-function Card({ icon, iconBg, title, value, to }) {
+function Card({ icon, iconBg, title, value, subtext, to }) {
   const content = (
     <>
       <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${iconBg}`}>
@@ -210,14 +217,18 @@ function Card({ icon, iconBg, title, value, to }) {
       </div>
       <div className="flex-1">
         <div className="text-[12px] text-gray-500 font-bold">{title}</div>
-        <div className="text-2xl font-bold text-gray-900">{value}</div>
+        <div className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{value}</div>
+        {subtext && <div className="text-[10.5px] text-blue-600 font-bold tracking-tight mt-0.5">{subtext}</div>}
       </div>
     </>
   )
 
   if (to) {
     return (
-      <Link to={to} className="bg-white border rounded-2xl p-5 flex items-center gap-4 hover:shadow-md transition-all">
+      <Link to={to} className="group bg-white border rounded-2xl p-5 flex items-center gap-4 hover:shadow-md transition-all relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity text-gray-300">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
+        </div>
         {content}
       </Link>
     )

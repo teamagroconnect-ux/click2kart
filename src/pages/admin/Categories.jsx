@@ -4,9 +4,7 @@ import ImageUpload from '../../components/ImageUpload'
 
 export default function Categories(){
   const [items, setItems] = useState([])
-  const [brands, setBrands] = useState([])
-  const [form, setForm] = useState({ name:'', slug:'', image:'', brandId:'', attributes: [] })
-  const [attrInput, setAttrInput] = useState('')
+  const [form, setForm] = useState({ name:'', slug:'', image:'' })
   const [editing, setEditing] = useState(null)
   
   const load = async () => { 
@@ -14,15 +12,20 @@ export default function Categories(){
     setItems(data)
   }
   useEffect(()=>{ load() }, [])
-  useEffect(()=>{ api.get('/api/brands', { params: { active: true } }).then(({data})=>setBrands(data||[])).catch(()=>{}) },[])
 
   const create = async (e) => { 
     e.preventDefault(); 
     await api.post('/api/categories', form); 
-    setForm({ name:'', slug:'', image:'', brandId:'', attributes: [] }); 
+    setForm({ name:'', slug:'', image:'' }); 
     load() 
   }
   const toggle = async (c) => { await api.put(`/api/categories/${c._id}`, { isActive: !c.isActive }); load() }
+  const remove = async (id) => { 
+    if(window.confirm('Are you sure you want to delete this category?')) {
+      await api.delete(`/api/categories/${id}`); 
+      load();
+    }
+  }
   const update = async (e) => {
     e.preventDefault()
     if (!editing) return
@@ -30,25 +33,12 @@ export default function Categories(){
       name: editing.name, 
       slug: editing.slug, 
       image: editing.image || '', 
-      brandId: editing.brandId || null, 
-      isActive: editing.isActive,
-      attributes: editing.attributes
+      isActive: editing.isActive
     })
     setEditing(null)
     load()
   }
 
-  const addAttr = (target, setTarget) => {
-    const val = attrInput.trim().toLowerCase()
-    if (val && !target.attributes.includes(val)) {
-      setTarget({ ...target, attributes: [...target.attributes, val] })
-      setAttrInput('')
-    }
-  }
-
-  const removeAttr = (target, setTarget, attr) => {
-    setTarget({ ...target, attributes: target.attributes.filter(a => a !== attr) })
-  }
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -64,40 +54,12 @@ export default function Categories(){
             <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Add New Category</h3>
             <form onSubmit={create} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Brand</label>
-                <select
-                  className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                  value={form.brandId}
-                  onChange={e=>setForm({...form, brandId:e.target.value})}
-                >
-                  <option value="">No Brand (General Category)</option>
-                  {brands.map(b=>(
-                    <option key={b._id} value={b._id}>{b.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category Name</label>
                 <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Chargers" value={form.name} onChange={e=>setForm({...form, name:e.target.value, slug:e.target.value.toLowerCase().replace(/\s+/g, '-')})} required />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Slug</label>
                 <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. chargers" value={form.slug} onChange={e=>setForm({...form, slug:e.target.value})} required />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Dynamic Attributes (e.g. model, watt)</label>
-                <div className="flex gap-2">
-                  <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Add attribute..." value={attrInput} onChange={e=>setAttrInput(e.target.value)} onKeyDown={e=>e.key==='Enter' && (e.preventDefault(), addAttr(form, setForm))} />
-                  <button type="button" onClick={()=>addAttr(form, setForm)} className="px-4 bg-gray-900 text-white rounded-2xl text-xs font-bold">Add</button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {form.attributes.map(a => (
-                    <span key={a} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase flex items-center gap-2">
-                      {a}
-                      <button type="button" onClick={()=>removeAttr(form, setForm, a)}>✕</button>
-                    </span>
-                  ))}
-                </div>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Image (Optional)</label>
@@ -128,7 +90,7 @@ export default function Categories(){
                     </div>
                     <div className="space-y-1">
                     <div className="font-bold text-gray-900 capitalize text-lg tracking-tight">{c.name}</div>
-                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Brand: {c.brand?.name || '-'} | Slug: {c.slug}</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Slug: {c.slug}</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
@@ -145,6 +107,13 @@ export default function Categories(){
                       ) : (
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
                       )}
+                    </button>
+                    <button 
+                      onClick={(e)=>{ e.stopPropagation(); remove(c._id); }} 
+                      className="p-2 rounded-xl transition-all text-gray-400 hover:text-red-600 hover:bg-red-50"
+                      title="Delete Category"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                   </div>
                 </div>
@@ -168,41 +137,12 @@ export default function Categories(){
             </div>
             <div className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Brand</label>
-                <select
-                  className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold outline-none"
-                  value={editing.brandId || (editing.brand?._id || '')}
-                  onChange={e=>setEditing({...editing, brandId: e.target.value})}
-                  required
-                >
-                  <option value="">Select Brand</option>
-                  {brands.map(b=>(
-                    <option key={b._id} value={b._id}>{b.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Name</label>
                 <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold outline-none" value={editing.name} onChange={e=>setEditing({...editing, name: e.target.value})} required />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Slug</label>
                 <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold outline-none" value={editing.slug} onChange={e=>setEditing({...editing, slug: e.target.value})} required />
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Dynamic Attributes</label>
-                <div className="flex gap-2">
-                  <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold outline-none" placeholder="Add attribute..." value={attrInput} onChange={e=>setAttrInput(e.target.value)} onKeyDown={e=>e.key==='Enter' && (e.preventDefault(), addAttr(editing, setEditing))} />
-                  <button type="button" onClick={()=>addAttr(editing, setEditing)} className="px-4 bg-gray-900 text-white rounded-2xl text-xs font-bold">Add</button>
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {(editing.attributes || []).map(a => (
-                    <span key={a} className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase flex items-center gap-2">
-                      {a}
-                      <button type="button" onClick={()=>removeAttr(editing, setEditing, a)}>✕</button>
-                    </span>
-                  ))}
-                </div>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Image</label>

@@ -425,373 +425,6 @@ export default function Products() {
             </div>
             
             <form onSubmit={create} className="p-6 space-y-5">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Product Name</label>
-                <input className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="Enter name..." value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Price (₹)</label>
-                  <input className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0.00" value={form.price} onChange={e => setForm({ ...form, price: e.target.value })} required />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">MRP (₹)</label>
-                  <input className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0.00" value={form.mrp} onChange={e => setForm({ ...form, mrp: e.target.value })} />
-                </div>
-              </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Stock</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50" placeholder="50" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} disabled={hasVariants} required={!hasVariants} />
-                    {hasVariants && <div className="text-[10px] text-gray-400 font-bold">Auto-summed from variants</div>}
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Multi-Variant</label>
-                    <div className="flex items-center h-[46px]">
-                      <label className="inline-flex items-center cursor-pointer">
-                        <input type="checkbox" className="sr-only" checked={hasVariants} onChange={e => setHasVariants(e.target.checked)} />
-                        <span className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${hasVariants ? 'bg-blue-600' : 'bg-gray-300'}`}>
-                          <span className={`bg-white w-4 h-4 rounded-full shadow transform transition-transform ${hasVariants ? 'translate-x-5' : 'translate-x-0'}`} />
-                        </span>
-                        <span className="ml-2 text-[11px] font-bold text-gray-700">{hasVariants ? 'Enabled' : 'Disabled'}</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category</label>
-                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value, subCategoryId: '' })} required>
-                      <option value="">Select Category...</option>
-                      {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Subcategory</label>
-                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.subCategoryId} onChange={e => setForm({ ...form, subCategoryId: e.target.value })}>
-                      <option value="">Select Subcategory...</option>
-                      {subcategories.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Store</label>
-                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.store} onChange={e => setForm({ ...form, store: e.target.value, section: '' })}>
-                      <option value="">Select store</option>
-                      {stores.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Section</label>
-                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.section} onChange={e => setForm({ ...form, section: e.target.value })}>
-                      <option value="">Select section</option>
-                      {(stores.find(s => s.name === form.store)?.sections || []).map(sec => <option key={sec} value={sec}>{sec}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12" value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Weight (g)</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 500" value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">HSN Code</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 8517" value={form.hsnCode} onChange={e => setForm({ ...form, hsnCode: e.target.value })} />
-                  </div>
-                </div>
-
-                {!hasVariants && (
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1 flex justify-between">
-                      <span>Product SKU</span>
-                      {form.sku && <span className="text-blue-600 font-black">AUTO: {form.sku}</span>}
-                    </label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. PROD-SKU-123" value={form.sku || ''} onChange={e => setForm({ ...form, sku: e.target.value })} />
-                  </div>
-                )}
-
-                <div className="space-y-4 border-2 border-dashed border-gray-200 rounded-3xl p-6 bg-white/50">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Step 1: Define Attributes & Values</h4>
-                      <p className="text-[9px] text-gray-500 font-bold mt-1">e.g. Color, Size, RAM</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input 
-                        className="bg-white border rounded-xl px-3 py-2 text-[11px] font-bold focus:ring-2 focus:ring-blue-500 outline-none w-24" 
-                        placeholder="e.g. Color" 
-                        value={attrInput} 
-                        onChange={e=>setAttrInput(e.target.value)} 
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const val = attrInput.trim().toLowerCase();
-                            if (val && !form.attributes.some(a => a.split(':')[0] === val)) {
-                              setForm(f => ({ ...f, attributes: [...f.attributes, `${val}:`] }));
-                              setAttrInput('');
-                            }
-                          }
-                        }}
-                      />
-                      <button 
-                        type="button" 
-                        onClick={() => {
-                          const val = attrInput.trim().toLowerCase();
-                          if (val && !form.attributes.some(a => a.split(':')[0] === val)) {
-                            setForm(f => ({ ...f, attributes: [...f.attributes, `${val}:`] }));
-                            setAttrInput('');
-                          }
-                        }}
-                        className="p-2 bg-gray-900 text-white rounded-xl"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  {(form.attributes || []).length > 0 && (
-                    <div className="space-y-2 mt-3">
-                      {form.attributes.map((a, i) => {
-                        const [name, valuesStr] = a.split(':');
-                        const values = valuesStr ? valuesStr.split(',').filter(Boolean) : [];
-                        return (
-                          <div key={i} className="bg-white p-3 rounded-2xl border border-gray-100 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[9px] font-black text-blue-600 uppercase">{name}</span>
-                              <button type="button" onClick={() => setForm(f => ({ ...f, attributes: f.attributes.filter((_, idx) => idx !== i) }))} className="text-gray-300 hover:text-red-500">✕</button>
-                            </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {values.map(v => (
-                                <span key={v} className="px-2 py-0.5 rounded-lg bg-gray-50 border border-gray-100 text-[8px] font-bold text-gray-500 flex items-center gap-1">
-                                  {v}
-                                  <button type="button" onClick={() => {
-                                    const next = [...form.attributes];
-                                    const vArr = values.filter(x => x !== v);
-                                    next[i] = `${name}:${vArr.join(',')}`;
-                                    setForm(f => ({ ...f, attributes: next }));
-                                  }} className="hover:text-red-500">✕</button>
-                                </span>
-                              ))}
-                              <input 
-                                className="bg-gray-50 border rounded-lg px-2 py-0.5 text-[8px] font-bold outline-none w-20" 
-                                placeholder="+ Value"
-                                onKeyDown={e => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    const val = e.target.value.trim();
-                                    if (val && !values.includes(val)) {
-                                      const next = [...form.attributes];
-                                      next[i] = `${name}:${[...values, val].join(',')}`;
-                                      setForm(f => ({ ...f, attributes: next }));
-                                      e.target.value = '';
-                                    }
-                                  }
-                                }}
-                              />
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-
-                  {hasVariants && (
-                    <div className="space-y-4 pt-4 border-t border-gray-100 mt-4 animate-in slide-in-from-top-2 duration-300">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest text-blue-600">Step 2: Create Variants</div>
-                          {form.attributes.filter(a => a.split(':')[1]).length > 0 && (
-                            <p className="text-[8px] font-black text-gray-400 uppercase mt-1">
-                              {form.attributes.filter(a => a.split(':')[1]).map(a => {
-                                const [name, vals] = a.split(':');
-                                return `${vals.split(',').filter(Boolean).length} ${name}`;
-                              }).join(' x ')} = {getMissingCombos(form.attributes, form.variants).length + (form.variants || []).length} Total Combinations
-                            </p>
-                          )}
-                        </div>
-                        {getMissingCombos(form.attributes, form.variants).length > 1 && (
-                          <button 
-                            type="button"
-                            onClick={() => handleAddAllCombosToForm(getMissingCombos(form.attributes, form.variants))}
-                            className="px-4 py-1.5 bg-blue-600 text-white text-[9px] font-black uppercase rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-50"
-                          >Create All ({getMissingCombos(form.attributes, form.variants).length})</button>
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        {getMissingCombos(form.attributes, form.variants).length > 0 ? (
-                          getMissingCombos(form.attributes, form.variants).map((combo, i) => (
-                            <button
-                              key={i}
-                              type="button"
-                              onClick={() => handleAddComboToForm(combo)}
-                              className="group flex flex-col items-start p-3 bg-white border border-gray-100 rounded-2xl hover:border-blue-200 hover:bg-blue-50 transition-all text-left min-w-[120px]"
-                            >
-                              <div className="flex flex-wrap gap-1 mb-2">
-                                {Object.entries(combo).map(([k, v]) => (
-                                  <span key={k} className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">
-                                    {v}
-                                  </span>
-                                ))}
-                              </div>
-                              <div className="flex items-center justify-between w-full">
-                                <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">+ Add</span>
-                                <svg className="w-3 h-3 text-blue-400 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/></svg>
-                              </div>
-                            </button>
-                          ))
-                        ) : (
-                          <div className="w-full py-4 text-center border-2 border-dashed border-gray-100 rounded-2xl">
-                            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">All combinations created!</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="pt-4 border-t border-gray-100 space-y-2">
-                        <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Created Variants ({(form.variants || []).length})</div>
-                        {(form.variants || []).length > 0 ? (
-                          <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                            {form.variants.map((v, idx) => (
-                              <div key={idx} className="flex items-center justify-between p-3 rounded-2xl bg-white border border-gray-100 hover:border-blue-200 transition-all group">
-                                <div className="flex-1">
-                                  <div className="flex flex-wrap gap-2 mb-1">
-                                    {Object.entries(v.attributes || {}).map(([key, val]) => (
-                                      <div key={key} className="flex flex-col">
-                                        <span className="text-[6px] font-black text-gray-400 uppercase tracking-tighter">{key}</span>
-                                        <span className="text-[9px] font-black text-blue-600 uppercase leading-none">{val}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                  <div className="text-[10px] font-black text-gray-900 flex items-center gap-3">
-                                    <span className="text-blue-600">₹{v.price}</span>
-                                    <span className="text-gray-300">|</span>
-                                    <span>{v.stock} pcs</span>
-                                    {v.weight > 0 && (
-                                      <>
-                                        <span className="text-gray-300">|</span>
-                                        <span>{v.weight}g</span>
-                                      </>
-                                    )}
-                                  </div>
-                                  {v.sku && <div className="text-[7px] font-mono text-gray-400 mt-1 uppercase tracking-wider">SKU: {v.sku}</div>}
-                                </div>
-                                <button type="button" className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-[9px] text-gray-400 italic font-bold text-center py-2">No variants created yet...</div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Brand (Optional)</label>
-                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.brandId} onChange={e => setForm({ ...form, brandId: e.target.value })}>
-                      <option value="">No Brand...</option>
-                      {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category</label>
-                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value, subCategoryId: '' })} required>
-                      <option value="">Select Category...</option>
-                      {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Subcategory (optional)</label>
-                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.subCategoryId} onChange={e => setForm({ ...form, subCategoryId: e.target.value })}>
-                      <option value="">Select Subcategory...</option>
-                      {subcategories.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-                    </select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12" value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Weight (grams)</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 500" value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} />
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">HSN Code</label>
-                  <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 8517" value={form.hsnCode} onChange={e => setForm({ ...form, hsnCode: e.target.value })} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Product SKU (Simple Product)</label>
-                  <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. PROD-SKU-123" value={form.sku || ''} onChange={e => setForm({ ...form, sku: e.target.value })} />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Min Order Qty</label>
-                  <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 5" value={form.minOrderQty} onChange={e => setForm({ ...form, minOrderQty: e.target.value })} />
-                </div>
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Bulk Qty</label>
-                      <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 10" value={form.bulkDiscountQuantity} onChange={e => setForm({ ...form, bulkDiscountQuantity: e.target.value })} />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Reduction/Unit (₹)</label>
-                      <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 50" value={form.bulkDiscountPriceReduction} onChange={e => setForm({ ...form, bulkDiscountPriceReduction: e.target.value })} />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => {
-                      const q = Number(form.bulkDiscountQuantity||0)
-                      const r = Number(form.bulkDiscountPriceReduction||0)
-                      if (Number.isFinite(q) && q > 0 && Number.isFinite(r) && r >= 0) {
-                        setForm(f => ({ ...f, bulkTiers: [...(f.bulkTiers||[]), { quantity: q, priceReduction: r }], bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' }))
-                      }
-                    }} className="px-3 py-2 rounded-xl bg-emerald-600 text-white text-[11px] font-black uppercase tracking-widest">Add Bulk Offer</button>
-                    <div className="text-[11px] text-gray-500">Add multiple bulk offers</div>
-                  </div>
-                  {(form.bulkTiers || []).length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                      {form.bulkTiers.map((t, i) => (
-                        <div key={i} className="inline-flex items-center gap-2 text-[10px] font-black bg-gray-50 border rounded-xl px-2 py-1">
-                          <span className="text-gray-700">{t.quantity}+: -₹{t.priceReduction}</span>
-                          <button type="button" className="text-red-600" onClick={() => setForm(f => ({ ...f, bulkTiers: f.bulkTiers.filter((_, idx) => idx !== i) }))}>✕</button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Store</label>
-                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.store} onChange={e => setForm({ ...form, store: e.target.value, section: '' })}>
-                      <option value="">Select store</option>
-                      {stores.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Section</label>
-                    <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.section} onChange={e => setForm({ ...form, section: e.target.value })}>
-                      <option value="">Select section</option>
-                      {(stores.find(s => s.name === form.store)?.sections || []).map(sec => <option key={sec} value={sec}>{sec}</option>)}
-                    </select>
-                  </div>
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Left Column: Basic Info */}
                   <div className="space-y-4">
@@ -815,25 +448,104 @@ export default function Products() {
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category</label>
                         <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value, subCategoryId: '' })} required>
-                          <option value="">Select...</option>
+                          <option value="">Select Category...</option>
                           {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                         </select>
                       </div>
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Brand</label>
-                        <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.brandId} onChange={e => setForm({ ...form, brandId: e.target.value })}>
-                          <option value="">Select...</option>
-                          {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Subcategory</label>
+                        <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.subCategoryId} onChange={e => setForm({ ...form, subCategoryId: e.target.value })}>
+                          <option value="">Select Subcategory...</option>
+                          {subcategories.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
                         </select>
                       </div>
                     </div>
 
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Store</label>
+                        <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.store} onChange={e => setForm({ ...form, store: e.target.value, section: '' })}>
+                          <option value="">Select store</option>
+                          {stores.map(s => <option key={s._id} value={s.name}>{s.name}</option>)}
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Section</label>
+                        <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.section} onChange={e => setForm({ ...form, section: e.target.value })}>
+                          <option value="">Select section</option>
+                          {(stores.find(s => s.name === form.store)?.sections || []).map(sec => <option key={sec} value={sec}>{sec}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>
+                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12" value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Weight (g)</label>
+                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 500" value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">HSN Code</label>
+                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 8517" value={form.hsnCode} onChange={e => setForm({ ...form, hsnCode: e.target.value })} />
+                      </div>
+                    </div>
+                    
                     {!hasVariants && (
                       <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Inventory Stock</label>
-                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} required />
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1 flex justify-between">
+                          <span>Product SKU</span>
+                          {form.sku && <span className="text-blue-600 font-black">AUTO: {form.sku}</span>}
+                        </label>
+                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. PROD-SKU-123" value={form.sku || ''} onChange={e => setForm({ ...form, sku: e.target.value })} />
                       </div>
                     )}
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Min Order Qty</label>
+                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 5" value={form.minOrderQty} onChange={e => setForm({ ...form, minOrderQty: e.target.value })} />
+                      </div>
+                      {!hasVariants && (
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Inventory Stock</label>
+                          <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} required />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2 p-3 bg-gray-50/50 rounded-2xl border border-gray-100">
+                      <div className="text-[10px] font-bold text-gray-500 uppercase ml-1">Bulk Options</div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Bulk Qty</label>
+                          <input className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 10" value={form.bulkDiscountQuantity} onChange={e => setForm({ ...form, bulkDiscountQuantity: e.target.value })} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-gray-400 uppercase ml-1">Reduction (₹)/Unit</label>
+                          <input className="w-full bg-white border border-gray-100 rounded-xl px-4 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 50" value={form.bulkDiscountPriceReduction} onChange={e => setForm({ ...form, bulkDiscountPriceReduction: e.target.value })} />
+                        </div>
+                      </div>
+                      <button type="button" onClick={() => {
+                        const q = Number(form.bulkDiscountQuantity||0)
+                        const r = Number(form.bulkDiscountPriceReduction||0)
+                        if (Number.isFinite(q) && q > 0 && Number.isFinite(r) && r >= 0) {
+                          setForm(f => ({ ...f, bulkTiers: [...(f.bulkTiers||[]), { quantity: q, priceReduction: r }], bulkDiscountQuantity: '', bulkDiscountPriceReduction: '' }))
+                        }
+                      }} className="px-3 py-2 rounded-xl bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-100">Add Bulk Offer</button>
+                      {(form.bulkTiers || []).length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {form.bulkTiers.map((t, i) => (
+                            <div key={i} className="inline-flex items-center gap-2 text-[10px] font-black bg-white border rounded-xl px-2 py-1">
+                              <span className="text-gray-700">{t.quantity}+: -₹{t.priceReduction}</span>
+                              <button type="button" className="text-red-600" onClick={() => setForm(f => ({ ...f, bulkTiers: f.bulkTiers.filter((_, idx) => idx !== i) }))}>✕</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Right Column: Attributes & Variants */}
@@ -1018,12 +730,6 @@ export default function Products() {
                     )}
                   </div>
                 </div>
-                {!hasVariants && (
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Stock</label>
-                    <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} required />
-                  </div>
-                )}
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Images</label>
                   <div className="flex gap-2">
