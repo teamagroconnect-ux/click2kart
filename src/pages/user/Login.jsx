@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import { useAuth } from '../../lib/AuthContext'
@@ -9,6 +9,8 @@ export default function Login() {
   const logo = "/logo.png"
   const { notify } = useToast()
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = location.state?.from || '/'
   const { setAuth, refreshProfile } = useAuth()
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState('password') // 'password' | 'otp'
@@ -28,7 +30,7 @@ export default function Login() {
         setAuth(data.token, { ...data.user, role: 'customer' })
         try { await refreshProfile() } catch {}
         notify('Welcome back!', 'success')
-        navigate('/')
+        navigate(from)
       } catch (err) {
         const code = err?.response?.data?.error
         const msg = code === 'account_pending_approval'
@@ -57,7 +59,7 @@ export default function Login() {
           setAuth(data.token, { ...data.user, role: 'customer' })
           try { await refreshProfile() } catch {}
           notify('Logged in successfully', 'success')
-          navigate('/')
+          navigate(from)
         } catch (err) {
           const code = err?.response?.data?.error
           const msg = code === 'account_pending_approval'

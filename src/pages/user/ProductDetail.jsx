@@ -1492,10 +1492,12 @@ export default function ProductDetail() {
       .pd-view-all:hover { gap: 8px; }
 
       /* rec scroll */
-      .pd-rec-scroll { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-      .pd-rec-scroll::-webkit-scrollbar { display: none; }
+      .pd-rec-scroll { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; padding-bottom: 8px; }
+      @media (min-width: 500px) { .pd-rec-scroll { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+      @media (min-width: 900px) { .pd-rec-scroll { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+      @media (min-width: 1100px) { .pd-rec-scroll { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
       .pd-rec-item {
-        flex-shrink: 0; width: 190px; background: white;
+        background: white;
         border-radius: 18px; overflow: hidden;
         border: 1px solid rgba(124,58,237,.09);
         cursor: pointer; transition: all .28s;
