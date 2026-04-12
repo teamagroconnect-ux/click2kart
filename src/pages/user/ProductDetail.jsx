@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import api from '../../lib/api'
 import { useCart, getStockStatus } from '../../lib/CartContext'
@@ -130,6 +130,37 @@ export default function ProductDetail() {
     if (matchedVariant?.images?.length > 0) return matchedVariant.images
     return Array.isArray(p?.images) ? p.images : []
   }, [p, matchedVariant])
+
+  const touchImgRef = useRef({ x0: 0, y0: 0, active: false })
+  const skipMainImgClickRef = useRef(false)
+
+  const onMainImgTouchStart = useCallback((e) => {
+    if (imgs.length <= 1) return
+    const t = e.touches[0]
+    touchImgRef.current = { x0: t.clientX, y0: t.clientY, active: true }
+  }, [imgs.length])
+
+  const onMainImgTouchEnd = useCallback((e) => {
+    if (!touchImgRef.current.active || imgs.length <= 1) return
+    touchImgRef.current.active = false
+    const t = e.changedTouches[0]
+    const dx = t.clientX - touchImgRef.current.x0
+    const dy = t.clientY - touchImgRef.current.y0
+    if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.15) return
+    skipMainImgClickRef.current = true
+    window.setTimeout(() => { skipMainImgClickRef.current = false }, 450)
+    if (dx < 0) setActiveImg(i => Math.min(imgs.length - 1, i + 1))
+    else setActiveImg(i => Math.max(0, i - 1))
+  }, [imgs.length])
+
+  const onMainImgTouchCancel = useCallback(() => {
+    touchImgRef.current.active = false
+  }, [])
+
+  const onMainImgClick = useCallback(() => {
+    if (skipMainImgClickRef.current) return
+    setLightbox(true)
+  }, [])
 
   /* KYC / pincode */
   useEffect(() => {
@@ -584,6 +615,59 @@ export default function ProductDetail() {
         }
       }
 
+      /* Tablet: larger type & tap targets (not phone-sized in landscape / ~600–899px) */
+      @media (min-width: 600px) and (max-width: 899px) {
+        .pd-topbar { padding: 16px 22px; }
+        .pd-back { font-size: 12px; padding: 9px 18px; gap: 8px; border-radius: 11px; }
+        .pd-breadcrumb { font-size: 12px; }
+        .pd-breadcrumb span:last-child { max-width: min(48vw, 320px); }
+        .pd-wrap { padding: 26px 22px 72px; }
+        .pd-grid { gap: 28px; }
+        .pd-img-main { border-radius: 26px; }
+        .pd-fullview { font-size: 10px; padding: 7px 14px; border-radius: 10px; }
+        .pd-img-chip { font-size: 9px; padding: 4px 10px; }
+        .pd-thumb { width: 80px; height: 80px; border-radius: 14px; padding: 7px; }
+        .pd-thumbs { gap: 10px; padding: 14px 0 22px; }
+        .pd-img-dots { margin-top: 4px; margin-bottom: 2px; }
+        .pd-img-dot { width: 7px; height: 7px; }
+        .pd-variants { padding: 26px 22px; border-radius: 26px; gap: 22px; }
+        .pd-var-name { font-size: 12px; }
+        .pd-var-selected { font-size: 11px; }
+        .pd-var-btn { min-width: 96px; padding: 15px 20px; font-size: 11px; }
+        .pd-var-img-btn { min-width: 84px; }
+        .pd-info {
+          padding: 22px 20px 26px;
+          border-radius: 24px;
+          background: rgba(255,255,255,.82);
+          backdrop-filter: blur(16px) saturate(150%);
+          -webkit-backdrop-filter: blur(16px) saturate(150%);
+          border: 1px solid rgba(124,58,237,.1);
+          box-shadow:
+            0 1px 0 rgba(255,255,255,.9) inset,
+            0 16px 40px -12px rgba(76,29,149,.1);
+        }
+        .pd-badge { font-size: 10px; padding: 6px 12px; }
+        .pd-name { font-size: clamp(30px, 6.5vw, 44px); }
+        .pd-price-main { font-size: clamp(34px, 7vw, 50px); }
+        .pd-rat-row .pd-rat-ct { font-size: 13px; }
+        .pd-del-inp { padding: 12px 16px; font-size: 14px; }
+        .pd-del-check { padding: 12px 20px; font-size: 11px; }
+        .pd-btn-primary { padding: 16px 24px; font-size: 12px; }
+        .pd-trust-item { font-size: 11px; }
+        .pd-delivery-head { padding: 16px 18px; }
+        .pd-del-label { font-size: 11px; }
+        .pd-del-ships-lbl { font-size: 10px; }
+      }
+
+      .pd-reveal {
+        animation: pdRevealIn 0.72s cubic-bezier(.22, 1, .36, 1) both;
+      }
+      .pd-reveal-delay { animation-delay: .14s; }
+      @keyframes pdRevealIn {
+        from { opacity: 0; transform: translateY(18px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
       /* ─── IMAGE PANEL ─── */
       .pd-img-panel { position: relative; }
       @media (min-width: 900px) { .pd-img-panel { position: sticky; top: 76px; } }
@@ -594,6 +678,9 @@ export default function ProductDetail() {
         border-radius: 28px; overflow: hidden; aspect-ratio: 1;
         position: relative; cursor: zoom-in;
         display: flex; align-items: center; justify-content: center;
+        touch-action: pan-y;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
         transition: box-shadow .4s cubic-bezier(.34,1.2,.64,1), border-color .3s, transform .35s;
         box-shadow:
           0 1px 0 rgba(255,255,255,.9) inset,
@@ -608,9 +695,30 @@ export default function ProductDetail() {
         border-color: rgba(124,58,237,.28);
         transform: translateY(-2px);
       }
-      .pd-img-main img {
+      .pd-img-main img.pd-main-photo {
         width: 100%; height: 100%; object-fit: contain; padding: 20px;
         transition: transform .35s cubic-bezier(.34,1.2,.64,1);
+        animation: pdImgSwap .38s cubic-bezier(.22, 1, .36, 1) both;
+      }
+      @keyframes pdImgSwap {
+        from { opacity: 0; transform: scale(1.02); }
+        to { opacity: 1; transform: scale(1); }
+      }
+
+      .pd-img-dots {
+        display: flex; justify-content: center; align-items: center; gap: 7px;
+        margin-top: 10px; margin-bottom: 4px;
+      }
+      .pd-img-dot {
+        width: 6px; height: 6px; border-radius: 50%;
+        border: none; padding: 0; cursor: pointer;
+        background: rgba(124,58,237,.22);
+        transition: transform .22s ease, background .22s ease, box-shadow .22s ease;
+      }
+      .pd-img-dot.on {
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        transform: scale(1.2);
+        box-shadow: 0 2px 8px rgba(124,58,237,.35);
       }
       .pd-img-main::after {
         content: ''; position: absolute; inset: 0;
@@ -1417,23 +1525,6 @@ export default function ProductDetail() {
       }
       .pd-modal-submit:hover { background: #6d28d9; }
 
-      /* ─── MOBILE STICKY BAR ─── */
-      .pd-mob-bar {
-        display: none;
-        position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
-        background: rgba(255,255,255,.96); backdrop-filter: blur(14px);
-        border-top: 1px solid rgba(124,58,237,.12);
-        padding: 12px 16px env(safe-area-inset-bottom, 12px);
-        align-items: center; gap: 12px;
-        box-shadow: 0 -4px 24px rgba(0,0,0,.08);
-        animation: pdSlideUp .4s ease both;
-      }
-      @media (max-width: 899px) { .pd-mob-bar { display: flex; } }
-      @keyframes pdSlideUp { from{transform:translateY(100%);} to{transform:translateY(0);} }
-      .pd-mob-price { flex: 1; }
-      .pd-mob-price-lbl { font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #9ca3af; }
-      .pd-mob-price-val { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: #7c3aed; letter-spacing: .03em; line-height: 1; }
-
       /* ─── ANIMATIONS ─── */
       @keyframes pdFadeIn  { from{opacity:0;} to{opacity:1;} }
       @keyframes pdFadeUp  { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
@@ -1462,19 +1553,31 @@ export default function ProductDetail() {
 
         {/* ── MAIN ── */}
         <div className="pd-wrap">
-          <div className="pd-grid" style={{ animation: 'pdFadeUp .5s ease both' }}>
+          <div className="pd-grid">
 
             {/* ══ LEFT — IMAGE PANEL ══ */}
-            <div className="pd-img-panel">
+            <div className="pd-img-panel pd-reveal">
               <div
                 className="pd-img-main"
                 onMouseEnter={() => setZoom(z => ({ ...z, on: true }))}
                 onMouseLeave={() => setZoom({ on: false, x: 50, y: 50 })}
                 onMouseMove={e => { const r = e.currentTarget.getBoundingClientRect(); setZoom({ on: true, x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 }) }}
-                onClick={() => setLightbox(true)}
+                onTouchStart={onMainImgTouchStart}
+                onTouchEnd={onMainImgTouchEnd}
+                onTouchCancel={onMainImgTouchCancel}
+                onClick={onMainImgClick}
               >
                 {currentImg
-                  ? <img src={currentImg} alt={p.name} style={{ transform: zoom.on ? 'scale(1.55)' : 'scale(1)', transformOrigin: `${zoom.x}% ${zoom.y}%` }} />
+                  ? (
+                    <img
+                      key={activeImg}
+                      className="pd-main-photo"
+                      src={currentImg}
+                      alt={p.name}
+                      draggable={false}
+                      style={{ transform: zoom.on ? 'scale(1.55)' : 'scale(1)', transformOrigin: `${zoom.x}% ${zoom.y}%` }}
+                    />
+                  )
                   : <span style={{ fontSize: 80, opacity: .2 }}>📦</span>
                 }
                 {/* image corner chips */}
@@ -1491,6 +1594,21 @@ export default function ProductDetail() {
                   Full View
                 </button>
               </div>
+
+              {imgs.length > 1 && (
+                <div className="pd-img-dots" aria-hidden="true">
+                  {imgs.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className={`pd-img-dot${i === activeImg ? ' on' : ''}`}
+                      onClick={() => setActiveImg(i)}
+                      aria-label={`Image ${i + 1}`}
+                      aria-current={i === activeImg ? 'true' : undefined}
+                    />
+                  ))}
+                </div>
+              )}
 
               {imgs.length > 1 && (
                 <div className="pd-thumbs">
@@ -1594,7 +1712,7 @@ export default function ProductDetail() {
             </div>
 
             {/* ══ RIGHT — INFO PANEL ══ */}
-            <div className="pd-info">
+            <div className="pd-info pd-reveal pd-reveal-delay">
 
               {/* badges */}
               <div className="pd-badges">
@@ -2100,24 +2218,6 @@ export default function ProductDetail() {
             if (updated.length === 0) setRecOpen(false)
           }}
         />
-
-        {/* ══ MOBILE FLOATING BAR ══ */}
-        <div className="pd-mob-bar">
-          <div className="pd-mob-price">
-            <div className="pd-mob-price-lbl">Wholesale Price</div>
-            <div className="pd-mob-price-val">
-              {authed ? `₹${effPrice.toLocaleString()}` : '₹ ****'}
-            </div>
-          </div>
-          <button
-            className="pd-btn-primary"
-            style={{ flex: 2, padding: '12px 20px', borderRadius: 13, minWidth: 'auto' }}
-            disabled={!authed || !isAvailable || (variantAttrs.length > 0 && !matchedVariant) || (sortedAsc.length > 0 && qty < minTierQty)}
-            onClick={handleAddToCart}
-          >
-            {!authed ? '🔒 Login' : !isAvailable ? 'Out of Stock' : (variantAttrs.length > 0 && !matchedVariant) ? 'Select' : 'Add to Cart'}
-          </button>
-        </div>
 
       </div>
     </>

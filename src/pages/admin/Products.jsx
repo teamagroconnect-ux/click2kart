@@ -22,6 +22,7 @@ export default function Products() {
   const [stores, setStores] = useState([])
   const limit = 10
   const [preview, setPreview] = useState('')
+  const [showAddProduct, setShowAddProduct] = useState(false)
 
   const [loading, setLoading] = useState(false)
   const load = async (p=1) => {
@@ -95,7 +96,7 @@ export default function Products() {
       attributes: [],
       variants: []
     })
-    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'' }); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'' }); setShowAddProduct(false); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -187,16 +188,24 @@ export default function Products() {
       `}</style>
       <div className="space-y-6 max-w-[1600px] mx-auto px-4 py-6">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Product Catalogue</h1>
             <p className="text-xs text-gray-500 font-medium mt-0.5">Manage inventory, pricing, and variants</p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="relative">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowAddProduct(v => !v)}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm border ${showAddProduct ? 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200' : 'bg-gray-900 text-white border-gray-900 hover:bg-gray-800 shadow-md'}`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
+              {showAddProduct ? 'Close add form' : 'Add New Product'}
+            </button>
+            <div className="relative flex-1 min-w-[200px] max-w-xs">
               <input
                 placeholder="Search products..."
-                className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl pl-10 pr-4 py-2.5 w-64 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl pl-10 pr-4 py-2.5 w-full outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 value={q}
                 onChange={e => setQ(e.target.value)}
               />
@@ -206,7 +215,7 @@ export default function Products() {
         </div>
 
         <div className="flex flex-col gap-6">
-          <div className="space-y-4 flex flex-col min-h-[320px] max-h-[min(56vh,520px)] lg:max-h-[min(52vh,560px)]">
+          <div className={`space-y-4 flex flex-col min-h-[320px] ${showAddProduct ? 'max-h-[min(48vh,480px)]' : 'max-h-[min(78vh,820px)]'}`}>
             <div className="flex items-center justify-between px-2">
               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Live Inventory ({total})</h3>
               <div className="flex gap-2">
@@ -311,14 +320,20 @@ export default function Products() {
             </div>
           </div>
 
-          {/* Creation Section — full width, dense grid (SKUs live on variants after save) */}
-          <div className="flex flex-col bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-            <div className="p-5 sm:p-6 border-b border-gray-50 flex flex-wrap items-end justify-between gap-3">
+          {/* Creation Section — only when opened from header */}
+          {showAddProduct && (
+          <div className="flex flex-col bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden ring-1 ring-indigo-100/80 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="p-5 sm:p-6 border-b border-gray-50 flex flex-wrap items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Add New Product</h3>
                 <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mt-0.5">Catalogue wizard</p>
               </div>
-              <p className="text-[11px] text-gray-500 max-w-xl">Variants and per-option SKUs are added from <span className="font-bold text-indigo-600">Manage Variants</span> on the product row after this product is saved.</p>
+              <div className="flex items-start gap-3 flex-1 justify-end min-w-0">
+                <p className="text-[11px] text-gray-500 max-w-xl text-right max-md:text-left max-md:w-full">Variants and per-option SKUs: use <span className="font-bold text-indigo-600">Manage Variants</span> on the row after save.</p>
+                <button type="button" onClick={() => setShowAddProduct(false)} className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 shrink-0" title="Close">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
             </div>
             
             <form onSubmit={create} className="p-5 sm:p-6 space-y-5 overflow-y-auto max-h-[70vh] custom-scrollbar">
@@ -481,7 +496,7 @@ export default function Products() {
                 <button className="w-full bg-gray-900 text-white py-4 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest">ADD TO INVENTORY</button>
               </form>
             </div>
-          </div>
+          )}
         </div>
 
       {editing && (
