@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
+import PasswordInput from '../../components/PasswordInput'
 
 export default function Signup() {
   const { notify } = useToast()
@@ -111,12 +112,12 @@ export default function Signup() {
               </div>
               <div className="group">
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Create Password</label>
-                <input
+                <PasswordInput
                   name="password"
-                  type="password"
                   required
                   minLength={6}
-                  className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  autoComplete="new-password"
+                  inputClassName="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleChange}

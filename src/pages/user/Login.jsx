@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import { useAuth } from '../../lib/AuthContext'
+import PasswordInput from '../../components/PasswordInput'
 
 export default function Login() {
   const logo = "/logo.png"
@@ -112,11 +113,11 @@ export default function Login() {
                     Forgot?
                   </Link>
                 </div>
-                <input
+                <PasswordInput
                   name="password"
-                  type="password"
                   required
-                  className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  autoComplete="current-password"
+                  inputClassName="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleChange}

@@ -10,12 +10,32 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+/** Paths where 401 means "wrong email/password" (or similar), not "session expired" — never redirect or clear storage. */
+function isCredentialAuthRequest(config) {
+  const raw = config?.url || ''
+  const path = (raw.includes('://') ? new URL(raw).pathname : raw.split('?')[0]) || ''
+  const p = path.startsWith('/') ? path : `/${path}`
+  const suffixes = [
+    '/api/auth/login',
+    '/api/auth/customer/login',
+    '/api/auth/customer/login-otp/send',
+    '/api/auth/customer/login-otp/verify',
+    '/api/auth/customer/signup',
+    '/api/auth/customer/verify-otp',
+    '/api/auth/customer/forgot-password',
+    '/api/auth/customer/reset-password',
+    '/api/public/partner/login'
+  ]
+  return suffixes.some((s) => p === s || p.endsWith(s))
+}
+
 api.interceptors.response.use(
   (res) => res,
   (err) => {
     const s = err?.response?.status
     const code = err?.response?.data?.error
-    if (s === 401 || code === 'invalid_token') {
+    const skipLogout = isCredentialAuthRequest(err.config)
+    if ((s === 401 || code === 'invalid_token') && !skipLogout) {
       try { sessionStorage.setItem('postLoginRedirect', location.pathname + location.search) } catch {}
       localStorage.removeItem('token')
       localStorage.removeItem('user')

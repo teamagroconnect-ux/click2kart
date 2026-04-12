@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import api from '../../lib/api'
+import PasswordInput from '../../components/PasswordInput'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -61,10 +62,10 @@ export default function Login() {
           </div>
           <div className="space-y-1">
             <label className="text-[11px] font-medium text-gray-700">Password</label>
-            <input
-              className="border border-gray-300 bg-white text-gray-900 text-sm rounded-lg px-3 py-2 w-full outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            <PasswordInput
+              autoComplete="current-password"
+              inputClassName="border border-gray-300 bg-white text-gray-900 text-sm rounded-lg px-3 py-2 w-full outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="••••••••"
-              type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
             />

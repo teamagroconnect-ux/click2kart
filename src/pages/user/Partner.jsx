@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
+import PasswordInput from '../../components/PasswordInput'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import { CONFIG } from '../../shared/lib/config.js'
 
@@ -693,12 +694,12 @@ export default function Partner() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <input 
-                    type="password" 
-                    className="pr-input" 
-                    placeholder="Portal Password…" 
-                    value={password} 
-                    onChange={e => setPassword(e.target.value)} 
+                  <PasswordInput
+                    autoComplete="current-password"
+                    inputClassName="pr-input"
+                    placeholder="Portal Password…"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
                   />
                   <button type="submit" className="pr-btn" disabled={!password || loading}>
                     {loading ? '⟳ Authenticating…' : 'Access Dashboard →'}
