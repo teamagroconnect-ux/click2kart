@@ -57,13 +57,14 @@ function skuHintLine(p) {
 
 export default function InventoryPage() {
   const { notify } = useToast()
-  const [q, setQ] = useState('')
-  const [options, setOptions] = useState([])
-  const [selectedProduct, setSelectedProduct] = useState(null)
-  const [selectedSku, setSelectedSku] = useState(null)
-  const [qty, setQty] = useState('')
-  const [note, setNote] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const [catalogSearch, setCatalogSearch] = useState('')
+  const [catalogProducts, setCatalogProducts] = useState([])
+  const [catalogLoading, setCatalogLoading] = useState(false)
+  const [activeCatalogProduct, setActiveCatalogProduct] = useState(null)
+  const [bulkQuantities, setBulkQuantities] = useState({})
+  const [bulkNote, setBulkNote] = useState('')
+  const [bulkSubmitting, setBulkSubmitting] = useState(false)
+
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState({ kpis: { totalSkus:0, totalUnits:0, lowStockCount:0, totalAdded30d:0 }, daily: [], topProducts: [], lowStock: [] })
@@ -71,9 +72,24 @@ export default function InventoryPage() {
   const [showSkuModal, setShowSkuModal] = useState(false)
   const [selectedProductForSkuView, setSelectedProductForSkuView] = useState(null)
   const [topSkus, setTopSkus] = useState([])
-  const [searchLoading, setSearchLoading] = useState(false)
-  const [searchHi, setSearchHi] = useState(-1)
-  const searchBoxRef = useRef(null)
+
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const [hist, sum, over] = await Promise.all([
+        api.get('/api/inventory/history', { params: { limit: 20 } }),
+        api.get('/api/inventory/summary', { params: { days: 30 } }),
+        api.get('/api/inventory/overview')
+      ])
+      setHistory(hist.data?.items || [])
+      setSummary(sum.data)
+      setOverview(over.data?.items || [])
+    } catch {} finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => { loadData() }, [loadData])
 
   useEffect(() => {
     if (selectedProductForSkuView) {
@@ -89,127 +105,49 @@ export default function InventoryPage() {
     }
   }, [selectedProductForSkuView])
 
-  const canSubmit = selectedSku && Number.isInteger(Number(qty)) && Number(qty) > 0
-
-  const productSkus = useMemo(() => buildSkuRows(selectedProduct), [selectedProduct])
-
-  // Filter overview to only show individual SKUs (variants or simple products)
   const skuOverview = useMemo(() => {
-    return overview.filter(o => o.sku); // Only items with a specific identity
+    return overview.filter(o => o.sku);
   }, [overview]);
-
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      try {
-        const { data } = await api.get('/api/inventory/history', { params: { limit: 20 } })
-        setHistory(data.items || [])
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [])
-
-  useEffect(() => {
-    const loadSum = async () => {
-      try {
-        const { data } = await api.get('/api/inventory/summary', { params: { days: 30 } })
-        setSummary(data)
-      } catch {}
-    }
-    loadSum()
-  }, [])
-
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const { data } = await api.get('/api/inventory/overview')
-        setOverview(data.items || [])
-      } catch {}
-    }
-    run()
-  }, [])
 
   useEffect(() => {
     const ctrl = new AbortController()
     const run = async () => {
-      if (!q.trim()) { setOptions([]); setSearchLoading(false); return }
-      setSearchLoading(true)
+      setCatalogLoading(true)
       try {
-        const { data } = await api.get('/api/products', { params: { q: q.trim(), limit: 35, page: 1 }, signal: ctrl.signal })
-        setOptions(data.items || [])
+        const { data } = await api.get('/api/products', { params: { q: catalogSearch.trim(), limit: 12, page: 1 }, signal: ctrl.signal })
+        setCatalogProducts(data.items || [])
       } catch { /* ignore */ }
       finally {
-        if (!ctrl.signal.aborted) setSearchLoading(false)
+        if (!ctrl.signal.aborted) setCatalogLoading(false)
       }
     }
-    const id = setTimeout(run, 160)
+    const id = setTimeout(run, 200)
     return () => { clearTimeout(id); ctrl.abort() }
-  }, [q])
+  }, [catalogSearch])
 
-  useEffect(() => {
-    setSearchHi(options.length ? 0 : -1)
-  }, [options])
-
-  useEffect(() => {
-    const close = (e) => {
-      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target)) setOptions([])
-    }
-    document.addEventListener('mousedown', close)
-    return () => document.removeEventListener('mousedown', close)
-  }, [])
-
-  const pickProduct = useCallback(async (productId, preferredVariantSku = '') => {
-    if (!productId) return
-    try {
-      const { data } = await api.get(`/api/products/${productId}`)
-      const rows = buildSkuRows(data)
-      setSelectedProduct(data)
-      setQ('')
-      setOptions([])
-      setSearchHi(-1)
-      if (preferredVariantSku) {
-        const row = rows.find(r => r.sku === preferredVariantSku)
-        setSelectedSku(row || rows[0] || null)
-      } else {
-        setSelectedSku(rows[0] || null)
-      }
-    } catch {
-      notify('Could not load product', 'error')
-    }
-  }, [notify])
-
-  const submit = async (e) => {
+  const submitBulk = async (e) => {
     e.preventDefault()
-    if (!canSubmit) return
+    const updates = Object.entries(bulkQuantities)
+      .filter(([sku, qty]) => qty && !isNaN(qty) && Number.isInteger(Number(qty)) && Number(qty) > 0)
+      .map(([sku, qty]) => ({ productId: activeCatalogProduct._id, variantSku: sku, quantity: Number(qty) }))
     
-    // Enforce SKU identity
-    if (!selectedSku.sku) {
-      notify('This item has no SKU. Please assign a SKU in Product Management first.', 'error')
+    if (updates.length === 0) {
+      notify('Please enter a valid positive quantity for at least one SKU.', 'error')
       return
     }
 
-    setSubmitting(true)
+    setBulkSubmitting(true)
     try {
-      await api.post('/api/inventory/in', {
-        productId: selectedProduct._id,
-        variantSku: selectedSku.sku,
-        quantity: Number(qty),
-        note
-      })
-      notify(`Stock added to SKU: ${selectedSku.sku}`, 'success')
-      setQty('')
-      setNote('')
-      setQ('')
-      setSelectedProduct(null)
-      setSelectedSku(null)
-      const { data } = await api.get('/api/inventory/history', { params: { limit: 20 } })
-      setHistory(data.items || [])
+      await api.post('/api/inventory/bulk-in', { updates, note: bulkNote })
+      notify(`Added stock to ${updates.length} item(s) successfully`, 'success')
+      setActiveCatalogProduct(null)
+      setBulkQuantities({})
+      setBulkNote('')
+      loadData()
     } catch (err) {
-      notify(err?.response?.data?.error || 'Failed to add stock', 'error')
+      notify(err?.response?.data?.error || 'Failed to add bulk stock', 'error')
     } finally {
-      setSubmitting(false)
+      setBulkSubmitting(false)
     }
   }
 
@@ -345,162 +283,128 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <form onSubmit={submit} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
-        {!selectedProduct && skuOverview.length > 0 && (
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1.5 block">Quick pick (overview)</label>
-            <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto pr-1">
-              {skuOverview.slice(0, 18).map(o => (
-                <button
-                  key={o.id}
-                  type="button"
-                  onClick={() => {
-                    const { productId, variantSku } = parseOverviewItemId(o.id)
-                    pickProduct(productId, variantSku)
-                  }}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-violet-50 hover:border-violet-200 text-left transition-colors max-w-[280px]"
-                >
-                  <span className="text-[11px] font-bold text-gray-900 truncate">{o.name}</span>
-                  {o.sku && <span className="text-[10px] font-mono text-violet-700 shrink-0">{o.sku}</span>}
-                </button>
-              ))}
-            </div>
+      {/* Catalog & Bulk Add Section */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">Catalog / Add Inventory</h2>
+          <div className="relative w-64 md:w-80">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            </span>
+            <input
+              className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-9 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+              placeholder="Search products..."
+              value={catalogSearch}
+              onChange={e => setCatalogSearch(e.target.value)}
+            />
+            {catalogLoading && (
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-violet-200 border-t-violet-600 rounded-full animate-spin" aria-hidden />
+            )}
           </div>
-        )}
-        <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Select Product</label>
-            <div className="relative" ref={searchBoxRef}>
-              {!selectedProduct ? (
-                <>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    </span>
-                    <input
-                      className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-10 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                      placeholder="Search name, brand, or SKU…"
-                      value={q}
-                      autoComplete="off"
-                      onChange={e => setQ(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'ArrowDown' && options.length) {
-                          e.preventDefault()
-                          setSearchHi(i => {
-                            const next = i < 0 ? 0 : i + 1
-                            return Math.min(options.length - 1, next)
-                          })
-                          return
-                        }
-                        if (e.key === 'ArrowUp' && options.length) {
-                          e.preventDefault()
-                          setSearchHi(i => Math.max(0, (i < 0 ? 0 : i - 1)))
-                          return
-                        }
-                        if (e.key === 'Enter') {
-                          if (options.length > 0 && searchHi >= 0 && options[searchHi]) {
-                            e.preventDefault()
-                            pickProduct(options[searchHi]._id)
-                          } else {
-                            e.preventDefault()
-                          }
-                          return
-                        }
-                        if (e.key === 'Escape') {
-                          setOptions([])
-                        }
-                      }}
-                    />
-                    {searchLoading && (
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-violet-200 border-t-violet-600 rounded-full animate-spin" aria-hidden />
+        </div>
+
+        {catalogProducts.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {catalogProducts.map(p => {
+              const pSkus = buildSkuRows(p)
+              return (
+                <div key={p._id} className="relative group rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col cursor-pointer hover:border-violet-300 hover:ring-1 hover:ring-violet-300 transition-all" onClick={() => setActiveCatalogProduct(p)}>
+                  <div className="aspect-square bg-gray-50 relative flex border-b border-gray-100">
+                    {p.images?.[0]?.url ? (
+                      <img src={p.images[0].url} alt="" className="w-full h-full object-contain p-2" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300">📦</div>
                     )}
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1">Type 1+ characters · ↑↓ to move · Enter to select · matches SKU</p>
-                  {options.length > 0 && (
-                    <div className="absolute z-20 mt-2 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl max-h-80 overflow-y-auto">
-                      {options.map((p, idx) => (
-                        <button
-                          key={p._id}
-                          type="button"
-                          onClick={() => pickProduct(p._id)}
-                          onMouseEnter={() => setSearchHi(idx)}
-                          className={`w-full px-3 py-2.5 text-left flex items-center gap-3 border-b last:border-0 border-gray-50 ${idx === searchHi ? 'bg-violet-50 ring-1 ring-inset ring-violet-200' : 'hover:bg-gray-50'}`}
-                        >
-                          <div className="h-10 w-10 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
-                            {p.images?.[0]?.url ? (
-                              <img src={p.images[0].url} alt="" className="h-full w-full object-contain" />
-                            ) : <span className="text-[10px] text-gray-400">📦</span>}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-bold text-gray-900 truncate">{p.name}</div>
-                            <div className="text-[10px] text-gray-500 truncate mt-0.5">{skuHintLine(p)}</div>
-                          </div>
-                        </button>
-                      ))}
+                  <div className="p-3 flex flex-col flex-1">
+                    <div className="text-[11px] font-bold text-gray-900 leading-tight line-clamp-2 mb-1">{p.name}</div>
+                    <div className="mt-auto flex items-center justify-between text-[10px] text-gray-500 font-medium">
+                      <span>{pSkus.length} {pSkus.length === 1 ? 'SKU' : 'SKUs'}</span>
+                      <span className="text-violet-600 font-bold bg-violet-50 px-1.5 py-0.5 rounded">Add</span>
                     </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex items-center gap-3 p-3 border border-gray-200 rounded-xl bg-gray-50">
-                  <div className="h-10 w-10 rounded-lg bg-white border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
-                    {selectedProduct.images?.[0]?.url ? (
-                      <img src={selectedProduct.images[0].url} alt={selectedProduct.name} className="h-full w-full object-contain" />
-                    ) : <span className="text-[10px] text-gray-400">📦</span>}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-bold text-gray-900 truncate">{selectedProduct.name}</div>
-                  </div>
-                  <button type="button" onClick={() => { setSelectedProduct(null); setSelectedSku(null); setQ(''); }} className="px-3 py-1.5 rounded-lg bg-white border text-gray-600 hover:bg-gray-100 text-xs font-bold">Change</button>
                 </div>
-              )}
+              )
+            })}
+          </div>
+        ) : (
+          <div className="py-10 text-center text-gray-400 text-sm font-medium">
+            {catalogSearch ? 'No products found matching your search.' : 'Type to search products'}
+          </div>
+        )}
+      </div>
+
+      {activeCatalogProduct && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[90vh] overflow-hidden">
+            <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center overflow-hidden">
+                  {activeCatalogProduct.images?.[0]?.url ? (
+                    <img src={activeCatalogProduct.images[0].url} alt="" className="w-full h-full object-contain p-1" />
+                  ) : <span>📦</span>}
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">{activeCatalogProduct.name}</h3>
+                  <p className="text-[10px] uppercase font-black tracking-wider text-gray-500">Bulk Add Inventory</p>
+                </div>
+              </div>
+              <button type="button" onClick={() => { setActiveCatalogProduct(null); setBulkQuantities({}); setBulkNote(''); }} className="text-gray-400 hover:text-gray-800 transition-colors p-1 text-2xl leading-none">&times;</button>
+            </div>
+            
+            <div className="p-5 overflow-y-auto flex-1">
+              <table className="w-full text-sm border-collapse">
+                <thead className="bg-gray-50/50 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="px-4 py-3 text-left border-b border-gray-100">SKU</th>
+                    <th className="px-4 py-3 text-left border-b border-gray-100">Attributes</th>
+                    <th className="px-4 py-3 text-center border-b border-gray-100 w-24">Current Stock</th>
+                    <th className="px-4 py-3 text-right border-b border-gray-100 w-32">Qty to Add</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {buildSkuRows(activeCatalogProduct).map(s => (
+                    <tr key={s.sku} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-3 font-mono text-gray-900 font-bold text-xs">{s.sku || 'No SKU'}</td>
+                      <td className="px-4 py-3 text-gray-600 text-xs">{s.attrLabel || '—'}</td>
+                      <td className="px-4 py-3 text-center text-gray-500 text-xs">{s.stock ?? 0}</td>
+                      <td className="px-4 py-3 text-right">
+                        <input
+                          type="number" min="1" step="1"
+                          placeholder="0"
+                          value={bulkQuantities[s.sku] || ''}
+                          onChange={(e) => setBulkQuantities(prev => ({ ...prev, [s.sku]: e.target.value }))}
+                          className="w-20 text-right bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-bold focus:ring-2 focus:ring-violet-500 outline-none"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="p-4 border-t border-gray-100 bg-gray-50/50 flex flex-col md:flex-row items-center gap-4">
+              <div className="flex-1 w-full">
+                <input
+                  type="text"
+                  placeholder="Note (e.g. Supplier, GRN) - applies to all"
+                  value={bulkNote}
+                  onChange={e => setBulkNote(e.target.value)}
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm font-semibold focus:ring-2 focus:ring-violet-500 outline-none"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={submitBulk}
+                disabled={bulkSubmitting}
+                className="w-full md:w-auto px-6 py-2.5 rounded-xl bg-gray-900 text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+              >
+                {bulkSubmitting ? 'Saving...' : 'Add Stock'}
+              </button>
             </div>
           </div>
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Select SKU</label>
-            <select 
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50"
-              disabled={!selectedProduct || productSkus.length === 0}
-              value={selectedSku ? selectedSku.sku : ''}
-              onChange={e => setSelectedSku(productSkus.find(s => s.sku === e.target.value) || null)}
-            >
-              <option value="">{productSkus.length > 0 ? '-- Select SKU --' : (selectedProduct ? 'No SKUs for this product' : 'Select a product first')}</option>
-              {productSkus.map(s => (
-                <option key={s.sku} value={s.sku}>{s.attrLabel ? `${s.sku} (${s.attrLabel})` : s.sku} (Stock: {s.stock ?? 0})</option>
-              ))}
-            </select>
-          </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr_auto] gap-3">
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Quantity</label>
-            <input
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-              type="number" min="1" step="1"
-              placeholder="e.g. 100"
-              value={qty}
-              onChange={e => setQty(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Note (optional)</label>
-            <input
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="e.g. GRN #123, supplier name"
-              value={note}
-              onChange={e => setNote(e.target.value)}
-            />
-          </div>
-          <div className="flex items-end">
-            <button
-              type="submit"
-              disabled={!canSubmit || submitting}
-              className="px-5 py-3 rounded-xl bg-gray-900 text-white text-sm font-black uppercase tracking-widest disabled:opacity-40 w-full"
-            >
-              {submitting ? 'Saving...' : 'Add Stock'}
-            </button>
-          </div>
-        </div>
-      </form>
+      )}
 
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-between mb-3">
