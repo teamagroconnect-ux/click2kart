@@ -6,9 +6,41 @@ import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
 import { useToast } from '../../components/Toast'
 import RecommendationModal from '../../components/RecommendationModal'
 
+/** Stable sort for RAM/ROM/Storage etc.; otherwise locale + numeric aware. */
+function sortVariantValues(lowKey, values) {
+  const arr = [...values]
+  const lk = String(lowKey || '').toLowerCase()
+  const storageLike =
+    /ram|rom|storage|memory|capacity|variant|model/i.test(lk) &&
+    !/screen|display|camera|inch|hz|refresh/i.test(lk)
+  if (storageLike) {
+    return arr.sort((a, b) => {
+      const na = parseFloat(String(a).replace(/[^\d.]/g, '')) || 0
+      const nb = parseFloat(String(b).replace(/[^\d.]/g, '')) || 0
+      if (na !== nb) return na - nb
+      return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' })
+    })
+  }
+  return arr.sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' }))
+}
+
+function variantAttrIconEmoji(lowKey) {
+  const k = String(lowKey || '').toLowerCase()
+  if (k === 'option') return '🛒'
+  if (k.includes('color') || k.includes('colour') || k === 'finish' || k.includes('shade')) return '🎨'
+  if (k.includes('ram')) return '🧠'
+  if (k.includes('rom') || k.includes('storage') || k.includes('memory')) return '💾'
+  if (k.includes('size') && !k.includes('screen')) return '📏'
+  if (k.includes('watt') || k.includes('power')) return '⚡'
+  if (k.includes('material')) return '🧵'
+  if (k.includes('model') || k.includes('variant')) return '📱'
+  if (k.includes('screen') || k.includes('display')) return '🖥'
+  return '🔧'
+}
+
 /* ═══════════════════════════════════════════════
    PRODUCT DETAIL  –  Click2Kart B2B
-   PREMIUM VARIANT SELECTOR WITH VERTICAL LAYOUT
+   Variant selector: any attribute count; many values → horizontal scroll rail
 ═══════════════════════════════════════════════ */
 export default function ProductDetail() {
   const { id } = useParams()
@@ -27,13 +59,17 @@ export default function ProductDetail() {
       })
     }
 
-    // 🚀 SKU Parsing Fallback: If attributes are empty, extract from SKU (e.g. O8SV-BLACK-80)
+    // SKU parsing when variant.attributes is empty:
+    // - PREFIX-COLOR-WATT (3+ segments) → color + watt (legacy)
+    // - PREFIX-COLOR (2 segments), e.g. EUSC-BLACK / EUSC-WHITE → single "color" dimension
     const targetSku = sku || (attrs && typeof attrs === 'object' ? attrs.sku : null);
     if (Object.keys(result).length === 0 && targetSku) {
-      const parts = targetSku.split('-');
+      const parts = String(targetSku).split('-').map(s => s.trim()).filter(Boolean);
       if (parts.length >= 3) {
-        result['color'] = parts[1].toLowerCase();
-        result['watt'] = parts[2].toLowerCase();
+        result.color = parts[1].toLowerCase();
+        result.watt = parts[2].toLowerCase();
+      } else if (parts.length === 2) {
+        result.color = parts[1].toLowerCase();
       }
     }
     return result
@@ -46,7 +82,6 @@ export default function ProductDetail() {
   const [activeImg, setActiveImg] = useState(0)
   const [lightbox, setLightbox] = useState(false)
   const [zoom, setZoom] = useState({ on: false, x: 50, y: 50 })
-  const [similar, setSimilar] = useState([])
   const [recItems, setRecItems] = useState([])
   const [recOpen, setRecOpen] = useState(false)
   const [qty, setQty] = useState(1)
@@ -60,41 +95,41 @@ export default function ProductDetail() {
 
   const variantAttrs = useMemo(() => {
     if (!p) return []
-    const set = new Set()
+    const ordered = []
+    const seen = new Set()
+    const add = (rawKey) => {
+      if (!rawKey || typeof rawKey !== 'string') return
+      const lk = rawKey.toLowerCase().trim()
+      if (!lk || seen.has(lk)) return
+      seen.add(lk)
+      ordered.push(rawKey.trim())
+    }
 
-    // 1. Get from product.attributes if available (Predefined order)
+    // 1) Order from product.attributes (e.g. RAM:8GB,12GB — key only; values come from variants)
     const attrs = Array.isArray(p.attributes) ? p.attributes : []
     attrs.forEach(a => {
-      const parts = a.split(':');
-      if (parts[0]) set.add(parts[0].trim())
+      const parts = a.split(':')
+      if (parts[0]) add(parts[0].trim())
     })
 
-    // 2. Scan ALL variants for ANY extra attributes
+    // 2) Any other keys from variants (normalizeAttrs includes SKU-derived color/watt)
+    const extras = []
     if (Array.isArray(p.variants)) {
       p.variants.forEach(v => {
-        if (!v.attributes) return;
-        const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : v.attributes;
+        const vAttrs = normalizeAttrs(v.attributes, v.sku)
         Object.keys(vAttrs || {}).forEach(k => {
-          if (k && typeof k === 'string') {
-            const lowK = k.toLowerCase().trim();
-            const existing = Array.from(set).find(s => s.toLowerCase().trim() === lowK)
-            if (!existing) set.add(k.trim())
-          }
+          if (!k || typeof k !== 'string') return
+          const lk = k.toLowerCase().trim()
+          if (!seen.has(lk)) extras.push(k.trim())
         })
       })
     }
+    const uniqExtra = [...new Map(extras.map(e => [e.toLowerCase().trim(), e])).values()]
+    uniqExtra.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    uniqExtra.forEach(add)
 
-    const result = Array.from(set)
-
-    // 🚀 ULTIMATE FORCE: If no attributes found in DB, extract 'Color' and 'Watt' from your SKUs
-    if (result.length === 0 && Array.isArray(p.variants) && p.variants.length > 0) {
-      const firstSku = p.variants[0].sku || '';
-      if (firstSku.includes('-')) {
-        return ['Color', 'Watt'];
-      }
-      return ['Option']
-    }
-    return result
+    if (ordered.length === 0 && Array.isArray(p.variants) && p.variants.length > 0) return ['Option']
+    return ordered
   }, [p])
 
   const matchedVariant = useMemo(() => {
@@ -209,7 +244,6 @@ export default function ProductDetail() {
       const msg = err?.response?.data?.error || err.message || 'Product not found';
       setError(msg === 'not_found' ? 'This product is no longer available.' : msg);
     })
-    api.get(`/api/recommendations/similar/${id}`).then(({ data }) => setSimilar(data || [])).catch(() => { })
     api.get(`/api/recommendations/frequently-bought/${id}?limit=6`).then(({ data }) => setRecItems(data || [])).catch(() => { })
   }, [id])
 
@@ -294,9 +328,10 @@ export default function ProductDetail() {
       if (v.isActive === false) return false
       const vAttrs = normalizeAttrs(v.attributes, v.sku)
       return variantAttrs.every(k => {
-        const val = selected[k];
+        const lk = k.toLowerCase().trim()
+        const val = selected[lk];
         if (!val) return true;
-        return String(vAttrs[k] || '').toLowerCase() === String(val || '').toLowerCase()
+        return String(vAttrs[lk] || '').toLowerCase() === String(val || '').toLowerCase()
       })
     }) || null
 
@@ -310,7 +345,10 @@ export default function ProductDetail() {
         const partialMatch = p.variants.find(vx => {
           if (vx.isActive === false) return false
           const vxAttrs = normalizeAttrs(vx.attributes, vx.sku)
-          return subAttrs.every(k => String(vxAttrs[k] || '').toLowerCase() === String(selected[k] || '').toLowerCase())
+          return subAttrs.every(k => {
+            const lk = k.toLowerCase().trim()
+            return String(vxAttrs[lk] || '').toLowerCase() === String(selected[lk] || '').toLowerCase()
+          })
         })
         if (partialMatch) {
           currentMatch = partialMatch
@@ -404,7 +442,7 @@ export default function ProductDetail() {
       p.variants.forEach(v => {
         if (v.isActive !== false) set.add(v.sku || v._id)
       })
-      return Array.from(set)
+      return sortVariantValues(lowKey, Array.from(set))
     }
 
     // 1. Get from predefined values in product.attributes (Format: "Color:Black,Blue")
@@ -430,8 +468,7 @@ export default function ProductDetail() {
         })
       })
     }
-    const result = Array.from(set).sort();
-    return result;
+    return sortVariantValues(lowKey, Array.from(set))
   }
 
   // Flipkart Style Logic: Check if an option is enabled based on current other selections
@@ -482,7 +519,7 @@ export default function ProductDetail() {
   const currentSku = matchedVariant?.sku
   const isAvailable = currentStock > 0
 
-  const canAddToCart = variantAttrs.every(attr => !!selected[attr]) && !!matchedVariant && isAvailable
+  const canAddToCart = variantAttrs.every(attr => !!selected[attr.toLowerCase().trim()]) && !!matchedVariant && isAvailable
 
   /* ── PRICE CALCULATIONS ── */
   const basePrice = Number(currentPrice ?? 0)
@@ -863,37 +900,62 @@ export default function ProductDetail() {
         border-radius: 20px;
       }
       
-      /* Premium Option Container - VERTICAL for many options */
+      /* Option rows: wrap for few; horizontal rail for many (RAM/ROM / 10+ values) */
       .pd-var-opts {
         display: flex;
         flex-wrap: wrap;
-        gap: 12px;
-        max-height: none;
-        overflow-y: visible;
-      }
-      
-      /* When options count is more than 5, switch to vertical scroll */
-      .pd-var-opts.has-many {
-        display: flex;
-        flex-direction: column;
         gap: 10px;
-        max-height: 260px;
-        overflow-y: auto;
-        padding-right: 8px;
+        align-items: stretch;
       }
-      
+      .pd-var-scroll-hint {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #a1a1aa;
+        margin-top: 4px;
+      }
+      .pd-var-opts.has-many {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        gap: 10px;
+        padding: 4px 2px 12px;
+        margin: 0 -2px;
+        scroll-snap-type: x proximity;
+        scrollbar-width: thin;
+      }
       .pd-var-opts.has-many::-webkit-scrollbar {
-        width: 4px;
+        height: 5px;
       }
-      
       .pd-var-opts.has-many::-webkit-scrollbar-track {
-        background: rgba(124, 58, 237, 0.05);
-        border-radius: 4px;
+        background: rgba(124, 58, 237, 0.06);
+        border-radius: 100px;
       }
-      
       .pd-var-opts.has-many::-webkit-scrollbar-thumb {
-        background: rgba(124, 58, 237, 0.3);
-        border-radius: 4px;
+        background: rgba(124, 58, 237, 0.35);
+        border-radius: 100px;
+      }
+      .pd-var-opts.has-many .pd-var-btn,
+      .pd-var-opts.has-many .pd-var-img-btn {
+        flex: 0 0 auto;
+        scroll-snap-align: start;
+        min-width: 76px;
+        max-width: min(220px, 52vw);
+      }
+      .pd-var-opts.has-very-many .pd-var-btn,
+      .pd-var-opts.has-very-many .pd-var-img-btn {
+        min-width: 64px;
+        padding: 10px 14px;
+        border-radius: 14px;
+      }
+      .pd-var-opts.has-very-many .pd-var-val {
+        font-size: 12px;
+      }
+      .pd-var-opts.has-many .pd-var-img-btn img {
+        width: 44px;
+        height: 44px;
       }
       
       /* Premium Option Button */
@@ -1072,34 +1134,6 @@ export default function ProductDetail() {
         text-transform: uppercase;
       }
       
-      /* For vertical layout items */
-      .pd-var-opts.has-many .pd-var-btn,
-      .pd-var-opts.has-many .pd-var-img-btn {
-        width: 100%;
-        flex-direction: row;
-        justify-content: space-between;
-        padding: 12px 16px;
-      }
-      
-      .pd-var-opts.has-many .pd-var-img-btn img {
-        width: 36px;
-        height: 36px;
-      }
-      
-      .pd-var-opts.has-many .pd-var-val {
-        flex: 1;
-        text-align: left;
-        margin-left: 12px;
-      }
-      
-      .pd-var-opts.has-many .pd-var-price {
-        margin-left: auto;
-      }
-      
-      .pd-var-opts.has-many .pd-var-oos {
-        margin-left: 8px;
-      }
-
       /* ─── INFO PANEL ─── */
       .pd-info { display: flex; flex-direction: column; gap: 0; }
 
@@ -1445,31 +1479,10 @@ export default function ProductDetail() {
       .pd-spec-table td:first-child { color: #71717a; font-weight: 600; width: 38%; padding-right: 14px; font-size: 12.5px; letter-spacing: .02em; }
       .pd-spec-table td:last-child { color: #18181b; font-weight: 600; }
 
-      /* ─── SIMILAR PRODUCTS (SCROLLABLE) ─── */
-      .pd-sim-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-      .pd-sim-scroll::-webkit-scrollbar { display: none; }
-      .pd-sim-item {
-        flex-shrink: 0; width: 160px;
-        background: white; border-radius: 16px; overflow: hidden;
-        border: 1px solid rgba(124,58,237,.08); cursor: pointer;
-        transition: all .25s; display: flex; flex-direction: column;
-        box-shadow: 0 2px 10px rgba(0,0,0,.03);
-      }
-      .pd-sim-item:hover { border-color: #7c3aed; transform: translateY(-3px); box-shadow: 0 10px 25px rgba(124,58,237,.12); }
-      .pd-sim-img { aspect-ratio: 1; background: #f9f7ff; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-      .pd-sim-img img { width: 100%; height: 100%; object-fit: contain; padding: 14px; transition: transform .4s; }
-      .pd-sim-item:hover .pd-sim-img img { transform: scale(1.08); }
-      .pd-sim-body { padding: 10px 12px; }
-      .pd-sim-cat { font-size: 8px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #9ca3af; margin-bottom: 3px; }
-      .pd-sim-name { font-size: 11px; font-weight: 700; color: #1e1b2e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .pd-sim-price { font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: #7c3aed; letter-spacing: .03em; margin-top: 4px; }
-
       /* ─── BELOW SECTIONS ─── */
       .pd-below { max-width: 1260px; margin: 0 auto; padding: 0 16px 80px; position: relative; z-index: 1; }
       @media (min-width: 768px) { .pd-below { padding: 0 24px 80px; } }
       .pd-below-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 18px; }
-      .pd-below-eyebrow { font-size: 8px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: #9ca3af; margin-bottom: 4px; display: flex; align-items: center; gap: 7px; }
-      .pd-below-eyebrow::before { content:''; width:18px; height:2px; background:#7c3aed; border-radius:2px; }
       .pd-below-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #1e1b2e; letter-spacing: .03em; line-height: 1; }
       .pd-view-all {
         display: inline-flex; align-items: center; gap: 5px;
@@ -1669,7 +1682,7 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* PREMIUM VARIANT SELECTOR - VERTICAL LAYOUT FOR MANY OPTIONS */}
+              {/* Variant rows: wrap or horizontal scroll when many values */}
               {Array.isArray(p.variants) && p.variants.length > 0 && (
                 <div className="pd-variants">
                   {variantAttrs.map(attrKey => {
@@ -1677,24 +1690,25 @@ export default function ProductDetail() {
                     const options = variantOpts(attrKey)
                     if (!options.length) return null
                     const currentVal = selected[lowKey]
-                    const isColor = lowKey.includes('color')
-                    const isManyOptions = options.length > 5
+                    const isManyOptions = options.length > 6
+                    const isVeryManyOptions = options.length > 14
+                    const useImageSwatch =
+                      (/color|colour|finish|shade/i.test(lowKey) && !/temperature|connector/i.test(lowKey)) &&
+                      options.length <= 14
 
                     return (
                       <div key={attrKey} className="pd-var-sec">
                         <div className="pd-var-header">
                           <div className="pd-var-lbl">
-                            <span className="pd-var-icon">
-                              {attrKey === 'Color' || attrKey === 'colour' ? '🎨' :
-                                attrKey === 'Size' ? '📏' :
-                                  attrKey === 'Watt' || attrKey === 'Power' ? '⚡' :
-                                    attrKey === 'Material' ? '🧵' : '🔧'}
-                            </span>
-                            <span className="pd-var-name">{attrKey === 'Option' ? 'Select Option' : attrKey}</span>
+                            <span className="pd-var-icon">{variantAttrIconEmoji(lowKey)}</span>
+                            <span className="pd-var-name">{attrKey === 'Option' ? 'Select Option' : (attrKey.charAt(0).toUpperCase() + attrKey.slice(1).toLowerCase())}</span>
                           </div>
                           {currentVal && <span className="pd-var-selected">{currentVal}</span>}
                         </div>
-                        <div className={`pd-var-opts ${isManyOptions ? 'has-many' : ''}`}>
+                        {isManyOptions && (
+                          <div className="pd-var-scroll-hint">Swipe sideways for more</div>
+                        )}
+                        <div className={`pd-var-opts${isManyOptions ? ' has-many' : ''}${isVeryManyOptions ? ' has-very-many' : ''}`}>
                           {options.map((opt, i) => {
                             const enabled = isOptEnabled(attrKey, opt)
                             const on = selected[lowKey] === opt
@@ -1705,13 +1719,14 @@ export default function ProductDetail() {
                               (lowKey === 'option' ? (v.sku === opt || v._id === opt) : (
                                 String(normalizeAttrs(v.attributes, v.sku)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
                                 Object.entries(selected).every(([k, vVal]) => {
-                                  if (k === lowKey || !vVal) return true;
-                                  return String(normalizeAttrs(v.attributes, v.sku)[k] || '').toLowerCase() === String(vVal || '').toLowerCase();
+                                  if (k.toLowerCase().trim() === lowKey || !vVal) return true
+                                  const lk = k.toLowerCase().trim()
+                                  return String(normalizeAttrs(v.attributes, v.sku)[lk] || '').toLowerCase() === String(vVal || '').toLowerCase();
                                 })
                               ))
                             ) || p.variants?.find(v => v.isActive !== false && (lowKey === 'option' ? (v.sku === opt || v._id === opt) : String(normalizeAttrs(v.attributes, v.sku)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase()));
 
-                            if (isColor) {
+                            if (useImageSwatch) {
                               const imgUrl = (repVariant?.images?.[0]?.url) || (Array.isArray(p.images) ? p.images[0]?.url : null);
                               return (
                                 <div
@@ -2136,43 +2151,6 @@ export default function ProductDetail() {
                 </div>
               )}
 
-              {/* SIMILAR PRODUCTS */}
-              {similar.length > 0 && (
-                <div className="pd-card" style={{ marginTop: 16 }}>
-                  <div className="pd-card-head">
-                    <div className="pd-card-head-ico">
-                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                      </svg>
-                    </div>
-                    <div>
-                      <div className="pd-card-head-label">More Like This</div>
-                      <div className="pd-card-head-title">Similar Products</div>
-                    </div>
-                  </div>
-                  <div className="pd-card-body" style={{ padding: '12px 16px 18px' }}>
-                    <div className="pd-sim-scroll">
-                      {similar.slice(0, 8).map(item => (
-                        <div key={item._id} className="pd-sim-item" onClick={() => navigate(`/products/${item._id}`)}>
-                          <div className="pd-sim-img">
-                            {item.images?.[0]?.url
-                              ? <img src={item.images[0].url} alt={item.name} />
-                              : <span style={{ fontSize: 24, opacity: .2 }}>📦</span>}
-                          </div>
-                          <div className="pd-sim-body">
-                            <div className="pd-sim-cat">{item.category?.name || item.category || 'General'}</div>
-                            <div className="pd-sim-name">{item.name}</div>
-                            <div className="pd-sim-price">
-                              {authed && item.price != null ? `₹${Number(item.price).toLocaleString()}` : 'Login'}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
             </div>{/* end info panel */}
           </div>{/* end grid */}
 
@@ -2181,7 +2159,6 @@ export default function ProductDetail() {
             <div className="pd-below" style={{ padding: '40px 0 0' }}>
               <div className="pd-below-header">
                 <div>
-                  <div className="pd-below-eyebrow">Frequently Bought Together</div>
                   <div className="pd-below-title">Recommended For You</div>
                 </div>
                 <Link to="/products" className="pd-view-all">

@@ -1,7 +1,59 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import { AreaChart, Area, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Legend } from 'recharts'
+
+/** Rows for SKU dropdown (same shape as previous inline useMemo). */
+function buildSkuRows(selectedProduct) {
+  if (!selectedProduct) return []
+  const list = []
+  if (selectedProduct.variants && selectedProduct.variants.length > 0) {
+    selectedProduct.variants.forEach(v => {
+      const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map))
+        ? v.attributes
+        : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
+      const attrLabel = Object.entries(vAttrs).map(([k, val]) => `${k}: ${val}`).join(', ')
+      list.push({
+        productId: selectedProduct._id,
+        productName: selectedProduct.name,
+        sku: v.sku,
+        attrLabel,
+        image: v.images?.[0]?.url || selectedProduct.images?.[0]?.url,
+        stock: v.stock,
+        isVariant: true,
+        variantId: v._id,
+      })
+    })
+  } else {
+    list.push({
+      productId: selectedProduct._id,
+      productName: selectedProduct.name,
+      sku: selectedProduct.sku || '',
+      image: selectedProduct.images?.[0]?.url,
+      stock: selectedProduct.stock,
+      isVariant: false,
+    })
+  }
+  return list
+}
+
+/** Parse `/api/inventory/overview` row id → product ObjectId + optional variant SKU. */
+function parseOverviewItemId(raw) {
+  const s = String(raw || '')
+  const m = s.match(/^([a-f\d]{24})_(.*)$/i)
+  if (m) return { productId: m[1], variantSku: m[2] || '' }
+  if (/^[a-f\d]{24}$/i.test(s)) return { productId: s, variantSku: '' }
+  return { productId: s, variantSku: '' }
+}
+
+function skuHintLine(p) {
+  const brand = p.brand?.name || p.brand
+  const cat = p.category?.name || p.category
+  const bits = [brand, cat].filter(Boolean)
+  const sku = p.sku || (Array.isArray(p.variants) ? p.variants.find(v => v.sku)?.sku : '') || ''
+  const tail = sku ? `SKU: ${sku}` : ''
+  return [bits.join(' · '), tail].filter(Boolean).join(' · ') || '—'
+}
 
 export default function InventoryPage() {
   const { notify } = useToast()
@@ -19,6 +71,9 @@ export default function InventoryPage() {
   const [showSkuModal, setShowSkuModal] = useState(false)
   const [selectedProductForSkuView, setSelectedProductForSkuView] = useState(null)
   const [topSkus, setTopSkus] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
+  const [searchHi, setSearchHi] = useState(-1)
+  const searchBoxRef = useRef(null)
 
   useEffect(() => {
     if (selectedProductForSkuView) {
@@ -36,38 +91,7 @@ export default function InventoryPage() {
 
   const canSubmit = selectedSku && Number.isInteger(Number(qty)) && Number(qty) > 0
 
-  const productSkus = useMemo(() => {
-    if (!selectedProduct) return []
-    const list = []
-    if (selectedProduct.variants && selectedProduct.variants.length > 0) {
-      selectedProduct.variants.forEach(v => {
-        const vAttrs = (v.attributes && typeof v.attributes === 'object' && !(v.attributes instanceof Map)) 
-          ? v.attributes 
-          : (v.attributes instanceof Map ? Object.fromEntries(v.attributes) : {})
-        const attrLabel = Object.entries(vAttrs).map(([k,val]) => `${k}: ${val}`).join(', ')
-        list.push({
-          productId: selectedProduct._id,
-          productName: selectedProduct.name,
-          sku: v.sku,
-          attrLabel,
-          image: v.images?.[0]?.url || selectedProduct.images?.[0]?.url,
-          stock: v.stock,
-          isVariant: true,
-          variantId: v._id,
-        })
-      })
-    } else {
-      list.push({
-        productId: selectedProduct._id,
-        productName: selectedProduct.name,
-        sku: selectedProduct.sku || '',
-        image: selectedProduct.images?.[0]?.url,
-        stock: selectedProduct.stock,
-        isVariant: false,
-      })
-    }
-    return list
-  }, [selectedProduct])
+  const productSkus = useMemo(() => buildSkuRows(selectedProduct), [selectedProduct])
 
   // Filter overview to only show individual SKUs (variants or simple products)
   const skuOverview = useMemo(() => {
@@ -110,15 +134,51 @@ export default function InventoryPage() {
   useEffect(() => {
     const ctrl = new AbortController()
     const run = async () => {
-      if (!q.trim()) { setOptions([]); return }
+      if (!q.trim()) { setOptions([]); setSearchLoading(false); return }
+      setSearchLoading(true)
       try {
-        const { data } = await api.get('/api/products', { params: { q, limit: 10 }, signal: ctrl.signal })
+        const { data } = await api.get('/api/products', { params: { q: q.trim(), limit: 35, page: 1 }, signal: ctrl.signal })
         setOptions(data.items || [])
       } catch { /* ignore */ }
+      finally {
+        if (!ctrl.signal.aborted) setSearchLoading(false)
+      }
     }
-    const id = setTimeout(run, 250)
+    const id = setTimeout(run, 160)
     return () => { clearTimeout(id); ctrl.abort() }
   }, [q])
+
+  useEffect(() => {
+    setSearchHi(options.length ? 0 : -1)
+  }, [options])
+
+  useEffect(() => {
+    const close = (e) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(e.target)) setOptions([])
+    }
+    document.addEventListener('mousedown', close)
+    return () => document.removeEventListener('mousedown', close)
+  }, [])
+
+  const pickProduct = useCallback(async (productId, preferredVariantSku = '') => {
+    if (!productId) return
+    try {
+      const { data } = await api.get(`/api/products/${productId}`)
+      const rows = buildSkuRows(data)
+      setSelectedProduct(data)
+      setQ('')
+      setOptions([])
+      setSearchHi(-1)
+      if (preferredVariantSku) {
+        const row = rows.find(r => r.sku === preferredVariantSku)
+        setSelectedSku(row || rows[0] || null)
+      } else {
+        setSelectedSku(rows[0] || null)
+      }
+    } catch {
+      notify('Could not load product', 'error')
+    }
+  }, [notify])
 
   const submit = async (e) => {
     e.preventDefault()
@@ -286,34 +346,94 @@ export default function InventoryPage() {
       </div>
 
       <form onSubmit={submit} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
+        {!selectedProduct && skuOverview.length > 0 && (
+          <div>
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1.5 block">Quick pick (overview)</label>
+            <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto pr-1">
+              {skuOverview.slice(0, 18).map(o => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => {
+                    const { productId, variantSku } = parseOverviewItemId(o.id)
+                    pickProduct(productId, variantSku)
+                  }}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-violet-50 hover:border-violet-200 text-left transition-colors max-w-[280px]"
+                >
+                  <span className="text-[11px] font-bold text-gray-900 truncate">{o.name}</span>
+                  {o.sku && <span className="text-[10px] font-mono text-violet-700 shrink-0">{o.sku}</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3">
           <div>
             <label className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-1 block">Select Product</label>
-            <div className="relative">
+            <div className="relative" ref={searchBoxRef}>
               {!selectedProduct ? (
                 <>
-                  <input
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder="Search product name..."
-                    value={q}
-                    onChange={e => setQ(e.target.value)}
-                  />
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </span>
+                    <input
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-10 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                      placeholder="Search name, brand, or SKU…"
+                      value={q}
+                      autoComplete="off"
+                      onChange={e => setQ(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'ArrowDown' && options.length) {
+                          e.preventDefault()
+                          setSearchHi(i => {
+                            const next = i < 0 ? 0 : i + 1
+                            return Math.min(options.length - 1, next)
+                          })
+                          return
+                        }
+                        if (e.key === 'ArrowUp' && options.length) {
+                          e.preventDefault()
+                          setSearchHi(i => Math.max(0, (i < 0 ? 0 : i - 1)))
+                          return
+                        }
+                        if (e.key === 'Enter') {
+                          if (options.length > 0 && searchHi >= 0 && options[searchHi]) {
+                            e.preventDefault()
+                            pickProduct(options[searchHi]._id)
+                          } else {
+                            e.preventDefault()
+                          }
+                          return
+                        }
+                        if (e.key === 'Escape') {
+                          setOptions([])
+                        }
+                      }}
+                    />
+                    {searchLoading && (
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-violet-200 border-t-violet-600 rounded-full animate-spin" aria-hidden />
+                    )}
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-1">Type 1+ characters · ↑↓ to move · Enter to select · matches SKU</p>
                   {options.length > 0 && (
-                    <div className="absolute z-10 mt-2 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-lg max-h-80 overflow-y-auto">
-                      {options.map(p => (
+                    <div className="absolute z-20 mt-2 left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl max-h-80 overflow-y-auto">
+                      {options.map((p, idx) => (
                         <button
                           key={p._id}
                           type="button"
-                          onClick={() => { setSelectedProduct(p); setQ(''); setOptions([]); }}
-                          className="w-full px-3 py-2 text-left hover:bg-gray-50 flex items-center gap-3 border-b last:border-0 border-gray-50"
+                          onClick={() => pickProduct(p._id)}
+                          onMouseEnter={() => setSearchHi(idx)}
+                          className={`w-full px-3 py-2.5 text-left flex items-center gap-3 border-b last:border-0 border-gray-50 ${idx === searchHi ? 'bg-violet-50 ring-1 ring-inset ring-violet-200' : 'hover:bg-gray-50'}`}
                         >
                           <div className="h-10 w-10 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
                             {p.images?.[0]?.url ? (
-                              <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain" />
+                              <img src={p.images[0].url} alt="" className="h-full w-full object-contain" />
                             ) : <span className="text-[10px] text-gray-400">📦</span>}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-bold text-gray-900 truncate">{p.name}</div>
+                            <div className="text-[10px] text-gray-500 truncate mt-0.5">{skuHintLine(p)}</div>
                           </div>
                         </button>
                       ))}
