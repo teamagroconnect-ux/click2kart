@@ -49,10 +49,6 @@ export default function ProductDetail() {
   const [similar, setSimilar] = useState([])
   const [recItems, setRecItems] = useState([])
   const [recOpen, setRecOpen] = useState(false)
-  const [reviewOpen, setReviewOpen] = useState(false)
-  const [myRating, setMyRating] = useState(0)
-  const [myComment, setMyComment] = useState('')
-  const [hoverStar, setHoverStar] = useState(0)
   const [qty, setQty] = useState(1)
   const [pincode, setPincode] = useState('')
   const [deliveryDate, setDeliveryDate] = useState(null)
@@ -1225,6 +1221,13 @@ export default function ProductDetail() {
 
       /* ─── DESCRIPTION ─── */
       .pd-desc { font-size: 14px; color: #4b5563; font-weight: 400; line-height: 1.9; white-space: pre-line; }
+      .pd-highlights { margin: 0; padding-left: 1.15rem; font-size: 14px; color: #374151; line-height: 1.75; }
+      .pd-highlights li { margin-bottom: 0.35rem; }
+      .pd-spec-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      .pd-spec-table tr { border-bottom: 1px solid rgba(139,92,246,0.08); }
+      .pd-spec-table td { padding: 10px 0; vertical-align: top; }
+      .pd-spec-table td:first-child { color: #6b7280; font-weight: 600; width: 38%; padding-right: 12px; }
+      .pd-spec-table td:last-child { color: #1f2937; font-weight: 500; }
 
       /* ─── SIMILAR PRODUCTS (SCROLLABLE) ─── */
       .pd-sim-scroll { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
@@ -1583,7 +1586,6 @@ export default function ProductDetail() {
                   ))}
                 </div>
                 <span className="pd-rat-ct">{Number(p.ratingAvg || 0).toFixed(1)} ({p.ratingCount || 0} ratings)</span>
-                {authed && <button className="pd-rev-btn" onClick={() => setReviewOpen(true)}>Write a Review</button>}
               </div>
 
               {/* PRICE BLOCK */}
@@ -1880,6 +1882,30 @@ export default function ProductDetail() {
                 </div>
               )}
 
+              {/* HIGHLIGHTS */}
+              {Array.isArray(p.highlights) && p.highlights.length > 0 && (
+                <div className="pd-card" style={{ marginTop: 16 }}>
+                  <div className="pd-card-head">
+                    <div className="pd-card-head-ico">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="pd-card-head-label">Key points</div>
+                      <div className="pd-card-head-title">Highlights</div>
+                    </div>
+                  </div>
+                  <div className="pd-card-body">
+                    <ul className="pd-highlights">
+                      {p.highlights.map((h, i) => (
+                        <li key={i}>{h}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              )}
+
               {/* DESCRIPTION */}
               {p.description && (
                 <div className="pd-card" style={{ marginTop: 16 }}>
@@ -1896,6 +1922,35 @@ export default function ProductDetail() {
                   </div>
                   <div className="pd-card-body">
                     <p className="pd-desc">{p.description}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* SPECIFICATIONS */}
+              {Array.isArray(p.specifications) && p.specifications.length > 0 && (
+                <div className="pd-card" style={{ marginTop: 16 }}>
+                  <div className="pd-card-head">
+                    <div className="pd-card-head-ico">
+                      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                    <div>
+                      <div className="pd-card-head-label">Technical</div>
+                      <div className="pd-card-head-title">Specifications</div>
+                    </div>
+                  </div>
+                  <div className="pd-card-body">
+                    <table className="pd-spec-table">
+                      <tbody>
+                        {p.specifications.map((row, i) => (
+                          <tr key={i}>
+                            <td>{row.key}</td>
+                            <td>{row.value}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               )}
@@ -1994,41 +2049,6 @@ export default function ProductDetail() {
                   ))}
                 </div>
                 <button className="pd-lb-navbtn" onClick={() => setActiveImg(i => Math.min(imgs.length - 1, i + 1))} disabled={activeImg >= imgs.length - 1}>Next →</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ══ REVIEW MODAL ══ */}
-        {reviewOpen && (
-          <div className="pd-modal-back" onClick={() => setReviewOpen(false)}>
-            <div className="pd-modal" onClick={e => e.stopPropagation()}>
-              <div className="pd-modal-title">Your Feedback</div>
-              <div className="pd-modal-stars">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <button key={i} className="pd-modal-star"
-                    onMouseEnter={() => setHoverStar(i + 1)}
-                    onMouseLeave={() => setHoverStar(0)}
-                    onClick={() => setMyRating(i + 1)}>
-                    <svg width="34" height="34" viewBox="0 0 24 24">
-                      <path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z"
-                        fill={i < (hoverStar || myRating) ? '#f59e0b' : '#e5e7eb'} />
-                    </svg>
-                  </button>
-                ))}
-              </div>
-              <textarea className="pd-modal-ta" rows="4" placeholder="Share your experience (optional)…"
-                value={myComment} onChange={e => setMyComment(e.target.value)} />
-              <div className="pd-modal-btns">
-                <button className="pd-modal-cancel" onClick={() => setReviewOpen(false)}>Cancel</button>
-                <button className="pd-modal-submit" onClick={async () => {
-                  if (myRating < 1) return
-                  try {
-                    const { data } = await api.post(`/api/products/${id}/reviews`, { rating: myRating, comment: myComment })
-                    setP(prev => ({ ...prev, ratingAvg: data.ratingAvg, ratingCount: data.ratingCount }))
-                    setReviewOpen(false); setMyRating(0); setMyComment('')
-                  } catch (e) { alert(e?.response?.data?.error || 'Failed to submit') }
-                }}>Submit Review</button>
               </div>
             </div>
           </div>

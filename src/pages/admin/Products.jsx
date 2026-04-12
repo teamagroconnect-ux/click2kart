@@ -10,9 +10,7 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [], attributes: [] })
-  const [attrInput, setAttrInput] = useState('')
-  const [hasVariants, setHasVariants] = useState(false)
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', sku: '' })
   const [editing, setEditing] = useState(null)
   const [viewing, setViewing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -56,8 +54,6 @@ export default function Products() {
         if (cat && Array.isArray(cat.attributes) && cat.attributes.length > 0) {
           if (editing) {
             setEditing(prev => ({ ...prev, attributes: cat.attributes }))
-          } else {
-            setForm(prev => ({ ...prev, attributes: cat.attributes }))
           }
         }
         setLastCategoryId(categoryId)
@@ -71,9 +67,9 @@ export default function Products() {
     api.get('/api/stores').then(({ data }) => setStores(data || [])).catch(()=>{})
   }, [])
 
-  // Auto-generate SKU for Simple Product
+  // Auto-generate SKU for new simple products
   useEffect(() => {
-    if (!hasVariants && form.name && !editing) {
+    if (form.name && !editing) {
       const cleanName = form.name.toLowerCase()
         .replace(/[^a-z0-9\s-]/g, '')
         .trim()
@@ -81,38 +77,38 @@ export default function Products() {
       const generatedSku = `${cleanName}`.toUpperCase()
       setForm(prev => ({ ...prev, sku: generatedSku }))
     }
-  }, [form.name, hasVariants, editing])
+  }, [form.name, editing])
 
   const create = async (e) => {
     e.preventDefault()
     const images = form.images.split(',').map(s=>s.trim()).filter(Boolean)
-    const computedStock = hasVariants ? (form.variants || []).reduce((s,v)=> s + (Number(v.stock||0)), 0) : Number(form.stock)
+    const stockNum = Number(form.stock)
     await api.post('/api/products', { 
-      ...form, 
+      name: form.name,
       price: Number(form.price), 
-      stock: Number.isFinite(computedStock) ? computedStock : 0, 
+      stock: Number.isFinite(stockNum) ? stockNum : 0, 
       weight: Number(form.weight || 0),
       gst: Number(form.gst||0), 
       mrp: form.mrp ? Number(form.mrp) : undefined,
       minOrderQty: Number(form.minOrderQty || 0),
       sku: form.sku || undefined,
+      description: form.description || '',
       highlights: (form.highlights || []).map(h => String(h).trim()).filter(Boolean),
+      specifications: (form.specifications || []).map(s => ({ key: String(s.key||'').trim(), value: String(s.value||'').trim() })).filter(s => s.key && s.value),
       bulkDiscountQuantity: form.bulkTiers?.[0]?.quantity ? Number(form.bulkTiers[0].quantity) : Number(form.bulkDiscountQuantity||0),
       bulkDiscountPriceReduction: form.bulkTiers?.[0]?.priceReduction ? Number(form.bulkTiers[0].priceReduction) : Number(form.bulkDiscountPriceReduction||0),
       bulkTiers: (form.bulkTiers || []).map(t => ({ quantity: Number(t.quantity||0), priceReduction: Number(t.priceReduction||0) })),
       images,
-      attributes: form.attributes,
-      variants: (form.variants || []).map(v => ({
-        attributes: v.attributes || {},
-        price: v.price ? Number(v.price) : undefined,
-        mrp: v.mrp ? Number(v.mrp) : undefined,
-        stock: v.stock ? Number(v.stock) : 0,
-        sku: v.sku || undefined,
-        weight: Number(v.weight || 0),
-        images: (v.images || '').split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
-      }))
+      brandId: form.brandId || undefined,
+      categoryId: form.categoryId,
+      subCategoryId: form.subCategoryId || undefined,
+      store: form.store || '',
+      section: form.section || '',
+      hsnCode: form.hsnCode || '',
+      attributes: [],
+      variants: []
     })
-    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', hsnCode: '', sku: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variants: [], attributes: [] }); setHasVariants(false); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', hsnCode: '', sku: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'' }); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -145,10 +141,12 @@ export default function Products() {
       minOrderQty: p.minOrderQty || '',
       highlights: Array.isArray(p.highlights) ? p.highlights : [],
       highlightInput: '',
-      bulkTiers: Array.isArray(p.bulkTiers) ? p.bulkTiers.map(t => ({ quantity: t.quantity, priceReduction: t.priceReduction })) : []
+      bulkTiers: Array.isArray(p.bulkTiers) ? p.bulkTiers.map(t => ({ quantity: t.quantity, priceReduction: t.priceReduction })) : [],
+      specifications: Array.isArray(p.specifications) ? p.specifications.map(s => ({ key: s.key || '', value: s.value || '' })).filter(s => s.key && s.value) : [],
+      specKey: '',
+      specValue: ''
     }
     setEditing(ed)
-    setHasVariants(p.variants?.length > 0)
     return ed
   }
   const saveEdit = async (e) => {
@@ -166,6 +164,7 @@ export default function Products() {
       mrp: editing.mrp ? Number(editing.mrp) : undefined,
       minOrderQty: Number(editing.minOrderQty || 0),
       highlights: (editing.highlights || []).map(h => String(h).trim()).filter(Boolean),
+      specifications: (editing.specifications || []).map(s => ({ key: String(s.key||'').trim(), value: String(s.value||'').trim() })).filter(s => s.key && s.value),
       bulkDiscountQuantity: editing.bulkTiers?.[0]?.quantity ? Number(editing.bulkTiers[0].quantity) : Number(editing.bulkDiscountQuantity||0),
       bulkDiscountPriceReduction: editing.bulkTiers?.[0]?.priceReduction ? Number(editing.bulkTiers[0].priceReduction) : Number(editing.bulkDiscountPriceReduction||0),
       bulkTiers: (editing.bulkTiers || []).map(t => ({ quantity: Number(t.quantity||0), priceReduction: Number(t.priceReduction||0) })),
@@ -192,95 +191,6 @@ export default function Products() {
   }
   const remove = (p) => setToDelete(p)
   const confirmDelete = async () => { if (!toDelete) return; await api.delete(`/api/products/${toDelete._id}`); setToDelete(null); load(page); notify('Product deleted','success') }
-
-  const getMissingCombos = (attrsArr, existingVars) => {
-    const attrs = (attrsArr || []).map(a => {
-      const [name, valuesStr] = a.split(':');
-      const values = valuesStr ? valuesStr.split(',').filter(Boolean) : [];
-      return { name, values };
-    }).filter(a => a.values.length > 0);
-
-    if (attrs.length === 0) return [];
-
-    const combine = (index, current) => {
-      if (index === attrs.length) return [current];
-      const result = [];
-      for (const val of attrs[index].values) {
-        result.push(...combine(index + 1, { ...current, [attrs[index].name]: val }));
-      }
-      return result;
-    };
-
-    const all = combine(0, {});
-    const existing = (existingVars || []).map(v => {
-      const vAttrs = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {});
-      const normalized = {};
-      Object.entries(vAttrs).forEach(([k, val]) => { normalized[k.toLowerCase().trim()] = String(val).toLowerCase().trim() });
-      const sorted = Object.keys(normalized).sort().reduce((obj, key) => {
-        obj[key] = normalized[key];
-        return obj;
-      }, {});
-      return JSON.stringify(sorted);
-    });
-
-    return all.filter(combo => {
-      const normalized = {};
-      Object.entries(combo).forEach(([k, val]) => { normalized[k.toLowerCase().trim()] = String(val).toLowerCase().trim() });
-      const sorted = Object.keys(normalized).sort().reduce((obj, key) => {
-        obj[key] = normalized[key];
-        return obj;
-      }, {});
-      return !existing.includes(JSON.stringify(sorted));
-    });
-  };
-
-  const generateSku = (productName, combo) => {
-    const nameParts = productName.split(' ').filter(Boolean)
-    let nameCode = ''
-    if (nameParts.length >= 2) {
-      nameCode = nameParts.map(p => p[0]).join('').substring(0, 4)
-    } else {
-      nameCode = productName.substring(0, 3)
-    }
-    const cleanValues = Object.values(combo).map(val => 
-      val.toLowerCase().replace(/[^a-z0-9]/g, '').trim()
-    ).join('-')
-    return `${nameCode.toUpperCase()}-${cleanValues.toUpperCase()}`
-  }
-
-  const handleAddComboToForm = (combo) => {
-    const sku = generateSku(form.name, combo)
-    const images = form.images.split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
-    const newVar = {
-      attributes: combo,
-      price: Number(form.price || 0),
-      mrp: form.mrp ? Number(form.mrp) : undefined,
-      stock: 0,
-      weight: Number(form.weight || 0),
-      images: images,
-      sku: sku,
-      isActive: true
-    }
-    setForm(f => ({ ...f, variants: [...(f.variants || []), newVar] }))
-  }
-
-  const handleAddAllCombosToForm = (combos) => {
-    const nextVars = [...(form.variants || [])]
-    const images = form.images.split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
-    combos.forEach(combo => {
-      nextVars.push({
-        attributes: combo,
-        price: Number(form.price || 0),
-        mrp: form.mrp ? Number(form.mrp) : undefined,
-        stock: 0,
-        weight: Number(form.weight || 0),
-        images: images,
-        sku: generateSku(form.name, combo),
-        isActive: true
-      })
-    })
-    setForm(f => ({ ...f, variants: nextVars }))
-  }
 
   return (
     <>
@@ -493,27 +403,23 @@ export default function Products() {
                       </div>
                     </div>
                     
-                    {!hasVariants && (
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1 flex justify-between">
-                          <span>Product SKU</span>
-                          {form.sku && <span className="text-blue-600 font-black">AUTO: {form.sku}</span>}
-                        </label>
-                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. PROD-SKU-123" value={form.sku || ''} onChange={e => setForm({ ...form, sku: e.target.value })} />
-                      </div>
-                    )}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1 flex justify-between">
+                        <span>Product SKU</span>
+                        {form.sku && <span className="text-blue-600 font-black">AUTO: {form.sku}</span>}
+                      </label>
+                      <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. PROD-SKU-123" value={form.sku || ''} onChange={e => setForm({ ...form, sku: e.target.value })} />
+                    </div>
                     
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Min Order Qty</label>
                         <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 5" value={form.minOrderQty} onChange={e => setForm({ ...form, minOrderQty: e.target.value })} />
                       </div>
-                      {!hasVariants && (
-                        <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Inventory Stock</label>
-                          <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} required />
-                        </div>
-                      )}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Inventory Stock</label>
+                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} required />
+                      </div>
                     </div>
                     
                     <div className="space-y-2 p-3 bg-gray-50/50 rounded-2xl border border-gray-100">
@@ -548,186 +454,12 @@ export default function Products() {
                     </div>
                   </div>
 
-                  {/* Right Column: Attributes & Variants */}
-                  <div className="space-y-4 bg-gray-50/50 p-4 rounded-3xl border border-gray-100">
-                    <div className="flex items-center justify-between">
-                      <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Variant Management</div>
-                      <label className="relative inline-flex items-center cursor-pointer scale-75">
-                        <input type="checkbox" className="sr-only peer" checked={hasVariants} onChange={e => setHasVariants(e.target.checked)} />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                      </label>
-                    </div>
-
-                    {hasVariants ? (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">1. Define Attributes & Values</label>
-                          <div className="flex gap-2">
-                            <input 
-                              className="flex-1 bg-white border rounded-xl px-3 py-2 text-[11px] font-bold outline-none focus:ring-2 focus:ring-blue-500" 
-                              placeholder="Attribute name..." 
-                              value={attrInput} 
-                              onChange={e=>setAttrInput(e.target.value)} 
-                              onKeyDown={e => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  const v = attrInput.trim().toLowerCase();
-                                  if (v && !form.attributes.some(a => a.split(':')[0] === v)) {
-                                    setForm(f => ({ ...f, attributes: [...f.attributes, `${v}:`] }));
-                                    setAttrInput('');
-                                  }
-                                }
-                              }}
-                            />
-                            <button 
-                              type="button" 
-                              onClick={() => { 
-                                const v = attrInput.trim().toLowerCase(); 
-                                if (v && !form.attributes.some(a => a.split(':')[0] === v)) { 
-                                  setForm(f => ({ ...f, attributes: [...f.attributes, `${v}:`] })); 
-                                  setAttrInput(''); 
-                                } 
-                              }} 
-                              className="p-2 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all"
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"/></svg>
-                            </button>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            {form.attributes.map((a, i) => {
-                              const [name, valuesStr] = a.split(':');
-                              const values = valuesStr ? valuesStr.split(',').filter(Boolean) : [];
-                              return (
-                                <div key={i} className="bg-white p-2 rounded-xl border border-gray-100 space-y-1.5">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-[9px] font-black text-blue-600 uppercase">{name}</span>
-                                    <button type="button" onClick={() => setForm(f => ({ ...f, attributes: f.attributes.filter((_, idx) => idx !== i) }))} className="text-gray-300 hover:text-red-500">✕</button>
-                                  </div>
-                                  <div className="flex flex-wrap gap-1">
-                                    {values.map(v => (
-                                      <span key={v} className="px-1.5 py-0.5 rounded bg-gray-50 border border-gray-100 text-[8px] font-bold text-gray-500 flex items-center gap-1">
-                                        {v}
-                                        <button type="button" onClick={() => {
-                                          const next = [...form.attributes];
-                                          const vArr = values.filter(x => x !== v);
-                                          next[i] = `${name}:${vArr.join(',')}`;
-                                          setForm(f => ({ ...f, attributes: next }));
-                                        }} className="hover:text-red-500">✕</button>
-                                      </span>
-                                    ))}
-                                    <input 
-                                      className="bg-gray-50 border rounded px-1.5 py-0.5 text-[8px] font-bold outline-none w-16" 
-                                      placeholder="+ Val"
-                                      onKeyDown={e => {
-                                        if (e.key === 'Enter') {
-                                          e.preventDefault();
-                                          const raw = e.target.value.trim();
-                                          if (!raw) return;
-                                          const newVals = raw.split(',').map(v => v.trim().toLowerCase()).filter(Boolean);
-                                          const existing = values.map(v => v.toLowerCase());
-                                          const combined = [...new Set([...existing, ...newVals])];
-                                          
-                                          const next = [...form.attributes];
-                                          next[i] = `${name}:${combined.join(',')}`;
-                                          setForm(f => ({ ...f, attributes: next }));
-                                          e.target.value = '';
-                                        }
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              )
-                            })}
-                          </div>
-                        </div>
-
-                        {form.attributes.length > 0 && (
-                          <div className="space-y-4 pt-4 border-t border-gray-100">
-                            <div className="flex items-center justify-between">
-                              <h5 className="text-[9px] font-black uppercase tracking-widest text-blue-600">2. Create Variants</h5>
-                              {getMissingCombos(form.attributes, form.variants).length > 1 && (
-                                <button 
-                                  type="button"
-                                  onClick={() => handleAddAllCombosToForm(getMissingCombos(form.attributes, form.variants))}
-                                  className="px-4 py-1.5 bg-blue-600 text-white text-[9px] font-black uppercase rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-50"
-                                >Create All ({getMissingCombos(form.attributes, form.variants).length})</button>
-                              )}
-                            </div>
-
-                            <div className="flex flex-wrap gap-2">
-                              {getMissingCombos(form.attributes, form.variants).length > 0 ? (
-                                getMissingCombos(form.attributes, form.variants).map((combo, i) => (
-                                  <button
-                                    key={i}
-                                    type="button"
-                                    onClick={() => handleAddComboToForm(combo)}
-                                    className="group flex flex-col items-start p-3 bg-white border border-gray-100 rounded-2xl hover:border-blue-200 hover:bg-blue-50 transition-all text-left min-w-[120px]"
-                                  >
-                                    <div className="flex flex-wrap gap-1 mb-2">
-                                      {Object.entries(combo).map(([k, v]) => (
-                                        <span key={k} className="text-[8px] font-black text-gray-400 uppercase tracking-tighter">
-                                          {v}
-                                        </span>
-                                      ))}
-                                    </div>
-                                    <div className="flex items-center justify-between w-full">
-                                      <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">+ Add</span>
-                                      <svg className="w-3 h-3 text-blue-400 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4"/></svg>
-                                    </div>
-                                  </button>
-                                ))
-                              ) : (
-                                <div className="w-full py-4 text-center border-2 border-dashed border-gray-100 rounded-2xl">
-                                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">All combinations created!</p>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="pt-4 border-t border-gray-100 space-y-2">
-                              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Created Variants ({(form.variants || []).length})</div>
-                              {(form.variants || []).length > 0 ? (
-                                <div className="max-h-[150px] overflow-y-auto pr-1 custom-scrollbar space-y-2">
-                                  {form.variants.map((v, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-white border border-gray-100 text-[10px]">
-                                      <div className="flex-1">
-                                        <div className="flex flex-wrap gap-1.5 mb-1">
-                                          {Object.entries(v.attributes || {}).map(([key, val]) => (
-                                            <div key={key} className="flex flex-col">
-                                              <span className="text-[6px] font-black text-gray-400 uppercase tracking-tighter">{key}</span>
-                                              <span className="text-[9px] font-black text-blue-600 uppercase leading-none">{val}</span>
-                                            </div>
-                                          ))}
-                                        </div>
-                                        <div className="flex items-center gap-2 text-[9px] font-bold text-gray-500">
-                                          <span>₹{v.price}</span>
-                                          <span className="opacity-30">|</span>
-                                          <span>{v.stock} pcs</span>
-                                          {v.weight > 0 && (
-                                            <>
-                                              <span className="opacity-30">|</span>
-                                              <span>{v.weight}g</span>
-                                            </>
-                                          )}
-                                        </div>
-                                      </div>
-                                      <button type="button" className="text-red-400 p-1.5 hover:bg-red-50 rounded-lg transition-colors" onClick={() => setForm(f => ({ ...f, variants: f.variants.filter((_, i) => i !== idx) }))}>✕</button>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <div className="text-[9px] text-gray-400 italic font-bold text-center py-2">No variants created yet...</div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-10 text-center opacity-50">
-                        <svg className="w-8 h-8 mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                        <p className="text-[10px] font-bold text-gray-400">Enable variants to add Color/Size/Storage</p>
-                      </div>
-                    )}
+                  {/* Right column: variants after save */}
+                  <div className="space-y-4 bg-gray-50/50 p-4 rounded-3xl border border-gray-100 flex flex-col justify-center min-h-[200px]">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Variants</div>
+                    <p className="text-[12px] text-gray-600 leading-relaxed">
+                      New products are added as a single SKU. After saving, use <span className="font-black text-blue-600">Manage Variants</span> on the product row to add colours, sizes, separate prices and stock.
+                    </p>
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -754,6 +486,24 @@ export default function Products() {
                           {h}
                           <button type="button" className="text-red-600" onClick={()=>setForm(f=>({...f, highlights: f.highlights.filter((_,idx)=>idx!==i)}))}>✕</button>
                         </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Specifications</label>
+                  <div className="flex flex-wrap gap-2">
+                    <input className="flex-1 min-w-[120px] bg-gray-50 rounded-2xl px-4 py-3 text-sm font-bold" placeholder="Name (e.g. Material)" value={form.specKey} onChange={e=>setForm({...form, specKey: e.target.value})} />
+                    <input className="flex-1 min-w-[120px] bg-gray-50 rounded-2xl px-4 py-3 text-sm font-bold" placeholder="Value (e.g. Cotton)" value={form.specValue} onChange={e=>setForm({...form, specValue: e.target.value})} />
+                    <button type="button" onClick={()=>{ const k=(form.specKey||'').trim(); const v=(form.specValue||'').trim(); if(k&&v){ setForm(f=>({ ...f, specifications:[...(f.specifications||[]), {key:k, value:v}], specKey:'', specValue:'' })) } }} className="px-4 py-3 rounded-2xl bg-gray-900 text-white text-sm font-bold">Add</button>
+                  </div>
+                  {(form.specifications||[]).length>0 && (
+                    <div className="flex flex-col gap-1.5">
+                      {form.specifications.map((s,i)=>(
+                        <div key={i} className="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-gray-50 border text-[11px] font-bold">
+                          <span><span className="text-gray-500">{s.key}:</span> {s.value}</span>
+                          <button type="button" className="text-red-600" onClick={()=>setForm(f=>({...f, specifications: f.specifications.filter((_,idx)=>idx!==i)}))}>✕</button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -932,6 +682,25 @@ export default function Products() {
                   </div>
                 )}
               </div>
+
+              <div className="space-y-4 md:col-span-3">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Specifications</label>
+                <div className="flex flex-wrap gap-2">
+                  <input className="flex-1 min-w-[120px] bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold outline-none" placeholder="Name" value={editing.specKey || ''} onChange={e=>setEditing({...editing, specKey: e.target.value})} />
+                  <input className="flex-1 min-w-[120px] bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold outline-none" placeholder="Value" value={editing.specValue || ''} onChange={e=>setEditing({...editing, specValue: e.target.value})} />
+                  <button type="button" onClick={()=>{ const k=(editing.specKey||'').trim(); const v=(editing.specValue||'').trim(); if(k&&v){ setEditing(ed=>({ ...ed, specifications:[...(ed.specifications||[]), {key:k, value:v}], specKey:'', specValue:'' })) } }} className="px-6 py-3 rounded-2xl bg-gray-900 text-white text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all">Add</button>
+                </div>
+                {(editing.specifications||[]).length>0 && (
+                  <div className="flex flex-col gap-2">
+                    {editing.specifications.map((s,i)=>(
+                      <div key={i} className="flex items-center justify-between gap-2 px-4 py-2 rounded-2xl bg-gray-50 border border-gray-100 text-[11px] font-bold">
+                        <span><span className="text-gray-500">{s.key}:</span> {s.value}</span>
+                        <button type="button" className="text-red-500" onClick={() => setEditing(ed => ({ ...ed, specifications: ed.specifications.filter((_,idx)=>idx!==i)}))}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-4 pt-6 border-t border-gray-100">
@@ -1030,6 +799,20 @@ export default function Products() {
                     <div className="flex flex-wrap gap-2">
                       {viewing.highlights.map((h, i) => (
                         <span key={i} className="px-3 py-1.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-lg border border-blue-100">{h}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {viewing.specifications?.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Specifications</h4>
+                    <div className="rounded-2xl border border-gray-100 divide-y divide-gray-100 overflow-hidden">
+                      {viewing.specifications.map((s, i) => (
+                        <div key={i} className="flex justify-between gap-4 px-4 py-2.5 bg-gray-50/50 text-[12px]">
+                          <span className="font-bold text-gray-500">{s.key}</span>
+                          <span className="font-bold text-gray-900 text-right">{s.value}</span>
+                        </div>
                       ))}
                     </div>
                   </div>

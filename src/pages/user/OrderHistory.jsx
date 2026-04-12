@@ -2,6 +2,32 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useAuth } from '../../lib/AuthContext'
+import { useToast } from '../../components/Toast'
+
+const REVIEWED_PIDS_KEY = 'c2k_reviewed_product_ids'
+
+function loadReviewedProductIds() {
+  try {
+    const raw = sessionStorage.getItem(REVIEWED_PIDS_KEY)
+    const arr = raw ? JSON.parse(raw) : []
+    return new Set(Array.isArray(arr) ? arr.filter(Boolean) : [])
+  } catch {
+    return new Set()
+  }
+}
+
+function persistReviewedProductIds(set) {
+  try {
+    sessionStorage.setItem(REVIEWED_PIDS_KEY, JSON.stringify([...set]))
+  } catch {}
+}
+
+function orderLineProductId(item) {
+  const x = item?.product
+  if (typeof x === 'string' && /^[a-f\d]{24}$/i.test(x)) return x
+  if (x && typeof x === 'object' && x._id) return String(x._id)
+  return ''
+}
 
 const fmtIST = (d) => new Date(d).toLocaleString('en-IN', {
   timeZone: 'Asia/Kolkata', year: 'numeric', month: 'short', day: 'numeric',
@@ -38,8 +64,19 @@ export default function OrderHistory() {
   const [orders, setOrders]       = useState([])
   const [loading, setLoading]     = useState(true)
   const [expandedId, setExpandedId] = useState(null)
+  const [reviewedProductIds, setReviewedProductIds] = useState(loadReviewedProductIds)
   const navigate = useNavigate()
   const { token } = useAuth()
+  const { notify } = useToast()
+
+  const markProductReviewed = (pid) => {
+    setReviewedProductIds((prev) => {
+      const next = new Set(prev)
+      next.add(pid)
+      persistReviewedProductIds(next)
+      return next
+    })
+  }
 
   useEffect(() => {
     if (!token) { navigate('/login'); return }
@@ -349,6 +386,23 @@ export default function OrderHistory() {
           font-family:'Bebas Neue',sans-serif; font-size:18px;
           color:#7c3aed; letter-spacing:.03em; flex-shrink:0; margin-left:auto;
         }
+        .oh-item-row{display:flex;align-items:center;gap:12px;width:100%;cursor:pointer;}
+        .oh-rate-row{
+          margin-top:10px;padding-top:10px;
+          border-top:1px solid rgba(139,92,246,.1);
+          display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+        }
+        .oh-rate-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9ca3af;}
+        .oh-rate-stars{display:flex;gap:4px;}
+        .oh-rate-star{
+          width:28px;height:28px;border-radius:8px;
+          background:white;border:1px solid rgba(139,92,246,.12);
+          display:flex;align-items:center;justify-content:center;
+          cursor:pointer;transition:all .2s;padding:0;
+        }
+        .oh-rate-star:hover{background:#f5f3ff;border-color:rgba(124,58,237,.35);}
+        .oh-rate-star svg{width:14px;height:14px;color:#f59e0b;}
+        .oh-rate-done{font-size:11px;font-weight:700;color:#059669;}
 
         /* ── action sections ── */
         .oh-section-label{
@@ -577,25 +631,65 @@ export default function OrderHistory() {
                         <div>
                           <div className="oh-items-label">Items Ordered ({order.items.length})</div>
                           <div className="oh-items-list">
-                            {order.items.map((item, i) => (
-                              <div key={i} className="oh-item" style={{ cursor: 'pointer' }} onClick={() => {
-                                const pid = item.productId || item.id || item._id;
-                                // If it looks like a valid mongo ID and is not the item's own _id from the order array
-                                navigate(`/products/${pid}`);
-                              }}>
-                                <div className="oh-item-img">
-                                  {item.image
-                                    ? <img src={item.image} alt={item.name} />
-                                    : <div className="oh-item-placeholder" />
-                                  }
+                            {order.items.map((item, i) => {
+                              const pid = orderLineProductId(item)
+                              const canRateProduct = ['DELIVERED', 'FULFILLED'].includes(order.status) && !!pid
+                              const already = pid && reviewedProductIds.has(pid)
+                              return (
+                              <div key={i} className="oh-item" style={{ cursor: 'default', flexDirection: 'column', alignItems: 'stretch' }}>
+                                <div
+                                  className="oh-item-row"
+                                  onClick={() => { if (pid) navigate(`/products/${pid}`) }}
+                                  style={{ cursor: pid ? 'pointer' : 'default' }}
+                                >
+                                  <div className="oh-item-img">
+                                    {item.image
+                                      ? <img src={item.image} alt={item.name} />
+                                      : <div className="oh-item-placeholder" />
+                                    }
+                                  </div>
+                                  <div style={{ flex:1, minWidth:0 }}>
+                                    <div className="oh-item-name">{item.name}</div>
+                                    <div className="oh-item-meta">Qty: {item.quantity} &nbsp;·&nbsp; ₹{item.price} each</div>
+                                  </div>
+                                  <div className="oh-item-price">₹{(item.price * item.quantity).toLocaleString()}</div>
                                 </div>
-                                <div style={{ flex:1, minWidth:0 }}>
-                                  <div className="oh-item-name">{item.name}</div>
-                                  <div className="oh-item-meta">Qty: {item.quantity} &nbsp;·&nbsp; ₹{item.price} each</div>
-                                </div>
-                                <div className="oh-item-price">₹{(item.price * item.quantity).toLocaleString()}</div>
+                                {canRateProduct && (
+                                  <div className="oh-rate-row" onClick={(e) => e.stopPropagation()}>
+                                    {already ? (
+                                      <span className="oh-rate-done">Thanks — your product rating was saved.</span>
+                                    ) : (
+                                      <>
+                                        <span className="oh-rate-lbl">Rate product</span>
+                                        <div className="oh-rate-stars">
+                                          {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                              key={star}
+                                              type="button"
+                                              className="oh-rate-star"
+                                              title={`${star} stars`}
+                                              onClick={async () => {
+                                                try {
+                                                  await api.post(`/api/products/${pid}/reviews`, { rating: star, comment: '' })
+                                                  markProductReviewed(pid)
+                                                  notify('Thanks for rating this product', 'success')
+                                                } catch (err) {
+                                                  const code = err?.response?.data?.error
+                                                  notify(code === 'not_eligible' ? 'You can rate after this item is on a delivered order' : (err?.response?.data?.error || 'Could not save rating'), 'error')
+                                                }
+                                              }}
+                                            >
+                                              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z"/></svg>
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                            ))}
+                              )
+                            })}
                           </div>
                         </div>
 
