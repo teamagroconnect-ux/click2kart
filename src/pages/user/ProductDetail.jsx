@@ -2241,10 +2241,19 @@ export default function ProductDetail() {
                   </div>
                   <div className="pd-below-title" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: '.02em', color: '#1e1b2e' }}>Recommended <span>For You</span></div>
                 </div>
-                <Link to="/products" className="pd-view-all" style={{ padding: '10px 20px', borderRadius: 12, background: 'rgba(124,58,237,.08)', border: '1px solid rgba(124,58,237,.15)', color: '#7c3aed', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.1em', display: 'flex', alignItems: 'center', gap: 8, transition: 'all .2s' }}>
-                  View All
-                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
+                <Link to="/products" className="pd-view-all" style={{ 
+                  padding: '12px 24px', borderRadius: 14, 
+                  background: 'white', 
+                  border: '1.5px solid rgba(124,58,237,.2)', 
+                  color: '#7c3aed', fontSize: 11, fontWeight: 800, 
+                  textTransform: 'uppercase', letterSpacing: '.12em', 
+                  display: 'flex', alignItems: 'center', gap: 10, 
+                  transition: 'all .25s cubic-bezier(.34,1.56,.64,1)',
+                  boxShadow: '0 4px 12px rgba(124,58,237,.08)'
+                }}>
+                  View All Products
+                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
                 </Link>
               </div>

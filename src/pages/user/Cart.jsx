@@ -393,12 +393,21 @@ export default function Cart() {
                 const itemId  = item.productId || item._id
                 const itemSku = item.variantSku || ''
 
-                // Get attributes from either item.attributes or item.productId.attributes (for server-side cart)
-                const getAttrs = (attr) => {
-                  if (!attr) return {};
-                  return attr instanceof Map ? Object.fromEntries(attr) : attr;
+                // Get attributes from either item.attributes or item.productId.variants (for server-side cart)
+                const getAttrs = (it) => {
+                  if (it.attributes) {
+                    return it.attributes instanceof Map ? Object.fromEntries(it.attributes) : it.attributes;
+                  }
+                  // If attributes are missing on item, find in variants if productId is populated
+                  if (it.productId && typeof it.productId === 'object' && it.variantSku && it.productId.variants) {
+                    const variant = it.productId.variants.find(v => v.sku === it.variantSku);
+                    if (variant && variant.attributes) {
+                      return variant.attributes instanceof Map ? Object.fromEntries(variant.attributes) : variant.attributes;
+                    }
+                  }
+                  return {};
                 };
-                const displayAttributes = getAttrs(item.attributes) || getAttrs(item.productId?.attributes);
+                const displayAttributes = getAttrs(item);
                 const hasAttributes = displayAttributes && Object.entries(displayAttributes).filter(([, v]) => v).length > 0;
 
                 return (

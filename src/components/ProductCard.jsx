@@ -115,24 +115,14 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
       <div className="ct-body">
         {/* top row */}
         <div className="ct-top-row">
-          {p.ratingCount > 0 ? (
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div className="ct-stars">
-                {[1, 2, 3, 4, 5].map(s => (
-                  <svg key={s} className="ct-star" viewBox="0 0 24 24" fill={s <= Math.round(p.ratingAvg || 0) ? '#f59e0b' : '#e5e7eb'}>
-                    <path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z" />
-                  </svg>
-                ))}
-              </div>
-              <span className="ct-rat-ct">({p.ratingCount >= 1000 ? `${(p.ratingCount / 1000).toFixed(1)}k` : p.ratingCount})</span>
-            </div>
-          ) : (
-            <span className="ct-cat-pill">{(p.category?.name || (typeof p.category === 'string' ? p.category : 'General')).toUpperCase()}</span>
-          )}
-          <span className="ct-verified">
-            <svg width="8" height="8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+          <div className="ct-verified">
+            <span style={{ opacity: 0.6, fontSize: '0.85em' }}>{p._id?.toString().slice(-8).toUpperCase() || 'B2B'}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: 2 }}>
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+            </svg>
             Verified
-          </span>
+          </div>
+          {p.category?.name && <div className="ct-cat-pill">{p.category.name}</div>}
         </div>
 
         {/* name */}
@@ -212,13 +202,9 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
 
         {/* tags */}
         <div className="ct-tags">
-          <span className="ct-tag" style={{
-            background: totalStock <= 0 ? 'rgba(220,38,38,.08)' : totalStock <= 5 ? 'rgba(245,158,11,.08)' : 'rgba(5,150,105,.08)',
-            color: totalStock <= 0 ? '#dc2626' : totalStock <= 5 ? '#d97706' : '#059669',
-            border: `1px solid ${totalStock <= 0 ? 'rgba(220,38,38,.18)' : totalStock <= 5 ? 'rgba(245,158,11,.18)' : 'rgba(5,150,105,.18)'}`,
-          }}>{status.text}</span>
-          <span className="ct-tag" style={{ background: 'rgba(124,58,237,.08)', color: '#7c3aed', border: '1px solid rgba(124,58,237,.15)' }}>⚡ Fast</span>
-          {p.gst > 0 && <span className="ct-tag" style={{ background: 'rgba(5,150,105,.08)', color: '#059669', border: '1px solid rgba(5,150,105,.15)' }}>GST</span>}
+          <span className="ct-tag" style={{ background: 'rgba(5,150,105,.08)', color: '#059669' }}>In Stock</span>
+          <span className="ct-tag" style={{ background: 'rgba(124,58,237,.08)', color: '#7c3aed' }}>⚡ Fast</span>
+          <span className="ct-tag" style={{ background: 'rgba(59,130,246,.08)', color: '#3b82f6' }}>GST</span>
         </div>
       </div>
     </div>

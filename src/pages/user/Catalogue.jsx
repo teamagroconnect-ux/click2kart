@@ -698,11 +698,15 @@ export default function Catalogue({ initialBrand, brandName }) {
 
       /* top row */
       .ct-top-row { display: flex; align-items: center; justify-content: space-between; }
-      .ct-stars { display: flex; gap: 1px; }
-      .ct-star { width: 11px; height: 11px; }
-      .ct-rat-ct { font-size: 10px; color: #9ca3af; font-weight: 600; margin-left: 3px; }
-      .ct-cat-pill { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: capitalize; color: #6b7280; background: #f5f3ff; border: 1px solid rgba(124,58,237,.1); padding: 2px 8px; border-radius: 100px; }
-      .ct-verified { display: inline-flex; align-items: center; gap: 3px; font-size: 8px; font-weight: 700; letter-spacing: .1em; color: #7c3aed; background: rgba(124,58,237,.07); border: 1px solid rgba(124,58,237,.13); padding: 2px 7px; border-radius: 100px; }
+      .ct-cat-pill { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: #6b7280; background: #f5f3ff; border: 1px solid rgba(124,58,237,.1); padding: 2px 8px; border-radius: 100px; }
+      .ct-verified { 
+        display: inline-flex; align-items: center; gap: 4px; 
+        font-size: 8px; font-weight: 800; letter-spacing: .1em; 
+        color: #7c3aed; background: rgba(124,58,237,.06); 
+        border: 1px solid rgba(124,58,237,.12); 
+        padding: 3px 10px; border-radius: 100px;
+        text-transform: uppercase;
+      }
 
       /* product name */
       .ct-pname {

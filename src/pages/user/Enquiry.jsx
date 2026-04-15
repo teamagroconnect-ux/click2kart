@@ -15,6 +15,11 @@ export default function Enquiry() {
 
   const mapCartItem = (item) => {
     const it = (item.bulkTiers || item.bulkDiscountQuantity) ? item : (item.productId && typeof item.productId === 'object' ? item.productId : item);
+    let attributes = item.attributes;
+    if (!attributes && item.productId && typeof item.productId === 'object' && item.variantSku && item.productId.variants) {
+      const variant = item.productId.variants.find(v => v.sku === item.variantSku);
+      if (variant && variant.attributes) attributes = variant.attributes;
+    }
     return {
       productId: item.productId || item._id,
       variantSku: item.variantSku,
@@ -24,7 +29,7 @@ export default function Enquiry() {
       gst:       item.gst || 0,
       mrp:       item.mrp || item.price,
       image:     item.image || item.images?.[0]?.url,
-      attributes: item.attributes,
+      attributes: attributes,
       bulkQty:   it.bulkDiscountQuantity || it.bulkQty || 0,
       bulkRed:   it.bulkDiscountPriceReduction || it.bulkRed || 0,
       bulkTiers: it.bulkTiers,
