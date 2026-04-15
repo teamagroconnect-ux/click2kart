@@ -60,7 +60,7 @@ export default function ProductDetail() {
     staleTime: 1000 * 60 * 5,
   })
 
-  const { data: recItems = [] } = useQuery({
+  const { data: similarProducts = [] } = useQuery({
     queryKey: ['recommendations', id],
     queryFn: () => api.get(`/api/recommendations/similar/${id}?limit=8`).then(res => res.data || []),
     enabled: !!id,
@@ -118,6 +118,7 @@ export default function ProductDetail() {
   const [lightbox, setLightbox] = useState(false)
   const [zoom, setZoom] = useState({ on: false, x: 50, y: 50 })
   const [recOpen, setRecOpen] = useState(false)
+  const [recItems, setRecItems] = useState([])
   const [qty, setQty] = useState(1)
   const [pincode, setPincode] = useState('')
   const [deliveryDate, setDeliveryDate] = useState(null)
@@ -2201,7 +2202,7 @@ export default function ProductDetail() {
           </div>{/* end grid */}
 
           {/* ══ BELOW — RECOMMENDED ══ */}
-          {recItems.length > 0 && (
+          {similarProducts.length > 0 && (
             <div className="pd-below" style={{ padding: '60px 0 80px' }}>
               <div className="pd-below-header" style={{ marginBottom: 32 }}>
                 <div>
@@ -2224,7 +2225,7 @@ export default function ProductDetail() {
                 gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
                 gap: 20
               }}>
-                {recItems.map((item, idx) => (
+                {similarProducts.map((item, idx) => (
                   <ProductCard
                     key={item._id || item.id}
                     p={item}

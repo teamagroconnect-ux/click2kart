@@ -190,8 +190,8 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
                 try {
                   const { data } = await api.get(`/api/recommendations/frequently-bought/${p._id}`)
                   const filtered = (data || []).filter(i => (i._id || i.id) !== p._id)
-                  setRecItems(filtered)
-                  if (filtered.length > 0) setRecOpen(true)
+                  if (typeof setRecItems === 'function') setRecItems(filtered)
+                  if (filtered.length > 0 && typeof setRecOpen === 'function') setRecOpen(true)
                 } catch { }
               }
             }}
