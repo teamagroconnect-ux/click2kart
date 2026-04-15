@@ -2233,26 +2233,57 @@ export default function ProductDetail() {
           {/* ══ BELOW — RECOMMENDED ══ */}
           {similarProducts.length > 0 && (
             <div className="pd-below" style={{ padding: '60px 0 80px' }}>
-              <div className="pd-below-header" style={{ marginBottom: 32 }}>
+              <div className="pd-below-header" style={{ 
+                marginBottom: 40, 
+                display: 'flex', 
+                alignItems: 'flex-end', 
+                justifyContent: 'space-between',
+                borderBottom: '2px solid rgba(124,58,237,0.05)',
+                paddingBottom: 24
+              }}>
                 <div>
-                  <div className="pd-below-eyebrow" style={{ fontSize: 9, fontWeight: 900, color: '#7c3aed', letterSpacing: '.25em', textTransform: 'uppercase', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ width: 12, height: 1.5, background: '#7c3aed', borderRadius: 10 }} />
+                  <div className="pd-below-eyebrow" style={{ 
+                    fontSize: 10, 
+                    fontWeight: 900, 
+                    color: '#7c3aed', 
+                    letterSpacing: '.3em', 
+                    textTransform: 'uppercase', 
+                    marginBottom: 12, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 10 
+                  }}>
+                    <span style={{ width: 24, height: 2, background: '#7c3aed', borderRadius: 10 }} />
                     Based on your interest
                   </div>
-                  <div className="pd-below-title" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: '.02em', color: '#1e1b2e' }}>Recommended <span>For You</span></div>
+                  <div className="pd-below-title" style={{ 
+                    fontFamily: "'Bebas Neue', sans-serif", 
+                    fontSize: 42, 
+                    lineHeight: 1,
+                    letterSpacing: '.01em', 
+                    color: '#1e1b2e' 
+                  }}>
+                    Recommended <span style={{ color: '#7c3aed' }}>For You</span>
+                  </div>
                 </div>
                 <Link to="/products" className="pd-view-all" style={{ 
-                  padding: '12px 24px', borderRadius: 14, 
+                  padding: '14px 28px', 
+                  borderRadius: 16, 
                   background: 'white', 
-                  border: '1.5px solid rgba(124,58,237,.2)', 
-                  color: '#7c3aed', fontSize: 11, fontWeight: 800, 
-                  textTransform: 'uppercase', letterSpacing: '.12em', 
-                  display: 'flex', alignItems: 'center', gap: 10, 
-                  transition: 'all .25s cubic-bezier(.34,1.56,.64,1)',
-                  boxShadow: '0 4px 12px rgba(124,58,237,.08)'
+                  border: '1.5px solid rgba(124,58,237,.25)', 
+                  color: '#7c3aed', 
+                  fontSize: 12, 
+                  fontWeight: 800, 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '.15em', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 12, 
+                  transition: 'all .3s cubic-bezier(.34,1.56,.64,1)',
+                  boxShadow: '0 4px 20px rgba(124,58,237,0.1)'
                 }}>
                   View All Products
-                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
                 </Link>

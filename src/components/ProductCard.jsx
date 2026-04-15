@@ -77,86 +77,85 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
 
       {/* image zone */}
       <div className="ct-card-img-z">
-        {p.images?.length
-          ? <img src={getCloudinaryUrl(p.images[0].url, 300)} alt={p.name} className="ct-card-img" loading="lazy" width="300" height="300" />
-          : <span className="ct-card-img-ph">📦</span>}
-        <div className="ct-card-bar" />
-
-        {/* BULK BADGE */}
+        {/* Bulk badge - Top Left */}
         {authed && hasBulk && (
-          <div className="ct-bulk">
+          <div className="ct-bulk" style={{ top: 8, left: 8 }}>
             <span className="ct-bulk-dot" />
             Bulk Offer
           </div>
         )}
 
-        {/* DISCOUNT BADGE (no bulk) */}
+        {/* DISCOUNT BADGE - Top Right (if no bulk) */}
         {authed && !hasBulk && discount >= 10 && (
-          <div className="ct-disc">{discount}% OFF</div>
+          <div className="ct-disc" style={{ top: 8, left: 8, background: 'linear-gradient(135deg, #059669, #047857)' }}>
+            {discount}% OFF
+          </div>
         )}
 
+        {/* Verified Badge - Floating above name area */}
+        <div className="ct-verified" style={{ 
+          position: 'absolute', bottom: 8, left: 8, z-index: 5,
+          background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(124,58,237,0.15)',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.05)', backdropFilter: 'blur(4px)',
+          padding: '4px 10px'
+        }}>
+          <span style={{ opacity: 0.6, fontSize: '0.85em', fontWeight: 800 }}>{p._id?.toString().slice(-8).toUpperCase()}</span>
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="#7c3aed" style={{ marginLeft: 4 }}>
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+          </svg>
+          <span style={{ color: '#7c3aed', marginLeft: 2 }}>VERIFIED</span>
+        </div>
+
+        {p.images?.length
+          ? <img src={getCloudinaryUrl(p.images[0].url, 300)} alt="" className="ct-card-img" loading="lazy" width="300" height="300" />
+          : <span className="ct-card-img-ph">📦</span>}
+        <div className="ct-card-bar" />
+
         {/* actions */}
-        <div className="ct-actions">
+        <div className="ct-actions" style={{ top: 8, right: 8 }}>
           <button className={`ct-act-btn${wished ? ' wished' : ''}`} onClick={toggleWish}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill={wished ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={wished ? 0 : 2}>
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </svg>
-          </button>
-          <button className="ct-act-btn" onClick={share}>
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-              <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
-              <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
             </svg>
           </button>
         </div>
       </div>
 
       {/* body */}
-      <div className="ct-body">
-        {/* top row */}
-        <div className="ct-top-row">
-          <div className="ct-verified">
-            <span style={{ opacity: 0.6, fontSize: '0.85em' }}>{p._id?.toString().slice(-8).toUpperCase() || 'B2B'}</span>
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: 2 }}>
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-            </svg>
-            Verified
-          </div>
-          {p.category?.name && <div className="ct-cat-pill">{p.category.name}</div>}
+      <div className="ct-body" style={{ padding: '16px 14px' }}>
+        <div className="ct-top-row" style={{ marginBottom: 4 }}>
+          {p.category?.name && <div className="ct-cat-pill" style={{ background: '#f5f3ff', color: '#7c3aed', border: 'none' }}>{p.category.name}</div>}
         </div>
 
         {/* name */}
-        <Link to={`/products/${p._id}`} onClick={e => e.stopPropagation()} className="ct-pname">{p.name}</Link>
+        <Link to={`/products/${p._id}`} onClick={e => e.stopPropagation()} className="ct-pname" style={{ fontSize: 14, fontWeight: 700, minHeight: '2.7em', marginBottom: 8 }}>{p.name}</Link>
 
         {/* price + cart */}
-        <div className="ct-price-area">
+        <div className="ct-price-area" style={{ marginTop: 'auto', paddingTop: 8, borderTop: '1px solid rgba(124,58,237,0.05)' }}>
           <div>
             {authed ? (
               <>
-                <div className="ct-price-authed">
-                  {hasMultiplePrices && <span style={{ fontSize: 10, color: '#9ca3af', marginRight: 4, textTransform: 'uppercase', fontWeight: 800 }}>From</span>}
+                <div className="ct-price-authed" style={{ fontSize: 20 }}>
                   ₹{Number(minPrice).toLocaleString()}
                   {displayMrp > minPrice && (
-                    <span className="ct-price-off">
+                    <span className="ct-price-off" style={{ marginLeft: 6, padding: '2px 8px', borderRadius: 4 }}>
                       {Math.round(((displayMrp - minPrice) / displayMrp) * 100)}% OFF
                     </span>
                   )}
                 </div>
-                {displayMrp > minPrice && <div className="ct-price-mrp">MRP ₹{Number(displayMrp).toLocaleString()}</div>}
+                {displayMrp > minPrice && <div className="ct-price-mrp" style={{ fontSize: 11 }}>MRP ₹{Number(displayMrp).toLocaleString()}</div>}
               </>
             ) : (
               <>
-                {/* ── PREMIUM MASKED PRICE ── */}
-                <Link to="/login" state={{ from: location.pathname + location.search }} className="ct-price-mask" onClick={e => e.stopPropagation()} title="Login to see price">
+                <Link to="/login" state={{ from: location.pathname + location.search }} className="ct-price-mask" onClick={e => e.stopPropagation()} style={{ padding: '8px 14px' }}>
                   <span className="ct-rupee">₹</span>
-                  <span className="ct-stars-blur">****</span>
-                  {/* 👁️ eye icon */}
+                  <span className="ct-stars-blur" style={{ letterSpacing: 2 }}>****</span>
                   <svg className="ct-eye" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
                 </Link>
-                <div className="ct-mask-hint">Login to view</div>
+                <div className="ct-mask-hint" style={{ fontSize: 10, marginTop: 4 }}>Login for B2B price</div>
               </>
             )}
           </div>
@@ -165,16 +164,11 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
             className="ct-atc"
             disabled={!authed || totalStock <= 0}
             title={!authed ? 'Login to add' : totalStock <= 0 ? 'Out of stock' : p.variants?.length > 0 ? 'Select options' : 'Add to cart'}
+            style={{ width: 44, height: 44, borderRadius: 14 }}
             onClick={async e => {
               e.stopPropagation(); e.preventDefault()
               if (!authed) { navigate('/login', { state: { from: location.pathname + location.search } }); return }
-
-              // If product has variants, redirect to detail page for selection
-              if (p.variants?.length > 0) {
-                navigate(`/products/${p._id}`)
-                return
-              }
-
+              if (p.variants?.length > 0) { navigate(`/products/${p._id}`); return }
               const ok = await addToCart(p)
               if (ok) {
                 try {
@@ -187,11 +181,11 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
             }}
           >
             {p.variants?.length > 0 ? (
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M9 5l7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             ) : (
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M7 6h13l-1.2 7H9.2L7 6Z" strokeLinecap="round" strokeLinejoin="round" />
                 <circle cx="10" cy="19" r="1.4" fill="currentColor" />
                 <circle cx="17" cy="19" r="1.4" fill="currentColor" />
@@ -201,10 +195,10 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
         </div>
 
         {/* tags */}
-        <div className="ct-tags">
-          <span className="ct-tag" style={{ background: 'rgba(5,150,105,.08)', color: '#059669' }}>In Stock</span>
-          <span className="ct-tag" style={{ background: 'rgba(124,58,237,.08)', color: '#7c3aed' }}>⚡ Fast</span>
-          <span className="ct-tag" style={{ background: 'rgba(59,130,246,.08)', color: '#3b82f6' }}>GST</span>
+        <div className="ct-tags" style={{ marginTop: 12, borderTop: '1px dotted rgba(124,58,237,0.1)', paddingTop: 8 }}>
+          <span className="ct-tag" style={{ background: 'rgba(5,150,105,.05)', color: '#059669', border: '1px solid rgba(5,150,105,0.1)', padding: '3px 10px' }}>In Stock</span>
+          <span className="ct-tag" style={{ background: 'rgba(124,58,237,.05)', color: '#7c3aed', border: '1px solid rgba(124,58,237,0.1)', padding: '3px 10px' }}>⚡ Fast Dispatch</span>
+          <span className="ct-tag" style={{ background: 'rgba(59,130,246,.05)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.1)', padding: '3px 10px' }}>GST Invoice</span>
         </div>
       </div>
     </div>
