@@ -78,14 +78,15 @@ export default function ProductDetail() {
             if (parts[idx + 1]) result[key] = parts[idx + 1].toLowerCase();
           });
         } else {
-          // Fallback to legacy color/watt if no attributes defined
-          if (parts.length >= 3) {
-            result.color = parts[1].toLowerCase();
-            result.watt = parts[2].toLowerCase();
-          } else {
-            // Fix: Default to 'model' for single variants as requested by user
+          // Fallback to model if no attributes defined
+          if (parts.length >= 2) {
+            // For 2 or more parts, use 'model' as the primary variant type
             // This prevents 'model' variants from showing as 'color'
             result.model = parts[1].toLowerCase();
+            if (parts.length >= 3) {
+              // If there are more parts, add them as a generic 'variant' attribute
+              result.variant = parts.slice(2).join('-').toLowerCase();
+            }
           }
         }
       }

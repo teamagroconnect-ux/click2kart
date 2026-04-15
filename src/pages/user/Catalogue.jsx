@@ -157,7 +157,7 @@ export default function Catalogue({ initialBrand, brandName }) {
     ] : [])
   ]
 
-  if (loading && products.length === 0) return (
+  if (loading && items.length === 0) return (
     <div className="ct">
       <style>{`
         .ct { font-family: 'DM Sans', system-ui, sans-serif; background: #f5f3ff; min-height: 100vh; position: relative; overflow-x: hidden; padding-top: env(safe-area-inset-top, 0px); }
@@ -897,7 +897,7 @@ export default function Catalogue({ initialBrand, brandName }) {
                 {categories.map(c => (
                   <button key={c._id} className={`ct-sb-cat-btn${category===c._id?' on':''}`} onClick={() => { setCategory(c._id); setBrowsePath('category') }}>
                     <div className="ct-sb-cat-img">
-                      {c.image ? <img src={c.image} alt={c.name}/> : <span style={{fontSize:17}}>📦</span>}
+                      {c.image ? <img src={getCloudinaryUrl(c.image, 100)} alt={c.name} loading="lazy" width="50" height="50" /> : <span style={{fontSize:17}}>📦</span>}
                     </div>
                     <div style={{flex:1,textAlign:'left'}}>
                       <div style={{fontWeight:700,fontSize:13,textTransform:'capitalize'}}>{c.name}</div>
@@ -940,7 +940,7 @@ export default function Catalogue({ initialBrand, brandName }) {
                 {brands.map(b => (
                   <button key={b._id} className={`ct-sb-cat-btn${brand===b._id?' on':''}`} onClick={() => { setBrand(b._id); setBrowsePath('brand') }}>
                     <div className="ct-sb-cat-img">
-                      {b.logo ? <img src={b.logo} alt={b.name}/> : <span style={{fontSize:17}}>🏭</span>}
+                      {b.logo ? <img src={getCloudinaryUrl(b.logo, 100)} alt={b.name} loading="lazy" width="50" height="50" /> : <span style={{fontSize:17}}>🏭</span>}
                     </div>
                     <div style={{flex:1,textAlign:'left'}}>
                       <div style={{fontWeight:700,fontSize:13,textTransform:'capitalize'}}>{b.name}</div>
