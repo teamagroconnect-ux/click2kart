@@ -184,14 +184,17 @@ export function CartProvider({ children }) {
     let p = Number(item.price || 0)
     const qty = Math.max(1, Number(item.quantity || 1))
     
+    // Check for bulk pricing at item level or product level
+    const it = (item.bulkTiers || item.bulkDiscountQuantity) ? item : (item.productId && typeof item.productId === 'object' ? item.productId : item);
+    
     // Apply bulk pricing
-    if (Array.isArray(item.bulkTiers) && item.bulkTiers.length) {
-      const tiers = item.bulkTiers.slice().sort((a, b) => Number(a.quantity || 0) - Number(b.quantity || 0))
+    if (Array.isArray(it.bulkTiers) && it.bulkTiers.length) {
+      const tiers = it.bulkTiers.slice().sort((a, b) => Number(a.quantity || 0) - Number(b.quantity || 0))
       const app = tiers.filter(t => qty >= Number(t.quantity || 0)).pop()
       if (app) p = Math.max(0, p - Number(app.priceReduction ?? app.price_reduction ?? 0))
-    } else if (Number(item.bulkDiscountQuantity || item.bulkQty) > 0) {
-      if (qty >= Number(item.bulkDiscountQuantity || item.bulkQty)) {
-        p = Math.max(0, p - Number(item.bulkDiscountPriceReduction || item.bulkRed || 0))
+    } else if (Number(it.bulkDiscountQuantity || it.bulkQty) > 0) {
+      if (qty >= Number(it.bulkDiscountQuantity || it.bulkQty)) {
+        p = Math.max(0, p - Number(it.bulkDiscountPriceReduction || it.bulkRed || 0))
       }
     }
     

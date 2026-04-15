@@ -13,22 +13,27 @@ export default function Enquiry() {
   const { cart, clearCart, cartTotal } = useCart()
   const minAmount   = Number(import.meta.env.VITE_MIN_ORDER_AMOUNT || 5000)
 
+  const mapCartItem = (item) => {
+    const it = (item.bulkTiers || item.bulkDiscountQuantity) ? item : (item.productId && typeof item.productId === 'object' ? item.productId : item);
+    return {
+      productId: item.productId || item._id,
+      variantSku: item.variantSku,
+      quantity:  item.quantity,
+      name:      item.name,
+      price:     item.price,
+      gst:       item.gst || 0,
+      mrp:       item.mrp || item.price,
+      image:     item.image || item.images?.[0]?.url,
+      attributes: item.attributes,
+      bulkQty:   it.bulkDiscountQuantity || it.bulkQty || 0,
+      bulkRed:   it.bulkDiscountPriceReduction || it.bulkRed || 0,
+      bulkTiers: it.bulkTiers,
+      weight:    item.weight || 0,
+    };
+  };
+
   const initialItems = cart.length > 0
-    ? cart.map(item => ({
-        productId: item.productId || item._id,
-        variantSku: item.variantSku,
-        quantity:  item.quantity,
-        name:      item.name,
-        price:     item.price,
-        gst:       item.gst || 0,
-        mrp:       item.mrp || item.price,
-        image:     item.image || item.images?.[0]?.url,
-        attributes: item.attributes,
-        bulkQty:   item.bulkDiscountQuantity || item.bulkQty || 0,
-        bulkRed:   item.bulkDiscountPriceReduction || item.bulkRed || 0,
-        bulkTiers: item.bulkTiers,
-        weight:    item.weight || 0,
-      }))
+    ? cart.map(mapCartItem)
     : (loc.state?.productId ? [{ productId: loc.state.productId, quantity: 1, name: loc.state.name, mrp: loc.state.mrp || loc.state.price, price: loc.state.price, gst: loc.state.gst || 0 }] : [])
 
   const [items,          setItems]          = useState(initialItems)
@@ -74,13 +79,7 @@ export default function Enquiry() {
   }
 
   useEffect(() => {
-    if (cart.length > 0) setItems(cart.map(item => ({
-      productId: item.productId||item._id, variantSku: item.variantSku, quantity: item.quantity,
-      name: item.name, price: item.price, gst: item.gst || 0, mrp: item.mrp || item.price, image: item.image||item.images?.[0]?.url,
-      attributes: item.attributes, bulkQty: item.bulkDiscountQuantity||item.bulkQty||0,
-      bulkRed: item.bulkDiscountPriceReduction||item.bulkRed||0, bulkTiers: item.bulkTiers,
-      weight: item.weight || 0,
-    })))
+    if (cart.length > 0) setItems(cart.map(mapCartItem))
   }, [cart])
 
   useEffect(() => {
@@ -1516,10 +1515,12 @@ export default function Enquiry() {
                   const maxQ = tiers.length ? Math.max(item.quantity, tiers[tiers.length - 1].quantity) : item.quantity
                   const pct = tiers.length ? Math.min(100, Math.round((item.quantity / maxQ) * 100)) : 100
                   
-                  const attrs = Object.entries(item.attributes || {})
-                    .filter(([, v]) => v)
-                    .map(([k, v]) => `${k.toUpperCase()}: ${String(v).toUpperCase()}`)
-                    .join(' · ')
+                  const getAttrs = (attr) => {
+                    if (!attr) return {};
+                    return attr instanceof Map ? Object.fromEntries(attr) : attr;
+                  };
+                  const displayAttributes = getAttrs(item.attributes);
+                  const hasAttributes = displayAttributes && Object.entries(displayAttributes).filter(([, v]) => v).length > 0;
 
                   return (
                     <div key={idx} className="eq-item" style={{ cursor: 'pointer' }} onClick={() => nav(`/products/${item.productId || item._id || item.id}`)}>
@@ -1534,9 +1535,9 @@ export default function Enquiry() {
                       <div className="eq-item-content">
                         <div className="eq-item-name">
                           {item.name}
-                          {Object.entries(item.attributes || {}).filter(([, v]) => v).length > 0 && (
+                          {hasAttributes && (
                             <span style={{ marginLeft: 8, color: '#6b7280', fontSize: '0.9em', fontWeight: 500 }}>
-                              ({Object.values(item.attributes).filter(v => v).map(v => String(v).toUpperCase()).join(', ')})
+                              ({Object.values(displayAttributes).filter(v => v).map(v => String(v).toUpperCase()).join(', ')})
                             </span>
                           )}
                         </div>

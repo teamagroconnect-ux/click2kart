@@ -637,6 +637,14 @@ export default function OrderHistory() {
                               const pid = orderLineProductId(item)
                               const canRateProduct = ['DELIVERED', 'FULFILLED'].includes(order.status) && !!pid
                               const already = pid && reviewedProductIds.has(pid)
+                              
+                              const getAttrs = (attr) => {
+                                if (!attr) return {};
+                                return attr instanceof Map ? Object.fromEntries(attr) : attr;
+                              };
+                              const displayAttributes = getAttrs(item.attributes);
+                              const hasAttributes = displayAttributes && Object.entries(displayAttributes).filter(([, v]) => v).length > 0;
+
                               return (
                               <div key={i} className="oh-item" style={{ cursor: 'default', flexDirection: 'column', alignItems: 'stretch' }}>
                                 <div
@@ -653,9 +661,9 @@ export default function OrderHistory() {
                                   <div style={{ flex:1, minWidth:0 }}>
                                     <div className="oh-item-name">
                                       {item.name}
-                                      {item.attributes && Object.entries(item.attributes).length > 0 && (
+                                      {hasAttributes && (
                                         <span style={{ marginLeft: 8, color: '#6b7280', fontSize: '0.9em', fontWeight: 500 }}>
-                                          ({Object.values(item.attributes).map(v => String(v).toUpperCase()).join(', ')})
+                                          ({Object.values(displayAttributes).filter(v => v).map(v => String(v).toUpperCase()).join(', ')})
                                         </span>
                                       )}
                                     </div>

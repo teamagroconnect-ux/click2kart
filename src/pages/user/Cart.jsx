@@ -16,10 +16,11 @@ export default function Cart() {
 
   /* ── price helpers ── */
   const getBulkTiers = (item) => {
-    if (Array.isArray(item.bulkTiers) && item.bulkTiers.length)
-      return item.bulkTiers.slice().sort((a,b) => a.quantity - b.quantity)
-    if (item.bulkDiscountQuantity > 0)
-      return [{ quantity: item.bulkDiscountQuantity, priceReduction: item.bulkDiscountPriceReduction || 0 }]
+    const it = (item.bulkTiers || item.bulkDiscountQuantity) ? item : (item.productId && typeof item.productId === 'object' ? item.productId : item);
+    if (Array.isArray(it.bulkTiers) && it.bulkTiers.length)
+      return it.bulkTiers.slice().sort((a,b) => a.quantity - b.quantity)
+    if (it.bulkDiscountQuantity > 0)
+      return [{ quantity: it.bulkDiscountQuantity, priceReduction: it.bulkDiscountPriceReduction || 0 }]
     return []
   }
   const getNextTier = (qty, tiers) => tiers.find(t => qty < t.quantity) || null
@@ -393,7 +394,12 @@ export default function Cart() {
                 const itemSku = item.variantSku || ''
 
                 // Get attributes from either item.attributes or item.productId.attributes (for server-side cart)
-                const displayAttributes = item.attributes || (item.productId?.attributes && typeof item.productId.attributes === 'object' ? item.productId.attributes : null)
+                const getAttrs = (attr) => {
+                  if (!attr) return {};
+                  return attr instanceof Map ? Object.fromEntries(attr) : attr;
+                };
+                const displayAttributes = getAttrs(item.attributes) || getAttrs(item.productId?.attributes);
+                const hasAttributes = displayAttributes && Object.entries(displayAttributes).filter(([, v]) => v).length > 0;
 
                 return (
                   <div key={`${itemId}-${itemSku}`} className="ct-item" style={{ animationDelay:`${idx*50}ms` }}>
@@ -410,9 +416,9 @@ export default function Cart() {
                     <div className="ct-item-body">
                       <div className="ct-item-name" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${itemId}`)}>
                         {item.name}
-                        {displayAttributes && Object.entries(displayAttributes).length > 0 && (
+                        {hasAttributes && (
                           <span style={{ marginLeft: 8, color: '#6b7280', fontSize: '0.9em', fontWeight: 500 }}>
-                            ({Object.values(displayAttributes).map(v => String(v).toUpperCase()).join(', ')})
+                            ({Object.values(displayAttributes).filter(v => v).map(v => String(v).toUpperCase()).join(', ')})
                           </span>
                         )}
                       </div>
@@ -435,6 +441,37 @@ export default function Cart() {
                         </svg>
                         Delivery by <b>{etaText}</b> · Free Delivery
                       </div>
+
+                      {/* bulk tier nudge */}
+                      {tiers.length > 0 && (
+                        <div className="ct-tier-nudge" style={{ background: 'rgba(124, 58, 237, 0.05)', border: '1px solid rgba(124, 58, 237, 0.15)' }}>
+                          <div className="ct-tier-bar-track" style={{ background: 'rgba(124, 58, 237, 0.1)' }}>
+                            <div className="ct-tier-bar-fill" style={{ width:`${pct}%`, background: '#7c3aed' }}/>
+                          </div>
+                          <div className="ct-tier-nudge-row">
+                            {next ? (() => {
+                              const delta     = next.quantity - item.quantity
+                              const perOff    = Number(next.priceReduction||0)
+                              const effUnit   = Math.max(0, Number(item.price||0) - perOff)
+                              const estSave   = perOff * (item.quantity + delta)
+                              return (
+                                <>
+                                  <div className="ct-tier-text" style={{ color: '#7c3aed' }}>
+                                    Add {delta} more to save ₹{estSave.toLocaleString()} (₹{effUnit.toLocaleString()}/unit)
+                                  </div>
+                                  <button className="ct-tier-add-btn"
+                                    style={{ background: '#7c3aed' }}
+                                    onClick={() => updateQuantity(itemId, itemSku, next.quantity)}>
+                                    Add {delta} units
+                                  </button>
+                                </>
+                              )
+                            })() : (
+                              <div className="ct-tier-max" style={{ color: '#059669' }}>✓ Max bulk savings applied</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                       {/* qty + actions */}
                       <div className="ct-qty-row">
@@ -475,46 +512,23 @@ export default function Cart() {
                           Save for later
                         </button>
                       </div>
-
-                      {/* bulk tier nudge */}
-                      {tiers.length > 0 && (
-                        <div className="ct-tier-nudge">
-                          <div className="ct-tier-bar-track">
-                            <div className="ct-tier-bar-fill" style={{ width:`${pct}%` }}/>
-                          </div>
-                          <div className="ct-tier-nudge-row">
-                            {next ? (() => {
-                              const delta     = next.quantity - item.quantity
-                              const perOff    = Number(next.priceReduction||0)
-                              const effUnit   = Math.max(0, Number(item.price||0) - perOff)
-                              const estSave   = perOff * (item.quantity + delta)
-                              return (
-                                <>
-                                  <div className="ct-tier-text">
-                                    Add {delta} more → ₹{effUnit.toLocaleString()}/unit · save ~₹{estSave.toLocaleString()}
-                                  </div>
-                                  <button className="ct-tier-add-btn"
-                                    onClick={() => updateQuantity(itemId, itemSku, next.quantity)}>
-                                    +{delta} units
-                                  </button>
-                                </>
-                              )
-                            })() : (
-                              <div className="ct-tier-max">✓ Max bulk savings applied</div>
-                            )}
-                          </div>
-                        </div>
-                      )}
                     </div>
 
                     {/* line total */}
                     <div className="ct-line-total">
                       <div className="ct-line-price">₹{lineTotal(item).toLocaleString()}</div>
-                      {item.bulkDiscountQuantity>0 && item.quantity<item.bulkDiscountQuantity && (
-                        <div className="ct-line-unlock">
-                          Add {item.bulkDiscountQuantity-item.quantity} more to unlock bulk price
-                        </div>
-                      )}
+                      {(() => {
+                        const it = (item.bulkTiers || item.bulkDiscountQuantity) ? item : (item.productId && typeof item.productId === 'object' ? item.productId : item);
+                        const bulkQty = it.bulkDiscountQuantity || (it.bulkTiers && it.bulkTiers[0]?.quantity);
+                        if (bulkQty > 0 && item.quantity < bulkQty) {
+                          return (
+                            <div className="ct-line-unlock">
+                              Add {bulkQty - item.quantity} more to unlock bulk price
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
                     </div>
 
                   </div>
