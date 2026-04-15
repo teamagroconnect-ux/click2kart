@@ -166,7 +166,7 @@ export default function Cart() {
         .ct-item{
           background:white; border:1px solid rgba(139,92,246,.1);
           border-radius:18px; padding:18px 20px;
-          display:grid; grid-template-columns: 88px 1fr auto; gap:16px; position:relative; overflow:hidden;
+          display:grid; grid-template-columns: 88px 1fr 120px; gap:16px; position:relative; overflow:hidden;
           transition:all .25s; box-shadow:0 2px 12px rgba(139,92,246,.04);
           animation:ctUp .5s ease both;
         }
@@ -392,11 +392,14 @@ export default function Cart() {
                 const itemId  = item.productId || item._id
                 const itemSku = item.variantSku || ''
 
+                // Get attributes from either item.attributes or item.productId.attributes (for server-side cart)
+                const displayAttributes = item.attributes || (item.productId?.attributes && typeof item.productId.attributes === 'object' ? item.productId.attributes : null)
+
                 return (
                   <div key={`${itemId}-${itemSku}`} className="ct-item" style={{ animationDelay:`${idx*50}ms` }}>
 
                     {/* image */}
-                    <div className="ct-img" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${item.productId || item._id}`)}>
+                    <div className="ct-img" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${itemId}`)}>
                       {imgSrc
                         ? <img src={getCloudinaryUrl(imgSrc, 200)} alt={item.name} loading="lazy" width="80" height="80" />
                         : <span className="ct-img-ph">📦</span>
@@ -405,12 +408,12 @@ export default function Cart() {
 
                     {/* body */}
                     <div className="ct-item-body">
-                      <div className="ct-item-name" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${item.productId || item._id}`)}>{item.name}</div>
+                      <div className="ct-item-name" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${itemId}`)}>{item.name}</div>
                       <div className="ct-item-meta">
-                        {item.attributes && Object.entries(item.attributes).length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            {Object.entries(item.attributes).map(([k,v]) => (
-                              <span key={k} className="px-2 py-1 rounded-md bg-indigo-50 border border-indigo-100 text-[10px] font-black uppercase tracking-widest text-indigo-600">
+                        {displayAttributes && Object.entries(displayAttributes).length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-1.5">
+                            {Object.entries(displayAttributes).map(([k,v]) => (
+                              <span key={k} className="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-100 text-[9px] font-black uppercase tracking-widest text-indigo-600">
                                 {k}: {String(v).toUpperCase()}
                               </span>
                             ))}

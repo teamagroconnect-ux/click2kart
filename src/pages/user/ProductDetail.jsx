@@ -57,13 +57,15 @@ export default function ProductDetail() {
   const { data: p, isLoading: loading, error: queryError } = useQuery({
     queryKey: ['product', id],
     queryFn: () => api.get(`/api/products/${id}`).then(res => res.data),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 30, // 30 minutes for products
+    gcTime: 1000 * 60 * 60 * 24, // 24 hours in cache
   })
 
   const { data: similarProducts = [] } = useQuery({
     queryKey: ['recommendations', id],
     queryFn: () => api.get(`/api/recommendations/similar/${id}?limit=8`).then(res => res.data || []),
     enabled: !!id,
+    staleTime: 1000 * 60 * 60, // 1 hour for recommendations
   })
 
   // Normalize an attributes object to lowercase keys
@@ -1796,11 +1798,7 @@ export default function ProductDetail() {
                                 })}
                               >
                                 <span className="pd-var-val">{String(opt).toUpperCase()}</span>
-                                {enabled ? (
-                                  <span className="pd-var-price">₹{(repVariant?.price || p.price).toLocaleString()}</span>
-                                ) : (
-                                  <span className="pd-var-oos">Out of Stock</span>
-                                )}
+                                {!enabled && <span className="pd-var-oos">OOS</span>}
                               </button>
                             )
                           })}
@@ -2222,9 +2220,14 @@ export default function ProductDetail() {
 
               <div className="pd-rec-grid" style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                gap: 20
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 12
               }}>
+                <style>{`
+                  @media (min-width: 640px) { .pd-rec-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 16px !important; } }
+                  @media (min-width: 1024px) { .pd-rec-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 20px !important; } }
+                  @media (min-width: 1280px) { .pd-rec-grid { grid-template-columns: repeat(5, 1fr) !important; } }
+                `}</style>
                 {similarProducts.map((item, idx) => (
                   <ProductCard
                     key={item._id || item.id}

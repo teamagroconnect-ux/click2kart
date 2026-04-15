@@ -56,7 +56,8 @@ export default function Catalogue({ initialBrand, brandName }) {
     hasNextPage,
     isFetchingNextPage,
     isLoading: loadingProducts,
-    refetch: refetchProducts
+    refetch: refetchProducts,
+    isPlaceholderData
   } = useInfiniteQuery({
     queryKey: ['products', { q, brand, category, subCategory, limit }],
     queryFn: fetchProducts,
@@ -64,18 +65,22 @@ export default function Catalogue({ initialBrand, brandName }) {
       const next = lastPage.page + 1
       return next <= lastPage.totalPages ? next : undefined
     },
-    enabled: viewMode === 'PRODUCTS' || !!q
+    enabled: viewMode === 'PRODUCTS' || !!q,
+    staleTime: 1000 * 60 * 30, // 30 minutes for products
+    gcTime: 1000 * 60 * 60 * 24, // Keep in garbage collection for 24 hours
   })
 
   const { data: groupedItems = [], isLoading: loadingGrouped } = useQuery({
     queryKey: ['products-grouped', { brand, category }],
     queryFn: fetchGrouped,
-    enabled: viewMode === 'GROUPED' || (viewMode === 'START' && !browsePath)
+    enabled: viewMode === 'GROUPED' || (viewMode === 'START' && !browsePath),
+    staleTime: 1000 * 60 * 60, // 1 hour for grouped items
   })
 
   const { data: brands = [] } = useQuery({
     queryKey: ['brands'],
-    queryFn: () => api.get('/api/brands', { params: { active: true } }).then(res => res.data || [])
+    queryFn: () => api.get('/api/brands', { params: { active: true } }).then(res => res.data || []),
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours for brands
   })
 
   const { data: categories = [] } = useQuery({
@@ -84,7 +89,8 @@ export default function Catalogue({ initialBrand, brandName }) {
       const params = { active: true }
       if (brand && browsePath === 'brand') params.brand = brand
       return api.get('/api/categories', { params }).then(res => res.data || [])
-    }
+    },
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours for categories
   })
 
   const { data: subcategories = [] } = useQuery({
@@ -93,7 +99,8 @@ export default function Catalogue({ initialBrand, brandName }) {
       if (!category) return []
       return api.get('/api/subcategories', { params: { category, active: true } }).then(res => res.data || [])
     },
-    enabled: !!category
+    enabled: !!category,
+    staleTime: 1000 * 60 * 60 * 24, // 24 hours for subcategories
   })
 
   const items = useMemo(() => {
@@ -163,20 +170,35 @@ export default function Catalogue({ initialBrand, brandName }) {
 
   useEffect(() => {
     const handleScroll = () => {
-      sessionStorage.setItem('catalogue-scroll', window.scrollY)
+      // Use a unique key based on filters to avoid wrong scroll on different views
+      const key = `catalogue-scroll-${q}-${brand}-${category}-${subCategory}`
+      sessionStorage.setItem(key, window.scrollY)
     }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+    // Debounce scroll saving to improve performance
+    let timeout
+    const debouncedScroll = () => {
+      clearTimeout(timeout)
+      timeout = setTimeout(handleScroll, 100)
+    }
+    window.addEventListener('scroll', debouncedScroll)
+    return () => {
+      window.removeEventListener('scroll', debouncedScroll)
+      clearTimeout(timeout)
+    }
+  }, [q, brand, category, subCategory])
 
   useEffect(() => {
     if (!loading && items.length > 0) {
-      const saved = sessionStorage.getItem('catalogue-scroll')
+      const key = `catalogue-scroll-${q}-${brand}-${category}-${subCategory}`
+      const saved = sessionStorage.getItem(key)
       if (saved) {
-        window.scrollTo(0, parseInt(saved))
+        // Use requestAnimationFrame to ensure DOM is ready
+        requestAnimationFrame(() => {
+          window.scrollTo(0, parseInt(saved))
+        })
       }
     }
-  }, [loading, items.length])
+  }, [loading, items.length, q, brand, category, subCategory])
   useEffect(() => {
     let t
     if (q.trim().length >= 2) {
