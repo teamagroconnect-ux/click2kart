@@ -408,9 +408,13 @@ export default function Cart() {
                       <div className="ct-item-name" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${item.productId || item._id}`)}>{item.name}</div>
                       <div className="ct-item-meta">
                         {item.attributes && Object.entries(item.attributes).length > 0 && (
-                          <span className="ct-item-variant">
-                            {Object.entries(item.attributes).map(([k,v]) => `${k}: ${v}`).join(' • ')}
-                          </span>
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {Object.entries(item.attributes).map(([k,v]) => (
+                              <span key={k} className="px-2 py-1 rounded-md bg-indigo-50 border border-indigo-100 text-[10px] font-black uppercase tracking-widest text-indigo-600">
+                                {k}: {String(v).toUpperCase()}
+                              </span>
+                            ))}
+                          </div>
                         )}
                         <span className="ct-unit-price">₹{unitPrice(item).toLocaleString()} / unit</span>
                         {item.stock <= 20 && (

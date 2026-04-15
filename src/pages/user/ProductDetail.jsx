@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { useCart, getStockStatus } from '../../lib/CartContext'
@@ -97,7 +98,6 @@ export default function ProductDetail() {
     return result
   }
 
-  const [p, setP] = useState(null)
   const [error, setError] = useState(null)
   const [selected, setSelected] = useState({})
   const [imgLoading, setImgLoading] = useState(true)
@@ -105,7 +105,6 @@ export default function ProductDetail() {
   const [activeImg, setActiveImg] = useState(0)
   const [lightbox, setLightbox] = useState(false)
   const [zoom, setZoom] = useState({ on: false, x: 50, y: 50 })
-  const [recItems, setRecItems] = useState([])
   const [recOpen, setRecOpen] = useState(false)
   const [qty, setQty] = useState(1)
   const [pincode, setPincode] = useState('')
@@ -225,6 +224,18 @@ export default function ProductDetail() {
     setLightbox(true)
   }, [])
 
+  const { data: p, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ['product', id],
+    queryFn: () => api.get(`/api/products/${id}`).then(res => res.data),
+    staleTime: 1000 * 60 * 5,
+  })
+
+  const { data: recItems = [] } = useQuery({
+    queryKey: ['recommendations', id],
+    queryFn: () => api.get(`/api/recommendations/similar/${id}?limit=8`).then(res => res.data || []),
+    enabled: !!id,
+  })
+
   /* KYC / pincode */
   useEffect(() => {
     if (!authed) return
@@ -260,19 +271,17 @@ export default function ProductDetail() {
     setDeliveryDate(d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', weekday: 'short' }))
   }
 
-  /* load product */
+  /* load product effect (syncing state from query) */
   useEffect(() => {
-    setError(null);
-    api.get(`/api/products/${id}`).then(({ data }) => {
-      if (!data) throw new Error('no_data');
-      setP(data); setQty(Math.max(1, Number(data.minOrderQty || 1)))
-    }).catch(err => {
-      console.error("Product load failed:", err);
-      const msg = err?.response?.data?.error || err.message || 'Product not found';
-      setError(msg === 'not_found' ? 'This product is no longer available.' : msg);
-    })
-    api.get(`/api/recommendations/frequently-bought/${id}?limit=6`).then(({ data }) => setRecItems(data || [])).catch(() => { })
-  }, [id])
+    if (p) {
+      setQty(Math.max(1, Number(p.minOrderQty || 1)))
+      setError(null)
+    }
+    if (queryError) {
+      const msg = queryError?.response?.data?.error || queryError.message || 'Product not found'
+      setError(msg === 'not_found' ? 'This product is no longer available.' : msg)
+    }
+  }, [p, queryError])
 
   useEffect(() => {
     if (!p) return
@@ -600,7 +609,7 @@ export default function ProductDetail() {
     const ok = await addToCart({ ...p, minOrderQty: Math.max(minTierQty, qty) }, matchedVariant || undefined)
     if (ok) {
       try {
-        const { data } = await api.get(`/api/recommendations/frequently-bought/${id}`)
+        const { data } = await api.get(`/api/recommendations/similar/${id}`)
         const filtered = (data || []).filter(item => (item._id || item.id) !== id)
         setRecItems(filtered)
         if (filtered.length > 0) setRecOpen(true)
@@ -1692,12 +1701,6 @@ export default function ProductDetail() {
                     {isHotDeal && <span className="pd-img-chip hd">🔥 Hot Deal</span>}
                   </div>
                 )}
-                <button className="pd-fullview" onClick={e => { e.stopPropagation(); setLightbox(true) }}>
-                  <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                  </svg>
-                  Full View
-                </button>
               </div>
 
               {imgs.length > 1 && (
@@ -1734,9 +1737,9 @@ export default function ProductDetail() {
                         <div className="pd-var-header">
                           <div className="pd-var-lbl">
                             <span className="pd-var-icon">{variantAttrIconEmoji(lowKey)}</span>
-                            <span className="pd-var-name">{attrKey === 'Option' ? 'Select Option' : (attrKey.charAt(0).toUpperCase() + attrKey.slice(1).toLowerCase())}</span>
+                            <span className="pd-var-name">{attrKey === 'Option' ? 'SELECT OPTION' : attrKey.toUpperCase()}</span>
                           </div>
-                          {currentVal && <span className="pd-var-selected">{currentVal}</span>}
+                          {currentVal && <span className="pd-var-selected">{String(currentVal).toUpperCase()}</span>}
                         </div>
                         {isManyOptions && (
                           <div className="pd-var-scroll-hint">Swipe sideways for more</div>
@@ -1773,8 +1776,8 @@ export default function ProductDetail() {
                                   })}
                                   title={opt}
                                 >
-                                  {imgUrl ? <img src={getCloudinaryUrl(imgUrl, 100)} alt={opt} loading="lazy" width="40" height="40" /> : <span className="text-[10px] uppercase font-bold">{opt.charAt(0)}</span>}
-                                  <span className="pd-var-val">{opt}</span>
+                                  {imgUrl ? <img src={getCloudinaryUrl(imgUrl, 100)} alt={opt} loading="lazy" width="40" height="40" /> : <span className="text-[10px] uppercase font-bold">{String(opt).charAt(0).toUpperCase()}</span>}
+                                  <span className="pd-var-val">{String(opt).toUpperCase()}</span>
                                   {!enabled && <span className="pd-var-oos">OOS</span>}
                                 </div>
                               )
@@ -1791,7 +1794,7 @@ export default function ProductDetail() {
                                   return next;
                                 })}
                               >
-                                <span className="pd-var-val">{opt}</span>
+                                <span className="pd-var-val">{String(opt).toUpperCase()}</span>
                                 {enabled ? (
                                   <span className="pd-var-price">₹{(repVariant?.price || p.price).toLocaleString()}</span>
                                 ) : (
@@ -1810,30 +1813,6 @@ export default function ProductDetail() {
 
             {/* ══ RIGHT — INFO PANEL ══ */}
             <div className="pd-info pd-reveal pd-reveal-delay">
-
-              {/* WELCOME BANNER (Only for logged in users) */}
-              {authed && user && (
-                <div className="pd-welcome-banner" style={{
-                  background: 'linear-gradient(135deg, #1e1b2e 0%, #2d2a4a 100%)',
-                  borderRadius: '16px',
-                  padding: '12px 18px',
-                  marginBottom: 16,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  boxShadow: '0 8px 20px -6px rgba(0,0,0,0.2)',
-                  border: '1px solid rgba(124,58,237,0.1)'
-                }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '12px', background: 'rgba(124,58,237,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>👋</div>
-                  <div>
-                    <div style={{ fontSize: 9, fontWeight: 800, color: '#c4b5fd', textTransform: 'uppercase', letterSpacing: '.15em', marginBottom: 2 }}>Welcome back</div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>Hi, {user.name?.split(' ')[0] || 'Partner'}!</div>
-                  </div>
-                  <div style={{ marginLeft: 'auto', background: 'rgba(5,150,105,0.2)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(5,150,105,0.3)' }}>
-                    <div style={{ fontSize: 8, fontWeight: 900, color: '#34d399', textTransform: 'uppercase', letterSpacing: '.1em' }}>B2B Active</div>
-                  </div>
-                </div>
-              )}
 
               {/* badges + stock — one compact strip */}
               <div className="pd-meta-compact">
@@ -1864,9 +1843,9 @@ export default function ProductDetail() {
                     {' '}({(() => {
                       const attrs = normalizeAttrs(matchedVariant.attributes, matchedVariant.sku, p.attributes);
                       const values = Object.values(attrs);
-                      if (values.length > 0) return values.join(', ');
-                      if (matchedVariant.sku) return matchedVariant.sku;
-                      return 'Selected';
+                      if (values.length > 0) return values.join(', ').toUpperCase();
+                      if (matchedVariant.sku) return matchedVariant.sku.toUpperCase();
+                      return 'SELECTED';
                     })()})
                   </span>
                 )}

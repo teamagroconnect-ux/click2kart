@@ -1518,7 +1518,7 @@ export default function Enquiry() {
                   
                   const attrs = Object.entries(item.attributes || {})
                     .filter(([, v]) => v)
-                    .map(([k, v]) => `${k}: ${v}`)
+                    .map(([k, v]) => `${k.toUpperCase()}: ${String(v).toUpperCase()}`)
                     .join(' · ')
 
                   return (

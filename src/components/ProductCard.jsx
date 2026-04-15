@@ -1,11 +1,22 @@
 import React, { useState, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import { getCloudinaryUrl } from '../lib/cloudinary';
 import { getStockStatus } from '../lib/CartContext';
 
 export default function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRecItems }) {
   const location = useLocation()
+  const queryClient = useQueryClient()
+
+  const prefetchProduct = () => {
+    queryClient.prefetchQuery({
+      queryKey: ['product', p._id],
+      queryFn: () => api.get(`/api/products/${p._id}`).then(res => res.data),
+      staleTime: 1000 * 60 * 5,
+    })
+  }
+
   // Calculate overall stock status based on variants
   const totalStock = Array.isArray(p.variants) && p.variants.length > 0
     ? p.variants.filter(v => v.isActive !== false).reduce((sum, v) => sum + (v.stock || 0), 0)
@@ -57,7 +68,12 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
   }
 
   return (
-    <div className="ct-card" style={{ animationDelay: `${index * 38}ms` }} onClick={() => navigate(`/products/${p._id}`)}>
+    <div 
+      className="ct-card" 
+      style={{ animationDelay: `${index * 38}ms` }} 
+      onClick={() => navigate(`/products/${p._id}`)}
+      onMouseEnter={prefetchProduct}
+    >
 
       {/* image zone */}
       <div className="ct-card-img-z">
@@ -111,7 +127,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
               <span className="ct-rat-ct">({p.ratingCount >= 1000 ? `${(p.ratingCount / 1000).toFixed(1)}k` : p.ratingCount})</span>
             </div>
           ) : (
-            <span className="ct-cat-pill">{p.category?.name || (typeof p.category === 'string' ? p.category : 'General')}</span>
+            <span className="ct-cat-pill">{(p.category?.name || (typeof p.category === 'string' ? p.category : 'General')).toUpperCase()}</span>
           )}
           <span className="ct-verified">
             <svg width="8" height="8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
