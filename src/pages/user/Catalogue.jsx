@@ -25,7 +25,7 @@ export default function Catalogue({ initialBrand, brandName }) {
   const [category, setCategory] = useState('')
   const [subCategory, setSubCategory] = useState('')
   const [browsePath, setBrowsePath] = useState(initialBrand ? 'brand' : null)
-  const [viewMode, setViewMode] = useState(initialBrand ? 'CATEGORIES' : 'START')
+  const [viewMode, setViewMode] = useState('PRODUCTS')
   const [sort, setSort] = useState('NEW')
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
@@ -116,15 +116,13 @@ export default function Catalogue({ initialBrand, brandName }) {
     if (q) {
       setViewMode('PRODUCTS')
     } else if (!browsePath) {
-      // If no browse path and no filters, show START mode
-      if (!brand && !category && !subCategory) setViewMode('START')
-      else setViewMode('PRODUCTS')
+      setViewMode('PRODUCTS')
     } else if (browsePath === 'brand') {
       if (!brand) setViewMode('BRANDS')
-      else setViewMode('PRODUCTS') // Directly show products for this brand
+      else setViewMode('PRODUCTS')
     } else if (browsePath === 'category') {
       if (!category) setViewMode('CATEGORIES')
-      else setViewMode('PRODUCTS') // Directly show products for this category
+      else setViewMode('PRODUCTS')
     }
   }, [q, browsePath, brand, category, subCategory])
 
