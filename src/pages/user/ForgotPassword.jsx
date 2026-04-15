@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 
@@ -7,6 +7,8 @@ export default function ForgotPassword() {
   const logo = "/logo.png"
   const { notify } = useToast()
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = location.state?.from || '/'
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
 
@@ -16,7 +18,7 @@ export default function ForgotPassword() {
     try {
       await api.post('/api/auth/customer/forgot-password', { email })
       notify('OTP sent to your email', 'success')
-      navigate(`/reset-password?email=${encodeURIComponent(email)}`)
+      navigate(`/reset-password?email=${encodeURIComponent(email)}`, { state: { from } })
     } catch (err) {
       notify(err?.response?.data?.error || 'User not found', 'error')
     } finally {
@@ -58,7 +60,7 @@ export default function ForgotPassword() {
 
           <p className="text-center text-xs text-gray-400 font-bold mt-6 uppercase tracking-widest">
             Remember password?{' '}
-            <Link to="/login" className="text-blue-600 hover:text-blue-700">
+            <Link to="/login" state={{ from }} className="text-blue-600 hover:text-blue-700">
               Login
             </Link>
           </p>

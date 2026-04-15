@@ -122,6 +122,7 @@ export default function UserLayout() {
                     </Link>
                     <Link
                       to="/signup"
+                      state={{ from: location.pathname + location.search }}
                       className="px-8 py-3 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-gray-200 hover:bg-gray-800 transition-all active:scale-95"
                     >
                       Join Now

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { useAuth } from '../../lib/AuthContext'
@@ -67,6 +67,7 @@ export default function OrderHistory() {
   const [expandedId, setExpandedId] = useState(null)
   const [reviewedProductIds, setReviewedProductIds] = useState(loadReviewedProductIds)
   const navigate = useNavigate()
+  const location = useLocation()
   const { token } = useAuth()
   const { notify } = useToast()
 
@@ -80,7 +81,7 @@ export default function OrderHistory() {
   }
 
   useEffect(() => {
-    if (!token) { navigate('/login'); return }
+    if (!token) { navigate('/login', { state: { from: location.pathname + location.search } }); return }
     api.get('/api/orders/my')
       .then(({ data }) => { setOrders(data); setLoading(false) })
       .catch(() => setLoading(false))

@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import { useAuth } from '../../lib/AuthContext'
 
 export default function Profile() {
+  const navigate = useNavigate()
+  const location = useLocation()
   const { notify }        = useToast()
   const { token, refreshProfile } = useAuth()
 
@@ -110,7 +113,7 @@ export default function Profile() {
   }
 
   useEffect(() => {
-    if (!token) return
+    if (!token) { navigate('/login', { state: { from: location.pathname + location.search } }); return }
     ;(async () => {
       try {
         const { data } = await api.get('/api/user/me')

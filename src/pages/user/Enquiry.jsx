@@ -89,7 +89,7 @@ export default function Enquiry() {
   }, [items])
 
   useEffect(() => {
-    if (!localStorage.getItem('token')) { nav('/login'); return }
+    if (!localStorage.getItem('token')) { nav('/login', { state: { from: loc.pathname + loc.search } }); return }
     ;(async () => {
       try {
         const { data } = await api.get('/api/user/me')

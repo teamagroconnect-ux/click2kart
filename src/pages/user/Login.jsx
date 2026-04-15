@@ -175,7 +175,7 @@ export default function Login() {
 
           <p className="text-center text-xs text-gray-400 font-bold mt-6 uppercase tracking-widest">
             New to Click2Kart?{' '}
-            <Link to="/signup" className="text-blue-600 hover:text-blue-700">
+            <Link to="/signup" state={{ from }} className="text-blue-600 hover:text-blue-700">
               Create Account
             </Link>
           </p>

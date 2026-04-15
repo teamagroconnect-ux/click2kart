@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import PasswordInput from '../../components/PasswordInput'
@@ -7,6 +7,8 @@ import PasswordInput from '../../components/PasswordInput'
 export default function Signup() {
   const { notify } = useToast()
   const navigate = useNavigate()
+  const location = useLocation()
+  const from = location.state?.from || '/'
   const [step, setStep] = useState(1) // 1: Details, 2: OTP
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -42,7 +44,7 @@ export default function Signup() {
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
       notify('Account created successfully!', 'success')
-      navigate('/')
+      navigate(from)
     } catch (err) {
       notify(err?.response?.data?.error || 'Invalid OTP', 'error')
     } finally {
@@ -135,7 +137,7 @@ export default function Signup() {
 
             <p className="text-center text-xs text-gray-400 font-bold mt-6 uppercase tracking-widest">
               Already have an account?{' '}
-              <Link to="/login" className="text-blue-600 hover:text-blue-700">
+              <Link to="/login" state={{ from }} className="text-blue-600 hover:text-blue-700">
                 Login
               </Link>
             </p>

@@ -1359,6 +1359,7 @@ export default function Catalogue({ initialBrand, brandName }) {
    PRODUCT CARD
 ══════════════════════════════════════════ */
 function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRecItems }) {
+  const location = useLocation()
   // Calculate overall stock status based on variants
   const totalStock = Array.isArray(p.variants) && p.variants.length > 0
     ? p.variants.filter(v => v.isActive !== false).reduce((sum, v) => sum + (v.stock || 0), 0)
@@ -1494,7 +1495,7 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
             ) : (
               <>
                 {/* ── PREMIUM MASKED PRICE ── */}
-                <Link to="/login" className="ct-price-mask" onClick={e => e.stopPropagation()} title="Login to see price">
+                <Link to="/login" state={{ from: location.pathname + location.search }} className="ct-price-mask" onClick={e => e.stopPropagation()} title="Login to see price">
                   <span className="ct-rupee">₹</span>
                   <span className="ct-stars-blur">****</span>
                   {/* 👁️ eye icon */}
@@ -1514,7 +1515,7 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
             title={!authed ? 'Login to add' : totalStock <= 0 ? 'Out of stock' : p.variants?.length > 0 ? 'Select options' : 'Add to cart'}
             onClick={async e => {
               e.stopPropagation(); e.preventDefault()
-              if (!authed) { navigate('/login'); return }
+              if (!authed) { navigate('/login', { state: { from: location.pathname + location.search } }); return }
               
               // If product has variants, redirect to detail page for selection
               if (p.variants?.length > 0) {

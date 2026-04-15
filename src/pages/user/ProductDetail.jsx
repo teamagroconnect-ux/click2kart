@@ -6,6 +6,7 @@ import { useCart, getStockStatus } from '../../lib/CartContext'
 import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
 import { useToast } from '../../components/Toast'
 import RecommendationModal from '../../components/RecommendationModal'
+import { useAuth } from '../../lib/AuthContext'
 
 /** Stable sort for RAM/ROM/Storage etc.; otherwise locale + numeric aware. */
 function sortVariantValues(lowKey, values) {
@@ -49,6 +50,7 @@ export default function ProductDetail() {
   const location = useLocation()
   const { addToCart } = useCart()
   const { notify } = useToast()
+  const { user } = useAuth()
 
   // Normalize an attributes object to lowercase keys
   const normalizeAttrs = (attrs, sku = '', productAttributes = []) => {
@@ -577,7 +579,7 @@ export default function ProductDetail() {
   const showSpecificationsBlock = hasSpecifications && (hlSpecTab === 'specs' || !hasHighlights)
 
   const handleAddToCart = async () => {
-    if (!authed) { navigate('/login'); return }
+    if (!authed) { navigate('/login', { state: { from: location.pathname + location.search } }); return }
     if (variantAttrs.length > 0 && !matchedVariant) {
       notify('Please select all options', 'error')
       return
@@ -1808,6 +1810,30 @@ export default function ProductDetail() {
             {/* ══ RIGHT — INFO PANEL ══ */}
             <div className="pd-info pd-reveal pd-reveal-delay">
 
+              {/* WELCOME BANNER (Only for logged in users) */}
+              {authed && user && (
+                <div className="pd-welcome-banner" style={{ 
+                  background: 'linear-gradient(135deg, #1e1b2e 0%, #2d2a4a 100%)', 
+                  borderRadius: '16px', 
+                  padding: '12px 18px', 
+                  marginBottom: 16, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 12,
+                  boxShadow: '0 8px 20px -6px rgba(0,0,0,0.2)',
+                  border: '1px solid rgba(124,58,237,0.1)'
+                }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '12px', background: 'rgba(124,58,237,0.2)', display: 'flex', alignItems: 'center', justify-content: 'center', fontSize: 18 }}>👋</div>
+                  <div>
+                    <div style={{ fontSize: 9, fontWeight: 800, color: '#c4b5fd', textTransform: 'uppercase', letterSpacing: '.15em', marginBottom: 2 }}>Welcome back</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>Hi, {user.name?.split(' ')[0] || 'Partner'}!</div>
+                  </div>
+                  <div style={{ marginLeft: 'auto', background: 'rgba(5,150,105,0.2)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(5,150,105,0.3)' }}>
+                    <div style={{ fontSize: 8, fontWeight: 900, color: '#34d399', textTransform: 'uppercase', letterSpacing: '.1em' }}>B2B Active</div>
+                  </div>
+                </div>
+              )}
+
               {/* badges + stock — one compact strip */}
               <div className="pd-meta-compact">
                 <div className="pd-badges">
@@ -1903,7 +1929,7 @@ export default function ProductDetail() {
                   </>
                 ) : (
                   <>
-                    <Link to="/login" className="pd-price-mask" onClick={e => e.stopPropagation()}>
+                    <Link to="/login" state={{ from: location.pathname + location.search }} className="pd-price-mask" onClick={e => e.stopPropagation()}>
                       <span className="pd-mask-rupee">₹</span>
                       <span className="pd-mask-stars">*****</span>
                       <svg className="pd-mask-eye" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2007,9 +2033,10 @@ export default function ProductDetail() {
               </div>
 
               {/* CTA */}
-              <div className="pd-cta">
+              <div className="pd-cta" style={{ display: 'flex', gap: 12, marginTop: 16 }}>
                 <button
                   className="pd-btn-primary"
+                  style={{ flex: 1 }}
                   disabled={!authed || !isAvailable || (variantAttrs.length > 0 && !matchedVariant) || (sortedAsc.length > 0 && qty < minTierQty)}
                   onClick={handleAddToCart}
                 >
@@ -2019,6 +2046,15 @@ export default function ProductDetail() {
                     <circle cx="17" cy="19" r="1.4" fill="currentColor" />
                   </svg>
                   {!authed ? 'Login to Buy' : !isAvailable ? 'Out of Stock' : (variantAttrs.length > 0 && !matchedVariant) ? 'Choose Product Options' : (sortedAsc.length > 0 && qty < minTierQty) ? `Min Order ${minTierQty}` : 'Add to Cart'}
+                </button>
+                <button 
+                  className="pd-btn-wish"
+                  onClick={() => notify('Added to wishlist!', 'success')}
+                  style={{ width: 50, height: 50, borderRadius: '16px', border: '1px solid rgba(124,58,237,0.2)', background: 'white', color: '#7c3aed', display: 'flex', alignItems: 'center', justify-content: 'center', transition: 'all .2s' }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
                 </button>
               </div>
 
@@ -2186,34 +2222,39 @@ export default function ProductDetail() {
 
           {/* ══ BELOW — RECOMMENDED ══ */}
           {recItems.length > 0 && (
-            <div className="pd-below" style={{ padding: '40px 0 0' }}>
-              <div className="pd-below-header">
+            <div className="pd-below" style={{ padding: '60px 0 80px' }}>
+              <div className="pd-below-header" style={{ marginBottom: 32 }}>
                 <div>
-                  <div className="pd-below-title">Recommended For You</div>
+                  <div className="pd-below-eyebrow" style={{ fontSize: 9, fontWeight: 900, color: '#7c3aed', letterSpacing: '.25em', textTransform: 'uppercase', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 12, height: 1.5, background: '#7c3aed', borderRadius: 10 }} />
+                    Based on your interest
+                  </div>
+                  <div className="pd-below-title" style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 32, letterSpacing: '.02em', color: '#1e1b2e' }}>Recommended <span>For You</span></div>
                 </div>
-                <Link to="/products" className="pd-view-all">
+                <Link to="/products" className="pd-view-all" style={{ padding: '10px 20px', borderRadius: 12, background: 'rgba(124,58,237,.08)', border: '1px solid rgba(124,58,237,.15)', color: '#7c3aed', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '.1em', display: 'flex', alignItems: 'center', gap: 8, transition: 'all .2s' }}>
                   View All
                   <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
                   </svg>
                 </Link>
               </div>
-              <div className="pd-rec-scroll">
-                {recItems.map(item => (
-                  <div key={item._id} className="pd-rec-item" onClick={() => navigate(`/products/${item._id}`)}>
-                    <div className="pd-rec-img">
-                      {item.images?.[0]?.url
-                        ? <img src={getCloudinaryUrl(item.images[0].url, 200)} alt={item.name} loading="lazy" width="100" height="100" />
-                        : <span style={{ fontSize: 32, opacity: .2 }}>📦</span>}
-                    </div>
-                    <div className="pd-rec-body">
-                      <div className="pd-rec-cat">{item.category?.name || item.category || 'General'}</div>
-                      <div className="pd-rec-name">{item.name}</div>
-                      <div className="pd-rec-price">
-                        {authed && item.price != null ? `₹${Number(item.price).toLocaleString()}` : 'Login to view'}
-                      </div>
-                    </div>
-                  </div>
+
+              <div className="pd-rec-grid" style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
+                gap: 20 
+              }}>
+                {recItems.map((item, idx) => (
+                  <ProductCard 
+                    key={item._id || item.id} 
+                    p={item} 
+                    authed={authed} 
+                    addToCart={addToCart} 
+                    navigate={navigate} 
+                    index={idx} 
+                    setRecOpen={setRecOpen} 
+                    setRecItems={setRecItems} 
+                  />
                 ))}
               </div>
             </div>

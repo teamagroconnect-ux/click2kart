@@ -9,6 +9,7 @@ export default function ResetPassword() {
   const { notify } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
+  const from = location.state?.from || '/'
   const query = new URLSearchParams(location.search)
   const email = query.get('email') || ''
 
@@ -25,7 +26,7 @@ export default function ResetPassword() {
     try {
       await api.post('/api/auth/customer/reset-password', formData)
       notify('Password reset successfully!', 'success')
-      navigate('/login')
+      navigate('/login', { state: { from } })
     } catch (err) {
       notify(err?.response?.data?.error || 'Invalid OTP or details', 'error')
     } finally {
