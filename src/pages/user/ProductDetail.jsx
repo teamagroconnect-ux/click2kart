@@ -2059,15 +2059,6 @@ export default function ProductDetail() {
                   </svg>
                   {!authed ? 'Login to Buy' : !isAvailable ? 'Out of Stock' : (variantAttrs.length > 0 && !matchedVariant) ? 'Choose Product Options' : (sortedAsc.length > 0 && qty < minTierQty) ? `Min Order ${minTierQty}` : 'Add to Cart'}
                 </button>
-                <button
-                  className="pd-btn-wish"
-                  onClick={() => notify('Added to wishlist!', 'success')}
-                  style={{ width: 50, height: 50, borderRadius: '16px', border: '1px solid rgba(124,58,237,0.2)', background: 'white', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-                  </svg>
-                </button>
               </div>
 
               {/* TRUST STRIP */}
@@ -2232,15 +2223,60 @@ export default function ProductDetail() {
 
           {/* ══ BELOW — RECOMMENDED ══ */}
           {similarProducts.length > 0 && (
-            <div className="pd-below" style={{ padding: '60px 0 80px' }}>
-              <div className="pd-below-header" style={{ 
-                marginBottom: 40, 
-                display: 'flex', 
-                alignItems: 'flex-end', 
-                justifyContent: 'space-between',
-                borderBottom: '2px solid rgba(124,58,237,0.05)',
-                paddingBottom: 24
-              }}>
+            <div className="pd-below">
+              <style>{`
+                .pd-below { padding: 40px 0 60px; }
+                .pd-below-header { 
+                  margin-bottom: 24px; 
+                  display: flex; 
+                  flex-direction: column;
+                  align-items: flex-start; 
+                  gap: 16px;
+                  border-bottom: 2px solid rgba(124,58,237,0.05);
+                  padding-bottom: 20px;
+                }
+                .pd-below-title { 
+                  font-family: 'Bebas Neue', sans-serif; 
+                  font-size: 32px; 
+                  line-height: 1;
+                  letter-spacing: .01em; 
+                  color: #1e1b2e; 
+                }
+                .pd-rec-grid {
+                  display: grid;
+                  grid-template-columns: repeat(2, 1fr);
+                  gap: 10px;
+                }
+                
+                @media (min-width: 640px) {
+                  .pd-below { padding: 60px 0 80px; }
+                  .pd-below-header { 
+                    flex-direction: row;
+                    align-items: flex-end; 
+                    justify-content: space-between;
+                    margin-bottom: 40px;
+                    padding-bottom: 24px;
+                  }
+                  .pd-below-title { font-size: 42px; }
+                  .pd-rec-grid {
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 16px;
+                  }
+                }
+                @media (min-width: 1024px) {
+                  .pd-rec-grid {
+                    grid-template-columns: repeat(4, 1fr);
+                    gap: 20px;
+                  }
+                }
+                @media (min-width: 1280px) {
+                  .pd-rec-grid {
+                    grid-template-columns: repeat(5, 1fr);
+                  }
+                }
+              `}</style>
+              
+              <div className="pd-below-header">
                 <div>
                   <div className="pd-below-eyebrow" style={{ 
                     fontSize: 10, 
@@ -2256,49 +2292,34 @@ export default function ProductDetail() {
                     <span style={{ width: 24, height: 2, background: '#7c3aed', borderRadius: 10 }} />
                     Based on your interest
                   </div>
-                  <div className="pd-below-title" style={{ 
-                    fontFamily: "'Bebas Neue', sans-serif", 
-                    fontSize: 42, 
-                    lineHeight: 1,
-                    letterSpacing: '.01em', 
-                    color: '#1e1b2e' 
-                  }}>
+                  <div className="pd-below-title">
                     Recommended <span style={{ color: '#7c3aed' }}>For You</span>
                   </div>
                 </div>
                 <Link to="/products" className="pd-view-all" style={{ 
-                  padding: '14px 28px', 
-                  borderRadius: 16, 
+                  padding: '12px 24px', 
+                  borderRadius: '14px', 
                   background: 'white', 
                   border: '1.5px solid rgba(124,58,237,.25)', 
                   color: '#7c3aed', 
-                  fontSize: 12, 
+                  fontSize: 11, 
                   fontWeight: 800, 
                   textTransform: 'uppercase', 
-                  letterSpacing: '.15em', 
+                  letterSpacing: '.12em', 
                   display: 'flex', 
                   alignItems: 'center', 
-                  gap: 12, 
+                  gap: 10, 
                   transition: 'all .3s cubic-bezier(.34,1.56,.64,1)',
                   boxShadow: '0 4px 20px rgba(124,58,237,0.1)'
                 }}>
                   View All Products
-                  <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                   </svg>
                 </Link>
               </div>
 
-              <div className="pd-rec-grid" style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: 12
-              }}>
-                <style>{`
-                  @media (min-width: 640px) { .pd-rec-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 16px !important; } }
-                  @media (min-width: 1024px) { .pd-rec-grid { grid-template-columns: repeat(4, 1fr) !important; gap: 20px !important; } }
-                  @media (min-width: 1280px) { .pd-rec-grid { grid-template-columns: repeat(5, 1fr) !important; } }
-                `}</style>
+              <div className="pd-rec-grid">
                 {similarProducts.map((item, idx) => (
                   <ProductCard
                     key={item._id || item.id}

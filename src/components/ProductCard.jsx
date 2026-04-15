@@ -48,18 +48,6 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
   const discount = displayMrp > minPrice
     ? Math.round(((displayMrp - minPrice) / displayMrp) * 100) : 0
 
-  const [wished, setWished] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('wishlist') || '[]').includes(p._id) } catch { return false }
-  })
-
-  const toggleWish = (e) => {
-    e.stopPropagation(); e.preventDefault()
-    try {
-      const arr = JSON.parse(localStorage.getItem('wishlist') || '[]')
-      const next = arr.includes(p._id) ? arr.filter(id => id !== p._id) : [...arr, p._id]
-      localStorage.setItem('wishlist', JSON.stringify(next)); setWished(!arr.includes(p._id))
-    } catch { }
-  }
   const share = (e) => {
     e.stopPropagation(); e.preventDefault()
     const url = `${window.location.origin}/products/${p._id}`
@@ -73,7 +61,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
       style={{ 
         animationDelay: `${index * 38}ms`,
         background: 'white',
-        borderRadius: '20px',
+        borderRadius: '16px',
         border: '1px solid rgba(124, 58, 237, 0.08)',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
         overflow: 'hidden',
@@ -86,6 +74,24 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
       onClick={() => navigate(`/products/${p._id}`)}
       onMouseEnter={prefetchProduct}
     >
+      <style>{`
+        @media (max-width: 640px) {
+          .ct-card { border-radius: 12px !important; }
+          .ct-card-img-wrap { padding: 12px !important; }
+          .ct-verified-badge { padding: 2px 6px !important; border-radius: 4px !important; bottom: 6px !important; left: 6px !important; }
+          .ct-verified-id { display: none !important; }
+          .ct-card-body { padding: 10px !important; }
+          .ct-card-name { font-size: 12px !important; margin-bottom: 8px !important; min-height: 2.8em !important; }
+          .ct-card-price { font-size: 16px !important; }
+          .ct-card-mrp { font-size: 9px !important; }
+          .ct-card-off { font-size: 8px !important; padding: 1px 4px !important; }
+          .ct-card-atc { width: 32px !important; height: 32px !important; border-radius: 8px !important; }
+          .ct-card-atc svg { width: 14px !important; height: 14px !important; }
+          .ct-card-tags { display: none !important; }
+          .ct-card-bulk { padding: 2px 6px !important; font-size: 7px !important; }
+        }
+      `}</style>
+
       {/* Image Section */}
       <div style={{ 
         position: 'relative', 
@@ -101,7 +107,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
         }}>
           <div style={{ display: 'flex', gap: 6 }}>
             {authed && hasBulk && (
-              <div style={{ 
+              <div className="ct-card-bulk" style={{ 
                 background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
                 color: 'white', padding: '4px 10px', borderRadius: '6px',
                 fontSize: '9px', fontWeight: 900, textTransform: 'uppercase',
@@ -111,7 +117,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
               </div>
             )}
             {authed && !hasBulk && discount >= 10 && (
-              <div style={{ 
+              <div className="ct-card-bulk" style={{ 
                 background: '#059669', color: 'white', 
                 padding: '4px 10px', borderRadius: '6px',
                 fontSize: '9px', fontWeight: 900, textTransform: 'uppercase'
@@ -120,24 +126,10 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
               </div>
             )}
           </div>
-
-          <button 
-            onClick={toggleWish}
-            style={{ 
-              width: 30, height: 30, borderRadius: '50%', 
-              background: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)', border: 'none',
-              color: wished ? '#ef4444' : '#d1d5db', transition: 'all 0.2s'
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill={wished ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2}>
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </svg>
-          </button>
         </div>
 
         {/* Product Image */}
-        <div style={{ width: '100%', height: '100%', padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="ct-card-img-wrap" style={{ width: '100%', height: '100%', padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           {p.images?.length ? (
             <img 
               src={getCloudinaryUrl(p.images[0].url, 400)} 
@@ -152,7 +144,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
         </div>
 
         {/* Verified Badge - Floating inside image at bottom */}
-        <div style={{ 
+        <div className="ct-verified-badge" style={{ 
           position: 'absolute', bottom: 10, left: 10, 
           background: 'rgba(255, 255, 255, 0.95)', 
           backdropFilter: 'blur(4px)',
@@ -165,7 +157,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
           zIndex: 5,
           boxShadow: '0 2px 10px rgba(0,0,0,0.04)'
         }}>
-          <span style={{ fontSize: '8px', fontWeight: 800, color: '#9ca3af' }}>
+          <span className="ct-verified-id" style={{ fontSize: '8px', fontWeight: 800, color: '#9ca3af' }}>
             {p._id?.toString().slice(-8).toUpperCase()}
           </span>
           <svg width="10" height="10" viewBox="0 0 24 24" fill="#7c3aed">
@@ -176,8 +168,8 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
       </div>
 
       {/* Content Section */}
-      <div style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ marginBottom: 6 }}>
+      <div className="ct-card-body" style={{ padding: '16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ marginBottom: 6 }} className="ct-card-tags">
           {p.category?.name && (
             <span style={{ 
               fontSize: '8px', fontWeight: 900, color: '#7c3aed', 
@@ -199,7 +191,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
             WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
             minHeight: '2.8em', textDecoration: 'none', transition: 'color 0.2s'
           }}
-          className="hover:text-purple-600"
+          className="ct-card-name hover:text-purple-600"
         >
           {p.name}
         </Link>
@@ -210,11 +202,11 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
             {authed ? (
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 1 }}>
-                  <span style={{ fontSize: '20px', fontWeight: 800, color: '#111827' }}>
+                  <span className="ct-card-price" style={{ fontSize: '20px', fontWeight: 800, color: '#111827' }}>
                     ₹{Number(minPrice).toLocaleString()}
                   </span>
                   {displayMrp > minPrice && (
-                    <span style={{ 
+                    <span className="ct-card-off" style={{ 
                       fontSize: '10px', fontWeight: 800, color: '#059669', 
                       background: 'rgba(5, 150, 105, 0.08)', 
                       padding: '1px 5px', borderRadius: '4px' 
@@ -224,7 +216,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
                   )}
                 </div>
                 {displayMrp > minPrice && (
-                  <div style={{ fontSize: '11px', color: '#9ca3af', textDecoration: 'line-through' }}>
+                  <div className="ct-card-mrp" style={{ fontSize: '11px', color: '#9ca3af', textDecoration: 'line-through' }}>
                     MRP ₹{Number(displayMrp).toLocaleString()}
                   </div>
                 )}
@@ -249,6 +241,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
           </div>
 
           <button
+            className="ct-card-atc"
             disabled={!authed || totalStock <= 0}
             style={{ 
               width: 40, height: 40, borderRadius: '12px', 
@@ -281,7 +274,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
         </div>
 
         {/* Clean Bottom Tags Row */}
-        <div style={{ 
+        <div className="ct-card-tags" style={{ 
           marginTop: 14, paddingTop: 10, 
           borderTop: '1px solid #f3f4f6',
           display: 'flex', gap: 8

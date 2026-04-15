@@ -25,7 +25,7 @@ export default function Catalogue({ initialBrand, brandName }) {
   const [category, setCategory] = useState('')
   const [subCategory, setSubCategory] = useState('')
   const [browsePath, setBrowsePath] = useState(initialBrand ? 'brand' : null)
-  const [viewMode, setViewMode] = useState(initialBrand ? 'CATEGORIES' : 'PRODUCTS')
+  const [viewMode, setViewMode] = useState(initialBrand ? 'CATEGORIES' : 'START')
   const [sort, setSort] = useState('NEW')
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
@@ -113,21 +113,18 @@ export default function Catalogue({ initialBrand, brandName }) {
   const loading = loadingProducts || loadingGrouped
 
   useEffect(() => {
-    if (q) setViewMode('PRODUCTS')
-    else if (!browsePath) setViewMode('PRODUCTS')
-    else if (!brand && !category) {
+    if (q) {
       setViewMode('PRODUCTS')
-      // No need to setBrowsePath here to avoid loop, it's already null or will be set by clicks
-    }
-    else if (browsePath === 'brand') {
+    } else if (!browsePath) {
+      // If no browse path and no filters, show START mode
+      if (!brand && !category && !subCategory) setViewMode('START')
+      else setViewMode('PRODUCTS')
+    } else if (browsePath === 'brand') {
       if (!brand) setViewMode('BRANDS')
-      else if (!category) setViewMode('GROUPED') // Show products grouped by category for this brand
-      else if (!subCategory) setViewMode('SUBCATEGORIES')
-      else setViewMode('PRODUCTS')
+      else setViewMode('PRODUCTS') // Directly show products for this brand
     } else if (browsePath === 'category') {
-      if (!category) setViewMode('PRODUCTS') // Show all products in category mode if no category selected
-      else if (!subCategory) setViewMode('SUBCATEGORIES')
-      else setViewMode('PRODUCTS')
+      if (!category) setViewMode('CATEGORIES')
+      else setViewMode('PRODUCTS') // Directly show products for this category
     }
   }, [q, browsePath, brand, category, subCategory])
 
