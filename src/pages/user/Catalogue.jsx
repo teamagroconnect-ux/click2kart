@@ -216,8 +216,6 @@ export default function Catalogue({ initialBrand, brandName }) {
     return list
   }, [items, minPrice, maxPrice, sort, authed])
 
-  const totalPages = Math.max(1, Math.ceil(total / limit))
-
   /* ── SORT OPTIONS ── */
   const sortOpts = [
     { v: 'NEW', l: 'Newest First', ico: '✨' },
@@ -542,11 +540,6 @@ export default function Catalogue({ initialBrand, brandName }) {
         background: white; color: #6b7280; cursor: pointer; transition: all .2s;
       }
       .ct-mob-sort-chip.on { background: #7c3aed; border-color: #7c3aed; color: white; box-shadow: 0 3px 10px rgba(124,58,237,.25); }
-      .ct-total-pill {
-        flex-shrink: 0; padding: 8px 11px; border-radius: 10px;
-        background: rgba(124,58,237,.08); border: 1px solid rgba(124,58,237,.14);
-        font-size: 10px; font-weight: 700; color: #7c3aed; white-space: nowrap;
-      }
 
       /* desktop result bar */
       .ct-res-bar { display: none; align-items: center; justify-content: space-between; margin-bottom: 20px; }
@@ -1039,10 +1032,6 @@ export default function Catalogue({ initialBrand, brandName }) {
               {/* Stats */}
               <div className="ct-sb-stats">
                 <div className="ct-sb-stat">
-                  <span className="ct-sb-stat-k">Total Products</span>
-                  <span className="ct-sb-stat-v">{total}</span>
-                </div>
-                <div className="ct-sb-stat">
                   <span className="ct-sb-stat-k" style={{ fontSize: 11 }}>Page</span>
                   <span className="ct-sb-stat-vs">{page} / {totalPages}</span>
                 </div>
@@ -1065,7 +1054,6 @@ export default function Catalogue({ initialBrand, brandName }) {
                   <button key={o.v} className={`ct-mob-sort-chip${sort === o.v ? ' on' : ''}`} onClick={() => setSort(o.v)}>{o.ico} {o.l.split(':')[0]}</button>
                 ))}
               </div>
-              <div className="ct-total-pill">{total}</div>
             </div>
 
             {/* desktop result bar */}
@@ -1342,7 +1330,6 @@ export default function Catalogue({ initialBrand, brandName }) {
                   {isFetchingNextPage ? 'Loading...' : 'Load More'}
                   {!isFetchingNextPage && <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>}
                 </button>
-                <span className="ct-lm-sub">Showing {items.length} of {total}</span>
               </div>
             )}
             {!loading && !hasNextPage && total > 0 && (
