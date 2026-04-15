@@ -94,7 +94,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
 
         {/* Verified Badge - Floating above name area */}
         <div className="ct-verified" style={{ 
-          position: 'absolute', bottom: 8, left: 8, z-index: 5,
+          position: 'absolute', bottom: 8, left: 8, zIndex: 5,
           background: 'rgba(255,255,255,0.95)', border: '1px solid rgba(124,58,237,0.15)',
           boxShadow: '0 2px 10px rgba(0,0,0,0.05)', backdropFilter: 'blur(4px)',
           padding: '4px 10px'
