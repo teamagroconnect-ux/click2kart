@@ -6,6 +6,7 @@ import { useCart, getStockStatus } from '../../lib/CartContext'
 import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
 import { useToast } from '../../components/Toast'
 import RecommendationModal from '../../components/RecommendationModal'
+import ProductCard from '../../components/ProductCard'
 import { useAuth } from '../../lib/AuthContext'
 
 /** Stable sort for RAM/ROM/Storage etc.; otherwise locale + numeric aware. */
@@ -67,12 +68,12 @@ export default function ProductDetail() {
     const targetSku = sku || (attrs && typeof attrs === 'object' ? attrs.sku : null);
     if (Object.keys(result).length === 0 && targetSku) {
       const parts = String(targetSku).split('-').map(s => s.trim()).filter(Boolean);
-      
+
       // Get predefined attribute keys (lowercase)
       const attrKeys = (Array.isArray(productAttributes) ? productAttributes : [])
         .map(a => a.split(':')[0]?.toLowerCase().trim())
         .filter(Boolean);
-      
+
       if (parts.length >= 2) {
         // If we have parts from SKU and predefined attributes, try to map them
         if (attrKeys.length > 0) {
@@ -443,15 +444,15 @@ export default function ProductDetail() {
         @keyframes pdSkelShim { 100% { transform:translateX(100%); } }
       `}</style>
       <div className="pd-skel-container">
-        <div className="pd-skel-img-box"><div className="pd-skel-shim"/></div>
+        <div className="pd-skel-img-box"><div className="pd-skel-shim" /></div>
         <div className="pd-skel-info">
-          <div className="pd-skel-line" style={{width:'30%'}}><div className="pd-skel-shim"/></div>
-          <div className="pd-skel-line" style={{width:'80%',height:40}}><div className="pd-skel-shim"/></div>
-          <div className="pd-skel-line" style={{width:'40%',height:30}}><div className="pd-skel-shim"/></div>
-          <div className="pd-skel-line" style={{width:'100%',height:100}}><div className="pd-skel-shim"/></div>
-          <div style={{display:'flex',gap:10}}>
-            <div className="pd-skel-line" style={{width:'120px',height:50}}><div className="pd-skel-shim"/></div>
-            <div className="pd-skel-line" style={{width:'120px',height:50}}><div className="pd-skel-shim"/></div>
+          <div className="pd-skel-line" style={{ width: '30%' }}><div className="pd-skel-shim" /></div>
+          <div className="pd-skel-line" style={{ width: '80%', height: 40 }}><div className="pd-skel-shim" /></div>
+          <div className="pd-skel-line" style={{ width: '40%', height: 30 }}><div className="pd-skel-shim" /></div>
+          <div className="pd-skel-line" style={{ width: '100%', height: 100 }}><div className="pd-skel-shim" /></div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <div className="pd-skel-line" style={{ width: '120px', height: 50 }}><div className="pd-skel-shim" /></div>
+            <div className="pd-skel-line" style={{ width: '120px', height: 50 }}><div className="pd-skel-shim" /></div>
           </div>
         </div>
       </div>
@@ -1662,9 +1663,9 @@ export default function ProductDetail() {
                   ? (
                     <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-3xl bg-gray-50">
                       {imgLoading && (
-                        <img 
-                          src={getCloudinaryUrl(currentImg, 50, true)} 
-                          className="absolute inset-0 w-full h-full object-contain blur-2xl scale-110" 
+                        <img
+                          src={getCloudinaryUrl(currentImg, 50, true)}
+                          className="absolute inset-0 w-full h-full object-contain blur-2xl scale-110"
                           alt=""
                         />
                       )}
@@ -1812,13 +1813,13 @@ export default function ProductDetail() {
 
               {/* WELCOME BANNER (Only for logged in users) */}
               {authed && user && (
-                <div className="pd-welcome-banner" style={{ 
-                  background: 'linear-gradient(135deg, #1e1b2e 0%, #2d2a4a 100%)', 
-                  borderRadius: '16px', 
-                  padding: '12px 18px', 
-                  marginBottom: 16, 
-                  display: 'flex', 
-                  alignItems: 'center', 
+                <div className="pd-welcome-banner" style={{
+                  background: 'linear-gradient(135deg, #1e1b2e 0%, #2d2a4a 100%)',
+                  borderRadius: '16px',
+                  padding: '12px 18px',
+                  marginBottom: 16,
+                  display: 'flex',
+                  alignItems: 'center',
                   gap: 12,
                   boxShadow: '0 8px 20px -6px rgba(0,0,0,0.2)',
                   border: '1px solid rgba(124,58,237,0.1)'
@@ -2047,13 +2048,13 @@ export default function ProductDetail() {
                   </svg>
                   {!authed ? 'Login to Buy' : !isAvailable ? 'Out of Stock' : (variantAttrs.length > 0 && !matchedVariant) ? 'Choose Product Options' : (sortedAsc.length > 0 && qty < minTierQty) ? `Min Order ${minTierQty}` : 'Add to Cart'}
                 </button>
-                <button 
+                <button
                   className="pd-btn-wish"
                   onClick={() => notify('Added to wishlist!', 'success')}
                   style={{ width: 50, height: 50, borderRadius: '16px', border: '1px solid rgba(124,58,237,0.2)', background: 'white', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                   </svg>
                 </button>
               </div>
@@ -2239,21 +2240,21 @@ export default function ProductDetail() {
                 </Link>
               </div>
 
-              <div className="pd-rec-grid" style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', 
-                gap: 20 
+              <div className="pd-rec-grid" style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gap: 20
               }}>
                 {recItems.map((item, idx) => (
-                  <ProductCard 
-                    key={item._id || item.id} 
-                    p={item} 
-                    authed={authed} 
-                    addToCart={addToCart} 
-                    navigate={navigate} 
-                    index={idx} 
-                    setRecOpen={setRecOpen} 
-                    setRecItems={setRecItems} 
+                  <ProductCard
+                    key={item._id || item.id}
+                    p={item}
+                    authed={authed}
+                    addToCart={addToCart}
+                    navigate={navigate}
+                    index={idx}
+                    setRecOpen={setRecOpen}
+                    setRecItems={setRecItems}
                   />
                 ))}
               </div>
