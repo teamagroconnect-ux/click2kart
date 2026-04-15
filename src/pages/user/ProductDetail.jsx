@@ -1823,7 +1823,7 @@ export default function ProductDetail() {
                   boxShadow: '0 8px 20px -6px rgba(0,0,0,0.2)',
                   border: '1px solid rgba(124,58,237,0.1)'
                 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: '12px', background: 'rgba(124,58,237,0.2)', display: 'flex', alignItems: 'center', justify-content: 'center', fontSize: 18 }}>👋</div>
+                  <div style={{ width: 36, height: 36, borderRadius: '12px', background: 'rgba(124,58,237,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>👋</div>
                   <div>
                     <div style={{ fontSize: 9, fontWeight: 800, color: '#c4b5fd', textTransform: 'uppercase', letterSpacing: '.15em', marginBottom: 2 }}>Welcome back</div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: 'white' }}>Hi, {user.name?.split(' ')[0] || 'Partner'}!</div>
