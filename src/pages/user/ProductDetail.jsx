@@ -54,6 +54,18 @@ export default function ProductDetail() {
   const { notify } = useToast()
   const { user } = useAuth()
 
+  const { data: p, isLoading: loading, error: queryError } = useQuery({
+    queryKey: ['product', id],
+    queryFn: () => api.get(`/api/products/${id}`).then(res => res.data),
+    staleTime: 1000 * 60 * 5,
+  })
+
+  const { data: recItems = [] } = useQuery({
+    queryKey: ['recommendations', id],
+    queryFn: () => api.get(`/api/recommendations/similar/${id}?limit=8`).then(res => res.data || []),
+    enabled: !!id,
+  })
+
   // Normalize an attributes object to lowercase keys
   const normalizeAttrs = (attrs, sku = '', productAttributes = []) => {
     const result = {}
@@ -223,18 +235,6 @@ export default function ProductDetail() {
     if (skipMainImgClickRef.current) return
     setLightbox(true)
   }, [])
-
-  const { data: p, isLoading: loading, error: queryError } = useQuery({
-    queryKey: ['product', id],
-    queryFn: () => api.get(`/api/products/${id}`).then(res => res.data),
-    staleTime: 1000 * 60 * 5,
-  })
-
-  const { data: recItems = [] } = useQuery({
-    queryKey: ['recommendations', id],
-    queryFn: () => api.get(`/api/recommendations/similar/${id}?limit=8`).then(res => res.data || []),
-    enabled: !!id,
-  })
 
   /* KYC / pincode */
   useEffect(() => {

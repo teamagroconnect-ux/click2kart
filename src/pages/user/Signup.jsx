@@ -3,12 +3,24 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import PasswordInput from '../../components/PasswordInput'
+import { useAuth } from '../../lib/AuthContext'
 
 export default function Signup() {
   const { notify } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = location.state?.from || '/'
+  const { setAuth, refreshProfile } = useAuth()
+
+  // Use state if available, otherwise fallback to session storage, then home
+  const [from] = useState(() => {
+    const stateFrom = location.state?.from
+    if (stateFrom && typeof stateFrom === 'string' && !stateFrom.includes('/login') && !stateFrom.includes('/signup')) {
+      sessionStorage.setItem('login_redirect', stateFrom)
+      return stateFrom
+    }
+    return sessionStorage.getItem('login_redirect') || '/'
+  })
+
   const [step, setStep] = useState(1) // 1: Details, 2: OTP
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -41,8 +53,9 @@ export default function Signup() {
         email: formData.email,
         otp
       })
-      localStorage.setItem('token', data.token)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      setAuth(data.token, { ...data.user, role: 'customer' })
+      try { await refreshProfile() } catch {}
+      sessionStorage.removeItem('login_redirect')
       notify('Account created successfully!', 'success')
       navigate(from)
     } catch (err) {

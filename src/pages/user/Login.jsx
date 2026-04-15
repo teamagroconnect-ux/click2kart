@@ -10,8 +10,18 @@ export default function Login() {
   const { notify } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = location.state?.from || '/'
   const { setAuth, refreshProfile } = useAuth()
+
+  // Use state if available, otherwise fallback to session storage, then home
+  const [from] = useState(() => {
+    const stateFrom = location.state?.from
+    if (stateFrom && typeof stateFrom === 'string' && !stateFrom.includes('/login') && !stateFrom.includes('/signup')) {
+      sessionStorage.setItem('login_redirect', stateFrom)
+      return stateFrom
+    }
+    return sessionStorage.getItem('login_redirect') || '/'
+  })
+
   const [loading, setLoading] = useState(false)
   const [mode, setMode] = useState('password') // 'password' | 'otp'
   const [formData, setFormData] = useState({
@@ -29,6 +39,7 @@ export default function Login() {
         const { data } = await api.post('/api/auth/customer/login', formData)
         setAuth(data.token, { ...data.user, role: 'customer' })
         try { await refreshProfile() } catch {}
+        sessionStorage.removeItem('login_redirect')
         notify('Welcome back!', 'success')
         navigate(from)
       } catch (err) {
@@ -58,6 +69,7 @@ export default function Login() {
           const { data } = await api.post('/api/auth/customer/login-otp/verify', { email: formData.email, otp })
           setAuth(data.token, { ...data.user, role: 'customer' })
           try { await refreshProfile() } catch {}
+          sessionStorage.removeItem('login_redirect')
           notify('Logged in successfully', 'success')
           navigate(from)
         } catch (err) {
