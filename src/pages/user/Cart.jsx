@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart, getStockStatus } from '../../lib/CartContext'
 import api from '../../lib/api'
+import { getCloudinaryUrl } from '../../lib/cloudinary'
 
 export default function Cart() {
   const { cart, removeFromCart, updateQuantity, cartTotal, addToCart } = useCart()
@@ -397,7 +398,7 @@ export default function Cart() {
                     {/* image */}
                     <div className="ct-img" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${item.productId || item._id}`)}>
                       {imgSrc
-                        ? <img src={imgSrc} alt={item.name}/>
+                        ? <img src={getCloudinaryUrl(imgSrc, 200)} alt={item.name} loading="lazy" width="80" height="80" />
                         : <span className="ct-img-ph">📦</span>
                       }
                     </div>
@@ -524,7 +525,7 @@ export default function Cart() {
                       <div key={p._id||p.id} className="ct-sugg-card" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${p._id || p.id}`)}>
                         <div className="ct-sugg-img">
                           {p.images?.[0]?.url
-                            ? <img src={p.images[0].url} alt={p.name}/>
+                            ? <img src={getCloudinaryUrl(p.images[0].url, 200)} alt={p.name} loading="lazy" width="60" height="60" />
                             : <span style={{fontSize:18}}>📦</span>
                           }
                         </div>

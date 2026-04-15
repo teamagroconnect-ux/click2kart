@@ -1,6 +1,7 @@
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import api from '../../lib/api'
+import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { useCart } from '../../lib/CartContext'
 import { useToast } from '../../components/Toast'
 import logo from '../../click2kart.png'
@@ -1524,7 +1525,7 @@ export default function Enquiry() {
                     <div key={idx} className="eq-item" style={{ cursor: 'pointer' }} onClick={() => nav(`/products/${item.productId || item._id || item.id}`)}>
                       <div className="eq-item-img">
                         {item.image ? (
-                          <img src={item.image} alt={item.name} />
+                          <img src={getCloudinaryUrl(item.image, 100)} alt={item.name} loading="lazy" width="60" height="60" />
                         ) : (
                           <span style={{ fontSize: 24, opacity: 0.3 }}>📦</span>
                         )}

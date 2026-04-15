@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import api from '../../lib/api'
+import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { useCart, getStockStatus } from '../../lib/CartContext'
 import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
 import { useToast } from '../../components/Toast'
@@ -50,7 +51,7 @@ export default function ProductDetail() {
   const { notify } = useToast()
 
   // Normalize an attributes object to lowercase keys
-  const normalizeAttrs = (attrs, sku = '') => {
+  const normalizeAttrs = (attrs, sku = '', productAttributes = []) => {
     const result = {}
     if (attrs && typeof attrs === 'object') {
       const obj = attrs instanceof Map ? Object.fromEntries(attrs) : attrs
@@ -60,16 +61,33 @@ export default function ProductDetail() {
     }
 
     // SKU parsing when variant.attributes is empty:
-    // - PREFIX-COLOR-WATT (3+ segments) → color + watt (legacy)
-    // - PREFIX-COLOR (2 segments), e.g. EUSC-BLACK / EUSC-WHITE → single "color" dimension
+    // - Try to match with defined attributes from p.attributes
     const targetSku = sku || (attrs && typeof attrs === 'object' ? attrs.sku : null);
     if (Object.keys(result).length === 0 && targetSku) {
       const parts = String(targetSku).split('-').map(s => s.trim()).filter(Boolean);
-      if (parts.length >= 3) {
-        result.color = parts[1].toLowerCase();
-        result.watt = parts[2].toLowerCase();
-      } else if (parts.length === 2) {
-        result.color = parts[1].toLowerCase();
+      
+      // Get predefined attribute keys (lowercase)
+      const attrKeys = (Array.isArray(productAttributes) ? productAttributes : [])
+        .map(a => a.split(':')[0]?.toLowerCase().trim())
+        .filter(Boolean);
+      
+      if (parts.length >= 2) {
+        // If we have parts from SKU and predefined attributes, try to map them
+        if (attrKeys.length > 0) {
+          attrKeys.forEach((key, idx) => {
+            if (parts[idx + 1]) result[key] = parts[idx + 1].toLowerCase();
+          });
+        } else {
+          // Fallback to legacy color/watt if no attributes defined
+          if (parts.length >= 3) {
+            result.color = parts[1].toLowerCase();
+            result.watt = parts[2].toLowerCase();
+          } else {
+            // Fix: Default to 'model' for single variants as requested by user
+            // This prevents 'model' variants from showing as 'color'
+            result.model = parts[1].toLowerCase();
+          }
+        }
       }
     }
     return result
@@ -78,6 +96,7 @@ export default function ProductDetail() {
   const [p, setP] = useState(null)
   const [error, setError] = useState(null)
   const [selected, setSelected] = useState({})
+  const [imgLoading, setImgLoading] = useState(true)
   const [activeVariant, setActiveVariant] = useState(null)
   const [activeImg, setActiveImg] = useState(0)
   const [lightbox, setLightbox] = useState(false)
@@ -116,7 +135,7 @@ export default function ProductDetail() {
     const extras = []
     if (Array.isArray(p.variants)) {
       p.variants.forEach(v => {
-        const vAttrs = normalizeAttrs(v.attributes, v.sku)
+        const vAttrs = normalizeAttrs(v.attributes, v.sku, p.attributes)
         Object.keys(vAttrs || {}).forEach(k => {
           if (!k || typeof k !== 'string') return
           const lk = k.toLowerCase().trim()
@@ -144,7 +163,7 @@ export default function ProductDetail() {
 
     return p.variants.find(v => {
       if (v.isActive === false) return false
-      const vAttrs = normalizeAttrs(v.attributes, v.sku)
+      const vAttrs = normalizeAttrs(v.attributes, v.sku, p.attributes)
 
       return variantAttrs.every(attr => {
         const lowAttr = attr.toLowerCase().trim()
@@ -161,6 +180,10 @@ export default function ProductDetail() {
       })
     })
   }, [p, selected, variantAttrs])
+
+  useEffect(() => {
+    setImgLoading(true)
+  }, [activeImg, activeVariant, matchedVariant])
 
   const imgs = useMemo(() => {
     if (matchedVariant?.images?.length > 0) return matchedVariant.images
@@ -326,7 +349,7 @@ export default function ProductDetail() {
     // Find variant that exactly matches current selection
     const v = p.variants.find(v => {
       if (v.isActive === false) return false
-      const vAttrs = normalizeAttrs(v.attributes, v.sku)
+      const vAttrs = normalizeAttrs(v.attributes, v.sku, p.attributes)
       return variantAttrs.every(k => {
         const lk = k.toLowerCase().trim()
         const val = selected[lk];
@@ -344,7 +367,7 @@ export default function ProductDetail() {
         const subAttrs = variantAttrs.slice(0, i)
         const partialMatch = p.variants.find(vx => {
           if (vx.isActive === false) return false
-          const vxAttrs = normalizeAttrs(vx.attributes, vx.sku)
+          const vxAttrs = normalizeAttrs(vx.attributes, vx.sku, p.attributes)
           return subAttrs.every(k => {
             const lk = k.toLowerCase().trim()
             return String(vxAttrs[lk] || '').toLowerCase() === String(selected[lk] || '').toLowerCase()
@@ -357,7 +380,7 @@ export default function ProductDetail() {
       }
 
       if (currentMatch) {
-        setSelected(normalizeAttrs(currentMatch.attributes, currentMatch.sku))
+        setSelected(normalizeAttrs(currentMatch.attributes, currentMatch.sku, p.attributes))
         return
       }
     }
@@ -405,30 +428,31 @@ export default function ProductDetail() {
   )
 
   if (!p) return (
-    <>
+    <div className="pd-skel-root">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;600;700&display=swap');
-        .pdload{font-family:'DM Sans',sans-serif;background:#f5f3ff;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;position:relative;overflow:hidden;}
-        .pdload::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(139,92,246,.03)1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.03)1px,transparent 1px);background-size:60px 60px;}
-        .pdload-wrap{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;}
-        .pdload-outer{width:80px;height:80px;border-radius:50%;border:4px solid rgba(124,58,237,.08);display:flex;align-items:center;justify-content:center;position:relative;}
-        .pdload-inner{width:60px;height:60px;border-radius:50%;border:4px solid transparent;border-top-color:#7c3aed;border-right-color:#7c3aed;animation:pdSpin 1s cubic-bezier(.4,0,.2,1) infinite;}
-        .pdload-center{position:absolute;width:30px;height:30px;background:rgba(124,58,237,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;animation:pdPulse 1.5s ease-in-out infinite;}
-        .pdload-txt{font-size:10px;font-weight:800;letter-spacing:.25em;text-transform:uppercase;color:#7c3aed;margin-top:20px;opacity:.6;animation:pdFade 1.5s ease-in-out infinite;}
-        @keyframes pdSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-        @keyframes pdPulse{0%,100%{transform:scale(1);opacity:.5}50%{transform:scale(1.2);opacity:1}}
-        @keyframes pdFade{0%,100%{opacity:.4}50%{opacity:1}}
+        .pd-skel-root { font-family:'DM Sans',sans-serif; background:#f5f3ff; min-height:100vh; padding:20px; }
+        .pd-skel-container { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:40px; }
+        @media (min-width:1024px) { .pd-skel-container { grid-template-columns:1fr 1fr; padding-top:40px; } }
+        .pd-skel-img-box { aspect-ratio:1/1; background:white; border-radius:32px; position:relative; overflow:hidden; border:1px solid rgba(124,58,237,.1); }
+        .pd-skel-info { display:flex; flex-direction:column; gap:20px; }
+        .pd-skel-line { height:20px; background:white; border-radius:10px; position:relative; overflow:hidden; border:1px solid rgba(124,58,237,.05); }
+        .pd-skel-shim { position:absolute; inset:0; background:linear-gradient(90deg, transparent, rgba(124,58,237,0.05), transparent); transform:translateX(-100%); animation:pdSkelShim 1.5s infinite; }
+        @keyframes pdSkelShim { 100% { transform:translateX(100%); } }
       `}</style>
-      <div className="pdload">
-        <div className="pdload-wrap">
-          <div className="pdload-outer">
-            <div className="pdload-inner" />
-            <div className="pdload-center">📦</div>
+      <div className="pd-skel-container">
+        <div className="pd-skel-img-box"><div className="pd-skel-shim"/></div>
+        <div className="pd-skel-info">
+          <div className="pd-skel-line" style={{width:'30%'}}><div className="pd-skel-shim"/></div>
+          <div className="pd-skel-line" style={{width:'80%',height:40}}><div className="pd-skel-shim"/></div>
+          <div className="pd-skel-line" style={{width:'40%',height:30}}><div className="pd-skel-shim"/></div>
+          <div className="pd-skel-line" style={{width:'100%',height:100}}><div className="pd-skel-shim"/></div>
+          <div style={{display:'flex',gap:10}}>
+            <div className="pd-skel-line" style={{width:'120px',height:50}}><div className="pd-skel-shim"/></div>
+            <div className="pd-skel-line" style={{width:'120px',height:50}}><div className="pd-skel-shim"/></div>
           </div>
-          <span className="pdload-txt">Fetching Product…</span>
         </div>
       </div>
-    </>
+    </div>
   )
 
   /* variant helpers */
@@ -459,7 +483,7 @@ export default function ProductDetail() {
     if (p?.variants?.length) {
       p.variants.forEach(v => {
         if (v.isActive === false) return;
-        const vAttrs = normalizeAttrs(v.attributes, v.sku)
+        const vAttrs = normalizeAttrs(v.attributes, v.sku, p.attributes)
         // Check all keys in vAttrs for a case-insensitive match with lowKey
         Object.entries(vAttrs).forEach(([vk, vv]) => {
           if (vk.toLowerCase().trim() === lowKey && vv) {
@@ -486,7 +510,7 @@ export default function ProductDetail() {
 
     return p.variants.some(v => {
       if (v.isActive === false || v.stock <= 0) return false;
-      const vAttrs = normalizeAttrs(v.attributes, v.sku)
+      const vAttrs = normalizeAttrs(v.attributes, v.sku, p.attributes)
 
       // Must match the value we're checking
       let matchVal = false;
@@ -1633,14 +1657,27 @@ export default function ProductDetail() {
               >
                 {currentImg
                   ? (
-                    <img
-                      key={activeImg}
-                      className="pd-main-photo"
-                      src={currentImg}
-                      alt={p.name}
-                      draggable={false}
-                      style={{ transform: zoom.on ? 'scale(1.55)' : 'scale(1)', transformOrigin: `${zoom.x}% ${zoom.y}%` }}
-                    />
+                    <div className="relative w-full h-full flex items-center justify-center overflow-hidden rounded-3xl bg-gray-50">
+                      {imgLoading && (
+                        <img 
+                          src={getCloudinaryUrl(currentImg, 50, true)} 
+                          className="absolute inset-0 w-full h-full object-contain blur-2xl scale-110" 
+                          alt=""
+                        />
+                      )}
+                      <img
+                        key={activeImg}
+                        className={`pd-main-photo transition-opacity duration-500 ${imgLoading ? 'opacity-0' : 'opacity-100'}`}
+                        src={getCloudinaryUrl(currentImg, 800)}
+                        alt={p.name}
+                        draggable={false}
+                        loading="lazy"
+                        width="800"
+                        height="800"
+                        onLoad={() => setImgLoading(false)}
+                        style={{ transform: zoom.on ? 'scale(1.55)' : 'scale(1)', transformOrigin: `${zoom.x}% ${zoom.y}%` }}
+                      />
+                    </div>
                   )
                   : <span style={{ fontSize: 80, opacity: .2 }}>📦</span>
                 }
@@ -1670,16 +1707,6 @@ export default function ProductDetail() {
                       aria-label={`Image ${i + 1}`}
                       aria-current={i === activeImg ? 'true' : undefined}
                     />
-                  ))}
-                </div>
-              )}
-
-              {imgs.length > 1 && (
-                <div className="pd-thumbs">
-                  {imgs.map((img, i) => (
-                    <button key={i} className={`pd-thumb${i === activeImg ? ' on' : ''}`} onClick={() => setActiveImg(i)}>
-                      <img src={img.url} alt={`${p.name} ${i + 1}`} loading="lazy" />
-                    </button>
                   ))}
                 </div>
               )}
@@ -1719,14 +1746,14 @@ export default function ProductDetail() {
                             const repVariant = p.variants?.find(v =>
                               v.isActive !== false &&
                               (lowKey === 'option' ? (v.sku === opt || v._id === opt) : (
-                                String(normalizeAttrs(v.attributes, v.sku)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
+                                String(normalizeAttrs(v.attributes, v.sku, p.attributes)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase() &&
                                 Object.entries(selected).every(([k, vVal]) => {
                                   if (k.toLowerCase().trim() === lowKey || !vVal) return true
                                   const lk = k.toLowerCase().trim()
-                                  return String(normalizeAttrs(v.attributes, v.sku)[lk] || '').toLowerCase() === String(vVal || '').toLowerCase();
+                                  return String(normalizeAttrs(v.attributes, v.sku, p.attributes)[lk] || '').toLowerCase() === String(vVal || '').toLowerCase();
                                 })
                               ))
-                            ) || p.variants?.find(v => v.isActive !== false && (lowKey === 'option' ? (v.sku === opt || v._id === opt) : String(normalizeAttrs(v.attributes, v.sku)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase()));
+                            ) || p.variants?.find(v => v.isActive !== false && (lowKey === 'option' ? (v.sku === opt || v._id === opt) : String(normalizeAttrs(v.attributes, v.sku, p.attributes)[lowKey] || '').toLowerCase() === String(opt || '').toLowerCase()));
 
                             if (useImageSwatch) {
                               const imgUrl = (repVariant?.images?.[0]?.url) || (Array.isArray(p.images) ? p.images[0]?.url : null);
@@ -1742,7 +1769,7 @@ export default function ProductDetail() {
                                   })}
                                   title={opt}
                                 >
-                                  {imgUrl ? <img src={imgUrl} alt={opt} /> : <span className="text-[10px] uppercase font-bold">{opt.charAt(0)}</span>}
+                                  {imgUrl ? <img src={getCloudinaryUrl(imgUrl, 100)} alt={opt} loading="lazy" width="40" height="40" /> : <span className="text-[10px] uppercase font-bold">{opt.charAt(0)}</span>}
                                   <span className="pd-var-val">{opt}</span>
                                   {!enabled && <span className="pd-var-oos">OOS</span>}
                                 </div>
@@ -1807,7 +1834,7 @@ export default function ProductDetail() {
                 {matchedVariant && (
                   <span className="pd-name-variant">
                     {' '}({(() => {
-                      const attrs = normalizeAttrs(matchedVariant.attributes, matchedVariant.sku);
+                      const attrs = normalizeAttrs(matchedVariant.attributes, matchedVariant.sku, p.attributes);
                       const values = Object.values(attrs);
                       if (values.length > 0) return values.join(', ');
                       if (matchedVariant.sku) return matchedVariant.sku;
@@ -2175,7 +2202,7 @@ export default function ProductDetail() {
                   <div key={item._id} className="pd-rec-item" onClick={() => navigate(`/products/${item._id}`)}>
                     <div className="pd-rec-img">
                       {item.images?.[0]?.url
-                        ? <img src={item.images[0].url} alt={item.name} />
+                        ? <img src={getCloudinaryUrl(item.images[0].url, 200)} alt={item.name} loading="lazy" width="100" height="100" />
                         : <span style={{ fontSize: 32, opacity: .2 }}>📦</span>}
                     </div>
                     <div className="pd-rec-body">
@@ -2197,14 +2224,14 @@ export default function ProductDetail() {
         {lightbox && (
           <div className="pd-lightbox" onClick={() => setLightbox(false)}>
             <div className="pd-lb-inner" onClick={e => e.stopPropagation()}>
-              <img src={currentImg} alt={p.name} className="pd-lb-img" />
+              <img src={getCloudinaryUrl(currentImg, 1200)} alt={p.name} className="pd-lb-img" loading="lazy" />
               <button className="pd-lb-close" onClick={() => setLightbox(false)}>✕</button>
               <div className="pd-lb-nav">
                 <button className="pd-lb-navbtn" onClick={() => setActiveImg(i => Math.max(0, i - 1))} disabled={activeImg <= 0}>← Prev</button>
                 <div className="pd-lb-thumbs">
                   {imgs.map((img, i) => (
                     <button key={i} className={`pd-lb-thumb${i === activeImg ? ' on' : ''}`} onClick={() => setActiveImg(i)}>
-                      <img src={img.url} alt={`${p.name} ${i + 1}`} />
+                      <img src={getCloudinaryUrl(img.url, 100)} alt={`${p.name} ${i + 1}`} loading="lazy" width="60" height="60" />
                     </button>
                   ))}
                 </div>

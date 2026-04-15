@@ -1352,6 +1352,12 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
             <div className="space-y-1">
               <label className="text-[9px] font-bold text-gray-400 uppercase">Images (Comma separated)</label>
               <textarea className="w-full bg-gray-50 rounded-xl px-3 py-2 text-xs font-bold min-h-[60px]" value={editingVariant.images} onChange={e=>setEditingVariant({...editingVariant, images: e.target.value})} />
+              <div className="flex justify-end mt-1">
+                <ImageUpload onUploaded={(url) => {
+                  const current = (editingVariant.images || '').split(',').map(s=>s.trim()).filter(Boolean)
+                  setEditingVariant({ ...editingVariant, images: [...current, url].join(', ') })
+                }} />
+              </div>
             </div>
 
             <button className="w-full py-3 bg-gray-900 text-white rounded-xl text-xs font-black uppercase tracking-widest">Update Variant</button>

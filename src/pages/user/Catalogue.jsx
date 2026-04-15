@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
+import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { useCart, getStockStatus } from '../../lib/CartContext'
 import { setSEO } from '../../shared/lib/seo.js'
 import RecommendationModal from '../../components/RecommendationModal'
@@ -155,6 +156,37 @@ export default function Catalogue({ initialBrand, brandName }) {
       { v: 'PRICE_HIGH', l: 'Price: High → Low', ico: '💎' },
     ] : [])
   ]
+
+  if (loading && products.length === 0) return (
+    <div className="ct">
+      <style>{`
+        .ct { font-family: 'DM Sans', system-ui, sans-serif; background: #f5f3ff; min-height: 100vh; position: relative; overflow-x: hidden; padding-top: env(safe-area-inset-top, 0px); }
+        .ct-skel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; }
+        @media (min-width: 640px) { .ct-skel-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px; } }
+        @media (min-width: 1024px) { .ct-skel-grid { grid-template-columns: repeat(4, 1fr); } }
+        @media (min-width: 1280px) { .ct-skel-grid { grid-template-columns: repeat(5, 1fr); } }
+        .ct-skel-card { background: white; border-radius: 20px; overflow: hidden; border: 1px solid rgba(124,58,237,.06); height: 320px; position: relative; }
+        .ct-skel-img { height: 180px; background: #f9fafb; position: relative; overflow: hidden; }
+        .ct-skel-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .ct-skel-line { height: 12px; background: #f3f4f6; border-radius: 6px; position: relative; overflow: hidden; }
+        .ct-skel-shim { position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(124,58,237,0.05), transparent); transform: translateX(-100%); animation: ctSkelShim 1.5s infinite; }
+        @keyframes ctSkelShim { 100% { transform: translateX(100%); } }
+      `}</style>
+      <div className="ct-skel-grid">
+        {[...Array(10)].map((_, i) => (
+          <div key={i} className="ct-skel-card">
+            <div className="ct-skel-img"><div className="ct-skel-shim"/></div>
+            <div className="ct-skel-body">
+              <div className="ct-skel-line" style={{width:'40%'}}><div className="ct-skel-shim"/></div>
+              <div className="ct-skel-line" style={{width:'90%'}}><div className="ct-skel-shim"/></div>
+              <div className="ct-skel-line" style={{width:'70%'}}><div className="ct-skel-shim"/></div>
+              <div className="ct-skel-line" style={{width:'50%',marginTop:'auto',height:20}}><div className="ct-skel-shim"/></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 
   return (
     <>
@@ -733,6 +765,18 @@ export default function Catalogue({ initialBrand, brandName }) {
         .ct-sheet-cat { font-size: 11.5px; padding: 10px; }
       }
 
+      /* ─── SKELETON ─── */
+      .ct-skel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; }
+      @media (min-width: 640px) { .ct-skel-grid { grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px; } }
+      @media (min-width: 1024px) { .ct-skel-grid { grid-template-columns: repeat(4, 1fr); } }
+      @media (min-width: 1280px) { .ct-skel-grid { grid-template-columns: repeat(5, 1fr); } }
+      .ct-skel-card { background: white; border-radius: 20px; overflow: hidden; border: 1px solid rgba(124,58,237,.06); height: 320px; position: relative; }
+      .ct-skel-img { height: 180px; background: #f9fafb; position: relative; overflow: hidden; }
+      .ct-skel-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+      .ct-skel-line { height: 12px; background: #f3f4f6; border-radius: 6px; position: relative; overflow: hidden; }
+      .ct-skel-shim { position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(124,58,237,0.05), transparent); transform: translateX(-100%); animation: ctSkelShim 1.5s infinite; }
+      @keyframes ctSkelShim { 100% { transform: translateX(100%); } }
+
       /* ─── ANIMATIONS ─── */
       @keyframes ctFadeUp   { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
       @keyframes ctShim     { 0% { background-position:200% 0; } 100% { background-position:-200% 0; } }
@@ -1118,7 +1162,7 @@ export default function Catalogue({ initialBrand, brandName }) {
                     {brands.map(b => (
                       <div key={b._id} className="ct-inner-card" onClick={() => setBrand(b._id)}>
                         <div className="ct-inner-img">
-                          {b.logo ? <img src={b.logo} alt={b.name} /> : <span style={{fontSize:32}}>🏭</span>}
+                          {b.logo ? <img src={getCloudinaryUrl(b.logo, 160)} alt={b.name} loading="lazy" width="80" height="80" /> : <span style={{fontSize:32}}>🏭</span>}
                         </div>
                         <div className="ct-inner-name">{b.name}</div>
                       </div>
@@ -1138,7 +1182,7 @@ export default function Catalogue({ initialBrand, brandName }) {
                     {categories.map(c => (
                       <div key={c._id} className="ct-inner-card" onClick={() => setCategory(c._id)}>
                         <div className="ct-inner-img">
-                          {c.image ? <img src={c.image} alt={c.name} /> : <span style={{fontSize:32}}>📦</span>}
+                          {c.image ? <img src={getCloudinaryUrl(c.image, 160)} alt={c.name} loading="lazy" width="80" height="80" /> : <span style={{fontSize:32}}>📦</span>}
                         </div>
                         <div className="ct-inner-name">{c.name}</div>
                       </div>
@@ -1371,7 +1415,7 @@ function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRec
       {/* image zone */}
       <div className="ct-card-img-z">
         {p.images?.length
-          ? <img src={p.images[0].url} alt={p.name} className="ct-card-img"/>
+          ? <img src={getCloudinaryUrl(p.images[0].url, 300)} alt={p.name} className="ct-card-img" loading="lazy" width="300" height="300" />
           : <span className="ct-card-img-ph">📦</span>}
         <div className="ct-card-bar"/>
 
@@ -1539,7 +1583,7 @@ function SuggestList({ items, setQ }) {
             </svg>
           </div>
           <div className="ct-sug-thumb">
-            {s.image ? <img src={s.image} alt={s.name}/> : <span style={{fontSize:15,opacity:.25}}>📦</span>}
+            {s.image ? <img src={getCloudinaryUrl(s.image, 100)} alt={s.name} loading="lazy" width="40" height="40" /> : <span style={{fontSize:15,opacity:.25}}>📦</span>}
           </div>
           <div style={{flex:1,minWidth:0}}>
             <div className="ct-sug-name">{s.name}</div>

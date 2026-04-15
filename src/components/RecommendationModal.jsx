@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getCloudinaryUrl } from '../lib/cloudinary';
 
 /**
  * Premium Recommendation Modal (Smart Pairing)
@@ -74,8 +75,11 @@ export default function RecommendationModal({ open, items, onClose, onAddToCart 
                     <div className="h-16 w-16 sm:h-24 sm:w-24 rounded-xl sm:rounded-2xl bg-white border border-slate-50 flex-shrink-0 flex items-center justify-center p-2 sm:p-3 group-hover:scale-105 transition-transform duration-500">
                       {item.images && (item.images[0]?.url || item.images[0])
                         ? <img 
-                            src={item.images[0]?.url || item.images[0]} 
+                            src={getCloudinaryUrl(item.images[0]?.url || item.images[0], 200)} 
                             alt={item.name} 
+                            loading="lazy"
+                            width="100"
+                            height="100"
                             className="h-full w-full object-contain transition-transform duration-700" 
                           />
                         : <span className="text-xl sm:text-2xl text-slate-300">📦</span>}

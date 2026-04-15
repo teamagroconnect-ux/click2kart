@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { CONFIG } from '../../shared/lib/config.js'
 import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
 import api from '../../lib/api'
+import { getCloudinaryUrl } from '../../lib/cloudinary'
 
 function useCountUp(target, duration = 1800, start = false) {
   const [val, setVal] = useState(0)
@@ -755,7 +756,7 @@ export default function Home() {
                     title={b.name}
                   >
                     {b.logo
-                      ? <img src={b.logo} alt="" loading="lazy" decoding="async" />
+                      ? <img src={getCloudinaryUrl(b.logo, 120)} alt={b.name} loading="lazy" decoding="async" width="120" height="60" />
                       : <span className="hm-brand-logo-fallback" aria-hidden="true">✦</span>}
                   </Link>
                 ))}
@@ -800,7 +801,7 @@ export default function Home() {
             <div className="hm-offers-grid">
               {offers.map(off => (
                 <div key={off._id} className="hm-offer-card">
-                  <img src={off.bannerImage} alt={off.title} className="hm-offer-img" />
+                  <img src={getCloudinaryUrl(off.bannerImage, 800)} alt={off.title} className="hm-offer-img" loading="lazy" width="800" height="400" />
                   <div className="hm-offer-content">
                     <div className="hm-offer-tag">{off.discountPercent}% OFF</div>
                     <h3 className="hm-offer-title">{off.title}</h3>
