@@ -1629,11 +1629,44 @@ export default function ProductDetail() {
       }
       .pd-modal-submit:hover { background: #6d28d9; }
 
+      /* ─── HIGHLIGHTS & SPECS ─── */
+      .pd-hl-spec-card { border: none !important; background: transparent !important; box-shadow: none !important; padding: 0 !important; }
+      .pd-hl-spec-tabs { display: flex; gap: 24px; border-bottom: 1.5px solid rgba(124,58,237,.1); margin-bottom: 24px; padding-bottom: 2px; }
+      .pd-hl-spec-tabs button {
+        font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: .02em;
+        color: #9ca3af; cursor: pointer; position: relative; padding: 8px 4px;
+        transition: color .2s; border: none; background: none; outline: none;
+      }
+      .pd-hl-spec-tabs button.on { color: #7c3aed; }
+      .pd-hl-spec-tabs button::after {
+        content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px;
+        background: #7c3aed; border-radius: 100px; transform: scaleX(0); transition: transform .3s;
+      }
+      .pd-hl-spec-tabs button.on::after { transform: scaleX(1); }
+
+      .pd-spec-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+      @media (min-width: 640px) { .pd-spec-grid { grid-template-columns: 1fr 1fr; gap: 16px; } }
+      .pd-spec-item {
+        background: white; border: 1px solid rgba(124,58,237,.08); border-radius: 14px;
+        padding: 14px 18px; display: flex; flex-direction: column; gap: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,.02); transition: transform .2s, border-color .2s;
+      }
+      .pd-spec-item:hover { border-color: rgba(124,58,237,.25); transform: translateY(-2px); }
+      .pd-spec-k { font-size: 10px; font-weight: 800; color: #9ca3af; text-transform: uppercase; letter-spacing: .08em; }
+      .pd-spec-v { font-size: 14px; font-weight: 600; color: #1e1b2e; }
+
+      .pd-hl-item {
+        display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px;
+        background: rgba(124,58,237,.04); padding: 12px 16px; border-radius: 14px;
+        border: 1px solid rgba(124,58,237,.06);
+      }
+      .pd-hl-dot { width: 6px; height: 6px; border-radius: 50%; background: #7c3aed; margin-top: 7px; flex-shrink: 0; }
       /* ─── ANIMATIONS ─── */
       @keyframes pdFadeIn  { from{opacity:0;} to{opacity:1;} }
       @keyframes pdFadeUp  { from{opacity:0;transform:translateY(14px);} to{opacity:1;transform:translateY(0);} }
       @keyframes pdSheen   { 0%,70%,100%{transform:translateX(-100%);} 35%{transform:translateX(200%);} }
       @keyframes pdMaskPulse { 0%,90%,100%{filter:blur(5px);} 94%{filter:blur(3px);} }
+      @keyframes pdStockPulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.2);opacity:.7;} }
     `}</style>
 
       <div className="pd">
@@ -2155,22 +2188,20 @@ export default function ProductDetail() {
                         {p.highlights.map((h, i) => (
                           <div key={i} className="pd-hl-item">
                             <span className="pd-hl-dot" />
-                            <span>{h}</span>
+                            <span className="pd-hl-txt">{h}</span>
                           </div>
                         ))}
                       </div>
                     )}
                     {showSpecificationsBlock && (
-                      <table className="pd-spec-table">
-                        <tbody>
-                          {p.specifications.map((row, i) => (
-                            <tr key={i}>
-                              <td>{row.key}</td>
-                              <td>{row.value}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                      <div className="pd-spec-grid">
+                        {p.specifications.map((row, i) => (
+                          <div key={i} className="pd-spec-item">
+                            <span className="pd-spec-k">{row.key}</span>
+                            <span className="pd-spec-v">{row.value}</span>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>

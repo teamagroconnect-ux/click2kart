@@ -456,8 +456,21 @@ export default function Catalogue({ initialBrand, brandName }) {
       .ct-sort-arr { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #7c3aed; }
 
       /* ─── MAIN LAYOUT ─── */
-      .ct-layout { max-width: 1280px; margin: 0 auto; position: relative; z-index: 1; }
-      @media (min-width: 1024px) { .ct-layout { display: grid; grid-template-columns: 268px 1fr; } }
+      .ct-layout { 
+        max-width: 1280px; 
+        margin: 0 auto; 
+        position: relative; 
+        z-index: 1; 
+        padding: 0 16px;
+      }
+      @media (min-width: 1024px) { 
+        .ct-layout { 
+          display: grid; 
+          grid-template-columns: 268px 1fr; 
+          gap: 24px;
+          padding: 0 32px;
+        } 
+      }
 
       /* ─── SIDEBAR ─── */
       .ct-sidebar {
@@ -466,10 +479,10 @@ export default function Catalogue({ initialBrand, brandName }) {
         border-right: 1px solid rgba(124,58,237,.08);
         min-height: calc(100vh - 68px);
       }
-      @media (min-width: 1024px) { .ct-sidebar { display: block; } }
+      @media (min-width: 1024px) { .ct-sidebar { display: block; border-right: none; } }
       .ct-sidebar-in {
         position: sticky; top: 68px;
-        padding: 24px 18px; display: flex; flex-direction: column; gap: 26px;
+        padding: 24px 0; display: flex; flex-direction: column; gap: 26px;
         overflow-y: auto; max-height: calc(100vh - 68px);
       }
 
@@ -571,8 +584,14 @@ export default function Catalogue({ initialBrand, brandName }) {
       .ct-page-info { font-size: 11px; font-weight: 600; color: #9ca3af; }
 
       /* ─── PRODUCT GRID ─── */
-      .ct-grid { display: grid; gap: 13px; grid-template-columns: repeat(2, 1fr); }
-      @media (min-width: 540px)  { .ct-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; } }
+      .ct-grid { 
+        display: grid; 
+        gap: 16px; 
+        grid-template-columns: repeat(2, 1fr); 
+        justify-content: center;
+      }
+      @media (min-width: 540px)  { .ct-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; } }
+      @media (min-width: 768px)  { .ct-grid { grid-template-columns: repeat(3, 1fr); } }
       @media (min-width: 1280px) { .ct-grid { grid-template-columns: repeat(4, 1fr); } }
 
       /* ─── SKELETON ─── */
@@ -583,24 +602,25 @@ export default function Catalogue({ initialBrand, brandName }) {
 
       /* ─── PRODUCT CARD ─── */
       .ct-card {
-        background: white; border-radius: 20px; overflow: hidden;
-        border: 1px solid rgba(124,58,237,.09);
+        background: white; border-radius: 16px; overflow: hidden;
+        border: 1px solid rgba(124,58,237,.08);
         display: flex; flex-direction: column; cursor: pointer;
         transition: transform .3s cubic-bezier(.34,1.4,.64,1), box-shadow .3s, border-color .3s;
         position: relative;
-        box-shadow: 0 2px 14px rgba(124,58,237,.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,.03);
         animation: ctFadeUp .45s ease both;
       }
       .ct-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 14px 40px rgba(124,58,237,.14);
-        border-color: rgba(124,58,237,.22);
+        transform: translateY(-6px);
+        box-shadow: 0 12px 32px rgba(124,58,237,.12);
+        border-color: rgba(124,58,237,.2);
       }
       /* top gradient accent */
       .ct-card::before {
-        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-        background: linear-gradient(90deg, transparent 0%, #7c3aed 40%, #a78bfa 70%, transparent 100%);
+        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, #7c3aed, #a78bfa);
         opacity: 0; transition: opacity .3s;
+        z-index: 10;
       }
       .ct-card:hover::before { opacity: 1; }
 
@@ -611,11 +631,12 @@ export default function Catalogue({ initialBrand, brandName }) {
         display: flex; align-items: center; justify-content: center;
       }
       .ct-card-img {
-        width: 100%; height: 100%; object-fit: contain; padding: 18px;
+        width: 100%; height: 100%; object-fit: contain; padding: 16px;
         transition: transform .5s cubic-bezier(.34,1.56,.64,1);
       }
-      .ct-card:hover .ct-card-img { transform: scale(1.09); }
-      .ct-card-img-ph { font-size: 46px; opacity: .18; }
+      @media (min-width: 640px) { .ct-card-img { padding: 20px; } }
+      .ct-card:hover .ct-card-img { transform: scale(1.08); }
+      .ct-card-img-ph { font-size: 40px; opacity: .15; }
 
       /* shimmer bottom bar on hover */
       .ct-card-bar {

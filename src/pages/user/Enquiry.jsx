@@ -1532,18 +1532,19 @@ export default function Enquiry() {
                       </div>
                       
                       <div className="eq-item-content">
-                        <div className="eq-item-name">{item.name}</div>
+                        <div className="eq-item-name">
+                          {item.name}
+                          {Object.entries(item.attributes || {}).filter(([, v]) => v).length > 0 && (
+                            <span style={{ marginLeft: 8, color: '#6b7280', fontSize: '0.9em', fontWeight: 500 }}>
+                              ({Object.values(item.attributes).filter(v => v).map(v => String(v).toUpperCase()).join(', ')})
+                            </span>
+                          )}
+                        </div>
                         
                         <div className="eq-item-meta">
                           <span>Qty: {item.quantity}</span>
                           <span>·</span>
                           <span>₹{unitPrice(item).toLocaleString()}/unit</span>
-                          {attrs && (
-                            <>
-                              <span>·</span>
-                              <span className="eq-item-meta-badge">{attrs}</span>
-                            </>
-                          )}
                         </div>
 
                         {tiers.length > 0 && (

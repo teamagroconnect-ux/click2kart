@@ -408,17 +408,15 @@ export default function Cart() {
 
                     {/* body */}
                     <div className="ct-item-body">
-                      <div className="ct-item-name" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${itemId}`)}>{item.name}</div>
-                      <div className="ct-item-meta">
+                      <div className="ct-item-name" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${itemId}`)}>
+                        {item.name}
                         {displayAttributes && Object.entries(displayAttributes).length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mb-1.5">
-                            {Object.entries(displayAttributes).map(([k,v]) => (
-                              <span key={k} className="px-2 py-0.5 rounded-md bg-indigo-50 border border-indigo-100 text-[9px] font-black uppercase tracking-widest text-indigo-600">
-                                {k}: {String(v).toUpperCase()}
-                              </span>
-                            ))}
-                          </div>
+                          <span style={{ marginLeft: 8, color: '#6b7280', fontSize: '0.9em', fontWeight: 500 }}>
+                            ({Object.values(displayAttributes).map(v => String(v).toUpperCase()).join(', ')})
+                          </span>
                         )}
+                      </div>
+                      <div className="ct-item-meta">
                         <span className="ct-unit-price">₹{unitPrice(item).toLocaleString()} / unit</span>
                         {item.stock <= 20 && (
                           <span style={{ fontSize:9, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase',

@@ -651,27 +651,16 @@ export default function OrderHistory() {
                                     }
                                   </div>
                                   <div style={{ flex:1, minWidth:0 }}>
-                                    <div className="oh-item-name">{item.name}</div>
+                                    <div className="oh-item-name">
+                                      {item.name}
+                                      {item.attributes && Object.entries(item.attributes).length > 0 && (
+                                        <span style={{ marginLeft: 8, color: '#6b7280', fontSize: '0.9em', fontWeight: 500 }}>
+                                          ({Object.values(item.attributes).map(v => String(v).toUpperCase()).join(', ')})
+                                        </span>
+                                      )}
+                                    </div>
                                     <div className="oh-item-meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
                                       <span className="oh-item-qty">Qty: {item.quantity} · ₹{item.price} each</span>
-                                      {item.attributes && Object.entries(item.attributes).length > 0 && (
-                                        <div style={{ display: 'flex', gap: '4px' }}>
-                                          {Object.entries(item.attributes).map(([k, v]) => (
-                                            <span key={k} style={{ 
-                                              fontSize: '9px', 
-                                              fontWeight: 800, 
-                                              textTransform: 'uppercase', 
-                                              background: 'rgba(124,58,237,0.08)', 
-                                              color: '#7c3aed', 
-                                              padding: '2px 6px', 
-                                              borderRadius: '4px',
-                                              border: '1px solid rgba(124,58,237,0.15)'
-                                            }}>
-                                              {k}: {String(v).toUpperCase()}
-                                            </span>
-                                          ))}
-                                        </div>
-                                      )}
                                     </div>
                                   </div>
                                   <div className="oh-item-price">₹{(item.price * item.quantity).toLocaleString()}</div>
