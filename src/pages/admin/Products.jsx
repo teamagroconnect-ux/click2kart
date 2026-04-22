@@ -418,28 +418,22 @@ export default function Products() {
                       </div>
                     </div>
 
-                    <div className="space-y-2 p-3 bg-gray-50/50 rounded-2xl border border-gray-100">
-                      <div className="text-[10px] font-bold text-gray-500 uppercase ml-1">Variant Display Style</div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setForm(f => ({ ...f, variantDisplayType: 'selector' }))}
-                          className={`p-4 rounded-2xl border-2 transition-all ${form.variantDisplayType === 'selector' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white hover:border-indigo-200'}`}
-                        >
-                          <div className="text-2xl mb-1">🔽</div>
-                          <div className="text-xs font-bold text-gray-900">Dropdown Selector</div>
-                          <div className="text-[10px] text-gray-500 mt-0.5">Traditional variant dropdowns</div>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setForm(f => ({ ...f, variantDisplayType: 'matrix' }))}
-                          className={`p-4 rounded-2xl border-2 transition-all ${form.variantDisplayType === 'matrix' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white hover:border-indigo-200'}`}
-                        >
-                          <div className="text-2xl mb-1">📊</div>
-                          <div className="text-xs font-bold text-gray-900">Variant Matrix</div>
-                          <div className="text-[10px] text-gray-500 mt-0.5">Bulk buy with quantity grid</div>
-                        </button>
+                    <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-2xl border border-gray-100">
+                      <div>
+                        <div className="text-[10px] font-bold text-gray-500 uppercase ml-1">Variant Display</div>
+                        <div className="text-[10px] text-gray-400 ml-1">{form.variantDisplayType === 'matrix' ? 'Bulk Matrix View' : 'Standard Selector'}</div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => setForm(f => ({ ...f, variantDisplayType: f.variantDisplayType === 'matrix' ? 'selector' : 'matrix' }))}
+                        className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none ${form.variantDisplayType === 'matrix' ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                      >
+                        <span
+                          className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${form.variantDisplayType === 'matrix' ? 'translate-x-9' : 'translate-x-1'}`}
+                        />
+                        <span className="absolute left-2 text-[8px] font-bold text-white uppercase">{form.variantDisplayType === 'matrix' ? 'MTX' : ''}</span>
+                        <span className="absolute right-2 text-[8px] font-bold text-gray-400 uppercase">{form.variantDisplayType === 'selector' ? 'SEL' : ''}</span>
+                      </button>
                     </div>
                     
                     <div className="space-y-2 p-3 bg-gray-50/50 rounded-2xl border border-gray-100">
@@ -609,6 +603,25 @@ export default function Products() {
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">HSN Code</label>
                 <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 8517" value={editing.hsnCode || ''} onChange={e => setEditing({ ...editing, hsnCode: e.target.value })} />
               </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-2xl border border-gray-100 mt-1 md:col-span-3">
+                <div>
+                  <div className="text-[10px] font-bold text-gray-500 uppercase ml-1">Variant Display Style</div>
+                  <div className="text-[10px] text-gray-400 ml-1">{editing.variantDisplayType === 'matrix' ? 'Bulk Matrix View (Grid)' : 'Standard Variant Selector (Dropdown)'}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditing(e => ({ ...e, variantDisplayType: e.variantDisplayType === 'matrix' ? 'selector' : 'matrix' }))}
+                  className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none ${editing.variantDisplayType === 'matrix' ? 'bg-indigo-600' : 'bg-gray-200'}`}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${editing.variantDisplayType === 'matrix' ? 'translate-x-9' : 'translate-x-1'}`}
+                  />
+                  <span className="absolute left-2 text-[8px] font-bold text-white uppercase">{editing.variantDisplayType === 'matrix' ? 'MTX' : ''}</span>
+                  <span className="absolute right-2 text-[8px] font-bold text-gray-400 uppercase">{editing.variantDisplayType === 'selector' ? 'SEL' : ''}</span>
+                </button>
+              </div>
+
               <div className="space-y-1 md:col-span-3">
                 <p className="text-[11px] text-gray-500 bg-violet-50/80 border border-violet-100 rounded-xl px-3 py-2">Option SKUs and variant stock are managed in <span className="font-bold text-violet-700">Manage Variants</span>, not here.</p>
               </div>
