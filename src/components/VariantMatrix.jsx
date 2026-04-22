@@ -68,13 +68,13 @@ export default function VariantMatrix({
   }, [variants, attrs, attrValues])
 
   const getPrice = (v) => {
-    if (!v) return null
-    return v.price ?? product.price
+    if (!v) return 0
+    return Number(v.price ?? product.price) || 0
   }
 
   const getMrp = (v) => {
-    if (!v) return null
-    return v.mrp ?? product.mrp
+    if (!v) return 0
+    return Number(v.mrp ?? product.mrp) || 0
   }
 
   const getStock = (v) => {

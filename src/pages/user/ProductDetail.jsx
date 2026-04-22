@@ -56,9 +56,9 @@ export default function ProductDetail() {
   const { user } = useAuth()
 
   const { data: p, isLoading: loading, error: queryError } = useQuery({
-    queryKey: ['product', id],
+    queryKey: ['product', id, user?._id],
     queryFn: () => api.get(`/api/products/${id}`).then(res => res.data),
-    staleTime: 1000 * 60 * 30, // 30 minutes for products
+    staleTime: 1000 * 60 * 5, // 5 minutes (reduced from 30 to reflect changes faster)
     gcTime: 1000 * 60 * 60 * 24, // 24 hours in cache
   })
 
@@ -563,19 +563,24 @@ export default function ProductDetail() {
   const canAddToCart = variantAttrs.every(attr => !!selected[attr.toLowerCase().trim()]) && !!matchedVariant && isAvailable
 
   /* ── PRICE CALCULATIONS ── */
-  const basePrice = Number(currentPrice ?? 0)
-  const mrp = Number(currentMrp ?? 0)
+  const basePrice = Number(currentPrice || 0) || 0
+  const mrp = Number(currentMrp || 0) || 0
 
   // Calculate savings based on the actual price (variant or base)
   const unitSave = mrp > 0 ? Math.max(0, mrp - basePrice) : 0
 
   const sortedAsc = Array.isArray(p.bulkTiers) ? p.bulkTiers.slice().sort((a, b) => a.quantity - b.quantity) : []
   const sortedDesc = Array.isArray(p.bulkTiers) ? p.bulkTiers.slice().sort((a, b) => b.quantity - a.quantity) : []
-  const minTierQty = sortedAsc.length > 0 ? Math.max(1, Number(sortedAsc[0].quantity || 1)) : (p.bulkDiscountQuantity || 1)
+  const minTierQty = sortedAsc.length > 0 ? Math.max(1, Number(sortedAsc[0].quantity || 1)) : (Number(p.bulkDiscountQuantity) || 1)
   let effPrice = basePrice
   const hitTier = sortedDesc.find(t => qty >= Number(t.quantity || 0))
-  if (hitTier) effPrice = Math.max(0, basePrice - Number(hitTier.priceReduction || 0))
-  else if (p.bulkDiscountQuantity > 0 && qty >= Number(p.bulkDiscountQuantity)) effPrice = Math.max(0, basePrice - Number(p.bulkDiscountPriceReduction || 0))
+  if (hitTier) {
+    const reduction = Number(hitTier.priceReduction || 0) || 0
+    effPrice = Math.max(0, basePrice - reduction)
+  } else if (Number(p.bulkDiscountQuantity || 0) > 0 && qty >= Number(p.bulkDiscountQuantity)) {
+    const reduction = Number(p.bulkDiscountPriceReduction || 0) || 0
+    effPrice = Math.max(0, basePrice - reduction)
+  }
   const savingsTotal = Math.max(0, (basePrice - effPrice) * qty)
 
   const gstRate = Number(p.gst || 0)
