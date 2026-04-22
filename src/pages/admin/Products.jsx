@@ -10,7 +10,7 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'' })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector' })
   const [editing, setEditing] = useState(null)
   const [viewing, setViewing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -94,9 +94,10 @@ export default function Products() {
       section: form.section || '',
       hsnCode: form.hsnCode || '',
       attributes: [],
+      variantDisplayType: form.variantDisplayType || 'selector',
       variants: []
     })
-    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'' }); setShowAddProduct(false); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector' }); setShowAddProduct(false); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -131,7 +132,8 @@ export default function Products() {
       bulkTiers: Array.isArray(p.bulkTiers) ? p.bulkTiers.map(t => ({ quantity: t.quantity, priceReduction: t.priceReduction })) : [],
       specifications: Array.isArray(p.specifications) ? p.specifications.map(s => ({ key: s.key || '', value: s.value || '' })).filter(s => s.key && s.value) : [],
       specKey: '',
-      specValue: ''
+      specValue: '',
+      variantDisplayType: p.variantDisplayType || 'selector'
     }
     setEditing(ed)
     return ed
@@ -159,6 +161,7 @@ export default function Products() {
       store: editing.store || '',
       section: editing.section || '',
       attributes: editing.attributes || [],
+      variantDisplayType: editing.variantDisplayType || 'selector',
       variants: (editing.variants || []).map(v => ({
         ...v,
         attributes: v.attributes instanceof Map ? Object.fromEntries(v.attributes) : v.attributes,
@@ -412,6 +415,30 @@ export default function Products() {
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Inventory Stock</label>
                         <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="50" value={form.stock} onChange={e => setForm({ ...form, stock: e.target.value })} required />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 p-3 bg-gray-50/50 rounded-2xl border border-gray-100">
+                      <div className="text-[10px] font-bold text-gray-500 uppercase ml-1">Variant Display Style</div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setForm(f => ({ ...f, variantDisplayType: 'selector' }))}
+                          className={`p-4 rounded-2xl border-2 transition-all ${form.variantDisplayType === 'selector' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white hover:border-indigo-200'}`}
+                        >
+                          <div className="text-2xl mb-1">🔽</div>
+                          <div className="text-xs font-bold text-gray-900">Dropdown Selector</div>
+                          <div className="text-[10px] text-gray-500 mt-0.5">Traditional variant dropdowns</div>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setForm(f => ({ ...f, variantDisplayType: 'matrix' }))}
+                          className={`p-4 rounded-2xl border-2 transition-all ${form.variantDisplayType === 'matrix' ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200 bg-white hover:border-indigo-200'}`}
+                        >
+                          <div className="text-2xl mb-1">📊</div>
+                          <div className="text-xs font-bold text-gray-900">Variant Matrix</div>
+                          <div className="text-[10px] text-gray-500 mt-0.5">Bulk buy with quantity grid</div>
+                        </button>
                       </div>
                     </div>
                     

@@ -8,6 +8,7 @@ import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
 import { useToast } from '../../components/Toast'
 import RecommendationModal from '../../components/RecommendationModal'
 import ProductCard from '../../components/ProductCard'
+import VariantMatrix from '../../components/VariantMatrix'
 import { useAuth } from '../../lib/AuthContext'
 
 /** Stable sort for RAM/ROM/Storage etc.; otherwise locale + numeric aware. */
@@ -1755,7 +1756,8 @@ export default function ProductDetail() {
               )}
 
               {/* Variant rows: wrap or horizontal scroll when many values */}
-              {Array.isArray(p.variants) && p.variants.length > 0 && (
+              {/* Only show traditional selector when admin has NOT chosen matrix display */}
+              {p.variantDisplayType !== 'matrix' && Array.isArray(p.variants) && p.variants.length > 0 && (
                 <div className="pd-variants">
                   {variantAttrs.map(attrKey => {
                     const lowKey = attrKey.toLowerCase().trim()
@@ -1840,6 +1842,20 @@ export default function ProductDetail() {
                     )
                   })}
                 </div>
+              )}
+
+              {/* Variant Matrix — shown when admin chose matrix display */}
+              {p.variantDisplayType === 'matrix' && Array.isArray(p.variants) && p.variants.length > 0 && (
+                <VariantMatrix
+                  variants={p.variants.filter(v => v.isActive !== false)}
+                  product={p}
+                  authed={authed}
+                  addToCart={addToCart}
+                  notify={notify}
+                  navigate={navigate}
+                  setRecItems={setRecItems}
+                  setRecOpen={setRecOpen}
+                />
               )}
             </div>
 

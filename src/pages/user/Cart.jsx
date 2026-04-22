@@ -36,7 +36,13 @@ export default function Cart() {
   }
   const lineTotal   = (it) => unitPrice(it) * Math.max(1, Number(it.quantity || 1))
   const mrpTotal    = cart.reduce((s,it) => s + Number(it.mrp||it.price||0) * Math.max(1,Number(it.quantity||1)), 0)
-  const effTotal    = cart.reduce((s,it) => s + lineTotal(it), 0)
+  const effTotal    = cart.reduce((s,it) => {
+    const itemStock = it.variantSku 
+      ? (it.productId?.variants?.find(v => v.sku === it.variantSku)?.stock ?? it.stock)
+      : (it.productId?.stock ?? it.stock);
+    if (itemStock <= 0) return s;
+    return s + lineTotal(it);
+  }, 0)
   const bulkDiscount = Math.max(0, mrpTotal - effTotal)
   const totalPayable = effTotal
   const etaText = (() => {
@@ -388,7 +394,11 @@ export default function Cart() {
                 const next    = getNextTier(item.quantity, tiers)
                 const maxQ    = tiers.length ? Math.max(item.quantity, tiers[tiers.length-1].quantity) : item.quantity
                 const pct     = tiers.length ? Math.min(100, Math.round((item.quantity/maxQ)*100)) : 100
-                const stockSt = getStockStatus(item.stock)
+                const itemStock = item.variantSku 
+                  ? (item.productId?.variants?.find(v => v.sku === item.variantSku)?.stock ?? item.stock)
+                  : (item.productId?.stock ?? item.stock);
+                const stockSt = getStockStatus(itemStock)
+                const isOutOfStock = itemStock <= 0
                 const imgSrc  = item.image || item.images?.[0]?.url
                 const itemId  = item.productId || item._id
                 const itemSku = item.variantSku || ''
@@ -411,7 +421,25 @@ export default function Cart() {
                 const hasAttributes = displayAttributes && Object.entries(displayAttributes).filter(([, v]) => v).length > 0;
 
                 return (
-                  <div key={`${itemId}-${itemSku}`} className="ct-item" style={{ animationDelay:`${idx*50}ms` }}>
+                  <div key={`${itemId}-${itemSku}`} className={`ct-item ${isOutOfStock ? 'ct-oos' : ''}`} style={{ 
+                    animationDelay:`${idx*50}ms`,
+                    opacity: isOutOfStock ? 0.6 : 1,
+                    filter: isOutOfStock ? 'grayscale(0.4)' : 'none'
+                  }}>
+                    {isOutOfStock && (
+                      <div style={{
+                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(255,255,255,0.4)', zIndex: 5,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        pointerEvents: 'none'
+                      }}>
+                        <div style={{
+                          background: '#ef4444', color: 'white', padding: '4px 12px',
+                          borderRadius: '8px', fontSize: '10px', fontWeight: 800,
+                          textTransform: 'uppercase', letterSpacing: '0.1em'
+                        }}>Currently Unavailable</div>
+                      </div>
+                    )}
 
                     {/* image */}
                     <div className="ct-img" style={{ cursor: 'pointer' }} onClick={() => navigate(`/products/${itemId}`)}>
@@ -433,16 +461,14 @@ export default function Cart() {
                       </div>
                       <div className="ct-item-meta">
                         <span className="ct-unit-price">₹{unitPrice(item).toLocaleString()} / unit</span>
-                        {item.stock <= 20 && (
-                          <span style={{ fontSize:9, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase',
-                            padding:'2px 8px', borderRadius:100,
-                            background: item.stock<=0?'rgba(220,38,38,.1)':item.stock<=5?'rgba(245,158,11,.1)':'rgba(5,150,105,.1)',
-                            color: item.stock<=0?'#dc2626':item.stock<=5?'#d97706':'#059669',
-                            border:`1px solid ${item.stock<=0?'rgba(220,38,38,.2)':item.stock<=5?'rgba(245,158,11,.2)':'rgba(5,150,105,.2)'}`
-                          }}>
-                            {stockSt.text}
-                          </span>
-                        )}
+                        <span style={{ fontSize:9, fontWeight:700, letterSpacing:'.1em', textTransform:'uppercase',
+                          padding:'2px 8px', borderRadius:100,
+                          background: isOutOfStock ? 'rgba(220,38,38,.1)' : itemStock <= 5 ? 'rgba(245,158,11,.1)' : 'rgba(5,150,105,.1)',
+                          color: isOutOfStock ? '#dc2626' : itemStock <= 5 ? '#d97706' : '#059669',
+                          border: `1px solid ${isOutOfStock ? 'rgba(220,38,38,.2)' : itemStock <= 5 ? 'rgba(245,158,11,.2)' : 'rgba(5,150,105,.2)'}`
+                        }}>
+                          {stockSt.text}
+                        </span>
                       </div>
                       <div className="ct-delivery">
                         <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{display:'inline',marginRight:4,verticalAlign:'middle'}}>
@@ -483,15 +509,16 @@ export default function Cart() {
                       )}
 
                       {/* qty + actions */}
-                      <div className="ct-qty-row">
-                        <div className="ct-qty-ctrl">
+                      <div className="ct-qty-row" style={{ pointerEvents: isOutOfStock ? 'none' : 'auto' }}>
+                        <div className="ct-qty-ctrl" style={{ opacity: isOutOfStock ? 0.4 : 1 }}>
                           <button className="ct-qty-btn"
-                            disabled={item.quantity <= Math.max(1, Number(item.minOrderQty||0))}
+                            disabled={isOutOfStock || item.quantity <= Math.max(1, Number(item.minOrderQty||0))}
                             onClick={() => updateQuantity(itemId, itemSku, Math.max(Number(item.minOrderQty||1), item.quantity-1))}>−</button>
                           <input 
                             className="ct-qty-val" 
                             type="number"
                             value={item.quantity} 
+                            disabled={isOutOfStock}
                             onChange={(e) => {
                               const v = parseInt(e.target.value) || 0
                               updateQuantity(itemId, itemSku, Math.max(0, v))
@@ -503,23 +530,27 @@ export default function Cart() {
                             }}
                           />
                           <button className="ct-qty-btn"
+                            disabled={isOutOfStock || item.quantity >= itemStock}
                             onClick={() => updateQuantity(itemId, itemSku, item.quantity+1)}>+</button>
                         </div>
 
                         <button className="ct-action-btn remove"
+                          style={{ pointerEvents: 'auto' }}
                           onClick={() => removeFromCart(itemId, itemSku)}>
                           Remove
                         </button>
-                        <button className="ct-action-btn save"
-                          onClick={() => {
-                            try {
-                              const saved = JSON.parse(localStorage.getItem('saved')||'[]')
-                              localStorage.setItem('saved', JSON.stringify([...saved, item]))
-                              removeFromCart(itemId, itemSku)
-                            } catch {}
-                          }}>
-                          Save for later
-                        </button>
+                        {!isOutOfStock && (
+                          <button className="ct-action-btn save"
+                            onClick={() => {
+                              try {
+                                const saved = JSON.parse(localStorage.getItem('saved')||'[]')
+                                localStorage.setItem('saved', JSON.stringify([...saved, item]))
+                                removeFromCart(itemId, itemSku)
+                              } catch {}
+                            }}>
+                            Save for later
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -678,7 +709,7 @@ export default function Cart() {
               {/* checkout button */}
               <button
                 className={`ct-checkout-btn ${totalPayable >= minAmount ? 'ready' : 'disabled'}`}
-                disabled={totalPayable < minAmount}
+                disabled={totalPayable < minAmount || cart.every(item => (item.variantSku ? (item.productId?.variants?.find(v => v.sku === item.variantSku)?.stock ?? item.stock) : (item.productId?.stock ?? item.stock)) <= 0)}
                 onClick={() => navigate('/order', { state: { appliedCoupon } })}
               >
                 {totalPayable < minAmount
@@ -710,8 +741,8 @@ export default function Cart() {
             <div className="ct-mobile-total-val">₹{totalPayable.toLocaleString()}</div>
           </div>
           <button
-            className={`ct-mobile-btn ${totalPayable >= minAmount ? '' : 'disabled'}`}
-            disabled={totalPayable < minAmount}
+            className={`ct-mobile-btn ${totalPayable >= minAmount && !cart.every(item => (item.variantSku ? (item.productId?.variants?.find(v => v.sku === item.variantSku)?.stock ?? item.stock) : (item.productId?.stock ?? item.stock)) <= 0) ? '' : 'disabled'}`}
+            disabled={totalPayable < minAmount || cart.every(item => (item.variantSku ? (item.productId?.variants?.find(v => v.sku === item.variantSku)?.stock ?? item.stock) : (item.productId?.stock ?? item.stock)) <= 0)}
             onClick={() => navigate('/order', { state: { appliedCoupon } })}
           >
             {totalPayable < minAmount ? `₹${minLeft.toLocaleString()} more needed` : 'Place Order →'}

@@ -179,10 +179,24 @@ export function CartProvider({ children }) {
     }
   }
 
-  const cartCount = cart.reduce((total, item) => total + item.quantity, 0)
+  const cartCount = cart.reduce((total, item) => {
+    // Only count items that are in stock
+    const itemStock = item.variantSku 
+      ? (item.productId?.variants?.find(v => v.sku === item.variantSku)?.stock ?? item.stock)
+      : (item.productId?.stock ?? item.stock);
+    if (itemStock <= 0) return total;
+    return total + item.quantity;
+  }, 0)
+
   const cartTotal = cart.reduce((total, item) => {
     let p = Number(item.price || 0)
     const qty = Math.max(1, Number(item.quantity || 1))
+    
+    // Skip out-of-stock items in total
+    const itemStock = item.variantSku 
+      ? (item.productId?.variants?.find(v => v.sku === item.variantSku)?.stock ?? item.stock)
+      : (item.productId?.stock ?? item.stock);
+    if (itemStock <= 0) return total;
     
     // Check for bulk pricing at item level or product level
     const it = (item.bulkTiers || item.bulkDiscountQuantity) ? item : (item.productId && typeof item.productId === 'object' ? item.productId : item);
