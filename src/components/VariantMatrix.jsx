@@ -130,7 +130,7 @@ export default function VariantMatrix({
 
       if (itemsToAdd.length > 0 && setRecOpen) {
         try {
-          const api = (await import('../../lib/api')).default
+          const api = (await import('../lib/api')).default
           const { data } = await api.get(`/api/recommendations/frequently-bought/${product._id}`)
           const filtered = (data || []).filter(i => (i._id || i.id) !== product._id)
           if (setRecItems) setRecItems(filtered)
