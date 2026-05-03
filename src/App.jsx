@@ -73,7 +73,7 @@ export default function App() {
         <Route index element={<Home />} />
         <Route path="products" element={<Catalogue />} />
         <Route path="brand/:slug" element={<BrandPage />} />
-        <Route path="products/:id" element={<ProductDetail />} />
+        <Route path="products/:idOrSlug" element={<ProductDetail />} />
         <Route path="order" element={<Enquiry />} />
         <Route path="partner" element={<Partner />} />
         <Route path="partner/dashboard" element={

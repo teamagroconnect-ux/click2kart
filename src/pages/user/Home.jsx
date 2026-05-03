@@ -203,40 +203,46 @@ export default function Home() {
 
         /* Primary btn — violet (same as Partner) */
         .hm-btn-primary {
-          display: inline-flex; align-items: center; gap: 10px;
-          background: #7c3aed; color: white;
-          padding: 15px 36px; border-radius: 8px;
-          font-size: 11px; font-weight: 700;
-          text-transform: uppercase; letter-spacing: 0.15em;
-          text-decoration: none; transition: all 0.25s;
-          box-shadow: 0 8px 30px rgba(124,58,237,0.3);
+          display: inline-flex; align-items: center; gap: 12px;
+          background: linear-gradient(135deg, #7c3aed, #6366f1); color: white;
+          padding: 16px 40px; border-radius: 14px;
+          font-size: 11px; font-weight: 800;
+          text-transform: uppercase; letter-spacing: 0.18em;
+          text-decoration: none; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          box-shadow: 0 8px 24px rgba(124,58,237,0.3);
           position: relative; overflow: hidden;
         }
         .hm-btn-primary::before {
           content: ''; position: absolute; inset: 0;
-          background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
-          opacity: 0; transition: opacity 0.25s;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+          transform: translateX(-100%); transition: transform 0.6s;
         }
-        .hm-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 14px 44px rgba(124,58,237,0.45); }
-        .hm-btn-primary:hover::before { opacity: 1; }
-        .hm-btn-primary:active { transform: scale(0.97); }
+        .hm-btn-primary:hover { 
+          transform: translateY(-4px) scale(1.02); 
+          box-shadow: 0 16px 48px rgba(124,58,237,0.45); 
+        }
+        .hm-btn-primary:hover::before { transform: translateX(100%); }
+        .hm-btn-primary:active { transform: translateY(-1px) scale(0.97); }
 
         /* Secondary btn — outlined */
         .hm-btn-secondary {
-          display: inline-flex; align-items: center; gap: 10px;
-          border: 1.5px solid rgba(124,58,237,0.3);
-          background: rgba(139,92,246,0.05);
+          display: inline-flex; align-items: center; gap: 12px;
+          border: 2px solid rgba(124,58,237,0.25);
+          background: white;
           color: #7c3aed;
-          padding: 15px 36px; border-radius: 8px;
-          font-size: 11px; font-weight: 700;
-          text-transform: uppercase; letter-spacing: 0.15em;
-          text-decoration: none; transition: all 0.25s;
+          padding: 16px 40px; border-radius: 14px;
+          font-size: 11px; font-weight: 800;
+          text-transform: uppercase; letter-spacing: 0.18em;
+          text-decoration: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 4px 12px rgba(124,58,237,0.06);
         }
         .hm-btn-secondary:hover {
-          background: rgba(139,92,246,0.1);
-          border-color: rgba(124,58,237,0.5);
-          transform: translateY(-2px);
+          background: #fdfcff;
+          border-color: #7c3aed;
+          transform: translateY(-3px);
+          box-shadow: 0 10px 24px rgba(124,58,237,0.12);
         }
+        .hm-btn-secondary:active { transform: translateY(-1px) scale(0.97); }
 
         /* Trust badge grid */
         .hm-trust-grid {

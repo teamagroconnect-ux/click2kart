@@ -87,6 +87,7 @@ export default function Login() {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
+    
   }
 
   return (
@@ -100,9 +101,9 @@ export default function Login() {
           <p className="text-sm text-gray-500 font-medium">Access your B2B dashboard and inventory.</p>
         </div>
 
-        <div className="flex gap-2 bg-gray-50 p-1 rounded-2xl">
-          <button onClick={()=>{setMode('password'); setOtpSent(false);}} className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest ${mode==='password'?'bg-white shadow border':'text-gray-600'}`} type="button">Password Login</button>
-          <button onClick={()=>{setMode('otp');}} className={`flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest ${mode==='otp'?'bg-white shadow border':'text-gray-600'}`} type="button">OTP Login</button>
+        <div className="flex gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
+          <button onClick={()=>{setMode('password'); setOtpSent(false);}} className={`flex-1 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${mode==='password'?'bg-white shadow-md border border-blue-100 text-blue-600':'text-gray-400 hover:text-gray-600'}`} type="button">Password Login</button>
+          <button onClick={()=>{setMode('otp');}} className={`flex-1 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${mode==='otp'?'bg-white shadow-md border border-blue-100 text-blue-600':'text-gray-400 hover:text-gray-600'}`} type="button">OTP Login</button>
         </div>
 
         <form className="mt-4 space-y-6" onSubmit={handleSubmit}>

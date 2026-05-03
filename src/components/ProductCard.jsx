@@ -9,10 +9,12 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
   const location = useLocation()
   const queryClient = useQueryClient()
 
+  const productIdOrSlug = p.slug || p._id
+
   const prefetchProduct = () => {
     queryClient.prefetchQuery({
-      queryKey: ['product', p._id],
-      queryFn: () => api.get(`/api/products/${p._id}`).then(res => res.data),
+      queryKey: ['product', productIdOrSlug],
+      queryFn: () => api.get(`/api/products/${productIdOrSlug}`).then(res => res.data),
       staleTime: 1000 * 60 * 5,
     })
   }
@@ -50,7 +52,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
 
   const share = (e) => {
     e.stopPropagation(); e.preventDefault()
-    const url = `${window.location.origin}/products/${p._id}`
+    const url = `${window.location.origin}/products/${productIdOrSlug}`
     if (navigator.share) navigator.share({ title: p.name, url }).catch(() => { })
     else navigator.clipboard?.writeText(url)
   }
@@ -71,7 +73,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
         cursor: 'pointer',
         position: 'relative'
       }}
-      onClick={() => navigate(`/products/${p._id}`)}
+      onClick={() => navigate(`/products/${productIdOrSlug}`)}
       onMouseEnter={prefetchProduct}
     >
       <style>{`
@@ -183,7 +185,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
         </div>
 
         <Link 
-          to={`/products/${p._id}`} 
+          to={`/products/${productIdOrSlug}`} 
           onClick={e => e.stopPropagation()} 
           style={{ 
             fontSize: '14px', fontWeight: 700, color: '#111827', 
@@ -255,7 +257,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
             onClick={async e => {
               e.stopPropagation(); e.preventDefault()
               if (!authed) { navigate('/login', { state: { from: location.pathname + location.search } }); return }
-              if (p.variants?.length > 0) { navigate(`/products/${p._id}`); return }
+              if (p.variants?.length > 0) { navigate(`/products/${productIdOrSlug}`); return }
               const ok = await addToCart(p)
               if (ok && typeof setRecOpen === 'function') {
                 try {

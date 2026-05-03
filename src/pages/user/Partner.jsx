@@ -230,26 +230,28 @@ export default function Partner() {
         /* same as Home btn-primary */
         .pr-btn {
           width: 100%;
-          display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-          background: #7c3aed; color: white;
-          border: none; border-radius: 14px; padding: 15px 24px;
-          font-size: 11px; font-weight: 700;
+          display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+          background: linear-gradient(135deg, #7c3aed, #6366f1); color: white;
+          border: none; border-radius: 16px; padding: 16px 32px;
+          font-size: 11px; font-weight: 800;
           letter-spacing: 0.15em; text-transform: uppercase;
           cursor: pointer; font-family: 'DM Sans', sans-serif;
-          transition: all 0.25s;
-          box-shadow: 0 8px 30px rgba(124,58,237,0.3);
+          transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+          box-shadow: 0 8px 24px rgba(124,58,237,0.3);
           position: relative; overflow: hidden;
         }
-        .pr-btn::before {
-          content: '';
-          position: absolute; inset: 0;
-          background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
-          opacity: 0; transition: opacity 0.25s;
+        .pr-btn::after {
+          content: ''; position: absolute; inset: 0;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+          transform: translateX(-100%); transition: transform 0.6s;
         }
-        .pr-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 40px rgba(124,58,237,0.45); }
-        .pr-btn:hover:not(:disabled)::before { opacity: 1; }
-        .pr-btn:active:not(:disabled) { transform: scale(0.97); }
-        .pr-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .pr-btn:hover:not(:disabled) { 
+          transform: translateY(-3px) scale(1.02); 
+          box-shadow: 0 16px 48px rgba(124,58,237,0.45); 
+        }
+        .pr-btn:hover:not(:disabled)::after { transform: translateX(100%); }
+        .pr-btn:active:not(:disabled) { transform: translateY(-1px) scale(0.97); }
+        .pr-btn:disabled { background: #f3f4f6; color: #d1d5db; box-shadow: none; cursor: not-allowed; }
 
         /* ── ERROR ── */
         .pr-error {

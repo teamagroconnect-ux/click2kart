@@ -20,6 +20,7 @@ export default function Products() {
   const [categories, setCategories] = useState([])
   const [subcategories, setSubcategories] = useState([])
   const [stores, setStores] = useState([])
+  const [openDropdown, setOpenDropdown] = useState(null)
   const limit = 10
   const [preview, setPreview] = useState('')
   const [showAddProduct, setShowAddProduct] = useState(false)
@@ -287,19 +288,57 @@ export default function Products() {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <div className="flex justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
-                              <button onClick={(e) => { e.stopPropagation(); setManagingVariants(p); }} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Manage Variants">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                            <div className="relative inline-block">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === p._id ? null : p._id); }}
+                                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+                                title="Actions"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <circle cx="12" cy="6" r="2" />
+                                  <circle cx="12" cy="12" r="2" />
+                                  <circle cx="12" cy="18" r="2" />
+                                </svg>
                               </button>
-                              <button onClick={(e) => { e.stopPropagation(); openEdit(p); }} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                              </button>
-                              <button onClick={(e) => { e.stopPropagation(); reduceStock(p._id); }} className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-all" title="Stock">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20 12H4" /></svg>
-                              </button>
-                              <button onClick={(e) => { e.stopPropagation(); remove(p); }} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                              </button>
+                              {openDropdown === p._id && (
+                                <>
+                                  <div 
+                                    className="fixed inset-0 z-10"
+                                    onClick={(e) => { e.stopPropagation(); setOpenDropdown(null); }}
+                                  />
+                                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-gray-100 shadow-xl z-20 py-2">
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); setManagingVariants(p); setOpenDropdown(null); }}
+                                      className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-all text-indigo-600"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                      Manage Variants
+                                    </button>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); openEdit(p); setOpenDropdown(null); }}
+                                      className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-all text-blue-600"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                      Edit Product
+                                    </button>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); reduceStock(p._id); setOpenDropdown(null); }}
+                                      className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-all text-amber-600"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" /></svg>
+                                      Reduce Stock
+                                    </button>
+                                    <div className="border-t border-gray-100 my-1" />
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); remove(p); setOpenDropdown(null); }}
+                                      className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-red-50 transition-all text-red-600"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                      Delete Product
+                                    </button>
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </td>
                         </tr>
