@@ -223,6 +223,12 @@ export default function VariantMatrix({
   const { refreshCart } = useCart()
 
   const handleBulkAdd = async () => {
+    console.log('=== VariantMatrix.handleBulkAdd called ===')
+    console.log('quantities:', quantities)
+    console.log('product:', product)
+    console.log('authed:', authed)
+    console.log('totalSelected:', totalSelected)
+    
     if (!authed) { navigate('/login'); return }
     if (totalSelected === 0) { notify('Please select at least one quantity', 'error'); return }
 
@@ -230,9 +236,12 @@ export default function VariantMatrix({
     try {
       const itemsToAdd = gridVariants
         .filter(item => item.variant && (quantities[item.variant._id] || 0) > 0)
+      
+      console.log('itemsToAdd:', itemsToAdd)
 
       for (const item of itemsToAdd) {
         const qty = Math.round(Number(quantities[item.variant._id]))
+        console.log('Calling addToCart with:', { product, variant: item.variant, requestedQuantity: qty })
         await addToCart(product, item.variant, qty)
       }
 
@@ -248,9 +257,12 @@ export default function VariantMatrix({
       notify(`Added ${totalSelected} items to cart!`, 'success')
       setQuantities({})
       
+      console.log('Calling refreshCart now...')
       await refreshCart()
+      console.log('refreshCart complete')
       
     } catch (err) {
+      console.error('handleBulkAdd error:', err)
       notify(err?.response?.data?.error || 'Failed to add items', 'error')
     } finally {
       setLoading(false)

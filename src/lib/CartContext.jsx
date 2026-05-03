@@ -69,6 +69,11 @@ export function CartProvider({ children }) {
   }, [token, user])
 
   const addToCart = async (product, variant, requestedQuantity) => {
+    console.log('=== CartContext.addToCart called ===')
+    console.log('product:', product)
+    console.log('variant:', variant)
+    console.log('requestedQuantity:', requestedQuantity)
+    
     if (mode === 'guest') {
       let success = true
       setCart(prev => {
@@ -102,15 +107,24 @@ export function CartProvider({ children }) {
     try {
       const minQty = Math.max(1, Number(product.minOrderQty || 0))
       const qtyToAdd = requestedQuantity ? Math.max(minQty, Number(requestedQuantity)) : Math.max(1, minQty)
-      const { data } = await api.post('/api/cart/add', {
+      
+      const payload = {
         productId: product._id,
         variantSku: variant?.sku,
         quantity: qtyToAdd
-      })
+      }
+      
+      console.log('Sending API request with payload:', payload)
+      
+      const { data } = await api.post('/api/cart/add', payload)
+      console.log('API response:', data)
+      
       setCart(data.items || [])
       notify('Added to cart', 'success')
       return true
     } catch (err) {
+      console.error('addToCart error:', err)
+      console.error('err.response:', err.response)
       notify(err?.response?.data?.error || 'Could not add to cart', 'error')
       return false
     }
