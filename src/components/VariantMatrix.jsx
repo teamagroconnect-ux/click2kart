@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react'
+import api from '../lib/api'
+import { useCart } from '../lib/CartContext'
 
 const normalizeAttrs = (attrs, sku = '', productAttributes = []) => {
   const result = {}
@@ -226,26 +228,25 @@ export default function VariantMatrix({
     try {
       const itemsToAdd = gridVariants
         .filter(item => item.variant && (quantities[item.variant._id] || 0) > 0)
-        .map(item => ({
-          productId: product._id,
-          variantSku: item.variant.sku,
-          quantity: quantities[item.variant._id],
-          name: product.name,
-          price: getPrice(item.variant),
-          mrp: getMrp(item.variant),
-          gst: product.gst || 0,
-          attributes: item.variant.attributes instanceof Map
-            ? Object.fromEntries(item.variant.attributes)
-            : (item.variant.attributes || {})
-        }))
+
+      const api = (await import('../lib/api')).default
 
       for (const item of itemsToAdd) {
-        await addToCart(item)
+        const qty = quantities[item.variant._id]
+        
+        try {
+          await api.post('/api/cart/add', {
+            productId: product._id,
+            variantSku: item.variant.sku,
+            quantity: qty
+          })
+        } catch (e) {
+          console.error(e)
+        }
       }
 
       if (itemsToAdd.length > 0 && setRecOpen) {
         try {
-          const api = (await import('../lib/api')).default
           const { data } = await api.get(`/api/recommendations/frequently-bought/${product._id}`)
           const filtered = (data || []).filter(i => (i._id || i.id) !== product._id)
           if (setRecItems) setRecItems(filtered)
@@ -255,8 +256,11 @@ export default function VariantMatrix({
 
       notify(`Added ${totalSelected} items to cart!`, 'success')
       setQuantities({})
+      
+      const { data } = await api.get('/api/cart')
+      
     } catch (err) {
-      notify('Failed to add items', 'error')
+      notify(err?.response?.data?.error || 'Failed to add items', 'error')
     } finally {
       setLoading(false)
     }

@@ -4,6 +4,7 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { useCart, getStockStatus } from '../../lib/CartContext'
+import { useAuth } from '../../lib/AuthContext'
 import { setSEO } from '../../shared/lib/seo.js'
 import RecommendationModal from '../../components/RecommendationModal'
 import ProductCard from '../../components/ProductCard'
@@ -13,7 +14,8 @@ import ProductCard from '../../components/ProductCard'
 ══════════════════════════════════════════ */
 export default function Catalogue({ initialBrand, brandName }) {
   const { addToCart } = useCart()
-  const authed = !!localStorage.getItem('token')
+  const { token } = useAuth()
+  const authed = !!token
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -59,7 +61,7 @@ export default function Catalogue({ initialBrand, brandName }) {
     refetch: refetchProducts,
     isPlaceholderData
   } = useInfiniteQuery({
-    queryKey: ['products', { q, brand, category, subCategory, limit }],
+    queryKey: ['products', { q, brand, category, subCategory, limit, authed }],
     queryFn: fetchProducts,
     getNextPageParam: (lastPage) => {
       const next = lastPage.page + 1
@@ -71,7 +73,7 @@ export default function Catalogue({ initialBrand, brandName }) {
   })
 
   const { data: groupedItems = [], isLoading: loadingGrouped } = useQuery({
-    queryKey: ['products-grouped', { brand, category }],
+    queryKey: ['products-grouped', { brand, category, authed }],
     queryFn: fetchGrouped,
     enabled: viewMode === 'GROUPED' || (viewMode === 'START' && !browsePath),
     staleTime: 1000 * 60 * 60, // 1 hour for grouped items
@@ -213,11 +215,15 @@ export default function Catalogue({ initialBrand, brandName }) {
   }, [q, category])
 
   const filteredSorted = useMemo(() => {
+    const safeNumber = (val) => {
+      const num = Number(val);
+      return isNaN(num) || !isFinite(num) ? 0 : num;
+    };
     const getMinPrice = (p) => {
-      if (!Array.isArray(p.variants) || p.variants.length === 0) return p.price || 0;
-      const activeVariants = p.variants.filter(v => v.isActive !== false && v.price > 0);
-      if (activeVariants.length === 0) return p.price || 0;
-      return Math.min(...activeVariants.map(v => v.price));
+      if (!Array.isArray(p.variants) || p.variants.length === 0) return safeNumber(p.price || 0);
+      const activeVariants = p.variants.filter(v => v.isActive !== false && safeNumber(v.price || 0) > 0);
+      if (activeVariants.length === 0) return safeNumber(p.price || 0);
+      return Math.min(...activeVariants.map(v => safeNumber(v.price || 0)));
     };
 
     let list = [...items]

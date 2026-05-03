@@ -26,22 +26,34 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
 
   // Find the lowest price among active variants
   const minPrice = useMemo(() => {
-    if (!Array.isArray(p.variants) || p.variants.length === 0) return p.price;
-    const activeVariants = p.variants.filter(v => v.isActive !== false && v.price > 0);
-    if (activeVariants.length === 0) return p.price;
-    return Math.min(...activeVariants.map(v => v.price));
+    const safeNumber = (val) => {
+      const num = Number(val);
+      return isNaN(num) || !isFinite(num) ? 0 : num;
+    };
+    if (!Array.isArray(p.variants) || p.variants.length === 0) return safeNumber(p.price || 0);
+    const activeVariants = p.variants.filter(v => v.isActive !== false && safeNumber(v.price || 0) > 0);
+    if (activeVariants.length === 0) return safeNumber(p.price || 0);
+    return Math.min(...activeVariants.map(v => safeNumber(v.price || 0)));
   }, [p.variants, p.price]);
 
   // Find the MRP corresponding to the min price or the highest MRP
   const displayMrp = useMemo(() => {
-    if (!Array.isArray(p.variants) || p.variants.length === 0) return p.mrp || p.price;
-    const variantWithMinPrice = p.variants.find(v => v.isActive !== false && v.price === minPrice);
-    return variantWithMinPrice?.mrp || p.mrp || minPrice;
+    const safeNumber = (val) => {
+      const num = Number(val);
+      return isNaN(num) || !isFinite(num) ? 0 : num;
+    };
+    if (!Array.isArray(p.variants) || p.variants.length === 0) return safeNumber(p.mrp || p.price || 0);
+    const variantWithMinPrice = p.variants.find(v => v.isActive !== false && safeNumber(v.price || 0) === minPrice);
+    return safeNumber(variantWithMinPrice?.mrp || p.mrp || minPrice || 0);
   }, [p.variants, minPrice, p.mrp]);
 
   const hasMultiplePrices = useMemo(() => {
+    const safeNumber = (val) => {
+      const num = Number(val);
+      return isNaN(num) || !isFinite(num) ? 0 : num;
+    };
     if (!Array.isArray(p.variants) || p.variants.length <= 1) return false;
-    const prices = new Set(p.variants.filter(v => v.isActive !== false && v.price > 0).map(v => v.price));
+    const prices = new Set(p.variants.filter(v => v.isActive !== false && safeNumber(v.price) > 0).map(v => safeNumber(v.price)));
     return prices.size > 1;
   }, [p.variants]);
 
