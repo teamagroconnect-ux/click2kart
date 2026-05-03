@@ -233,16 +233,7 @@ export default function VariantMatrix({
 
       for (const item of itemsToAdd) {
         const qty = Math.round(Number(quantities[item.variant._id]))
-        
-        try {
-          const { data } = await api.post('/api/cart/add', {
-            productId: product._id,
-            variantSku: item.variant.sku,
-            quantity: qty
-          })
-        } catch (e) {
-          console.error('Error adding item:', e.response?.data || e)
-        }
+        await addToCart(product, item.variant, qty)
       }
 
       if (itemsToAdd.length > 0 && setRecOpen) {

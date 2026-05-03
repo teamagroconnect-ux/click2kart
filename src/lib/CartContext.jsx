@@ -68,7 +68,7 @@ export function CartProvider({ children }) {
     syncServerCart()
   }, [token, user])
 
-  const addToCart = async (product, variant) => {
+  const addToCart = async (product, variant, requestedQuantity) => {
     if (mode === 'guest') {
       let success = true
       setCart(prev => {
@@ -78,7 +78,7 @@ export function CartProvider({ children }) {
         const currentQty = existing ? existing.quantity : 0
         const available = vsku ? (variant?.stock ?? 0) : (product.stock ?? 0)
         const minQty = Math.max(1, Number(product.minOrderQty || 0))
-        const addQty = existing ? 1 : Math.max(1, minQty)
+        const addQty = requestedQuantity ? Math.max(minQty, Number(requestedQuantity)) : (existing ? 1 : Math.max(1, minQty))
 
         if (currentQty + addQty > available) {
           notify(`Only ${available} units available in stock`, 'error')
@@ -101,10 +101,11 @@ export function CartProvider({ children }) {
 
     try {
       const minQty = Math.max(1, Number(product.minOrderQty || 0))
+      const qtyToAdd = requestedQuantity ? Math.max(minQty, Number(requestedQuantity)) : Math.max(1, minQty)
       const { data } = await api.post('/api/cart/add', {
         productId: product._id,
         variantSku: variant?.sku,
-        quantity: Math.max(1, minQty)
+        quantity: qtyToAdd
       })
       setCart(data.items || [])
       notify('Added to cart', 'success')

@@ -129,7 +129,7 @@ export default function Products() {
       bulkDiscountQuantity: p.bulkDiscountQuantity || '',
       bulkDiscountPriceReduction: p.bulkDiscountPriceReduction || '',
       minOrderQty: p.minOrderQty || '',
-      packSize: p.packSize || '',
+      packSize: p.packSize ?? '',
       highlights: Array.isArray(p.highlights) ? p.highlights : [],
       highlightInput: '',
       bulkTiers: Array.isArray(p.bulkTiers) ? p.bulkTiers.map(t => ({ quantity: t.quantity, priceReduction: t.priceReduction })) : [],
@@ -677,7 +677,7 @@ export default function Products() {
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Pack Size</label>
-                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 12" value={editing.packSize || ''} onChange={e => setEditing({ ...editing, packSize: e.target.value })} />
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 12" value={editing.packSize ?? ''} onChange={e => setEditing({ ...editing, packSize: e.target.value })} />
               </div>
               
               <div className="space-y-4 md:col-span-2 bg-gray-50/50 p-4 rounded-3xl border border-gray-100">
