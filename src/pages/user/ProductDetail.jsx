@@ -51,7 +51,7 @@ export default function ProductDetail() {
   const { idOrSlug } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const { addToCart } = useCart()
+  const { addToCart, refreshCart } = useCart()
   const { notify } = useToast()
   const { user } = useAuth()
 
@@ -620,9 +620,10 @@ export default function ProductDetail() {
 
     const ok = await addToCart({ ...p, minOrderQty: Math.max(minTierQty, qty) }, matchedVariant || undefined)
     if (ok) {
+      await refreshCart()
       try {
-        const { data } = await api.get(`/api/recommendations/similar/${id}`)
-        const filtered = (data || []).filter(item => (item._id || item.id) !== id)
+        const { data } = await api.get(`/api/recommendations/similar/${idOrSlug}`)
+        const filtered = (data || []).filter(item => (item._id || item.id) !== (p._id || idOrSlug))
         setRecItems(filtered)
         if (filtered.length > 0) setRecOpen(true)
       } catch { }

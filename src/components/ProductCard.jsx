@@ -3,9 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import api from '../lib/api';
 import { getCloudinaryUrl } from '../lib/cloudinary';
-import { getStockStatus } from '../lib/CartContext';
+import { getStockStatus, useCart } from '../lib/CartContext'
 
 export default function ProductCard({ p, authed, addToCart, navigate, index, setRecOpen, setRecItems }) {
+  const { refreshCart } = useCart()
   const location = useLocation()
   const queryClient = useQueryClient()
 
@@ -271,13 +272,16 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
               if (!authed) { navigate('/login', { state: { from: location.pathname + location.search } }); return }
               if (p.variants?.length > 0) { navigate(`/products/${productIdOrSlug}`); return }
               const ok = await addToCart(p)
-              if (ok && typeof setRecOpen === 'function') {
-                try {
-                  const { data } = await api.get(`/api/recommendations/frequently-bought/${p._id}`)
-                  const filtered = (data || []).filter(i => (i._id || i.id) !== p._id)
-                  setRecItems(filtered)
-                  if (filtered.length > 0) setRecOpen(true)
-                } catch { }
+              if (ok) {
+                await refreshCart()
+                if (typeof setRecOpen === 'function') {
+                  try {
+                    const { data } = await api.get(`/api/recommendations/frequently-bought/${p._id}`)
+                    const filtered = (data || []).filter(i => (i._id || i.id) !== p._id)
+                    setRecItems(filtered)
+                    if (filtered.length > 0) setRecOpen(true)
+                  } catch { }
+                }
               }
             }}
           >
