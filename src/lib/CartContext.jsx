@@ -179,6 +179,17 @@ export function CartProvider({ children }) {
     }
   }
 
+  const refreshCart = async () => {
+    if (mode === 'server' && token) {
+      try {
+        const { data } = await api.get('/api/cart')
+        setCart(data.items || [])
+      } catch (e) {
+        console.error('Failed to refresh cart', e)
+      }
+    }
+  }
+
   const cartCount = cart.reduce((total, item) => {
     // Only count items that are in stock
     const itemStock = item.variantSku 
@@ -218,7 +229,7 @@ export function CartProvider({ children }) {
   }, 0)
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal }}>
+    <CartContext.Provider value={{ cart, setCart, addToCart, removeFromCart, updateQuantity, clearCart, refreshCart, cartCount, cartTotal }}>
       {children}
     </CartContext.Provider>
   )

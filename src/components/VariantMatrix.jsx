@@ -220,6 +220,8 @@ export default function VariantMatrix({
     return sum + (getPrice(v) * (quantities[v._id] || 0))
   }, 0)
 
+  const { refreshCart } = useCart()
+
   const handleBulkAdd = async () => {
     if (!authed) { navigate('/login'); return }
     if (totalSelected === 0) { notify('Please select at least one quantity', 'error'); return }
@@ -228,8 +230,6 @@ export default function VariantMatrix({
     try {
       const itemsToAdd = gridVariants
         .filter(item => item.variant && (quantities[item.variant._id] || 0) > 0)
-
-      const api = (await import('../lib/api')).default
 
       for (const item of itemsToAdd) {
         const qty = quantities[item.variant._id]
@@ -257,7 +257,7 @@ export default function VariantMatrix({
       notify(`Added ${totalSelected} items to cart!`, 'success')
       setQuantities({})
       
-      const { data } = await api.get('/api/cart')
+      await refreshCart()
       
     } catch (err) {
       notify(err?.response?.data?.error || 'Failed to add items', 'error')
