@@ -278,7 +278,10 @@ export default function ProductDetail() {
   /* load product effect (syncing state from query) */
   useEffect(() => {
     if (p) {
-      setQty(Math.max(1, Number(p.minOrderQty || 1)))
+      const packSize = Number(p.packSize || 1)
+      const minQty = Math.max(1, Number(p.minOrderQty || 1))
+      const initialQty = Math.ceil(minQty / packSize) * packSize
+      setQty(initialQty)
       setError(null)
     }
     if (queryError) {
@@ -1979,10 +1982,21 @@ export default function ProductDetail() {
                       <div className="pd-qty">
                         <button className="pd-qty-btn"
                           disabled={qty <= Math.max(1, Number(p.minOrderQty || 1))}
-                          onClick={() => setQty(q => Math.max(Math.max(1, Number(p.minOrderQty || 1)), q - 1))}>−</button>
+                          onClick={() => {
+                            const packSize = Number(p.packSize || 1)
+                            setQty(q => Math.max(Math.max(1, Number(p.minOrderQty || 1)), q - packSize))
+                          }}>−</button>
                         <div className="pd-qty-val">{qty}</div>
-                        <button className="pd-qty-btn" onClick={() => setQty(q => q + 1)}>+</button>
+                        <button className="pd-qty-btn" onClick={() => {
+                          const packSize = Number(p.packSize || 1)
+                          setQty(q => q + packSize)
+                        }}>+</button>
                       </div>
+                      {p.packSize > 1 && (
+                        <span className="pd-save-tag">
+                          Pack size: {p.packSize} units
+                        </span>
+                      )}
                       {savingsTotal > 0 && (
                         <span className="pd-save-tag">
                           <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>

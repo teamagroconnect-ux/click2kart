@@ -1,5 +1,40 @@
 import { useState, useMemo } from 'react'
 
+const normalizeAttrs = (attrs, sku = '', productAttributes = []) => {
+  const result = {}
+  if (attrs && typeof attrs === 'object') {
+    const obj = attrs instanceof Map ? Object.fromEntries(attrs) : attrs
+    Object.entries(obj).forEach(([k, v]) => {
+      if (k && k !== 'sku') result[k.toLowerCase().trim()] = String(v || '').trim()
+    })
+  }
+
+  const targetSku = sku || (attrs && typeof attrs === 'object' ? attrs.sku : null);
+  if (Object.keys(result).length === 0 && targetSku) {
+    const parts = String(targetSku).split('-').map(s => s.trim()).filter(Boolean);
+
+    const attrKeys = (Array.isArray(productAttributes) ? productAttributes : [])
+      .map(a => a.split(':')[0]?.toLowerCase().trim())
+      .filter(Boolean);
+
+    if (parts.length >= 2) {
+      if (attrKeys.length > 0) {
+        attrKeys.forEach((key, idx) => {
+          if (parts[idx + 1]) result[key] = parts[idx + 1].toLowerCase();
+        });
+      } else {
+        if (parts.length >= 2) {
+          result.model = parts[1].toLowerCase();
+          if (parts.length >= 3) {
+            result.variant = parts.slice(2).join('-').toLowerCase();
+          }
+        }
+      }
+    }
+  }
+  return result
+}
+
 export default function VariantMatrix({
   variants = [],
   product,
@@ -14,34 +49,97 @@ export default function VariantMatrix({
   const [loading, setLoading] = useState(false)
 
   const attrs = useMemo(() => {
-    const allKeys = new Set()
-    variants.forEach(v => {
-      const a = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
-      Object.keys(a).forEach(k => allKeys.add(k))
+    const ordered = []
+    const seen = new Set()
+    const add = (rawKey) => {
+      if (!rawKey || typeof rawKey !== 'string') return
+      const lk = rawKey.toLowerCase().trim()
+      if (!lk || seen.has(lk)) return
+      seen.add(lk)
+      ordered.push(rawKey.trim())
+    }
+
+    const prodAttrs = Array.isArray(product?.attributes) ? product.attributes : []
+    prodAttrs.forEach(a => {
+      const parts = a.split(':')
+      if (parts[0]) add(parts[0].trim())
     })
-    return Array.from(allKeys)
-  }, [variants])
+
+    const extras = []
+    if (Array.isArray(variants)) {
+      variants.forEach(v => {
+        const vAttrs = normalizeAttrs(v.attributes, v.sku, product?.attributes)
+        Object.keys(vAttrs || {}).forEach(k => {
+          if (!k || typeof k !== 'string') return
+          const lk = k.toLowerCase().trim()
+          if (!seen.has(lk)) extras.push(k.trim())
+        })
+      })
+    }
+    const uniqExtra = [...new Map(extras.map(e => [e.toLowerCase().trim(), e])).values()]
+    uniqExtra.sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    uniqExtra.forEach(add)
+
+    if (ordered.length === 0 && Array.isArray(variants) && variants.length > 0) return ['Option']
+    return ordered
+  }, [variants, product?.attributes])
 
   const attrValues = useMemo(() => {
     const result = {}
     attrs.forEach(attr => {
-      const values = new Set()
-      variants.forEach(v => {
-        const a = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
-        if (a[attr]) values.add(a[attr])
+      const set = new Set()
+      const lowKey = attr.toLowerCase().trim()
+
+      if (lowKey === 'option' && Array.isArray(variants)) {
+        variants.forEach(v => {
+          if (v.isActive !== false) set.add(v.sku || v._id)
+        })
+        result[attr] = Array.from(set)
+        return
+      }
+
+      const attrEntry = (product?.attributes || []).find(a => {
+        const parts = a.split(':');
+        return parts[0]?.toLowerCase().trim() === lowKey;
       })
-      result[attr] = Array.from(values)
+      if (attrEntry) {
+        const vals = attrEntry.split(':')[1]?.split(',').filter(Boolean) || []
+        vals.forEach(v => set.add(v.trim()))
+      }
+
+      if (variants?.length) {
+        variants.forEach(v => {
+          if (v.isActive === false) return;
+          const vAttrs = normalizeAttrs(v.attributes, v.sku, product?.attributes)
+          Object.entries(vAttrs).forEach(([vk, vv]) => {
+            if (vk.toLowerCase().trim() === lowKey && vv) {
+              set.add(vv.trim())
+            }
+          })
+        })
+      }
+      result[attr] = Array.from(set)
     })
     return result
-  }, [variants, attrs])
+  }, [variants, attrs, product?.attributes])
 
   const gridVariants = useMemo(() => {
     if (attrs.length === 0) return []
     if (attrs.length === 1) {
       return attrValues[attrs[0]].map(val => {
+        const lowKey = attrs[0].toLowerCase().trim()
         const variant = variants.find(v => {
-          const a = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
-          return a[attrs[0]] === val
+          if (lowKey === 'option') {
+            return v.isActive !== false && (v.sku === val || v._id === val)
+          }
+          const vAttrs = normalizeAttrs(v.attributes, v.sku, product?.attributes)
+          let match = false
+          Object.entries(vAttrs).forEach(([vk, vv]) => {
+            if (vk.toLowerCase().trim() === lowKey && String(vv || '').toLowerCase().trim() === String(val || '').toLowerCase().trim()) {
+              match = true
+            }
+          })
+          return match
         })
         return { attrKey: attrs[0], attrValue: val, variant }
       })
@@ -52,8 +150,20 @@ export default function VariantMatrix({
       attrValues[key1].forEach(val1 => {
         attrValues[key2].forEach(val2 => {
           const variant = variants.find(v => {
-            const a = v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})
-            return a[key1] === val1 && a[key2] === val2
+            const vAttrs = normalizeAttrs(v.attributes, v.sku, product?.attributes)
+            const lowKey1 = key1.toLowerCase().trim()
+            const lowKey2 = key2.toLowerCase().trim()
+            let match1 = false
+            let match2 = false
+            Object.entries(vAttrs).forEach(([vk, vv]) => {
+              if (vk.toLowerCase().trim() === lowKey1 && String(vv || '').toLowerCase().trim() === String(val1 || '').toLowerCase().trim()) {
+                match1 = true
+              }
+              if (vk.toLowerCase().trim() === lowKey2 && String(vv || '').toLowerCase().trim() === String(val2 || '').toLowerCase().trim()) {
+                match2 = true
+              }
+            })
+            return match1 && match2
           })
           result.push({ attrKey: key1, attrValue: val1, attrKey2: key2, attrValue2: val2, variant })
         })
@@ -63,9 +173,9 @@ export default function VariantMatrix({
     return variants.map(v => ({
       variant: v,
       attrKey: attrs[0],
-      attrValue: Object.values(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {}))[0]
+      attrValue: Object.values(normalizeAttrs(v.attributes, v.sku, product?.attributes))[0]
     }))
-  }, [variants, attrs, attrValues])
+  }, [variants, attrs, attrValues, product?.attributes])
 
   const getPrice = (v) => {
     if (!v) return 0
@@ -85,10 +195,15 @@ export default function VariantMatrix({
   const handleQtyChange = (vId, val) => {
     const variant = variants.find(v => v._id === vId)
     const stock = getStock(variant)
+    const packSize = Number(product?.packSize || 1)
     let qty = Number(val) || 0
     
+    if (qty > 0 && packSize > 1) {
+      qty = Math.round(qty / packSize) * packSize
+    }
+    
     if (qty > stock) {
-      qty = stock
+      qty = Math.floor(stock / packSize) * packSize
       notify(`Only ${stock} units available for this variant`, 'warning')
     }
     if (qty < 0) qty = 0
@@ -323,12 +438,18 @@ export default function VariantMatrix({
                       type="number"
                       className="vm-qty-input"
                       min={0}
+                      step={product?.packSize || 1}
                       max={stock}
                       value={quantities[v._id] || ''}
                       onChange={e => handleQtyChange(v._id, e.target.value)}
                       disabled={isOut || !authed}
                       placeholder="0"
                     />
+                    {product?.packSize > 1 && (
+                      <div style={{ fontSize: '8px', color: '#9ca3af', marginTop: '4px' }}>
+                        Pack: {product.packSize}
+                      </div>
+                    )}
                   </td>
                 </tr>
               )
@@ -374,12 +495,18 @@ export default function VariantMatrix({
                                 className="vm-qty-input"
                                 style={{ marginTop: '4px', width: '50px' }}
                                 min={0}
+                                step={product?.packSize || 1}
                                 max={stock}
                                 value={quantities[v._id] || ''}
                                 onChange={e => handleQtyChange(v._id, e.target.value)}
                                 disabled={isOut || !authed}
                                 placeholder="0"
                               />
+                              {product?.packSize > 1 && (
+                                <div style={{ fontSize: '7px', color: '#9ca3af', marginTop: '2px' }}>
+                                  Pack: {product.packSize}
+                                </div>
+                              )}
                             </>
                           ) : (
                             <span style={{ fontSize: '10px', color: '#d1d5db' }}>—</span>
@@ -429,12 +556,18 @@ export default function VariantMatrix({
                   className="vm-qty-input"
                   style={{ marginTop: '8px', width: '100%' }}
                   min={0}
+                  step={product?.packSize || 1}
                   max={stock}
                   value={quantities[v._id] || ''}
                   onChange={e => handleQtyChange(v._id, e.target.value)}
                   disabled={isOut || !authed}
                   placeholder="Enter qty"
                 />
+                {product?.packSize > 1 && (
+                  <div style={{ fontSize: '8px', color: '#9ca3af', marginTop: '4px' }}>
+                    Pack size: {product.packSize} units
+                  </div>
+                )}
               </div>
             )
           })}
