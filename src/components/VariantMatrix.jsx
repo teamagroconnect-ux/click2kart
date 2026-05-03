@@ -232,16 +232,16 @@ export default function VariantMatrix({
         .filter(item => item.variant && (quantities[item.variant._id] || 0) > 0)
 
       for (const item of itemsToAdd) {
-        const qty = quantities[item.variant._id]
+        const qty = Math.round(Number(quantities[item.variant._id]))
         
         try {
-          await api.post('/api/cart/add', {
+          const { data } = await api.post('/api/cart/add', {
             productId: product._id,
             variantSku: item.variant.sku,
             quantity: qty
           })
         } catch (e) {
-          console.error(e)
+          console.error('Error adding item:', e.response?.data || e)
         }
       }
 
