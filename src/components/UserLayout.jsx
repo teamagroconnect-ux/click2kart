@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import { useCart } from '../lib/CartContext'
 import { CONFIG } from '../shared/lib/config.js'
+import logoImg from '../click2kart.png'
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -28,28 +29,30 @@ export default function UserLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-xl shadow-sm">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/90 backdrop-blur-xl shadow-sm">
         <div className="max-w-7xl mx-auto px-6 md:px-10">
-          <div className="flex items-center justify-between h-24 gap-8">
+          <div className="flex items-center justify-between h-14 md:h-16 gap-8">
             <Link to="/" className="flex items-center group">
-              <div className="relative h-16 w-16 rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px] shadow-xl shadow-indigo-100 transition-all group-hover:scale-105">
-                <div className="absolute inset-[2px] bg-white rounded-[22px]" />
-                <div className="relative h-full w-full flex items-center justify-center p-1.5">
+              <div className="relative h-10 w-10 md:h-12 md:w-12 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px] shadow-lg shadow-indigo-100 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
+                <div className="absolute inset-[2px] bg-white rounded-full" />
+                <div className="relative h-full w-full flex items-center justify-center p-1 overflow-hidden rounded-full">
                   <img
-                    src="/logo.png"
+                    src={logoImg}
                     alt="Click2Kart"
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110"
                   />
                 </div>
               </div>
-              <div className="flex flex-col ml-4">
-                <span className="text-2xl font-black tracking-tighter text-gray-900 leading-none">
+              <div className="flex flex-col ml-3 md:ml-4">
+                <span className="text-lg md:text-xl font-black tracking-tighter text-gray-900 leading-none">
                   CLICK2<span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">KART</span>
                 </span>
-                <span className="mt-1 inline-flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
-                  <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-gray-500">PREMIUM B2B SUPPLY CHAIN</span>
-                </span>
+                <div className="mt-0.5 flex items-center gap-1.5">
+                  <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse"></div>
+                  <span className="text-[7px] md:text-[8px] font-bold uppercase tracking-[0.3em] text-gray-400">
+                    Premium B2B Hub
+                  </span>
+                </div>
               </div>
             </Link>
 

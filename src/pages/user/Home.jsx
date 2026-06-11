@@ -127,24 +127,40 @@ export default function Home() {
           content: '';
           position: fixed; inset: 0;
           background-image:
-            linear-gradient(rgba(139,92,246,0.02) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(139,92,246,0.02) 1px, transparent 1px);
-          background-size: 80px 80px;
+            radial-gradient(rgba(139,92,246,0.06) 1px, transparent 1px);
+          background-size: 40px 40px;
           pointer-events: none; z-index: 0;
         }
 
-        /* violet glow blobs — light, not dark */
+        @keyframes hmFloat {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-20px); }
+        }
+        .hm-float {
+          animation: hmFloat 6s ease-in-out infinite;
+        }
+
+        /* enhanced violet glow blobs */
         .hm-blob1 {
-          position: fixed; top: -300px; left: 50%; transform: translateX(-50%);
-          width: 1200px; height: 800px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(139,92,246,0.04), transparent 70%);
+          position: fixed; top: -400px; left: 50%; transform: translateX(-50%);
+          width: 1600px; height: 1000px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(139,92,246,0.12), transparent 70%);
           pointer-events: none; z-index: 0;
+          filter: blur(80px);
         }
         .hm-blob2 {
-          position: fixed; bottom: -200px; right: -150px;
-          width: 600px; height: 600px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(109,40,217,0.06), transparent 65%);
+          position: fixed; bottom: -300px; right: -250px;
+          width: 800px; height: 800px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(109,40,217,0.15), transparent 65%);
           pointer-events: none; z-index: 0;
+          filter: blur(60px);
+        }
+        .hm-blob3 {
+          position: fixed; top: 20%; left: -200px;
+          width: 600px; height: 600px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(236,72,153,0.08), transparent 60%);
+          pointer-events: none; z-index: 0;
+          filter: blur(50px);
         }
 
         /* ────────────── HERO ────────────── */
@@ -153,20 +169,22 @@ export default function Home() {
           min-height: 100svh;
           display: flex; flex-direction: column;
           align-items: center; justify-content: center;
-          padding: 120px 24px 80px;
+          padding: 160px 24px 120px;
           overflow: hidden; z-index: 1;
         }
 
-        /* same eyebrow pill as Partner */
+        /* enhanced eyebrow pill */
         .hm-eyebrow {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 7px 20px; border-radius: 100px;
-          background: rgba(139,92,246,0.1);
-          border: 1px solid rgba(139,92,246,0.25);
+          display: inline-flex; align-items: center; gap: 12px;
+          padding: 10px 28px; border-radius: 100px;
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(139,92,246,0.3);
           color: #7c3aed;
-          font-size: 9px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
-          margin-bottom: 28px;
-          animation: hmFadeUp 0.7s ease both;
+          font-size: 10px; font-weight: 800; letter-spacing: 0.3em; text-transform: uppercase;
+          margin-bottom: 40px;
+          animation: hmFadeUp 0.8s ease both;
+          box-shadow: 0 10px 30px rgba(124,58,237,0.15);
         }
         .hm-eyebrow-dot {
           width: 6px; height: 6px; border-radius: 50%;
@@ -175,24 +193,38 @@ export default function Home() {
         }
         @keyframes hmPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
 
-        /* Bebas Neue title — dark text on light bg */
+        /* Bebas Neue title with gradient */
         .hm-title {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(64px, 13vw, 150px);
-          line-height: 0.92; text-align: center;
-          letter-spacing: 0.01em;
-          color: #1e1b2e;
-          margin-bottom: 24px;
-          animation: hmFadeUp 0.7s 0.1s ease both;
+          font-size: clamp(80px, 15vw, 180px);
+          line-height: 0.85; text-align: center;
+          letter-spacing: -0.02em;
+          margin-bottom: 32px;
+          animation: hmFadeUp 0.8s 0.1s ease both;
+          filter: drop-shadow(0 20px 40px rgba(0,0,0,0.1));
         }
-        .hm-title .accent { color: #7c3aed; }
+        .hm-title .accent {
+          background: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #ec4899 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          position: relative;
+        }
+        .hm-title .accent::after {
+          content: '';
+          position: absolute;
+          bottom: 10px; left: 0; width: 100%; height: 8px;
+          background: rgba(124,58,237,0.15);
+          z-index: -1;
+          border-radius: 4px;
+        }
 
         .hm-sub {
-          font-size: clamp(15px, 2vw, 19px);
-          color: #6b7280; font-weight: 300;
-          max-width: 540px; text-align: center; line-height: 1.7;
-          margin-bottom: 44px;
-          animation: hmFadeUp 0.7s 0.25s ease both;
+          font-size: clamp(18px, 2.5vw, 22px);
+          color: #4b5563; font-weight: 400;
+          max-width: 700px; text-align: center; line-height: 1.6;
+          margin-bottom: 60px;
+          animation: hmFadeUp 0.8s 0.25s ease both;
         }
 
         .hm-ctas {
@@ -201,75 +233,80 @@ export default function Home() {
         }
         @media(min-width:480px) { .hm-ctas { flex-direction: row; } }
 
-        /* Primary btn — violet (same as Partner) */
+        /* Enhanced Primary btn */
         .hm-btn-primary {
-          display: inline-flex; align-items: center; gap: 12px;
-          background: linear-gradient(135deg, #7c3aed, #6366f1); color: white;
-          padding: 16px 40px; border-radius: 14px;
-          font-size: 11px; font-weight: 800;
-          text-transform: uppercase; letter-spacing: 0.18em;
-          text-decoration: none; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-          box-shadow: 0 8px 24px rgba(124,58,237,0.3);
+          display: inline-flex; align-items: center; gap: 14px;
+          background: linear-gradient(135deg, #7c3aed, #6366f1, #ec4899);
+          background-size: 200% auto;
+          color: white;
+          padding: 20px 52px; border-radius: 20px;
+          font-size: 12px; font-weight: 900;
+          text-transform: uppercase; letter-spacing: 0.25em;
+          text-decoration: none; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          box-shadow: 0 15px 45px rgba(124,58,237,0.4);
           position: relative; overflow: hidden;
         }
-        .hm-btn-primary::before {
-          content: ''; position: absolute; inset: 0;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-          transform: translateX(-100%); transition: transform 0.6s;
-        }
         .hm-btn-primary:hover { 
-          transform: translateY(-4px) scale(1.02); 
-          box-shadow: 0 16px 48px rgba(124,58,237,0.45); 
+          transform: translateY(-8px) scale(1.05); 
+          box-shadow: 0 25px 70px rgba(124,58,237,0.5); 
+          background-position: right center;
         }
-        .hm-btn-primary:hover::before { transform: translateX(100%); }
-        .hm-btn-primary:active { transform: translateY(-1px) scale(0.97); }
+        .hm-btn-primary:active { transform: translateY(-2px) scale(0.98); }
 
-        /* Secondary btn — outlined */
+        /* Enhanced Secondary btn */
         .hm-btn-secondary {
-          display: inline-flex; align-items: center; gap: 12px;
-          border: 2px solid rgba(124,58,237,0.25);
-          background: white;
+          display: inline-flex; align-items: center; gap: 14px;
+          border: 2px solid rgba(124,58,237,0.4);
+          background: rgba(255, 255, 255, 0.6);
+          backdrop-filter: blur(10px);
           color: #7c3aed;
-          padding: 16px 40px; border-radius: 14px;
-          font-size: 11px; font-weight: 800;
-          text-transform: uppercase; letter-spacing: 0.18em;
-          text-decoration: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 4px 12px rgba(124,58,237,0.06);
+          padding: 20px 52px; border-radius: 20px;
+          font-size: 12px; font-weight: 900;
+          text-transform: uppercase; letter-spacing: 0.25em;
+          text-decoration: none; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .hm-btn-secondary:hover {
-          background: #fdfcff;
+          background: #ffffff;
           border-color: #7c3aed;
-          transform: translateY(-3px);
-          box-shadow: 0 10px 24px rgba(124,58,237,0.12);
+          transform: translateY(-6px);
+          box-shadow: 0 15px 45px rgba(124,58,237,0.15);
         }
-        .hm-btn-secondary:active { transform: translateY(-1px) scale(0.97); }
+        .hm-btn-secondary:active { transform: translateY(-1px) scale(0.98); }
 
-        /* Trust badge grid */
+        /* Enhanced Trust badge grid */
         .hm-trust-grid {
           display: grid; grid-template-columns: repeat(2, 1fr);
-          gap: 12px; width: 100%; max-width: 880px; margin-top: 72px;
-          animation: hmFadeUp 0.7s 0.55s ease both;
+          gap: 20px; width: 100%; max-width: 1000px; margin-top: 100px;
+          animation: hmFadeUp 0.8s 0.55s ease both;
         }
-        @media(min-width:640px) { .hm-trust-grid { grid-template-columns: repeat(4,1fr); gap: 14px; } }
+        @media(min-width:640px) { .hm-trust-grid { grid-template-columns: repeat(4,1fr); gap: 24px; } }
 
-        /* same white card as Partner trust badges */
         .hm-trust-card {
-          background: white;
-          border: 1px solid rgba(139,92,246,0.12);
-          border-radius: 18px; padding: 22px 18px;
-          transition: all 0.3s; position: relative; overflow: hidden;
-          box-shadow: 0 2px 12px rgba(139,92,246,0.05);
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(139,92,246,0.2);
+          border-radius: 28px; padding: 32px 24px;
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          position: relative; overflow: hidden;
+          box-shadow: 0 10px 30px rgba(139,92,246,0.05);
+          text-align: center;
         }
-        .hm-trust-card::before {
-          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.3), transparent);
-          opacity: 0; transition: opacity 0.3s;
+        .hm-trust-card:hover {
+          border-color: rgba(124,58,237,0.5);
+          transform: translateY(-12px);
+          box-shadow: 0 30px 60px rgba(124,58,237,0.15);
+          background: #ffffff;
         }
-        .hm-trust-card:hover { border-color: rgba(124,58,237,0.25); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(124,58,237,0.1); }
-        .hm-trust-card:hover::before { opacity: 1; }
-        .hm-trust-icon { font-size: 26px; margin-bottom: 12px; display: block; }
-        .hm-trust-title { font-size: 13px; font-weight: 700; color: #1e1b2e; margin-bottom: 5px; }
-        .hm-trust-desc { font-size: 11px; color: #9ca3af; line-height: 1.5; font-weight: 400; }
+        .hm-trust-icon { 
+          font-size: 40px; margin-bottom: 20px; display: block;
+          filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
+          transition: transform 0.4s;
+        }
+        .hm-trust-card:hover .hm-trust-icon {
+          transform: scale(1.2) rotate(5deg);
+        }
+        .hm-trust-title { font-size: 15px; font-weight: 900; color: #1e1b2e; margin-bottom: 8px; letter-spacing: -0.01em; }
+        .hm-trust-desc { font-size: 13px; color: #6b7280; line-height: 1.5; font-weight: 500; }
 
         /* scroll hint */
         .hm-scroll-hint {
@@ -322,36 +359,38 @@ export default function Home() {
         .hm-brand-logo-card {
           position: relative;
           aspect-ratio: 1;
-          border-radius: 22px;
-          background: linear-gradient(145deg, #ffffff 0%, #faf8ff 100%);
-          border: 1px solid rgba(124,58,237,0.1);
-          box-shadow: 0 4px 20px rgba(76,29,149,0.06), 0 1px 0 rgba(255,255,255,0.9) inset;
+          border-radius: 24px;
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(139, 92, 246, 0.15);
+          box-shadow: 0 10px 30px rgba(76, 29, 149, 0.05);
           display: flex; align-items: center; justify-content: center;
-          padding: 18px 16px;
+          padding: 24px;
           text-decoration: none;
           overflow: hidden;
-          transition: transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1), box-shadow 0.35s, border-color 0.25s;
+          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .hm-brand-logo-card::after {
           content: ''; position: absolute; inset: 0;
-          background: radial-gradient(circle at 30% 20%, rgba(124,58,237,0.08), transparent 55%);
-          pointer-events: none; opacity: 0; transition: opacity 0.35s;
+          background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), transparent);
+          opacity: 0; transition: opacity 0.5s;
         }
         .hm-brand-logo-card:hover {
-          transform: translateY(-5px) scale(1.02);
-          border-color: rgba(124,58,237,0.28);
-          box-shadow: 0 16px 40px rgba(124,58,237,0.14), 0 8px 24px rgba(76,29,149,0.08);
+          transform: translateY(-12px) scale(1.05);
+          border-color: rgba(124, 58, 237, 0.4);
+          box-shadow: 0 30px 60px rgba(124, 58, 237, 0.15);
+          background: #ffffff;
         }
         .hm-brand-logo-card:hover::after { opacity: 1; }
         .hm-brand-logo-card img {
           max-width: 100%; max-height: 100%; width: auto; height: auto;
           object-fit: contain;
-          filter: grayscale(0.15) opacity(0.92);
-          transition: filter 0.35s, transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+          filter: grayscale(1) opacity(0.6);
+          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .hm-brand-logo-card:hover img {
           filter: grayscale(0) opacity(1);
-          transform: scale(1.06);
+          transform: scale(1.15);
         }
         .hm-brand-logo-fallback {
           font-size: 36px; line-height: 1; opacity: 0.35;
@@ -360,8 +399,13 @@ export default function Home() {
         /* ────────────── STATS BAND ────────────── */
         .hm-stats-section {
           position: relative; z-index: 1;
-          background: #7c3aed;
-          padding: 56px 24px;
+          background: linear-gradient(135deg, #1e1b2e 0%, #312e81 100%);
+          padding: 80px 24px;
+          overflow: hidden;
+        }
+        .hm-stats-section::before {
+          content: ''; position: absolute; inset: 0;
+          background-image: radial-gradient(circle at 50% 50%, rgba(124,58,237,0.15) 0%, transparent 70%);
         }
 
         /* ── TICKER ── */
@@ -414,9 +458,13 @@ export default function Home() {
         .hm-stat { text-align: center; opacity: 0; animation: hmFadeUp 0.6s ease both; }
         .hm-stat-num {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(40px, 6vw, 64px);
-          color: white; line-height: 1; letter-spacing: 0.02em;
-          text-shadow: 0 2px 20px rgba(255,255,255,0.2);
+          font-size: clamp(50px, 7vw, 84px);
+          background: linear-gradient(to bottom, #ffffff, #94a3b8);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          line-height: 1; letter-spacing: 0.02em;
+          filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
         }
         .hm-stat-label {
           font-size: 10px; font-weight: 700; text-transform: uppercase;
@@ -695,15 +743,16 @@ export default function Home() {
       <div className="hm-root">
         <div className="hm-blob1" />
         <div className="hm-blob2" />
+        <div className="hm-blob3" />
 
         {/* ── HERO ── */}
         <section className="hm-hero">
-          <div className="hm-eyebrow">
+          <div className="hm-eyebrow hm-float">
             <span className="hm-eyebrow-dot" />
             India's Trusted B2B Tech Hub
           </div>
 
-          <h1 className="hm-title">
+          <h1 className="hm-title hm-float" style={{ animationDelay: '0.2s' }}>
             <span style={{ display: 'block' }}>{line1}</span>
             <span style={{ display: 'block' }} className="accent">{line2}</span>
           </h1>
@@ -745,12 +794,12 @@ export default function Home() {
 
         {/* ── BRANDS SECTION ── */}
         {brands.length > 0 && (
-          <section className="hm-brands-section" style={{ padding: '88px 20px 96px', background: 'linear-gradient(180deg, #faf8ff 0%, #f3efff 50%, #faf8ff 100%)', position: 'relative', zIndex: 1 }}>
+          <section className="hm-brands-section" style={{ padding: '120px 20px', background: 'linear-gradient(180deg, #ffffff 0%, #f9f7ff 50%, #ffffff 100%)', position: 'relative', zIndex: 1 }}>
             <div className="hm-brands-inner">
               <div className="hm-brands-head">
-                <div className="hm-brands-kicker">Trusted supply</div>
-                <h2 className="hm-brands-title">Authorized brand partners</h2>
-                <p className="hm-brands-sub">Tap a mark to open that brand&apos;s wholesale catalogue — logos only, same verified inventory.</p>
+                <div className="hm-brands-kicker">Global Partners</div>
+                <h2 className="hm-brands-title">Authorized Brand Network</h2>
+                <p className="hm-brands-sub">Direct access to authentic inventory from India's most trusted electronics brands.</p>
               </div>
               <div className="hm-brands-grid">
                 {brands.map(b => (
