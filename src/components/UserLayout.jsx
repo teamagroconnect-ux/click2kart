@@ -33,14 +33,12 @@ export default function UserLayout() {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex items-center justify-between h-14 sm:h-14 md:h-16 gap-4">
             <Link to="/" className="flex items-center group">
-              <div className="relative h-10 w-10 sm:h-12 sm:w-12 md:h-13 md:w-13 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[1px] shadow-lg shadow-indigo-100 transition-all duration-300">
-                <div className="absolute inset-0 rounded-full overflow-hidden">
-                  <img
-                    src={logoImg}
-                    alt="Click2Kart"
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+              <div className="relative h-10 w-10 sm:h-12 sm:w-12 md:h-13 md:w-13 rounded-full bg-violet-500 shadow-lg shadow-violet-200 p-1.5 transition-all duration-300 group-hover:scale-105">
+                <img
+                  src={logoImg}
+                  alt="Click2Kart"
+                  className="h-full w-full object-contain rounded-full"
+                />
               </div>
               <div className="flex flex-col ml-2 md:ml-2.5">
                 <span className="text-lg sm:text-xl md:text-2xl font-black tracking-tighter text-gray-900 leading-none">
@@ -179,32 +177,34 @@ export default function UserLayout() {
         </div>
       </nav>
 
-      <footer className="border-t border-gray-50 bg-white py-12 pb-32 lg:pb-12">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
-          <div className="flex flex-col md:flex-row items-center gap-6">
-            <img src={logoImg} alt="Click2Kart" className="h-10 w-auto rounded-xl border border-gray-100 shadow-sm" />
-            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart B2B</span>
-            <div className="flex gap-4 items-center">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-              <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Store Status: Online</span>
+      {location.pathname === '/' && (
+        <footer className="border-t border-gray-50 bg-white py-12 pb-32 lg:pb-12">
+          <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <img src={logoImg} alt="Click2Kart" className="h-10 w-auto rounded-xl border border-gray-100 shadow-sm" />
+              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart B2B</span>
+              <div className="flex gap-4 items-center">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Store Status: Online</span>
+              </div>
+            </div>
+            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
+              <a 
+                href={`mailto:${CONFIG.SUPPORT_EMAIL}`} 
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-700 hover:bg-white transition-all"
+              >
+                <span>Support</span>
+                <span className="text-violet-600">{CONFIG.SUPPORT_EMAIL}</span>
+              </a>
+              <div className="hidden md:block h-8 w-[1px] bg-gray-100"></div>
+              <div className="flex gap-6 md:gap-8">
+                <Link to="/privacy-policy" className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors">Privacy Policy</Link>
+                <Link to="/terms-of-service" className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors">Terms of Service</Link>
+              </div>
             </div>
           </div>
-          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
-            <a 
-              href={`mailto:${CONFIG.SUPPORT_EMAIL}`} 
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-700 hover:bg-white transition-all"
-            >
-              <span>Support</span>
-              <span className="text-violet-600">{CONFIG.SUPPORT_EMAIL}</span>
-            </a>
-            <div className="hidden md:block h-8 w-[1px] bg-gray-100"></div>
-            <div className="flex gap-6 md:gap-8">
-              <Link to="/privacy-policy" className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors">Privacy Policy</Link>
-              <Link to="/terms-of-service" className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors">Terms of Service</Link>
-            </div>
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
     </div>
   )
 }
