@@ -359,38 +359,45 @@ export default function Home() {
         .hm-brand-logo-card {
           position: relative;
           aspect-ratio: 1;
-          border-radius: 24px;
-          background: rgba(255, 255, 255, 0.8);
-          backdrop-filter: blur(8px);
-          border: 1px solid rgba(139, 92, 246, 0.15);
-          box-shadow: 0 10px 30px rgba(76, 29, 149, 0.05);
+          border-radius: 28px;
+          background: #ffffff;
+          border: 1px solid rgba(139, 92, 246, 0.1);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
           display: flex; align-items: center; justify-content: center;
           padding: 24px;
           text-decoration: none;
           overflow: hidden;
-          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .hm-brand-logo-card::after {
-          content: ''; position: absolute; inset: 0;
-          background: linear-gradient(135deg, rgba(124, 58, 237, 0.05), transparent);
-          opacity: 0; transition: opacity 0.5s;
+        .hm-brand-logo-card::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          border-radius: 28px;
+          padding: 2px;
+          background: linear-gradient(135deg, #7c3aed, #ec4899);
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          opacity: 0;
+          transition: opacity 0.4s;
         }
         .hm-brand-logo-card:hover {
-          transform: translateY(-12px) scale(1.05);
-          border-color: rgba(124, 58, 237, 0.4);
-          box-shadow: 0 30px 60px rgba(124, 58, 237, 0.15);
-          background: #ffffff;
+          transform: translateY(-10px) scale(1.05);
+          box-shadow: 0 25px 50px -12px rgba(124, 58, 237, 0.15);
+          border-color: transparent;
         }
-        .hm-brand-logo-card:hover::after { opacity: 1; }
+        .hm-brand-logo-card:hover::before {
+          opacity: 1;
+        }
         .hm-brand-logo-card img {
           max-width: 100%; max-height: 100%; width: auto; height: auto;
           object-fit: contain;
-          filter: grayscale(1) opacity(0.6);
-          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         .hm-brand-logo-card:hover img {
-          filter: grayscale(0) opacity(1);
-          transform: scale(1.15);
+          transform: scale(1.1);
         }
         .hm-brand-logo-fallback {
           font-size: 36px; line-height: 1; opacity: 0.35;
@@ -721,7 +728,6 @@ export default function Home() {
 
         @media(max-width:768px) {
           .hm-steps-section { margin-bottom: 60px; }
-        }
           .hm-cta-section { margin-bottom: 100px; }
           .hm-cta-inner { padding: 40px 20px; }
           .hm-cta-title { font-size: clamp(32px, 9vw, 52px); }
@@ -794,12 +800,13 @@ export default function Home() {
 
         {/* ── BRANDS SECTION ── */}
         {brands.length > 0 && (
-          <section className="hm-brands-section" style={{ padding: '120px 20px', background: 'linear-gradient(180deg, #ffffff 0%, #f9f7ff 50%, #ffffff 100%)', position: 'relative', zIndex: 1 }}>
+          <section className="hm-brands-section" style={{ padding: '120px 20px', background: '#ffffff', position: 'relative', zIndex: 1 }}>
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
             <div className="hm-brands-inner">
               <div className="hm-brands-head">
-                <div className="hm-brands-kicker">Global Partners</div>
-                <h2 className="hm-brands-title">Authorized Brand Network</h2>
-                <p className="hm-brands-sub">Direct access to authentic inventory from India's most trusted electronics brands.</p>
+                <div className="hm-brands-kicker">Industry Leaders</div>
+                <h2 className="hm-brands-title">Global Technology Partners</h2>
+                <p className="hm-brands-sub">Seamlessly procure inventory from world-renowned electronics manufacturers through our verified network.</p>
               </div>
               <div className="hm-brands-grid">
                 {brands.map(b => (

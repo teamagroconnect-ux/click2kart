@@ -29,13 +29,13 @@ export default function UserLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/90 backdrop-blur-xl shadow-sm">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-xl shadow-sm">
         <div className="max-w-7xl mx-auto px-6 md:px-10">
-          <div className="flex items-center justify-between h-14 md:h-16 gap-8">
+          <div className="flex items-center justify-between h-16 md:h-20 gap-8">
             <Link to="/" className="flex items-center group">
-              <div className="relative h-10 w-10 md:h-12 md:w-12 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px] shadow-lg shadow-indigo-100 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
+              <div className="relative h-11 w-11 md:h-14 md:w-14 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px] shadow-lg shadow-indigo-100 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
                 <div className="absolute inset-[2px] bg-white rounded-full" />
-                <div className="relative h-full w-full flex items-center justify-center p-1 overflow-hidden rounded-full">
+                <div className="relative h-full w-full flex items-center justify-center p-1.5 overflow-hidden rounded-full">
                   <img
                     src={logoImg}
                     alt="Click2Kart"
@@ -44,13 +44,13 @@ export default function UserLayout() {
                 </div>
               </div>
               <div className="flex flex-col ml-3 md:ml-4">
-                <span className="text-lg md:text-xl font-black tracking-tighter text-gray-900 leading-none">
+                <span className="text-xl md:text-2xl font-black tracking-tighter text-gray-900 leading-none">
                   CLICK2<span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">KART</span>
                 </span>
-                <div className="mt-0.5 flex items-center gap-1.5">
-                  <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse"></div>
-                  <span className="text-[7px] md:text-[8px] font-bold uppercase tracking-[0.3em] text-gray-400">
-                    Premium B2B Hub
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="text-[9px] md:text-[10px] font-extrabold uppercase tracking-[0.25em] text-gray-500">
+                    India's Tech Ecosystem
                   </span>
                 </div>
               </div>
@@ -68,10 +68,10 @@ export default function UserLayout() {
                   to={link.to}
                   className={({ isActive }) =>
                     classNames(
-                      'px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-300',
+                      'px-5 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] transition-all duration-300',
                       isActive
-                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl shadow-indigo-200 scale-105'
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:border hover:border-indigo-100'
+                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-100 scale-105'
+                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                     )
                   }
                 >
@@ -83,15 +83,15 @@ export default function UserLayout() {
             <div className="flex items-center gap-4">
               <Link
                 to="/cart"
-                className="group relative h-14 w-14 flex items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 hover:bg-white hover:shadow-2xl hover:shadow-indigo-100 transition-all active:scale-95"
+                className="group relative h-11 w-11 md:h-12 md:w-12 flex items-center justify-center rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-xl transition-all active:scale-95"
               >
-                <svg className="w-7 h-7 text-gray-700 group-hover:text-indigo-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-700 group-hover:text-indigo-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M7 6h13l-1.2 7H9.2L7 6Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="10" cy="19" r="1.8" fill="currentColor" />
-                  <circle cx="17" cy="19" r="1.8" fill="currentColor" />
+                  <circle cx="10" cy="19" r="1.5" fill="currentColor" />
+                  <circle cx="17" cy="19" r="1.5" fill="currentColor" />
                 </svg>
                 {cartCount > 0 && (
-                  <span className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center text-[11px] font-black text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg shadow-indigo-200 border-2 border-white">
+                  <span className="absolute -top-1.5 -right-1.5 h-5 w-5 flex items-center justify-center text-[10px] font-black text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg shadow-md border-2 border-white">
                     {cartCount}
                   </span>
                 )}
@@ -180,17 +180,17 @@ export default function UserLayout() {
         </div>
       </nav>
 
-      <footer className="hidden lg:block border-t border-gray-50 bg-white py-12">
-        <div className="max-w-7xl mx-auto px-10 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="flex items-center gap-6">
-            <img src="/logo.png" alt="Click2Kart" className="h-10 w-auto rounded-xl border border-gray-100 shadow-sm" />
+      <footer className="border-t border-gray-50 bg-white py-12 pb-32 lg:pb-12">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <img src={logoImg} alt="Click2Kart" className="h-10 w-auto rounded-xl border border-gray-100 shadow-sm" />
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart B2B</span>
             <div className="flex gap-4 items-center">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
               <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Store Status: Online</span>
             </div>
           </div>
-          <div className="flex items-center gap-8">
+          <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
             <a 
               href={`mailto:${CONFIG.SUPPORT_EMAIL}`} 
               className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-700 hover:bg-white transition-all"
@@ -198,8 +198,8 @@ export default function UserLayout() {
               <span>Support</span>
               <span className="text-violet-600">{CONFIG.SUPPORT_EMAIL}</span>
             </a>
-            <div className="h-8 w-[1px] bg-gray-100"></div>
-            <div className="flex gap-8">
+            <div className="hidden md:block h-8 w-[1px] bg-gray-100"></div>
+            <div className="flex gap-6 md:gap-8">
               <Link to="/privacy-policy" className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors">Privacy Policy</Link>
               <Link to="/terms-of-service" className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors">Terms of Service</Link>
             </div>
