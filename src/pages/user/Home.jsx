@@ -995,6 +995,42 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Partner Login CTA */}
+        <section className="py-12 sm:py-16 md:py-20 relative z-1" style={{ background: 'linear-gradient(135deg, #f9f7ff 0%, #ffffff 100%)' }}>
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-indigo-200 bg-white shadow-sm mb-6">
+              <span className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+              <span className="text-[11px] font-black uppercase tracking-[0.25em] text-gray-500">Partner Program</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 mb-3 tracking-tight">
+              Are You a Brand or Distributor?
+            </h2>
+            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto mb-8">
+              Join our partner network and reach 500+ active B2B buyers. List your products, manage orders, and grow your business with Click2Kart.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link
+                to="/partner"
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-[12px] font-black uppercase tracking-[0.25em] shadow-xl shadow-violet-200 hover:shadow-2xl hover:scale-[1.03] transition-all duration-300"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-2m2 0h-2m-6 0H5a2 2 0 01-2-2v-3m10-7h4m-4 0h-4m4 0h-4M9 13h6" />
+                </svg>
+                Partner Login & Apply
+              </Link>
+              <a
+                href="mailto:support@click2kart.com"
+                className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-2xl border border-gray-200 bg-white text-gray-700 text-[12px] font-black uppercase tracking-[0.2em] hover:border-indigo-200 hover:text-indigo-600 hover:shadow-lg transition-all duration-300"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Get In Touch
+              </a>
+            </div>
+          </div>
+        </section>
+
       </div>
     </>
   )

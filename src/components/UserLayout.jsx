@@ -33,12 +33,12 @@ export default function UserLayout() {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex items-center justify-between h-14 sm:h-14 md:h-16 gap-4">
             <Link to="/" className="flex items-center group">
-              <div className="relative h-10 w-10 sm:h-12 sm:w-12 md:h-13 md:w-13 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[1px] shadow-lg shadow-indigo-100 transition-all duration-500 group-hover:scale-110">
+              <div className="relative h-10 w-10 sm:h-12 sm:w-12 md:h-13 md:w-13 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[1px] shadow-lg shadow-indigo-100 transition-all duration-300">
                 <div className="absolute inset-0 rounded-full overflow-hidden">
                   <img
                     src={logoImg}
                     alt="Click2Kart"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    className="h-full w-full object-cover"
                   />
                 </div>
               </div>
