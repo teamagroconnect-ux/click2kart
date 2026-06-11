@@ -28,41 +28,47 @@ export default function UserLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/80 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-xl shadow-sm">
         <div className="max-w-7xl mx-auto px-6 md:px-10">
-          <div className="flex items-center justify-between h-20 gap-8">
-            <div className="flex items-center gap-6">
-              <Link to="/" className="flex items-center group">
-                <div className="h-14 w-14 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 transition-all group-hover:scale-110 p-2 overflow-hidden">
+          <div className="flex items-center justify-between h-24 gap-8">
+            <Link to="/" className="flex items-center group">
+              <div className="relative h-16 w-16 rounded-3xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px] shadow-xl shadow-indigo-100 transition-all group-hover:scale-105">
+                <div className="absolute inset-[2px] bg-white rounded-[22px]" />
+                <div className="relative h-full w-full flex items-center justify-center p-1.5">
                   <img
                     src="/logo.png"
                     alt="Click2Kart"
                     className="h-full w-full object-contain"
                   />
                 </div>
-                <div className="hidden md:flex flex-col ml-3">
-                  <span className="text-lg font-black tracking-tighter text-gray-900 leading-none">CLICK2<span className="text-indigo-600">KART</span></span>
-                  <span className="text-[8px] font-black uppercase tracking-[0.3em] text-gray-400 mt-1">B2B Electronics</span>
-                </div>
-              </Link>
-            </div>
+              </div>
+              <div className="flex flex-col ml-4">
+                <span className="text-2xl font-black tracking-tighter text-gray-900 leading-none">
+                  CLICK2<span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">KART</span>
+                </span>
+                <span className="mt-1 inline-flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.35em] text-gray-500">PREMIUM B2B SUPPLY CHAIN</span>
+                </span>
+              </div>
+            </Link>
 
-            <nav className="hidden lg:flex items-center gap-2">
+            <nav className="hidden lg:flex items-center gap-3">
               {[
-                { to: '/', label: 'Home' },
+                { to: '/', label: 'Dashboard' },
                 { to: '/products', label: 'Catalogue' },
-                { to: '/orders', label: 'My Orders' },
-                { to: '/partner', label: 'Partner Portal' }
+                { to: '/orders', label: 'Orders' },
+                { to: '/partner', label: 'Partners' }
               ].map((link) => (
                 <NavLink
                   key={link.to}
                   to={link.to}
                   className={({ isActive }) =>
                     classNames(
-                      'px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-200',
-                      isActive 
-                        ? 'bg-gray-900 text-white shadow-xl shadow-gray-200 scale-105' 
-                        : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
+                      'px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all duration-300',
+                      isActive
+                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-xl shadow-indigo-200 scale-105'
+                        : 'text-gray-500 hover:text-gray-900 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:border hover:border-indigo-100'
                     )
                   }
                 >
@@ -74,29 +80,29 @@ export default function UserLayout() {
             <div className="flex items-center gap-4">
               <Link
                 to="/cart"
-                className="group relative h-12 w-12 flex items-center justify-center rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-xl transition-all active:scale-95"
+                className="group relative h-14 w-14 flex items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 hover:bg-white hover:shadow-2xl hover:shadow-indigo-100 transition-all active:scale-95"
               >
-                <svg className="w-6 h-6 text-gray-700 group-hover:text-violet-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <svg className="w-7 h-7 text-gray-700 group-hover:text-indigo-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path d="M7 6h13l-1.2 7H9.2L7 6Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="10" cy="19" r="1.6" fill="currentColor" />
-                  <circle cx="17" cy="19" r="1.6" fill="currentColor" />
+                  <circle cx="10" cy="19" r="1.8" fill="currentColor" />
+                  <circle cx="17" cy="19" r="1.8" fill="currentColor" />
                 </svg>
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-[10px] font-black text-white bg-violet-600 rounded-lg shadow-lg shadow-violet-200 border-2 border-white">
+                  <span className="absolute -top-2 -right-2 h-6 w-6 flex items-center justify-center text-[11px] font-black text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg shadow-indigo-200 border-2 border-white">
                     {cartCount}
                   </span>
                 )}
               </Link>
-              <div className="hidden sm:flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-3">
                 {user ? (
                   <div className="flex items-center gap-4">
                     <div className="flex flex-col items-end">
-                      <Link to="/profile" className="inline-flex flex-col items-end gap-0.5 px-3 py-1.5 rounded-full border border-gray-200 bg-white shadow-sm hover:border-violet-300 hover:shadow-md transition-all cursor-pointer">
+                      <Link to="/profile" className="inline-flex flex-col items-end gap-0.5 px-4 py-2.5 rounded-2xl border border-gray-200 bg-white shadow-lg shadow-gray-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-100 transition-all cursor-pointer">
                         <div className="inline-flex items-center gap-2">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                          <span className="text-[10px] font-black uppercase tracking-widest text-gray-900">{user.name}</span>
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
+                          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900">{user.name}</span>
                         </div>
-                        <span className="text-[8px] font-black uppercase tracking-widest text-gray-500 leading-none">Business</span>
+                        <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-gray-500 leading-none">BUSINESS ACCOUNT</span>
                       </Link>
                     </div>
                     <button
@@ -104,9 +110,9 @@ export default function UserLayout() {
                       onClick={handleLogout}
                       title="Sign out"
                       aria-label="Sign out"
-                      className="h-12 w-12 inline-flex items-center justify-center rounded-2xl border border-gray-100 bg-white text-gray-400 shadow-sm transition-all hover:border-red-100 hover:bg-red-50 hover:text-red-600 hover:shadow-md active:scale-95"
+                      className="h-14 w-14 inline-flex items-center justify-center rounded-3xl border border-gray-100 bg-white text-gray-400 shadow-lg shadow-gray-100 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 hover:shadow-xl hover:shadow-red-100 active:scale-95"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
                     </button>
@@ -116,24 +122,22 @@ export default function UserLayout() {
                     <Link
                       to="/login"
                       state={{ from: location.pathname + location.search }}
-                      className="px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-900 transition-colors"
+                      className="px-7 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
                     >
                       Login
                     </Link>
                     <Link
                       to="/signup"
                       state={{ from: location.pathname + location.search }}
-                      className="px-8 py-3 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest shadow-xl shadow-gray-200 hover:bg-gray-800 transition-all active:scale-95"
+                      className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:from-indigo-700 hover:to-purple-700 transition-all active:scale-95"
                     >
-                      Join Now
+                      Get Started
                     </Link>
                   </>
                 )}
               </div>
             </div>
           </div>
-
-          {/* Mobile menu removed by request; bottom nav handles navigation */}
         </div>
       </header>
 
