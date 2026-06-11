@@ -29,28 +29,27 @@ export default function UserLayout() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-xl shadow-sm">
-        <div className="max-w-7xl mx-auto px-6 md:px-10">
-          <div className="flex items-center justify-between h-16 md:h-20 gap-8">
+      <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-xl shadow-sm transition-all duration-300">
+        <div className="max-w-7xl mx-auto px-4 md:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-14 md:h-16 gap-4">
             <Link to="/" className="flex items-center group">
-              <div className="relative h-11 w-11 md:h-14 md:w-14 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[2px] shadow-lg shadow-indigo-100 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3">
-                <div className="absolute inset-[2px] bg-white rounded-full" />
-                <div className="relative h-full w-full flex items-center justify-center p-1.5 overflow-hidden rounded-full">
+              <div className="relative h-10 w-10 sm:h-12 sm:w-12 md:h-13 md:w-13 rounded-full bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[1px] shadow-lg shadow-indigo-100 transition-all duration-500 group-hover:scale-110">
+                <div className="absolute inset-0 rounded-full overflow-hidden">
                   <img
                     src={logoImg}
                     alt="Click2Kart"
-                    className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-110"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 </div>
               </div>
-              <div className="flex flex-col ml-3 md:ml-4">
-                <span className="text-xl md:text-2xl font-black tracking-tighter text-gray-900 leading-none">
+              <div className="flex flex-col ml-2 md:ml-2.5">
+                <span className="text-lg sm:text-xl md:text-2xl font-black tracking-tighter text-gray-900 leading-none">
                   CLICK2<span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">KART</span>
                 </span>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="text-[9px] md:text-[10px] font-extrabold uppercase tracking-[0.25em] text-gray-500">
-                    India's Tech Ecosystem
+                <div className="mt-0.5 flex items-center gap-1">
+                  <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] text-gray-400">
+                    B2B Marketplace
                   </span>
                 </div>
               </div>

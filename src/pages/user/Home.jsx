@@ -71,8 +71,8 @@ export default function Home() {
     return cleanup
   }, [])
 
-  const line1 = CONFIG.HERO_TITLE_LINE1 || 'Premium B2B Wholesale'
-  const line2 = CONFIG.HERO_TITLE_LINE2 || 'Click2Kart'
+  const line1 = CONFIG.HERO_TITLE_LINE1 || 'Direct Wholesale'
+  const line2 = CONFIG.HERO_TITLE_LINE2 || 'B2B Marketplace'
 
   useEffect(() => {
     setSEO('Click2Kart | India\'s Premier B2B Tech Hub', 'Direct wholesale access to top-tier electronics. GST compliant billing, bulk-only pricing, and Pan-India logistics for modern enterprises.')
