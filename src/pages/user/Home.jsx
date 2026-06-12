@@ -116,7 +116,7 @@ export default function Home() {
         /* ── same variables as Partner.jsx ── */
         .hm-root {
           font-family: 'DM Sans', system-ui, sans-serif;
-          background: #ffffff;
+          background: linear-gradient(180deg, #fdfcff 0%, #faf8ff 100%);
           color: #1e1b2e;
           overflow-x: hidden;
           padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -127,40 +127,55 @@ export default function Home() {
           content: '';
           position: fixed; inset: 0;
           background-image:
-            radial-gradient(rgba(139,92,246,0.06) 1px, transparent 1px);
-          background-size: 40px 40px;
+            radial-gradient(rgba(139,92,246,0.08) 1px, transparent 1px);
+          background-size: 30px 30px;
           pointer-events: none; z-index: 0;
         }
 
         @keyframes hmFloat {
           0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-20px); }
+          50% { transform: translateY(-25px); }
         }
         .hm-float {
-          animation: hmFloat 6s ease-in-out infinite;
+          animation: hmFloat 7s ease-in-out infinite;
         }
 
         /* enhanced violet glow blobs */
         .hm-blob1 {
-          position: fixed; top: -400px; left: 50%; transform: translateX(-50%);
-          width: 1600px; height: 1000px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(139,92,246,0.12), transparent 70%);
+          position: fixed; top: -500px; left: 50%; transform: translateX(-50%);
+          width: 2000px; height: 1200px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(139,92,246,0.2), transparent 70%);
           pointer-events: none; z-index: 0;
-          filter: blur(80px);
+          filter: blur(100px);
+          animation: blobFloat1 12s ease-in-out infinite;
+        }
+        @keyframes blobFloat1 {
+          0%, 100% { transform: translateX(-50%) scale(1); }
+          50% { transform: translateX(-48%) scale(1.05); }
         }
         .hm-blob2 {
-          position: fixed; bottom: -300px; right: -250px;
-          width: 800px; height: 800px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(109,40,217,0.15), transparent 65%);
+          position: fixed; bottom: -400px; right: -300px;
+          width: 1000px; height: 1000px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(109,40,217,0.25), transparent 65%);
           pointer-events: none; z-index: 0;
-          filter: blur(60px);
+          filter: blur(80px);
+          animation: blobFloat2 10s ease-in-out infinite;
+        }
+        @keyframes blobFloat2 {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
         }
         .hm-blob3 {
-          position: fixed; top: 20%; left: -200px;
-          width: 600px; height: 600px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(236,72,153,0.08), transparent 60%);
+          position: fixed; top: 20%; left: -250px;
+          width: 700px; height: 700px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(236,72,153,0.12), transparent 60%);
           pointer-events: none; z-index: 0;
-          filter: blur(50px);
+          filter: blur(60px);
+          animation: blobFloat3 15s ease-in-out infinite;
+        }
+        @keyframes blobFloat3 {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-20px) scale(1.08); }
         }
 
         /* ────────────── HERO ────────────── */
@@ -176,19 +191,20 @@ export default function Home() {
         /* enhanced eyebrow pill */
         .hm-eyebrow {
           display: inline-flex; align-items: center; gap: 12px;
-          padding: 10px 28px; border-radius: 100px;
-          background: rgba(255, 255, 255, 0.8);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(139,92,246,0.3);
+          padding: 12px 32px; border-radius: 100px;
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(139,92,246,0.4);
           color: #7c3aed;
-          font-size: 10px; font-weight: 800; letter-spacing: 0.3em; text-transform: uppercase;
+          font-size: 10px; font-weight: 900; letter-spacing: 0.35em; text-transform: uppercase;
           margin-bottom: 40px;
           animation: hmFadeUp 0.8s ease both;
-          box-shadow: 0 10px 30px rgba(124,58,237,0.15);
+          box-shadow: 0 15px 50px rgba(124,58,237,0.25), 0 0 40px rgba(124,58,237,0.1) inset;
         }
         .hm-eyebrow-dot {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: #7c3aed; box-shadow: 0 0 6px rgba(124,58,237,0.5);
+          width: 8px; height: 8px; border-radius: 50%;
+          background: linear-gradient(135deg, #7c3aed, #ec4899);
+          box-shadow: 0 0 15px rgba(124,58,237,0.7);
           animation: hmPulse 2s ease infinite;
         }
         @keyframes hmPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
@@ -196,15 +212,15 @@ export default function Home() {
         /* Bebas Neue title with gradient */
         .hm-title {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(80px, 15vw, 180px);
-          line-height: 0.85; text-align: center;
-          letter-spacing: -0.02em;
+          font-size: clamp(80px, 15vw, 200px);
+          line-height: 0.82; text-align: center;
+          letter-spacing: -0.03em;
           margin-bottom: 32px;
           animation: hmFadeUp 0.8s 0.1s ease both;
-          filter: drop-shadow(0 20px 40px rgba(0,0,0,0.1));
+          filter: drop-shadow(0 30px 60px rgba(0,0,0,0.15));
         }
         .hm-title .accent {
-          background: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #ec4899 100%);
+          background: linear-gradient(135deg, #7c3aed 0%, #6366f1 30%, #3b82f6 60%, #ec4899 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -213,118 +229,139 @@ export default function Home() {
         .hm-title .accent::after {
           content: '';
           position: absolute;
-          bottom: 10px; left: 0; width: 100%; height: 8px;
-          background: rgba(124,58,237,0.15);
+          bottom: 10px; left: 0; width: 100%; height: 10px;
+          background: linear-gradient(90deg, rgba(124,58,237,0.2), rgba(236,72,153,0.2));
           z-index: -1;
-          border-radius: 4px;
+          border-radius: 10px;
+          filter: blur(2px);
         }
 
         .hm-sub {
-          font-size: clamp(18px, 2.5vw, 22px);
-          color: #4b5563; font-weight: 400;
-          max-width: 700px; text-align: center; line-height: 1.6;
+          font-size: clamp(18px, 2.5vw, 24px);
+          color: #6b7280; font-weight: 400;
+          max-width: 750px; text-align: center; line-height: 1.7;
           margin-bottom: 60px;
           animation: hmFadeUp 0.8s 0.25s ease both;
         }
 
         .hm-ctas {
-          display: flex; flex-direction: column; gap: 14px; align-items: center;
+          display: flex; flex-direction: column; gap: 16px; align-items: center;
           animation: hmFadeUp 0.7s 0.4s ease both;
         }
-        @media(min-width:480px) { .hm-ctas { flex-direction: row; } }
+        @media(min-width:480px) { .hm-ctas { flex-direction: row; gap: 20px; } }
 
         /* Enhanced Primary btn */
         .hm-btn-primary {
-          display: inline-flex; align-items: center; gap: 14px;
-          background: linear-gradient(135deg, #7c3aed, #6366f1, #ec4899);
-          background-size: 200% auto;
+          display: inline-flex; align-items: center; gap: 16px;
+          background: linear-gradient(135deg, #7c3aed, #6366f1, #3b82f6, #ec4899);
+          background-size: 300% auto;
           color: white;
-          padding: 20px 52px; border-radius: 20px;
-          font-size: 12px; font-weight: 900;
-          text-transform: uppercase; letter-spacing: 0.25em;
-          text-decoration: none; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-          box-shadow: 0 15px 45px rgba(124,58,237,0.4);
+          padding: 22px 56px; border-radius: 24px;
+          font-size: 11px; font-weight: 900;
+          text-transform: uppercase; letter-spacing: 0.3em;
+          text-decoration: none; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+          box-shadow: 0 20px 60px rgba(124,58,237,0.5), 0 0 40px rgba(124,58,237,0.2) inset;
           position: relative; overflow: hidden;
         }
+        .hm-btn-primary::before {
+          content: '';
+          position: absolute;
+          top: 0; left: -100%;
+          width: 100%; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+          transition: left 0.6s;
+        }
         .hm-btn-primary:hover { 
-          transform: translateY(-8px) scale(1.05); 
-          box-shadow: 0 25px 70px rgba(124,58,237,0.5); 
+          transform: translateY(-10px) scale(1.05); 
+          box-shadow: 0 30px 80px rgba(124,58,237,0.6), 0 0 60px rgba(124,58,237,0.3) inset; 
           background-position: right center;
         }
-        .hm-btn-primary:active { transform: translateY(-2px) scale(0.98); }
+        .hm-btn-primary:hover::before { left: 100%; }
+        .hm-btn-primary:active { transform: translateY(-3px) scale(0.97); }
 
         /* Enhanced Secondary btn */
         .hm-btn-secondary {
-          display: inline-flex; align-items: center; gap: 14px;
-          border: 2px solid rgba(124,58,237,0.4);
-          background: rgba(255, 255, 255, 0.6);
-          backdrop-filter: blur(10px);
+          display: inline-flex; align-items: center; gap: 16px;
+          border: 2px solid rgba(124,58,237,0.5);
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(20px);
           color: #7c3aed;
-          padding: 20px 52px; border-radius: 20px;
-          font-size: 12px; font-weight: 900;
-          text-transform: uppercase; letter-spacing: 0.25em;
-          text-decoration: none; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          padding: 22px 56px; border-radius: 24px;
+          font-size: 11px; font-weight: 900;
+          text-transform: uppercase; letter-spacing: 0.3em;
+          text-decoration: none; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 5px 30px rgba(124,58,237,0.1);
         }
         .hm-btn-secondary:hover {
           background: #ffffff;
           border-color: #7c3aed;
-          transform: translateY(-6px);
-          box-shadow: 0 15px 45px rgba(124,58,237,0.15);
+          transform: translateY(-8px);
+          box-shadow: 0 20px 60px rgba(124,58,237,0.25);
         }
-        .hm-btn-secondary:active { transform: translateY(-1px) scale(0.98); }
+        .hm-btn-secondary:active { transform: translateY(-2px) scale(0.97); }
 
         /* Enhanced Trust badge grid */
         .hm-trust-grid {
           display: grid; grid-template-columns: repeat(2, 1fr);
-          gap: 20px; width: 100%; max-width: 1000px; margin-top: 100px;
+          gap: 24px; width: 100%; max-width: 1100px; margin-top: 100px;
           animation: hmFadeUp 0.8s 0.55s ease both;
         }
-        @media(min-width:640px) { .hm-trust-grid { grid-template-columns: repeat(4,1fr); gap: 24px; } }
+        @media(min-width:640px) { .hm-trust-grid { grid-template-columns: repeat(4,1fr); gap: 28px; } }
 
         .hm-trust-card {
-          background: rgba(255, 255, 255, 0.7);
-          backdrop-filter: blur(10px);
-          border: 1px solid rgba(139,92,246,0.2);
-          border-radius: 28px; padding: 32px 24px;
-          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(139,92,246,0.25);
+          border-radius: 32px; padding: 36px 28px;
+          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
           position: relative; overflow: hidden;
-          box-shadow: 0 10px 30px rgba(139,92,246,0.05);
+          box-shadow: 0 15px 50px rgba(139,92,246,0.1);
           text-align: center;
+          transform-style: preserve-3d;
+          perspective: 1000px;
+        }
+        .hm-trust-card::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(circle at 50% 0%, rgba(124,58,237,0.1), transparent 60%);
+          opacity: 0; transition: opacity 0.5s;
         }
         .hm-trust-card:hover {
-          border-color: rgba(124,58,237,0.5);
-          transform: translateY(-12px);
-          box-shadow: 0 30px 60px rgba(124,58,237,0.15);
+          border-color: rgba(124,58,237,0.6);
+          transform: translateY(-16px) rotateX(3deg);
+          box-shadow: 0 40px 80px rgba(124,58,237,0.25), 0 0 60px rgba(124,58,237,0.15) inset;
           background: #ffffff;
         }
+        .hm-trust-card:hover::before { opacity: 1; }
         .hm-trust-icon { 
-          font-size: 40px; margin-bottom: 20px; display: block;
-          filter: drop-shadow(0 10px 15px rgba(0,0,0,0.1));
-          transition: transform 0.4s;
+          font-size: 48px; margin-bottom: 20px; display: block;
+          filter: drop-shadow(0 15px 25px rgba(0,0,0,0.15));
+          transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .hm-trust-card:hover .hm-trust-icon {
-          transform: scale(1.2) rotate(5deg);
+          transform: scale(1.25) rotate(8deg) translateZ(20px);
         }
-        .hm-trust-title { font-size: 15px; font-weight: 900; color: #1e1b2e; margin-bottom: 8px; letter-spacing: -0.01em; }
-        .hm-trust-desc { font-size: 13px; color: #6b7280; line-height: 1.5; font-weight: 500; }
+        .hm-trust-title { font-size: 16px; font-weight: 900; color: #1e1b2e; margin-bottom: 10px; letter-spacing: -0.02em; }
+        .hm-trust-desc { font-size: 14px; color: #6b7280; line-height: 1.6; font-weight: 500; }
 
         /* scroll hint */
         .hm-scroll-hint {
-          position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
-          display: flex; flex-direction: column; align-items: center; gap: 8px;
-          opacity: 0.35;
+          position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+          display: flex; flex-direction: column; align-items: center; gap: 10px;
+          opacity: 0.4;
           animation: hmFadeUp 0.8s 1s ease both;
         }
-        .hm-scroll-hint span { font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; color: #9ca3af; }
+        .hm-scroll-hint span { font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: #9ca3af; font-weight: 800; }
         .hm-scroll-line {
-          width: 1px; height: 36px;
-          background: linear-gradient(to bottom, #7c3aed, transparent);
-          animation: hmScrollLine 1.8s ease infinite;
+          width: 2px; height: 48px;
+          background: linear-gradient(to bottom, #7c3aed, #ec4899, transparent);
+          animation: hmScrollLine 2s ease infinite;
         }
         @keyframes hmScrollLine {
           0%{transform:scaleY(0);transform-origin:top}
-          50%{transform:scaleY(1);transform-origin:top}
-          51%{transform-origin:bottom}
+          40%{transform:scaleY(1);transform-origin:top}
+          60%{transform:scaleY(1);transform-origin:bottom}
           100%{transform:scaleY(0);transform-origin:bottom}
         }
 
