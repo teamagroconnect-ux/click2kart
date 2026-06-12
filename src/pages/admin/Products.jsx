@@ -39,11 +39,8 @@ export default function Products() {
     api.get('/api/brands', { params: { active: true } }).then(({ data }) => setBrands(data || [])).catch(() => {})
   }, [])
   useEffect(() => {
-    const brandId = editing ? editing.brandId : form.brandId;
-    const params = { active: true };
-    if (brandId) params.brand = brandId;
-    api.get('/api/categories', { params }).then(({ data }) => setCategories(data || [])).catch(() => {})
-  }, [form.brandId, editing?.brandId])
+    api.get('/api/categories', { params: { active: true } }).then(({ data }) => setCategories(data || [])).catch(() => {})
+  }, [])
   const [lastCategoryId, setLastCategoryId] = useState(null)
   useEffect(() => {
     const categoryId = editing ? editing.categoryId : form.categoryId;
@@ -400,7 +397,14 @@ export default function Products() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Brand</label>
+                        <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.brandId} onChange={e => setForm({ ...form, brandId: e.target.value })}>
+                          <option value="">No Brand</option>
+                          {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
+                        </select>
+                      </div>
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category</label>
                         <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value, subCategoryId: '' })} required>
@@ -438,6 +442,18 @@ export default function Products() {
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">GST %</label>
                         <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="12" value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} />
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {[0, 5, 12, 18, 28].map(rate => (
+                            <button 
+                              key={rate}
+                              type="button"
+                              onClick={() => setForm({ ...form, gst: rate.toString() })}
+                              className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${form.gst === rate.toString() ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                            >
+                              {rate}%
+                            </button>
+                          ))}
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Weight (g)</label>
@@ -640,6 +656,18 @@ export default function Products() {
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">GST %</label>
                 <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="GST %" value={editing.gst} onChange={e => setEditing({ ...editing, gst: e.target.value })} />
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {[0, 5, 12, 18, 28].map(rate => (
+                    <button 
+                      key={rate}
+                      type="button"
+                      onClick={() => setEditing({ ...editing, gst: rate.toString() })}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${editing.gst === rate.toString() ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                    >
+                      {rate}%
+                    </button>
+                  ))}
+                </div>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Weight (grams)</label>
