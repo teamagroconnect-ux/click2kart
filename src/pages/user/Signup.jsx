@@ -96,7 +96,7 @@ export default function Signup() {
                   type="text"
                   required
                   className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  placeholder="Uddhab Das"
+                  placeholder="John Doe"
                   value={formData.name}
                   onChange={handleChange}
                 />
@@ -108,7 +108,7 @@ export default function Signup() {
                   type="email"
                   required
                   className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  placeholder="mr.uddhabcharandas@gmail.com"
+                  placeholder="john.doe@example.com"
                   value={formData.email}
                   onChange={handleChange}
                 />
