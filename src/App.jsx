@@ -25,6 +25,7 @@ import BrandPage from './pages/user/BrandPage.jsx'
 import ProductDetail from './pages/user/ProductDetail.jsx'
 import Enquiry from './pages/user/Enquiry.jsx'
 import Partner from './pages/user/Partner.jsx'
+import PartnerLayout from './components/PartnerLayout.jsx'
 import PartnerProtectedRoute from './components/PartnerProtectedRoute.jsx'
 import UserLayout from './components/UserLayout.jsx'
 import UserLogin from './pages/user/Login.jsx'
@@ -76,11 +77,6 @@ export default function App() {
         <Route path="products/:idOrSlug" element={<ProductDetail />} />
         <Route path="order" element={<Enquiry />} />
         <Route path="partner" element={<Partner />} />
-        <Route path="partner/dashboard" element={
-          <PartnerProtectedRoute>
-            <Partner />
-          </PartnerProtectedRoute>
-        } />
         <Route path="login" element={<UserLogin />} />
         <Route path="signup" element={<UserSignup />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
@@ -91,6 +87,29 @@ export default function App() {
         <Route path="manual-payment" element={<ManualPayment />} />
         <Route path="privacy-policy" element={<PrivacyPolicy />} />
         <Route path="terms-of-service" element={<TermsOfService />} />
+      </Route>
+
+      <Route
+        path="/partner"
+        element={
+          <PartnerLayout />
+        }
+      >
+        <Route index element={<Partner />} />
+      </Route>
+
+      <Route
+        path="/partner"
+        element={
+          <PartnerProtectedRoute>
+            <PartnerLayout />
+          </PartnerProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<Partner />} />
+        <Route path="earnings" element={<Partner />} />
+        <Route path="orders" element={<Partner />} />
+        <Route path="profile" element={<Partner />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

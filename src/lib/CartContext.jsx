@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useRef } from 'react'
 import { useToast } from '../components/Toast'
 import { useAuth } from './AuthContext'
 import api from './api'
+import { getEffectiveMoq, getPackSize, normalizeQty, getVariantKey } from './packSize'
 
 const CartContext = createContext()
 
@@ -68,63 +69,76 @@ export function CartProvider({ children }) {
     syncServerCart()
   }, [token, user])
 
-  const addToCart = async (product, variant, requestedQuantity) => {
-    console.log('=== CartContext.addToCart called ===')
-    console.log('product:', product)
-    console.log('variant:', variant)
-    console.log('requestedQuantity:', requestedQuantity)
-    
+  const addToCart = async (product, variant, requestedQuantity, options = {}) => {
+    const { silent = false, setAbsolute = false } = options
+    const variantKey = getVariantKey(variant)
+    const pack = getPackSize(product)
+    const moq = getEffectiveMoq(product)
+
     if (mode === 'guest') {
       let success = true
       setCart(prev => {
         const pid = product._id || product.id
-        const vsku = variant?.sku || undefined
-        const existing = prev.find(item => item._id === pid && (item.variantSku || '') === (vsku || ''))
+        const existing = prev.find(item => item._id === pid && (item.variantSku || '') === (variantKey || ''))
         const currentQty = existing ? existing.quantity : 0
-        const available = vsku ? (variant?.stock ?? 0) : (product.stock ?? 0)
-        const minQty = Math.max(1, Number(product.minOrderQty || 0))
-        const addQty = requestedQuantity ? Math.max(minQty, Number(requestedQuantity)) : (existing ? 1 : Math.max(1, minQty))
+        const available = variantKey ? (variant?.stock ?? 0) : (product.stock ?? 0)
+        const rawQty = requestedQuantity != null
+          ? normalizeQty(requestedQuantity, product)
+          : (existing ? pack : moq)
+        const addQty = setAbsolute ? Math.max(moq, rawQty) : rawQty
+        const nextQty = setAbsolute ? addQty : currentQty + addQty
 
-        if (currentQty + addQty > available) {
+        if (nextQty > available) {
           notify(`Only ${available} units available in stock`, 'error')
           success = false
           return prev
         }
 
         if (existing) {
-          return prev.map(item => 
-            (item._id === pid && (item.variantSku || '') === (vsku || '')) ? { ...item, quantity: item.quantity + addQty } : item
+          return prev.map(item =>
+            (item._id === pid && (item.variantSku || '') === (variantKey || ''))
+              ? { ...item, quantity: nextQty, packSize: pack, minOrderQty: moq }
+              : item
           )
         }
-        const price = vsku ? (variant?.price ?? product.price) : product.price
-        const image = vsku ? (variant?.images?.[0] || product.images?.[0]) : product.images?.[0]
+        const price = variantKey ? (variant?.price ?? product.price) : product.price
+        const image = variantKey ? (variant?.images?.[0] || product.images?.[0]) : product.images?.[0]
         const attributes = variant?.attributes
-        return [...prev, { ...product, _id: pid, variantSku: vsku, attributes, price, image, quantity: addQty, stock: available, minOrderQty: minQty, weight: product.weight }]
+        return [...prev, {
+          ...product,
+          _id: pid,
+          variantSku: variantKey,
+          attributes,
+          price,
+          image,
+          quantity: nextQty,
+          stock: available,
+          minOrderQty: moq,
+          packSize: pack,
+          weight: product.weight
+        }]
       })
+      if (success && !silent) notify('Added to cart', 'success')
       return success
     }
 
     try {
-      const minQty = Math.max(1, Number(product.minOrderQty || 0))
-      const qtyToAdd = requestedQuantity ? Math.max(minQty, Number(requestedQuantity)) : Math.max(1, minQty)
-      
+      const qtyToAdd = requestedQuantity != null
+        ? normalizeQty(requestedQuantity, product)
+        : moq
+
       const payload = {
-        productId: product._id,
-        variantSku: variant?.sku,
-        quantity: qtyToAdd
+        productId: product._id || product.id,
+        quantity: qtyToAdd,
+        setAbsolute: !!setAbsolute
       }
-      
-      console.log('Sending API request with payload:', payload)
-      
+      if (variantKey) payload.variantSku = variantKey
+
       const { data } = await api.post('/api/cart/add', payload)
-      console.log('API response:', data)
-      
       setCart(data.items || [])
-      notify('Added to cart', 'success')
+      if (!silent) notify('Added to cart', 'success')
       return true
     } catch (err) {
-      console.error('addToCart error:', err)
-      console.error('err.response:', err.response)
       notify(err?.response?.data?.error || 'Could not add to cart', 'error')
       return false
     }
@@ -152,8 +166,8 @@ export function CartProvider({ children }) {
       setCart(prev => {
         const item = prev.find(x => x._id === productId && (x.variantSku || '') === (variantSku || ''))
         if (!item) return prev
-        const minQty = Math.max(1, Number(item.minOrderQty || 0))
-        const nextQty = Math.max(minQty, quantity)
+        const productLike = { packSize: item.packSize, minOrderQty: item.minOrderQty }
+        const nextQty = normalizeQty(quantity, productLike)
 
         if (nextQty > item.stock) {
           notify(`Only ${item.stock} units available in stock`, 'error')

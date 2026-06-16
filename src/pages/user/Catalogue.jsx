@@ -1009,7 +1009,7 @@ export default function Catalogue({ initialBrand, brandName }) {
           <div className="ct-chips">
             <button className={`ct-chip${category === '' ? ' on' : ''}`} onClick={() => { setCategory(''); setSubCategory(''); setBrowsePath('category') }}>All</button>
             {categories.map(c => (
-              <button key={c._id} className={`ct-chip${category === c._id ? ' on' : ''}`} onClick={() => { setCategory(c._id); setSubCategory(''); setBrowsePath('category') }}>{c.name}</button>
+              <button key={c._id} className={`ct-chip${category === c._id ? ' on' : ''}`} onClick={() => { setCategory(c._id); setSubCategory(''); setBrowsePath('category') }}>{(c.name || '').toUpperCase()}</button>
             ))}
           </div>
         </div>
@@ -1439,12 +1439,12 @@ export default function Catalogue({ initialBrand, brandName }) {
                     <div className="flex items-center justify-between border-b border-gray-200 pb-4">
                       <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight flex items-center gap-3">
                         <span className="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center text-sm">📦</span>
-                        {group.category.name}
+                        {(group.category.name || '').toUpperCase()}
                       </h3>
                       <button
                         onClick={() => { setCategory(group.category._id); setViewMode('PRODUCTS') }}
                         className="text-xs font-black text-indigo-600 uppercase tracking-widest hover:underline"
-                      >View All {group.category.name}</button>
+                      >View All {(group.category.name || '').toUpperCase()}</button>
                     </div>
                     <div className="ct-grid">
                       {group.items.slice(0, 4).map((p, idx) => (
@@ -1507,7 +1507,7 @@ export default function Catalogue({ initialBrand, brandName }) {
                   <div className="ct-sheet-cats">
                     <button className={`ct-sheet-cat${category === '' ? ' on' : ''}`} onClick={() => setCategory('')}>All Categories</button>
                     {categories.map(c => (
-                      <button key={c._id} className={`ct-sheet-cat${category === c._id ? ' on' : ''}`} onClick={() => setCategory(c._id)}>{c.name}</button>
+                      <button key={c._id} className={`ct-sheet-cat${category === c._id ? ' on' : ''}`} onClick={() => setCategory(c._id)}>{(c.name || '').toUpperCase()}</button>
                     ))}
                   </div>
                 </div>
@@ -1516,7 +1516,7 @@ export default function Catalogue({ initialBrand, brandName }) {
                     <div className="ct-sheet-lbl">Subcategory</div>
                     <div className="ct-sheet-cats">
                       {subcategories.map(s => (
-                        <button key={s._id} className={`ct-sheet-cat${subCategory === s._id ? ' on' : ''}`} onClick={() => setSubCategory(s._id)}>{s.name}</button>
+                        <button key={s._id} className={`ct-sheet-cat${subCategory === s._id ? ' on' : ''}`} onClick={() => setSubCategory(s._id)}>{(s.name || '').toUpperCase()}</button>
                       ))}
                     </div>
                   </div>
@@ -1583,7 +1583,7 @@ function SuggestList({ items, setQ }) {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="ct-sug-name">{s.name}</div>
-            <div className="ct-sug-cat">{s.category?.name || (typeof s.category === 'string' ? s.category : 'General')}</div>
+            <div className="ct-sug-cat">{((s.category?.name || (typeof s.category === 'string' ? s.category : 'General')) || '').toUpperCase()}</div>
           </div>
           <div className="ct-sug-fill" onClick={e => { e.stopPropagation(); setQ(s.name) }}>
             <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24">

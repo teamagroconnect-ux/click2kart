@@ -10,6 +10,7 @@ import RecommendationModal from '../../components/RecommendationModal'
 import ProductCard from '../../components/ProductCard'
 import VariantMatrix from '../../components/VariantMatrix'
 import { useAuth } from '../../lib/AuthContext'
+import { getPackSize, getEffectiveMoq, normalizeQty, getInitialQty } from '../../lib/packSize.js'
 
 /** Stable sort for RAM/ROM/Storage etc.; otherwise locale + numeric aware. */
 function sortVariantValues(lowKey, values) {
@@ -278,9 +279,7 @@ export default function ProductDetail() {
   /* load product effect (syncing state from query) */
   useEffect(() => {
     if (p) {
-      const packSize = Number(p.packSize || 1)
-      const minQty = Math.max(1, Number(p.minOrderQty || 1))
-      const initialQty = Math.ceil(minQty / packSize) * packSize
+      const initialQty = getInitialQty(p)
       setQty(initialQty)
       setError(null)
     }
@@ -1727,7 +1726,7 @@ export default function ProductDetail() {
           <div className="pd-breadcrumb">
             <span>Catalogue</span>
             <span className="pd-breadcrumb-sep">›</span>
-            {p.category && <><span>{p.category?.name || p.category}</span><span className="pd-breadcrumb-sep">›</span></>}
+            {p.category && <><span>{(p.category?.name || p.category || '').toUpperCase()}</span><span className="pd-breadcrumb-sep">›</span></>}
             <span>{p.name}</span>
           </div>
         </div>
@@ -1908,7 +1907,7 @@ export default function ProductDetail() {
               {/* badges + stock — one compact strip */}
               <div className="pd-meta-compact">
                 <div className="pd-badges">
-                  {p.category && <span className="pd-badge pd-badge-v">{p.category?.name || p.category}</span>}
+                  {p.category && <span className="pd-badge pd-badge-v">{(p.category?.name || p.category || '').toUpperCase()}</span>}
                   <span className="pd-badge pd-badge-g">✓ GST</span>
                   <span className="pd-badge pd-badge-a">⚡ Dispatch</span>
                 </div>
@@ -1982,20 +1981,20 @@ export default function ProductDetail() {
                     <div className="pd-qty-row">
                       <div className="pd-qty">
                         <button className="pd-qty-btn"
-                          disabled={qty <= Math.max(1, Number(p.minOrderQty || 1))}
+                          disabled={qty <= getEffectiveMoq(p)}
                           onClick={() => {
-                            const packSize = Number(p.packSize || 1)
-                            setQty(q => Math.max(Math.max(1, Number(p.minOrderQty || 1)), q - packSize))
+                            const packSize = getPackSize(p)
+                            setQty(q => Math.max(getEffectiveMoq(p), q - packSize))
                           }}>−</button>
                         <div className="pd-qty-val">{qty}</div>
                         <button className="pd-qty-btn" onClick={() => {
-                          const packSize = Number(p.packSize || 1)
+                          const packSize = getPackSize(p)
                           setQty(q => q + packSize)
                         }}>+</button>
                       </div>
-                      {p.packSize > 1 && (
+                      {getPackSize(p) > 1 && (
                         <span className="pd-save-tag">
-                          Pack size: {p.packSize} units
+                          Pack size: {getPackSize(p)} units
                         </span>
                       )}
                       {savingsTotal > 0 && (

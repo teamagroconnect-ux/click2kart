@@ -192,7 +192,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
               padding: '2px 6px', borderRadius: '4px', 
               textTransform: 'uppercase', letterSpacing: '0.08em' 
             }}>
-              {p.category.name}
+              {(p.category.name || '').toUpperCase()}
             </span>
           )}
         </div>

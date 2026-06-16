@@ -18,6 +18,7 @@ export default function UserLayout() {
   const [isPwaInstalled, setIsPwaInstalled] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const [getAppDismissed, setGetAppDismissed] = useState(() => localStorage.getItem('get_app_dismissed') === '1')
+  const [showInstallHelp, setShowInstallHelp] = useState(false)
   const bottomNavItems = [
     { to: '/', l: 'Home', i: (<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />) },
     { to: '/products', l: 'Browse', i: (<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />) },
@@ -55,30 +56,31 @@ export default function UserLayout() {
   }, [])
 
   const handleGetAppClick = async () => {
-    // Only non-installed users will see the button; require premium to trigger install
-    if (!user) {
-      navigate('/login', { state: { from: location.pathname + location.search } })
+    if (!deferredPrompt) {
+      // Fallback for when browser doesn't expose beforeinstallprompt
+      setShowInstallHelp(true)
       return
     }
-    if (!user.isPremium) {
-      setShowUpgradeModal(true)
-      return
-    }
-    if (deferredPrompt) {
-      deferredPrompt.prompt()
-      const choiceResult = await deferredPrompt.userChoice.catch(() => null)
-      setDeferredPrompt(null)
-      if (choiceResult && choiceResult.outcome === 'accepted') setIsPwaInstalled(true)
-    } else {
-      // Fallback for iOS (show instructions)
-      alert('To install the app: open the browser menu and choose "Add to Home screen".')
-    }
+    deferredPrompt.prompt()
+    const choiceResult = await deferredPrompt.userChoice.catch(() => null)
+    setDeferredPrompt(null)
+    if (choiceResult && choiceResult.outcome === 'accepted') setIsPwaInstalled(true)
   }
 
   const dismissGetApp = () => {
     setGetAppDismissed(true)
     try { localStorage.setItem('get_app_dismissed', '1') } catch {}
   }
+
+  const installMessage = (() => {
+    try {
+      const ua = navigator.userAgent || ''
+      if (/iPhone|iPad|iPod/i.test(ua)) {
+        return 'iOS: Tap the Share icon (bottom) → Add to Home Screen → Add.'
+      }
+      return 'Android / Desktop: Open your browser menu and choose "Add to Home screen". On Chrome for Android you may also see an install prompt.'
+    } catch (e) { return 'Open browser menu and choose "Add to Home screen".' }
+  })()
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -192,10 +194,10 @@ export default function UserLayout() {
                 {!isPwaInstalled && !getAppDismissed && (
                   <button
                     onClick={handleGetAppClick}
-                    className="ml-2 px-4 py-2 rounded-2xl bg-yellow-500 text-white font-black text-[11px] uppercase tracking-widest shadow hover:brightness-95 lg:hidden"
-                    title="Get App (Premium)"
+                    className="ml-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:from-indigo-700 hover:to-purple-700 transition-all active:scale-95 lg:hidden"
+                    title="Install App"
                   >
-                    Get App
+                    Install App
                   </button>
                 )}
               </div>
@@ -268,25 +270,32 @@ export default function UserLayout() {
           </div>
         </footer>
       )}
-      {/* Floating Get App button visible on all screens when appropriate */}
+      {/* Floating Install App button visible on all screens when appropriate */}
       {!isPwaInstalled && !getAppDismissed && (
-        <div className="fixed bottom-6 right-4 z-50 flex items-center gap-2 lg:hidden">
+        <div className="fixed bottom-6 right-4 z-50 flex items-center gap-3 lg:hidden">
           <button
             onClick={handleGetAppClick}
-            className="px-4 py-3 rounded-full bg-yellow-500 text-white font-black text-sm shadow-lg hover:brightness-95"
-            title="Get App (Premium)"
+            className="px-6 py-3 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black text-sm shadow-xl shadow-indigo-300 hover:from-indigo-700 hover:to-purple-700 transition-all active:scale-95"
+            title="Install App"
           >
-            Get App
+            Install App
           </button>
           <button
             onClick={dismissGetApp}
-            className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white border border-gray-100 shadow-md text-gray-600 hover:bg-gray-50"
+            className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white border border-gray-100 shadow-lg text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all"
             title="Dismiss"
           >
             ×
           </button>
         </div>
       )}
+      <ConfirmModal
+        open={showInstallHelp}
+        title="Install Instructions"
+        message={installMessage}
+        onCancel={() => setShowInstallHelp(false)}
+        onConfirm={() => { try { navigator.clipboard.writeText(installMessage) } catch {} ; setShowInstallHelp(false); alert('Instructions copied to clipboard') }}
+      />
       <ConfirmModal
         open={showUpgradeModal}
         title="Premium Required"

@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import api from '../lib/api'
 import { useCart } from '../lib/CartContext'
+import { normalizeQty, getPackSize, getEffectiveMoq } from '../lib/packSize.js'
 
 const normalizeAttrs = (attrs, sku = '', productAttributes = []) => {
   const result = {}
@@ -197,14 +198,10 @@ export default function VariantMatrix({
   const handleQtyChange = (vId, val) => {
     const variant = variants.find(v => v._id === vId)
     const stock = getStock(variant)
-    const packSize = Number(product?.packSize || 1)
-    let qty = Number(val) || 0
-    
-    if (qty > 0 && packSize > 1) {
-      qty = Math.round(qty / packSize) * packSize
-    }
+    let qty = normalizeQty(Number(val) || 0, product)
     
     if (qty > stock) {
+      const packSize = getPackSize(product)
       qty = Math.floor(stock / packSize) * packSize
       notify(`Only ${stock} units available for this variant`, 'warning')
     }

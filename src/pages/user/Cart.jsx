@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useCart, getStockStatus } from '../../lib/CartContext'
 import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
+import { getPackSize, getEffectiveMoq } from '../../lib/packSize.js'
 
 export default function Cart() {
   const { cart, removeFromCart, updateQuantity, cartTotal, addToCart } = useCart()
@@ -545,8 +546,11 @@ export default function Cart() {
                       <div className="ct-qty-row" style={{ pointerEvents: isOutOfStock ? 'none' : 'auto' }}>
                         <div className="ct-qty-ctrl" style={{ opacity: isOutOfStock ? 0.4 : 1 }}>
                           <button className="ct-qty-btn"
-                            disabled={isOutOfStock || item.quantity <= Math.max(1, Number(item.minOrderQty||0))}
-                            onClick={() => updateQuantity(itemId, itemSku, Math.max(Number(item.minOrderQty||1), item.quantity-1))}>−</button>
+                            disabled={isOutOfStock || item.quantity <= getEffectiveMoq(item)}
+                            onClick={() => {
+                              const packSize = getPackSize(item)
+                              updateQuantity(itemId, itemSku, Math.max(getEffectiveMoq(item), item.quantity - packSize))
+                            }}>−</button>
                           <input 
                             className="ct-qty-val" 
                             type="number"
@@ -554,17 +558,20 @@ export default function Cart() {
                             disabled={isOutOfStock}
                             onChange={(e) => {
                               const v = parseInt(e.target.value) || 0
-                              updateQuantity(itemId, itemSku, Math.max(0, v))
+                              updateQuantity(itemId, itemSku, v)
                             }}
                             onBlur={(e) => {
-                              const min = Math.max(1, Number(item.minOrderQty||0))
+                              const min = getEffectiveMoq(item)
                               const v = parseInt(e.target.value) || min
-                              updateQuantity(itemId, itemSku, Math.max(min, v))
+                              updateQuantity(itemId, itemSku, v)
                             }}
                           />
                           <button className="ct-qty-btn"
                             disabled={isOutOfStock || item.quantity >= itemStock}
-                            onClick={() => updateQuantity(itemId, itemSku, item.quantity+1)}>+</button>
+                            onClick={() => {
+                              const packSize = getPackSize(item)
+                              updateQuantity(itemId, itemSku, item.quantity + packSize)
+                            }}>+</button>
                         </div>
 
                         <button className="ct-action-btn remove"
