@@ -39,6 +39,9 @@ import PrivacyPolicy from './pages/user/PrivacyPolicy.jsx'
 import TermsOfService from './pages/user/TermsOfService.jsx'
 import PartnerLogin from './pages/partner/Login.jsx'
 import PartnerDashboard from './pages/partner/Dashboard.jsx'
+import PartnerLanding from './pages/partner/Landing.jsx'
+import PartnerOnboarding from './pages/partner/Onboarding.jsx'
+import PartnerProfile from './pages/partner/Profile.jsx'
 
 export default function App() {
   return (
@@ -89,7 +92,9 @@ export default function App() {
         <Route path="terms-of-service" element={<TermsOfService />} />
       </Route>
 
+      <Route path="/partner" element={<PartnerLanding />} />
       <Route path="/partner/login" element={<PartnerLogin />} />
+      <Route path="/partner/onboarding" element={<PartnerOnboarding />} />
       <Route
         path="/partner"
         element={
@@ -102,7 +107,7 @@ export default function App() {
         <Route path="dashboard" element={<PartnerDashboard />} />
         <Route path="earnings" element={<PartnerDashboard />} />
         <Route path="orders" element={<PartnerDashboard />} />
-        <Route path="profile" element={<PartnerDashboard />} />
+        <Route path="profile" element={<PartnerProfile />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

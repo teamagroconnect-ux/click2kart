@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import api from '../../lib/api'
 import PasswordInput from '../../components/PasswordInput'
 import { CONFIG } from '../../shared/lib/config.js'
@@ -473,6 +473,16 @@ export default function PartnerLogin() {
                 : error === 'invalid_password' ? 'Incorrect portal password.' : error}
             </div>
           )}
+          
+          <div className="text-center mt-6">
+            <span className="text-gray-500 font-medium text-sm">Want to become a partner?</span>
+            <Link 
+              to="/partner/onboarding" 
+              className="text-indigo-600 font-black text-sm ml-2 hover:text-indigo-700 transition-colors"
+            >
+              Click here →
+            </Link>
+          </div>
 
           <div className="pr-onboard">
             <div className="pr-onboard-glow" />
