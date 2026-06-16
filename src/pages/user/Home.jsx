@@ -64,7 +64,7 @@ export default function Home() {
       "logo": (CONFIG.LOGO_URL || ""),
       "contactPoint": {
         "@type": "ContactPoint",
-        "telephone": "+91-79788-80244",
+        "telephone": CONFIG.SUPPORT_PHONE_DISPLAY,
         "contactType": "customer service"
       }
     })

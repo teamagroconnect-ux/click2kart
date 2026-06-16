@@ -1,8 +1,9 @@
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import { useCart } from '../lib/CartContext'
 import { CONFIG } from '../shared/lib/config.js'
 import logoImg from '../click2kart.png'
+import ConfirmModal from './ConfirmModal'
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -12,6 +13,10 @@ export default function UserLayout() {
   const location = useLocation()
   const { cartCount } = useCart()
   const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const navigate = useNavigate()
+  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [isPwaInstalled, setIsPwaInstalled] = useState(false)
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false)
   const bottomNavItems = [
     { to: '/', l: 'Home', i: (<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />) },
     { to: '/products', l: 'Browse', i: (<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />) },
@@ -26,6 +31,48 @@ export default function UserLayout() {
   }
 
   useEffect(() => {}, [location.pathname])
+
+  useEffect(() => {
+    // detect PWA install prompt availability
+    const onBeforeInstallPrompt = (e) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+    }
+    const onAppInstalled = () => setIsPwaInstalled(true)
+    // check if already installed
+    const checkInstalled = () => {
+      const standalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches
+      if (navigator.standalone || standalone) setIsPwaInstalled(true)
+    }
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+    window.addEventListener('appinstalled', onAppInstalled)
+    checkInstalled()
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt)
+      window.removeEventListener('appinstalled', onAppInstalled)
+    }
+  }, [])
+
+  const handleGetAppClick = async () => {
+    // Only non-installed users will see the button; require premium to trigger install
+    if (!user) {
+      navigate('/login', { state: { from: location.pathname + location.search } })
+      return
+    }
+    if (!user.isPremium) {
+      setShowUpgradeModal(true)
+      return
+    }
+    if (deferredPrompt) {
+      deferredPrompt.prompt()
+      const choiceResult = await deferredPrompt.userChoice.catch(() => null)
+      setDeferredPrompt(null)
+      if (choiceResult && choiceResult.outcome === 'accepted') setIsPwaInstalled(true)
+    } else {
+      // Fallback for iOS (show instructions)
+      alert('To install the app: open the browser menu and choose "Add to Home screen".')
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -133,6 +180,16 @@ export default function UserLayout() {
                     >
                       Get Started
                     </Link>
+                    {/* Get App button for non-installed users */}
+                    {!isPwaInstalled && (
+                      <button
+                        onClick={handleGetAppClick}
+                        className="ml-2 px-4 py-2 rounded-2xl bg-yellow-500 text-white font-black text-[11px] uppercase tracking-widest shadow hover:brightness-95"
+                        title="Get App (Premium)"
+                      >
+                        Get App
+                      </button>
+                    )}
                   </>
                 )}
               </div>
@@ -205,6 +262,13 @@ export default function UserLayout() {
           </div>
         </footer>
       )}
+      <ConfirmModal
+        open={showUpgradeModal}
+        title="Premium Required"
+        message="Get App is a premium feature. Upgrade to premium to enable app installation. Proceed to upgrade?"
+        onCancel={() => setShowUpgradeModal(false)}
+        onConfirm={() => { setShowUpgradeModal(false); navigate('/profile') }}
+      />
     </div>
   )
 }
