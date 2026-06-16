@@ -10,7 +10,7 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '' })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', volumetricWeight: { length: '', width: '', height: '' }, hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '' })
   const [editing, setEditing] = useState(null)
   const [viewing, setViewing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -75,6 +75,11 @@ export default function Products() {
       price: Number(form.price), 
       stock: Number.isFinite(stockNum) ? stockNum : 0, 
       weight: Number(form.weight || 0),
+      volumetricWeight: {
+        length: Number(form.volumetricWeight?.length || 0),
+        width: Number(form.volumetricWeight?.width || 0),
+        height: Number(form.volumetricWeight?.height || 0)
+      },
       gst: Number(form.gst||0), 
       mrp: form.mrp ? Number(form.mrp) : undefined,
       minOrderQty: Number(form.minOrderQty || 0),
@@ -96,7 +101,7 @@ export default function Products() {
       variantDisplayType: form.variantDisplayType || 'selector',
       variants: []
     })
-    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '' }); setShowAddProduct(false); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', volumetricWeight: { length: '', width: '', height: '' }, hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '' }); setShowAddProduct(false); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -111,6 +116,7 @@ export default function Products() {
       categoryId: p.category?._id || p.category || '',
       subCategoryId: p.subCategory?._id || p.subCategory || '',
       weight: p.weight || '',
+      volumetricWeight: p.volumetricWeight || { length: '', width: '', height: '' },
       hsnCode: p.hsnCode || '',
       images: (p.images||[]).map(i=>i.url||i).join(', '),
       attributes: Array.isArray(p.attributes) ? p.attributes : [],
@@ -148,6 +154,11 @@ export default function Products() {
       categoryId: editing.categoryId,
       subCategoryId: editing.subCategoryId || undefined,
       weight: Number(editing.weight || 0),
+      volumetricWeight: {
+        length: Number(editing.volumetricWeight?.length || 0),
+        width: Number(editing.volumetricWeight?.width || 0),
+        height: Number(editing.volumetricWeight?.height || 0)
+      },
       hsnCode: editing.hsnCode || '',
       gst: Number(editing.gst || 0),
       mrp: editing.mrp ? Number(editing.mrp) : undefined,
@@ -467,6 +478,21 @@ export default function Products() {
                     
                     <div className="grid grid-cols-3 gap-3">
                       <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Length (cm)</label>
+                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 20" value={form.volumetricWeight?.length} onChange={e => setForm({ ...form, volumetricWeight: { ...form.volumetricWeight, length: e.target.value } })} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Width (cm)</label>
+                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 15" value={form.volumetricWeight?.width} onChange={e => setForm({ ...form, volumetricWeight: { ...form.volumetricWeight, width: e.target.value } })} />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Height (cm)</label>
+                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 10" value={form.volumetricWeight?.height} onChange={e => setForm({ ...form, volumetricWeight: { ...form.volumetricWeight, height: e.target.value } })} />
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Min Order Qty</label>
                         <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 5" value={form.minOrderQty} onChange={e => setForm({ ...form, minOrderQty: e.target.value })} />
                       </div>
@@ -676,6 +702,18 @@ export default function Products() {
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">HSN Code</label>
                 <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 8517" value={editing.hsnCode || ''} onChange={e => setEditing({ ...editing, hsnCode: e.target.value })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Length (cm)</label>
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 20" value={editing.volumetricWeight?.length || ''} onChange={e => setEditing({ ...editing, volumetricWeight: { ...editing.volumetricWeight, length: e.target.value } })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Width (cm)</label>
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 15" value={editing.volumetricWeight?.width || ''} onChange={e => setEditing({ ...editing, volumetricWeight: { ...editing.volumetricWeight, width: e.target.value } })} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Height (cm)</label>
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 10" value={editing.volumetricWeight?.height || ''} onChange={e => setEditing({ ...editing, volumetricWeight: { ...editing.volumetricWeight, height: e.target.value } })} />
               </div>
 
               <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-2xl border border-gray-100 mt-1 md:col-span-3">

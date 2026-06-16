@@ -7,5 +7,6 @@ export const CONFIG = {
   HERO_TITLE_LINE2: import.meta.env.VITE_HERO_TITLE_LINE2 || '',
   HERO_SUBHEAD:
     import.meta.env.VITE_HERO_SUBHEAD ||
-    'Direct wholesale access to top-tier electronics. GST compliant billing, bulk-only pricing, and Pan-India logistics for modern enterprises.'
+    'Direct wholesale access to top-tier electronics. GST compliant billing, bulk-only pricing, and Pan-India logistics for modern enterprises.',
+  APK_DOWNLOAD_URL: import.meta.env.VITE_APK_DOWNLOAD_URL || 'https://example.com/app.apk'
 }

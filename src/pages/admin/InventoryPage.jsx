@@ -20,6 +20,7 @@ function buildSkuRows(selectedProduct) {
         attrLabel,
         image: v.images?.[0]?.url || selectedProduct.images?.[0]?.url,
         stock: v.stock,
+        price: v.price,
         isVariant: true,
         variantId: v._id,
       })
@@ -31,6 +32,7 @@ function buildSkuRows(selectedProduct) {
       sku: selectedProduct.sku || '',
       image: selectedProduct.images?.[0]?.url,
       stock: selectedProduct.stock,
+      price: selectedProduct.price,
       isVariant: false,
     })
   }
@@ -62,6 +64,7 @@ export default function InventoryPage() {
   const [catalogLoading, setCatalogLoading] = useState(false)
   const [activeCatalogProduct, setActiveCatalogProduct] = useState(null)
   const [bulkQuantities, setBulkQuantities] = useState({})
+  const [bulkPrices, setBulkPrices] = useState({})
   const [bulkNote, setBulkNote] = useState('')
   const [bulkSubmitting, setBulkSubmitting] = useState(false)
 
@@ -129,7 +132,12 @@ export default function InventoryPage() {
     e.preventDefault()
     const updates = Object.entries(bulkQuantities)
       .filter(([sku, qty]) => qty && !isNaN(qty) && Number.isInteger(Number(qty)) && Number(qty) > 0)
-      .map(([sku, qty]) => ({ productId: activeCatalogProduct._id, variantSku: sku, quantity: Number(qty) }))
+      .map(([sku, qty]) => ({ 
+        productId: activeCatalogProduct._id, 
+        variantSku: sku, 
+        quantity: Number(qty),
+        newPrice: bulkPrices[sku] ? Number(bulkPrices[sku]) : null 
+      }))
     
     if (updates.length === 0) {
       notify('Please enter a valid positive quantity for at least one SKU.', 'error')
@@ -142,6 +150,7 @@ export default function InventoryPage() {
       notify(`Added stock to ${updates.length} item(s) successfully`, 'success')
       setActiveCatalogProduct(null)
       setBulkQuantities({})
+      setBulkPrices({})
       setBulkNote('')
       loadData()
     } catch (err) {
@@ -349,7 +358,7 @@ export default function InventoryPage() {
                   <p className="text-[10px] uppercase font-black tracking-wider text-gray-500">Bulk Add Inventory</p>
                 </div>
               </div>
-              <button type="button" onClick={() => { setActiveCatalogProduct(null); setBulkQuantities({}); setBulkNote(''); }} className="text-gray-400 hover:text-gray-800 transition-colors p-1 text-2xl leading-none">&times;</button>
+              <button type="button" onClick={() => { setActiveCatalogProduct(null); setBulkQuantities({}); setBulkPrices({}); setBulkNote(''); }} className="text-gray-400 hover:text-gray-800 transition-colors p-1 text-2xl leading-none">&times;</button>
             </div>
             
             <div className="p-5 overflow-y-auto flex-1">
@@ -359,7 +368,9 @@ export default function InventoryPage() {
                     <th className="px-4 py-3 text-left border-b border-gray-100">SKU</th>
                     <th className="px-4 py-3 text-left border-b border-gray-100">Attributes</th>
                     <th className="px-4 py-3 text-center border-b border-gray-100 w-24">Current Stock</th>
+                    <th className="px-4 py-3 text-right border-b border-gray-100 w-32">Current Price</th>
                     <th className="px-4 py-3 text-right border-b border-gray-100 w-32">Qty to Add</th>
+                    <th className="px-4 py-3 text-right border-b border-gray-100 w-36">New Price (Optional)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -368,6 +379,7 @@ export default function InventoryPage() {
                       <td className="px-4 py-3 font-mono text-gray-900 font-bold text-xs">{s.sku || 'No SKU'}</td>
                       <td className="px-4 py-3 text-gray-600 text-xs">{s.attrLabel || '—'}</td>
                       <td className="px-4 py-3 text-center text-gray-500 text-xs">{s.stock ?? 0}</td>
+                      <td className="px-4 py-3 text-right text-gray-700 text-xs font-semibold">₹{s.price?.toLocaleString() || '—'}</td>
                       <td className="px-4 py-3 text-right">
                         <input
                           type="number" min="1" step="1"
@@ -375,6 +387,15 @@ export default function InventoryPage() {
                           value={bulkQuantities[s.sku] || ''}
                           onChange={(e) => setBulkQuantities(prev => ({ ...prev, [s.sku]: e.target.value }))}
                           className="w-20 text-right bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-bold focus:ring-2 focus:ring-violet-500 outline-none"
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <input
+                          type="number" min="0.01" step="0.01"
+                          placeholder="Keep blank"
+                          value={bulkPrices[s.sku] || ''}
+                          onChange={(e) => setBulkPrices(prev => ({ ...prev, [s.sku]: e.target.value }))}
+                          className="w-28 text-right bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-sm font-bold focus:ring-2 focus:ring-violet-500 outline-none"
                         />
                       </td>
                     </tr>

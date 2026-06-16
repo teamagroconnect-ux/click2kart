@@ -1,18 +1,21 @@
 import { useState } from 'react'
 import api from '../../lib/api'
+import { useAuth } from '../../lib/AuthContext'
 import PasswordInput from '../../components/PasswordInput'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const { setAuth } = useAuth()
 
   const submit = async (e) => {
     e.preventDefault()
     setError('')
     try {
       const { data } = await api.post('/api/auth/login', { email, password })
-      localStorage.setItem('token', data.token)
+      const user = { ...data.admin, role: data.admin.role || 'admin' }
+      setAuth(data.token, user)
       const target = sessionStorage.getItem('postLoginRedirect')
       if (target && target.startsWith('/admin')) {
         sessionStorage.removeItem('postLoginRedirect')

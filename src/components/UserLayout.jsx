@@ -56,15 +56,14 @@ export default function UserLayout() {
   }, [])
 
   const handleGetAppClick = async () => {
-    if (!deferredPrompt) {
-      // Fallback for when browser doesn't expose beforeinstallprompt
-      setShowInstallHelp(true)
-      return
-    }
-    deferredPrompt.prompt()
-    const choiceResult = await deferredPrompt.userChoice.catch(() => null)
-    setDeferredPrompt(null)
-    if (choiceResult && choiceResult.outcome === 'accepted') setIsPwaInstalled(true)
+    // Trigger direct APK download
+    const link = document.createElement('a')
+    link.href = CONFIG.APK_DOWNLOAD_URL
+    link.download = 'click2kart-app.apk'
+    link.target = '_blank'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   const dismissGetApp = () => {
