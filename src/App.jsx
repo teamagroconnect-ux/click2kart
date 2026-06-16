@@ -96,18 +96,54 @@ export default function App() {
       <Route path="/partner/login" element={<PartnerLogin />} />
       <Route path="/partner/onboarding" element={<PartnerOnboarding />} />
       <Route
-        path="/partner"
+        path="/partner/dashboard"
         element={
           <PartnerProtectedRoute>
             <PartnerLayout />
           </PartnerProtectedRoute>
         }
       >
-        <Route index element={<Navigate to="/partner/dashboard" replace />} />
-        <Route path="dashboard" element={<PartnerDashboard />} />
-        <Route path="earnings" element={<PartnerDashboard />} />
-        <Route path="orders" element={<PartnerDashboard />} />
-        <Route path="profile" element={<PartnerProfile />} />
+        <Route index element={<PartnerDashboard />} />
+      </Route>
+      <Route
+        path="/partner/earnings"
+        element={
+          <PartnerProtectedRoute>
+            <PartnerLayout />
+          </PartnerProtectedRoute>
+        }
+      >
+        <Route index element={<PartnerDashboard />} />
+      </Route>
+      <Route
+        path="/partner/orders"
+        element={
+          <PartnerProtectedRoute>
+            <PartnerLayout />
+          </PartnerProtectedRoute>
+        }
+      >
+        <Route index element={<PartnerDashboard />} />
+      </Route>
+      <Route
+        path="/partner/add-business"
+        element={
+          <PartnerProtectedRoute>
+            <PartnerLayout />
+          </PartnerProtectedRoute>
+        }
+      >
+        <Route index element={<UserSignup />} /> {/* We'll use existing signup */}
+      </Route>
+      <Route
+        path="/partner/profile"
+        element={
+          <PartnerProtectedRoute>
+            <PartnerLayout />
+          </PartnerProtectedRoute>
+        }
+      >
+        <Route index element={<PartnerProfile />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />
