@@ -809,9 +809,9 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Link>
-            <Link to="/partner" className="hm-btn-secondary">
-              Become a Partner
-            </Link>
+            <Link to="/partner/login" className="hm-btn-secondary">
+          Become a Partner
+        </Link>
           </div>
 
           <div className="hm-trust-grid">
@@ -880,7 +880,7 @@ export default function Home() {
               { n: '500+', t: 'Active Partners',       delay: 0   },
               { n: '10+',  t: 'Crore Sales Generated', delay: 100 },
               { n: '50+',  t: 'Top Brands',        delay: 200 },
-              { n: '24*',   t: 'B2B Support',        delay: 300 },
+              { n: '24/7', t: 'B2B Support',        delay: 300 },
             ].map((s, i) => (
               <StatItem key={i} n={s.n} t={s.t} delay={s.delay} />
             ))}

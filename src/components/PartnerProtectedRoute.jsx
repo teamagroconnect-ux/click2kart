@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom'
 
 export default function PartnerProtectedRoute({ children }) {
   const token = localStorage.getItem('partnerToken')
-  if (!token) return <Navigate to="/partner" replace />
+  if (!token) return <Navigate to="/partner/login" replace />
   
   // Basic role check
   try {
@@ -11,12 +11,12 @@ export default function PartnerProtectedRoute({ children }) {
     const payload = JSON.parse(atob(b64))
     if (payload?.role !== 'partner') {
       localStorage.removeItem('partnerToken')
-      return <Navigate to="/partner" replace />
+      return <Navigate to="/partner/login" replace />
     }
   } catch (e) {
     // If invalid token, redirect
     localStorage.removeItem('partnerToken')
-    return <Navigate to="/partner" replace />
+    return <Navigate to="/partner/login" replace />
   }
 
   return children

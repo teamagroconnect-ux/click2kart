@@ -24,7 +24,6 @@ import Catalogue from './pages/user/Catalogue.jsx'
 import BrandPage from './pages/user/BrandPage.jsx'
 import ProductDetail from './pages/user/ProductDetail.jsx'
 import Enquiry from './pages/user/Enquiry.jsx'
-import Partner from './pages/user/Partner.jsx'
 import PartnerLayout from './components/PartnerLayout.jsx'
 import PartnerProtectedRoute from './components/PartnerProtectedRoute.jsx'
 import UserLayout from './components/UserLayout.jsx'
@@ -38,6 +37,8 @@ import Profile from './pages/user/Profile.jsx'
 import ManualPayment from './pages/user/ManualPayment.jsx'
 import PrivacyPolicy from './pages/user/PrivacyPolicy.jsx'
 import TermsOfService from './pages/user/TermsOfService.jsx'
+import PartnerLogin from './pages/partner/Login.jsx'
+import PartnerDashboard from './pages/partner/Dashboard.jsx'
 
 export default function App() {
   return (
@@ -76,7 +77,6 @@ export default function App() {
         <Route path="brand/:slug" element={<BrandPage />} />
         <Route path="products/:idOrSlug" element={<ProductDetail />} />
         <Route path="order" element={<Enquiry />} />
-        <Route path="partner" element={<Partner />} />
         <Route path="login" element={<UserLogin />} />
         <Route path="signup" element={<UserSignup />} />
         <Route path="forgot-password" element={<ForgotPassword />} />
@@ -89,15 +89,7 @@ export default function App() {
         <Route path="terms-of-service" element={<TermsOfService />} />
       </Route>
 
-      <Route
-        path="/partner"
-        element={
-          <PartnerLayout />
-        }
-      >
-        <Route index element={<Partner />} />
-      </Route>
-
+      <Route path="/partner/login" element={<PartnerLogin />} />
       <Route
         path="/partner"
         element={
@@ -106,10 +98,11 @@ export default function App() {
           </PartnerProtectedRoute>
         }
       >
-        <Route path="dashboard" element={<Partner />} />
-        <Route path="earnings" element={<Partner />} />
-        <Route path="orders" element={<Partner />} />
-        <Route path="profile" element={<Partner />} />
+        <Route index element={<Navigate to="/partner/dashboard" replace />} />
+        <Route path="dashboard" element={<PartnerDashboard />} />
+        <Route path="earnings" element={<PartnerDashboard />} />
+        <Route path="orders" element={<PartnerDashboard />} />
+        <Route path="profile" element={<PartnerDashboard />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" />} />

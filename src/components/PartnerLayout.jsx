@@ -40,7 +40,7 @@ export default function PartnerLayout() {
   const logout = () => {
     localStorage.removeItem('partnerToken')
     localStorage.removeItem('partnerData')
-    navigate('/partner')
+    navigate('/partner/login')
   }
 
   const link = (to, label, end = false) => {
