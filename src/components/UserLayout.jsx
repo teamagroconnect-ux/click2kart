@@ -17,6 +17,7 @@ export default function UserLayout() {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isPwaInstalled, setIsPwaInstalled] = useState(false)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false)
+  const [getAppDismissed, setGetAppDismissed] = useState(() => localStorage.getItem('get_app_dismissed') === '1')
   const bottomNavItems = [
     { to: '/', l: 'Home', i: (<path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />) },
     { to: '/products', l: 'Browse', i: (<path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />) },
@@ -72,6 +73,11 @@ export default function UserLayout() {
       // Fallback for iOS (show instructions)
       alert('To install the app: open the browser menu and choose "Add to Home screen".')
     }
+  }
+
+  const dismissGetApp = () => {
+    setGetAppDismissed(true)
+    try { localStorage.setItem('get_app_dismissed', '1') } catch {}
   }
 
   return (
@@ -180,17 +186,17 @@ export default function UserLayout() {
                     >
                       Get Started
                     </Link>
-                    {/* Get App button for non-installed users */}
-                    {!isPwaInstalled && (
-                      <button
-                        onClick={handleGetAppClick}
-                        className="ml-2 px-4 py-2 rounded-2xl bg-yellow-500 text-white font-black text-[11px] uppercase tracking-widest shadow hover:brightness-95"
-                        title="Get App (Premium)"
-                      >
-                        Get App
-                      </button>
-                    )}
                   </>
+                )}
+                {/* Get App button for non-installed users (visible to both logged-in and logged-out) */}
+                {!isPwaInstalled && !getAppDismissed && (
+                  <button
+                    onClick={handleGetAppClick}
+                    className="ml-2 px-4 py-2 rounded-2xl bg-yellow-500 text-white font-black text-[11px] uppercase tracking-widest shadow hover:brightness-95 lg:hidden"
+                    title="Get App (Premium)"
+                  >
+                    Get App
+                  </button>
                 )}
               </div>
             </div>
@@ -261,6 +267,25 @@ export default function UserLayout() {
             </div>
           </div>
         </footer>
+      )}
+      {/* Floating Get App button visible on all screens when appropriate */}
+      {!isPwaInstalled && !getAppDismissed && (
+        <div className="fixed bottom-6 right-4 z-50 flex items-center gap-2 lg:hidden">
+          <button
+            onClick={handleGetAppClick}
+            className="px-4 py-3 rounded-full bg-yellow-500 text-white font-black text-sm shadow-lg hover:brightness-95"
+            title="Get App (Premium)"
+          >
+            Get App
+          </button>
+          <button
+            onClick={dismissGetApp}
+            className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-white border border-gray-100 shadow-md text-gray-600 hover:bg-gray-50"
+            title="Dismiss"
+          >
+            ×
+          </button>
+        </div>
       )}
       <ConfirmModal
         open={showUpgradeModal}
