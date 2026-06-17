@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import api from '../../lib/api'
+import { useToast } from '../../components/Toast'
 
 export default function Coupons(){
+  const { notify } = useToast()
   const [items, setItems] = useState([])
   const [expandedId, setExpandedId] = useState(null)
   const [editingId, setEditingId] = useState(null)
@@ -270,6 +272,12 @@ export default function Coupons(){
                         )}
                       </div>
                       <div className="col-span-2 pt-4 flex gap-3">
+                        <button 
+                          onClick={(e)=>{ e.stopPropagation(); navigator.clipboard.writeText(c.code); notify('Coupon code copied!', 'success'); }} 
+                          className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-2xl text-[10px] font-black hover:from-indigo-700 hover:to-purple-700 transition-all uppercase tracking-widest shadow-lg"
+                        >
+                          Copy Code
+                        </button>
                         <button 
                           onClick={(e)=>{ e.stopPropagation(); startEdit(c); }} 
                           className="flex-1 bg-gray-50 text-gray-900 py-3 rounded-2xl text-[10px] font-black hover:bg-gray-100 transition-all uppercase tracking-widest border border-gray-100"

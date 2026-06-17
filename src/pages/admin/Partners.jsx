@@ -1,6 +1,7 @@
 import React, { Fragment, useEffect, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
+import PasswordConfirmModal from '../../components/PasswordConfirmModal'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import { getImageUrl } from '../../lib/cloudinary'
 
@@ -17,6 +18,8 @@ export default function Partners() {
   const [form, setForm] = useState({ amount:'', method:'MANUAL', utr:'', razorpayPaymentId:'', notes:'' })
   const [partners, setPartners] = useState([])
   const [newPartner, setNewPartner] = useState({ name:'', email:'', phone:'', password:'' })
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [partnerToDelete, setPartnerToDelete] = useState(null)
 
   const load = async () => {
     setLoading(true)
@@ -51,14 +54,17 @@ export default function Partners() {
     }
   }
 
-  const deletePartner = async (id) => {
-    if (!confirm('Delete this partner?')) return
+  const handleDeleteConfirm = async (password) => {
     try {
-      await api.put(`/api/partner-accounts/${id}`, { isActive: false })
-      loadPartners()
-      notify('Partner removed','success')
-    } catch {
-      notify('Failed to remove partner','error')
+      await api.post('/api/admin/verify-deletion-password', { password });
+      await api.put(`/api/partner-accounts/${partnerToDelete}`, { isActive: false });
+      setDeleteModalOpen(false);
+      setPartnerToDelete(null);
+      loadPartners();
+      notify('Partner removed', 'success');
+    } catch (err) {
+      console.error(err);
+      notify('Invalid password or failed to remove partner', 'error');
     }
   }
 
@@ -133,7 +139,11 @@ export default function Partners() {
                       <div className="text-[9px] text-gray-500 font-bold truncate">{p.phone || 'No Phone'}</div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={(e) => { e.stopPropagation(); deletePartner(p._id); }} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                      <button onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setPartnerToDelete(p._id); 
+                        setDeleteModalOpen(true); 
+                      }} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                     </div>
@@ -193,7 +203,7 @@ export default function Partners() {
                       </td>
                       <td className="px-6 py-4 text-right">
                     <button 
-                      onClick={(e) => { e.stopPropagation(); openPayout(p.code); }}
+                      onClick={(e) => { e.stopPropagation(); openPayout(p.code); }} 
                       className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black hover:bg-blue-500 transition-all uppercase tracking-widest"
                     >
                           Mark Paid
@@ -292,7 +302,7 @@ export default function Partners() {
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Recent Payouts</h3>
                   <button 
-                    onClick={(e) => { e.stopPropagation(); setViewingPartner(null); openPayout(viewingPartner.code); }}
+                    onClick={(e) => { e.stopPropagation(); setViewingPartner(null); openPayout(viewingPartner.code); }} 
                     className="text-[10px] font-black uppercase text-blue-600 hover:text-blue-700 tracking-widest"
                   >
                     + Record New
@@ -300,7 +310,7 @@ export default function Partners() {
                 </div>
                 <div className="space-y-3">
                   {viewingPartner.payouts && viewingPartner.payouts.length > 0 ? (
-                    viewingPartner.payouts.slice(0, 5).map((p, idx) => (
+                    viewingPartner.payouts.slice(0,5).map((p, idx) => (
                       <div key={idx} className="bg-white border border-gray-100 p-4 rounded-2xl flex items-center justify-between group hover:border-blue-100 transition-colors">
                         <div>
                           <div className="font-bold text-gray-900">₹{p.amount.toLocaleString()}</div>
@@ -348,7 +358,6 @@ export default function Partners() {
               </button>
             </div>
 
-            {/* Partner Profile Info */}
             <div className="bg-white border border-gray-100 rounded-3xl p-6">
               <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Partner Profile</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -409,7 +418,6 @@ export default function Partners() {
               </div>
             </div>
 
-            {/* Earnings Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white border border-gray-100 rounded-3xl p-6">
                 <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Total Sales</div>
@@ -425,7 +433,6 @@ export default function Partners() {
               </div>
             </div>
 
-            {/* Coupons */}
             <div className="bg-white border border-gray-100 rounded-3xl p-6">
               <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Partner Coupons</h3>
               {viewingFullPartner.coupons?.length > 0 ? (
@@ -453,7 +460,6 @@ export default function Partners() {
               )}
             </div>
 
-            {/* Referred Businesses */}
             <div className="bg-white border border-gray-100 rounded-3xl p-6">
               <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Referred Businesses</h3>
               {viewingFullPartner.referredBusinesses?.length > 0 ? (
@@ -476,7 +482,6 @@ export default function Partners() {
               )}
             </div>
 
-            {/* Payouts */}
             <div className="bg-white border border-gray-100 rounded-3xl p-6">
               <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Payout History</h3>
               {viewingFullPartner.payouts?.length > 0 ? (
@@ -543,6 +548,17 @@ export default function Partners() {
           </div>
         </div>
       )}
+
+      <PasswordConfirmModal
+        open={deleteModalOpen}
+        title="Remove Partner"
+        message="Enter deletion password to confirm removal:"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          setDeleteModalOpen(false)
+          setPartnerToDelete(null)
+        }}
+      />
     </div>
   )
 }
