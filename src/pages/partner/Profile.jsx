@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
-import { QRCodeSVG } from 'qrcode.react';
+import QRCode from 'react-qr-code';
 import api from '../../lib/api';
 import { useToast } from '../../components/Toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -164,9 +164,9 @@ const PartnerIDCard = React.forwardRef(({ partner }, ref) => {
             <div className="flex items-center gap-8 mt-auto">
               <div className="flex items-center gap-4">
                 <div className="w-32 h-32 border-2 border-gray-300 rounded-2xl flex items-center justify-center bg-white p-2">
-                  <QRCodeSVG 
+                  <QRCode
                     value={`${window.location.origin}/partner/verify/${partner?._id || ''}`}
-                    size="100%"
+                    size={128}
                     level="H"
                   />
                 </div>
