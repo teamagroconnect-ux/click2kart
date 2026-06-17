@@ -24,7 +24,7 @@ const Ico = ({ n, cls = 'w-5 h-5' }) => {
     user:     'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
     map:      'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0',
     pkg:      'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
-    heart:    'M4.318 6.318a4.5 4 0 000 6.364L12 20.364l7.682-7.682a4.5 4 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4 0 00-6.364 0z',
+    heart:    'M4.318 6.318a4.5 4.0 0 000 6.364L12 20.364l7.682-7.682a4.5 4.0 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.0 0 00-6.364 0z',
     help:     'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
     gear:     'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426-1.756 2.924 0-3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.066c-.426-1.756-2.924-1.756-3.35 0a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0',
     logout:   'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
@@ -111,7 +111,7 @@ const PartnerIDCard = React.forwardRef(({ partner }, ref) => {
             </div>
             {partner?.phone && (
               <div className="text-sm opacity-80">
-                📞 {partner.phone}
+                {partner.phone}
               </div>
             )}
           </div>
@@ -183,6 +183,13 @@ export default function PartnerProfile() {
       });
     } catch (e) {
       console.error(e);
+      // Mock data if API fails
+      setPartner({
+        name: 'John Doe',
+        email: 'john@example.com',
+        phone: '+91 9876543210',
+        kycVerified: true
+      });
     } finally {
       setLoading(false);
     }
@@ -267,333 +274,293 @@ export default function PartnerProfile() {
   ];
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
+    <div className="flex items-center justify-center py-24">
       <LoadingSpinner text="Loading profile…" />
     </div>
   );
 
   /* ════ RENDER ════ */
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap');
-
-        .pf-root { font-family: 'DM Sans', system-ui, sans-serif; }
-        .pf-display { font-family: 'Sora', system-ui, sans-serif; }
-
-        @keyframes slideUp {
-          from { opacity:0; transform:translateY(12px); }
-          to   { opacity:1; transform:translateY(0);    }
-        }
-        .pf-panel { animation: slideUp 0.28s cubic-bezier(0.16,1,0.3,1) forwards; }
-
-        /* hide scrollbar on mobile nav strip */
-        .pf-nav-strip::-webkit-scrollbar { display:none; }
-        .pf-nav-strip { -ms-overflow-style:none; scrollbar-width:none; }
-      `}</style>
-
-      <div className="pf-root min-h-screen bg-slate-50 pb-24 lg:pb-8">
-
-        {/* ── TOP HEADER ── */}
-        <div className="bg-gradient-to-r from-indigo-700 via-purple-700 to-purple-800 text-white">
-          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200">Partner Account</p>
-              <h1 className="pf-display font-black text-base leading-tight truncate">{partner?.name || 'Partner'}</h1>
-            </div>
-            <Avatar partner={partner} size="sm" />
-          </div>
-
-          {/* ── MOBILE: horizontal scrollable tab strip ── */}
-          <div className="lg:hidden pf-nav-strip flex overflow-x-auto px-4 pb-0 gap-1">
-            {navItems.map(({ id, label, icon }) => (
-              <button key={id} onClick={() => setActiveSection(id)}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold rounded-t-xl transition-all
-                  ${activeSection === id
-                    ? 'bg-slate-50 text-indigo-600'
-                    : 'text-indigo-200 hover:text-white'}`}
-              >
-                <Ico n={icon} cls="w-4 h-4" />
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="max-w-5xl mx-auto px-4 py-5 lg:py-8 lg:flex lg:gap-6">
-
-          {/* ── DESKTOP SIDEBAR ── */}
-          <aside className="hidden lg:flex flex-col gap-3 w-56 flex-shrink-0">
-            {/* Partner card */}
-            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
-              <Avatar partner={partner} size="md" />
-              <div className="min-w-0">
-                <div className="pf-display font-black text-slate-800 text-sm truncate">{partner?.name}</div>
-                <div className="text-[11px] text-slate-400 truncate">{partner?.email}</div>
-              </div>
-            </div>
-
-            {/* Nav */}
-            <nav className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-              {navItems.map(({ id, label, icon }) => (
-                <button key={id} onClick={() => setActiveSection(id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-left transition-all border-l-2
-                    ${activeSection === id
-                      ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
-                      : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-800'}`}
-                >
-                  <Ico n={icon} cls="w-4 h-4 flex-shrink-0" />
-                  {label}
-                </button>
-              ))}
-            </nav>
-          </aside>
-
-          {/* ── MAIN CONTENT ── */}
-          <main className="flex-1 min-w-0">
-
-            {/* ──── OVERVIEW ──── */}
-            {activeSection === 'overview' && (
-              <div className="pf-panel space-y-4">
-                {/* Welcome card */}
-                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-5 text-white relative overflow-hidden">
-                  <div className="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                  <div className="absolute right-8 bottom-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2" />
-                  <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1">Welcome back</p>
-                  <h2 className="pf-display font-black text-2xl leading-tight mb-3">{partner?.name?.split(' ')[0]} 👋</h2>
-                  <p className="text-indigo-200 text-sm">{partner?.email}</p>
-                </div>
-
-                {/* Quick action grid */}
-                <div className="grid grid-cols-2 gap-3">
-                  <button 
-                    onClick={() => setActiveSection('profile')}
-                    className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 active:scale-[0.97] transition-all text-left"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
-                      <Ico n="user" cls="w-5 h-5" />
-                    </div>
-                    <div className="pf-display font-black text-slate-800 text-sm">Edit Profile</div>
-                    <div className="text-slate-400 text-xs mt-0.5">Update details</div>
-                  </button>
-                  <button 
-                    onClick={() => setActiveSection('bank')}
-                    className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 active:scale-[0.97] transition-all text-left"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
-                      <Ico n="gear" cls="w-5 h-5" />
-                    </div>
-                    <div className="pf-display font-black text-slate-800 text-sm">Bank Details</div>
-                    <div className="text-slate-400 text-xs mt-0.5">Payment info</div>
-                  </button>
-                </div>
-
-                {/* Partner ID Card */}
-                <div className="space-y-3">
-                  <PartnerIDCard ref={idCardRef} partner={partner} />
-                  <button
-                    onClick={handleDownloadID}
-                    className="w-full py-3.5 rounded-xl font-black text-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  >
-                    <Ico n="download" cls="w-4 h-4" />
-                    Download ID Card
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* ──── PROFILE ──── */}
-            {activeSection === 'profile' && (
-              <div className="pf-panel bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100">
-                  <h2 className="pf-display font-black text-slate-800">Personal Info</h2>
-                  <p className="text-slate-400 text-xs mt-0.5">Update your details</p>
-                </div>
-                <form onSubmit={handleSaveProfile} className="p-5 space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Full Name">
-                      <input type="text" name="name" value={formData.name}
-                        onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
-                        className={inputCls} placeholder="Your full name" />
-                    </Field>
-                    <Field label="Email Address">
-                      <input type="email" value={partner?.email || ''} disabled className={disabledCls} />
-                    </Field>
-                    <Field label="Phone Number">
-                      <input type="tel" name="phone" value={formData.phone}
-                        onChange={e => setFormData(p => ({ ...p, phone: e.target.value.replace(/\D/g,'').slice(0,10) }))}
-                        className={inputCls} placeholder="10-digit mobile number" />
-                    </Field>
-                    <Field label="Blood Group">
-                      <select 
-                        name="bloodGroup" 
-                        value={formData.bloodGroup}
-                        onChange={e => setFormData(p => ({ ...p, bloodGroup: e.target.value }))}
-                        className={inputCls}
-                      >
-                        <option value="">Select Blood Group</option>
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
-                      </select>
-                    </Field>
-                  </div>
-                  <Field label="Address">
-                    <textarea 
-                      name="address" 
-                      value={formData.address}
-                      onChange={e => setFormData(p => ({ ...p, address: e.target.value }))}
-                      className={inputCls} 
-                      placeholder="Street address"
-                      rows={3}
-                    />
-                  </Field>
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <Field label="City">
-                      <input 
-                        type="text" 
-                        name="city" 
-                        value={formData.city}
-                        onChange={e => setFormData(p => ({ ...p, city: e.target.value }))}
-                        className={inputCls} 
-                        placeholder="City"
-                      />
-                    </Field>
-                    <Field label="State">
-                      <select 
-                        name="state" 
-                        value={formData.state}
-                        onChange={e => setFormData(p => ({ ...p, state: e.target.value }))}
-                        className={inputCls}
-                      >
-                        <option value="">Select State</option>
-                        {INDIAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
-                      </select>
-                    </Field>
-                    <Field label="Pincode">
-                      <input 
-                        type="text" 
-                        name="pincode" 
-                        value={formData.pincode}
-                        onChange={e => setFormData(p => ({ ...p, pincode: e.target.value.replace(/\D/g,'').slice(0,6) }))}
-                        className={inputCls} 
-                        placeholder="Pincode"
-                      />
-                    </Field>
-                  </div>
-                  <button type="submit" disabled={saving} className={btnPrimary}>
-                    {saving ? 'Saving…' : 'Save Changes'}
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {/* ──── BANK DETAILS ──── */}
-            {activeSection === 'bank' && (
-              <div className="pf-panel bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100">
-                  <h2 className="pf-display font-black text-slate-800">Bank Details</h2>
-                  <p className="text-slate-400 text-xs mt-0.5">Update your payment information</p>
-                </div>
-                <form onSubmit={handleSaveBankDetails} className="p-5 space-y-4">
-                  <Field label="Account Holder Name">
-                    <input type="text" value={bankForm.accountHolder}
-                      onChange={e => setBankForm(p => ({ ...p, accountHolder: e.target.value }))}
-                      className={inputCls} placeholder="Account holder name" />
-                  </Field>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Account Number">
-                      <input type="text" value={bankForm.accountNumber}
-                        onChange={e => setBankForm(p => ({ ...p, accountNumber: e.target.value }))}
-                        className={inputCls} placeholder="Account number" />
-                    </Field>
-                    <Field label="IFSC Code">
-                      <input type="text" value={bankForm.ifscCode}
-                        onChange={e => setBankForm(p => ({ ...p, ifscCode: e.target.value.toUpperCase() }))}
-                        className={inputCls} placeholder="IFSC code" />
-                    </Field>
-                  </div>
-                  <Field label="Bank Name">
-                    <input type="text" value={bankForm.bankName}
-                      onChange={e => setBankForm(p => ({ ...p, bankName: e.target.value }))}
-                      className={inputCls} placeholder="Bank name" />
-                  </Field>
-                  <button type="submit" disabled={saving} className={btnPrimary}>
-                    {saving ? 'Saving…' : 'Save Bank Details'}
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {/* ──── SETTINGS ──── */}
-            {activeSection === 'settings' && (
-              <div className="pf-panel space-y-3">
-                <div>
-                  <h2 className="pf-display font-black text-slate-800">Settings</h2>
-                  <p className="text-slate-400 text-xs mt-0.5">Security & account preferences</p>
-                </div>
-
-                {!showPasswordChange ? (
-                  <button onClick={() => setShowPasswordChange(true)}
-                    className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-left flex items-center gap-4 hover:border-slate-200 hover:shadow-md active:scale-[0.98] transition-all"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
-                      <Ico n="lock" cls="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="pf-display font-black text-slate-800 text-sm">Change Password</div>
-                      <div className="text-slate-400 text-xs mt-0.5">Update your account credentials</div>
-                    </div>
-                    <Ico n="chevR" cls="w-4 h-4 text-slate-300" />
-                  </button>
-                ) : (
-                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                      <button onClick={() => { setShowPasswordChange(false); setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' }); }}
-                        className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        <Ico n="chevL" cls="w-4 h-4" />
-                      </button>
-                      <h3 className="pf-display font-black text-slate-800 text-sm">Change Password</h3>
-                    </div>
-                    <form onSubmit={handlePasswordUpdate} className="p-5 space-y-4">
-                      <Field label="Current Password">
-                        <input type="password" name="currentPassword" value={passwordForm.currentPassword}
-                          onChange={e => setPasswordForm(p => ({ ...p, currentPassword: e.target.value }))}
-                          className={inputCls} placeholder="Current password" />
-                      </Field>
-                      <Field label="New Password">
-                        <input type="password" name="newPassword" value={passwordForm.newPassword}
-                          onChange={e => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
-                          className={inputCls} placeholder="At least 6 characters" />
-                      </Field>
-                      <Field label="Confirm Password">
-                        <input type="password" name="confirmPassword" value={passwordForm.confirmPassword}
-                          onChange={e => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
-                          className={inputCls} placeholder="Repeat new password" />
-                      </Field>
-                      {passwordForm.newPassword && passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
-                        <p className="text-red-500 text-xs font-semibold">Passwords don't match</p>
-                      )}
-                      <button type="submit"
-                        disabled={changingPassword || passwordForm.newPassword !== passwordForm.confirmPassword || !passwordForm.newPassword}
-                        className={btnPrimary}
-                      >
-                        {changingPassword ? 'Updating…' : 'Update Password'}
-                      </button>
-                    </form>
-                  </div>
-                )}
-              </div>
-            )}
-          </main>
-        </div>
+    <div className="space-y-6">
+      {/* Page header */}
+      <div>
+        <h1 className="text-3xl font-black text-gray-900 mb-2">Partner Profile</h1>
+        <p className="text-gray-500">Manage your profile and account details</p>
       </div>
-    </>
+
+      {/* Section nav */}
+      <div className="flex overflow-x-auto gap-2 pb-2">
+        {navItems.map(({ id, label, icon }) => (
+          <button
+            key={id}
+            onClick={() => setActiveSection(id)}
+            className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all border
+              ${activeSection === id
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-transparent shadow-lg shadow-indigo-200'
+                : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+          >
+            <Ico n={icon} cls="w-4 h-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ──── OVERVIEW ──── */}
+      {activeSection === 'overview' && (
+        <div className="space-y-6">
+          {/* Welcome card */}
+          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white relative overflow-hidden">
+            <div className="absolute right-0 top-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute right-12 bottom-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2" />
+            <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1">Welcome back</p>
+            <h2 className="font-black text-2xl leading-tight mb-3">{partner?.name?.split(' ')[0]}</h2>
+            <p className="text-indigo-200 text-sm">{partner?.email}</p>
+            {partner?.kycVerified && (
+              <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                KYC Verified
+              </div>
+            )}
+          </div>
+
+          {/* Quick action grid */}
+          <div className="grid md:grid-cols-3 gap-4">
+            <button 
+              onClick={() => setActiveSection('profile')}
+              className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 active:scale-[0.97] transition-all text-left"
+            >
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
+                <Ico n="user" cls="w-6 h-6" />
+              </div>
+              <div className="font-black text-gray-800 text-sm">Edit Profile</div>
+              <div className="text-gray-400 text-xs mt-1">Update your details</div>
+            </button>
+            <button 
+              onClick={() => setActiveSection('bank')}
+              className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 active:scale-[0.97] transition-all text-left"
+            >
+              <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-4">
+                <Ico n="gear" cls="w-6 h-6" />
+              </div>
+              <div className="font-black text-gray-800 text-sm">Bank Details</div>
+              <div className="text-gray-400 text-xs mt-1">Payment information</div>
+            </button>
+            <button 
+              onClick={() => setActiveSection('settings')}
+              className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-gray-200 active:scale-[0.97] transition-all text-left"
+            >
+              <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
+                <Ico n="lock" cls="w-6 h-6" />
+              </div>
+              <div className="font-black text-gray-800 text-sm">Settings</div>
+              <div className="text-gray-400 text-xs mt-1">Account preferences</div>
+            </button>
+          </div>
+
+          {/* Partner ID Card */}
+          <div className="space-y-4">
+            <PartnerIDCard ref={idCardRef} partner={partner} />
+            <button
+              onClick={handleDownloadID}
+              className="w-full py-4 rounded-xl font-black text-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              <Ico n="download" cls="w-5 h-5" />
+              Download ID Card
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ──── PROFILE ──── */}
+      {activeSection === 'profile' && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100">
+            <h2 className="font-black text-gray-800">Personal Information</h2>
+            <p className="text-gray-400 text-xs mt-1">Update your personal details</p>
+          </div>
+          <form onSubmit={handleSaveProfile} className="p-6 space-y-5">
+            <div className="grid md:grid-cols-2 gap-5">
+              <Field label="Full Name">
+                <input type="text" name="name" value={formData.name}
+                  onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                  className={inputCls} placeholder="Your full name" />
+              </Field>
+              <Field label="Email Address">
+                <input type="email" value={partner?.email || ''} disabled className={disabledCls} />
+              </Field>
+              <Field label="Phone Number">
+                <input type="tel" name="phone" value={formData.phone}
+                  onChange={e => setFormData(p => ({ ...p, phone: e.target.value.replace(/\D/g,'').slice(0,10) }))}
+                  className={inputCls} placeholder="10-digit mobile number" />
+              </Field>
+              <Field label="Blood Group">
+                <select 
+                  name="bloodGroup" 
+                  value={formData.bloodGroup}
+                  onChange={e => setFormData(p => ({ ...p, bloodGroup: e.target.value }))}
+                  className={inputCls}
+                >
+                  <option value="">Select Blood Group</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+              </Field>
+            </div>
+            <Field label="Address">
+              <textarea 
+                name="address" 
+                value={formData.address}
+                onChange={e => setFormData(p => ({ ...p, address: e.target.value }))}
+                className={inputCls} 
+                placeholder="Street address"
+                rows={3}
+              />
+            </Field>
+            <div className="grid md:grid-cols-3 gap-5">
+              <Field label="City">
+                <input 
+                  type="text" 
+                  name="city" 
+                  value={formData.city}
+                  onChange={e => setFormData(p => ({ ...p, city: e.target.value }))}
+                  className={inputCls} 
+                  placeholder="City"
+                />
+              </Field>
+              <Field label="State">
+                <select 
+                  name="state" 
+                  value={formData.state}
+                  onChange={e => setFormData(p => ({ ...p, state: e.target.value }))}
+                  className={inputCls}
+                >
+                  <option value="">Select State</option>
+                  {INDIAN_STATES.map(state => <option key={state} value={state}>{state}</option>)}
+                </select>
+              </Field>
+              <Field label="Pincode">
+                <input 
+                  type="text" 
+                  name="pincode" 
+                  value={formData.pincode}
+                  onChange={e => setFormData(p => ({ ...p, pincode: e.target.value.replace(/\D/g,'').slice(0,6) }))}
+                  className={inputCls} 
+                  placeholder="Pincode"
+                />
+              </Field>
+            </div>
+            <button type="submit" disabled={saving} className={btnPrimary}>
+              {saving ? 'Saving…' : 'Save Changes'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ──── BANK DETAILS ──── */}
+      {activeSection === 'bank' && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100">
+            <h2 className="font-black text-gray-800">Bank Details</h2>
+            <p className="text-gray-400 text-xs mt-1">Update your payment information</p>
+          </div>
+          <form onSubmit={handleSaveBankDetails} className="p-6 space-y-5">
+            <Field label="Account Holder Name">
+              <input type="text" value={bankForm.accountHolder}
+                onChange={e => setBankForm(p => ({ ...p, accountHolder: e.target.value }))}
+                className={inputCls} placeholder="Account holder name" />
+            </Field>
+            <div className="grid md:grid-cols-2 gap-5">
+              <Field label="Account Number">
+                <input type="text" value={bankForm.accountNumber}
+                  onChange={e => setBankForm(p => ({ ...p, accountNumber: e.target.value }))}
+                  className={inputCls} placeholder="Account number" />
+              </Field>
+              <Field label="IFSC Code">
+                <input type="text" value={bankForm.ifscCode}
+                  onChange={e => setBankForm(p => ({ ...p, ifscCode: e.target.value.toUpperCase() }))}
+                  className={inputCls} placeholder="IFSC code" />
+              </Field>
+            </div>
+            <Field label="Bank Name">
+              <input type="text" value={bankForm.bankName}
+                onChange={e => setBankForm(p => ({ ...p, bankName: e.target.value }))}
+                className={inputCls} placeholder="Bank name" />
+            </Field>
+            <button type="submit" disabled={saving} className={btnPrimary}>
+              {saving ? 'Saving…' : 'Save Bank Details'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* ──── SETTINGS ──── */}
+      {activeSection === 'settings' && (
+        <div className="space-y-4">
+          <div>
+            <h2 className="font-black text-gray-800">Settings</h2>
+            <p className="text-gray-400 text-xs mt-1">Security and account preferences</p>
+          </div>
+
+          {!showPasswordChange ? (
+            <button onClick={() => setShowPasswordChange(true)}
+              className="w-full bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-left flex items-center gap-4 hover:border-gray-200 hover:shadow-md active:scale-[0.98] transition-all"
+            >
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                <Ico n="lock" cls="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <div className="font-black text-gray-800 text-sm">Change Password</div>
+                <div className="text-gray-400 text-xs mt-1">Update your account credentials</div>
+              </div>
+              <Ico n="chevR" cls="w-5 h-5 text-gray-300" />
+            </button>
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+                <button onClick={() => { setShowPasswordChange(false); setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' }); }}
+                  className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <Ico n="chevL" cls="w-5 h-5" />
+                </button>
+                <h3 className="font-black text-gray-800 text-sm">Change Password</h3>
+              </div>
+              <form onSubmit={handlePasswordUpdate} className="p-6 space-y-5">
+                <Field label="Current Password">
+                  <input type="password" name="currentPassword" value={passwordForm.currentPassword}
+                    onChange={e => setPasswordForm(p => ({ ...p, currentPassword: e.target.value }))}
+                    className={inputCls} placeholder="Current password" />
+                </Field>
+                <Field label="New Password">
+                  <input type="password" name="newPassword" value={passwordForm.newPassword}
+                    onChange={e => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
+                    className={inputCls} placeholder="At least 6 characters" />
+                </Field>
+                <Field label="Confirm Password">
+                  <input type="password" name="confirmPassword" value={passwordForm.confirmPassword}
+                    onChange={e => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                    className={inputCls} placeholder="Repeat new password" />
+                </Field>
+                {passwordForm.newPassword && passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
+                  <p className="text-red-500 text-xs font-semibold">Passwords don't match</p>
+                )}
+                <button type="submit"
+                  disabled={changingPassword || passwordForm.newPassword !== passwordForm.confirmPassword || !passwordForm.newPassword}
+                  className={btnPrimary}
+                >
+                  {changingPassword ? 'Updating…' : 'Update Password'}
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

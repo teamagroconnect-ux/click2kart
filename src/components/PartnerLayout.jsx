@@ -4,7 +4,7 @@ import { CONFIG } from '../shared/lib/config.js'
 import logoImg from '../click2kart.png'
 
 const Icon = ({ name }) => (
-  <span className="inline-block w-4 h-4 mr-2 align-middle">
+  <span className="inline-block w-5 h-5 mr-3 align-middle">
     {name === 'dash' && (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="7" />
@@ -25,9 +25,15 @@ const Icon = ({ name }) => (
         <path d="M16 10a4 4 0 0 1-8 0" />
       </svg>
     )}
-    {name === 'add' && (
+    {name === 'business' && (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 5v14M5 12h14" />
+        <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M4 6h16v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6" />
+        <path d="M14 14h-4M12 14v-2" />
+      </svg>
+    )}
+    {name === 'coupon' && (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6M14 4l8 4v6l-8 4M10 8l-2 2M10 12l-2 2M14 12l2 2M14 8l2-2" />
       </svg>
     )}
     {name === 'profile' && (
@@ -69,14 +75,14 @@ export default function PartnerLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 selection:bg-indigo-100 selection:text-indigo-900">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white text-gray-900 selection:bg-indigo-100 selection:text-indigo-900">
       <style>{`
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
       `}</style>
-      <div className="flex h-20 items-center justify-between border-b border-gray-100 bg-white/80 backdrop-blur-md px-6 md:px-10 sticky top-0 z-30">
+      <div className="flex h-20 items-center justify-between border-b border-gray-100 bg-white/80 backdrop-blur-md px-4 md:px-6 lg:px-10 sticky top-0 z-30">
         <div className="flex items-center gap-4">
           <button
             className="md:hidden p-2 rounded-xl hover:bg-gray-50 border border-gray-100 transition-colors"
@@ -85,15 +91,15 @@ export default function PartnerLayout() {
             <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
           <div className="flex items-center gap-3">
-            <span className="h-12 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-1 overflow-hidden">
+            <div className="h-10 md:h-12 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-1 overflow-hidden">
               <img src={logoImg} alt="Click2Kart" className="h-full w-auto object-contain" />
-            </span>
+            </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
-                <span className="text-base font-black tracking-tight text-gray-900">{CONFIG.BRAND_NAME}</span>
+                <span className="text-sm md:text-base font-black tracking-tight text-gray-900">{CONFIG.BRAND_NAME}</span>
                 <span className="px-2 py-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-[10px] font-black text-white rounded-lg tracking-widest uppercase">Partner</span>
               </div>
-              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Partner Portal</div>
+              <div className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Partner Portal</div>
             </div>
           </div>
         </div>
@@ -102,7 +108,7 @@ export default function PartnerLayout() {
           onClick={logout}
           title="Sign out"
           aria-label="Sign out"
-          className="group inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-gray-200 text-gray-600 transition-all hover:bg-red-50 hover:border-red-100 hover:text-red-600 active:scale-95"
+          className="group inline-flex h-10 md:h-11 w-10 md:w-11 items-center justify-center rounded-2xl border border-gray-200 text-gray-600 transition-all hover:bg-red-50 hover:border-red-100 hover:text-red-600 active:scale-95"
         >
           <svg className="w-5 h-5 transition-transform group-hover:-translate-x-px" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -110,13 +116,13 @@ export default function PartnerLayout() {
         </button>
       </div>
 
-      <div className="grid min-h-[calc(100vh-5rem)] md:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid min-h-[calc(100vh-5rem)] md:grid-cols-[260px_minmax(0,1fr)]">
         <aside
           className={`border-r border-gray-100 bg-white/50 backdrop-blur-sm ${
             open ? 'fixed inset-0 z-40 bg-white pt-20' : 'hidden'
           } md:block sticky top-20 h-[calc(100vh-5rem)]`}
         >
-          <div className="h-full flex flex-col p-6 overflow-hidden">
+          <div className="h-full flex flex-col p-4 md:p-6 overflow-hidden">
             <nav className="flex-1 space-y-2 overflow-y-auto pr-2 custom-scrollbar">
               {link('/partner/dashboard', (
                 <>
@@ -124,10 +130,16 @@ export default function PartnerLayout() {
                   Dashboard
                 </>
               ), true)}
-              {link('/partner/add-business', (
+              {link('/partner/my-businesses', (
                 <>
-                  <Icon name="add" />
-                  Add Business
+                  <Icon name="business" />
+                  My Businesses
+                </>
+              ))}
+              {link('/partner/my-coupons', (
+                <>
+                  <Icon name="coupon" />
+                  My Coupons
                 </>
               ))}
               {link('/partner/earnings', (

@@ -27,7 +27,8 @@ export default function Signup() {
     name: '',
     phone: '',
     email: '',
-    password: ''
+    password: '',
+    inviteCode: ''
   })
   const [otp, setOtp] = useState('')
 
@@ -135,6 +136,17 @@ export default function Signup() {
                   inputClassName="w-full bg-violet-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                   placeholder="••••••••"
                   value={formData.password}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="group">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Invite Code (Optional)</label>
+                <input
+                  name="inviteCode"
+                  type="text"
+                  className="w-full bg-violet-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                  placeholder="Partner invite code"
+                  value={formData.inviteCode}
                   onChange={handleChange}
                 />
               </div>
