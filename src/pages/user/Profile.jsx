@@ -272,9 +272,6 @@ export default function Profile() {
                 <button onClick={() => navigate('/orders')} className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-left text-slate-600 hover:bg-slate-50 border-l-2 border-transparent transition-all">
                   <Ico n="pkg" cls="w-4 h-4 flex-shrink-0" /> My Orders
                 </button>
-                <button onClick={() => navigate('/wishlist')} className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-left text-slate-600 hover:bg-slate-50 border-l-2 border-transparent transition-all">
-                  <Ico n="heart" cls="w-4 h-4 flex-shrink-0" /> Wishlist
-                </button>
                 <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-left text-red-500 hover:bg-red-50 border-l-2 border-transparent transition-all">
                   <Ico n="logout" cls="w-4 h-4 flex-shrink-0" /> Logout
                 </button>
@@ -301,7 +298,6 @@ export default function Profile() {
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { label: 'My Orders', sub: 'Track & manage', icon: 'pkg', color: 'bg-blue-50 text-blue-600', action: () => navigate('/orders') },
-                    { label: 'Wishlist', sub: 'Saved items', icon: 'heart', color: 'bg-rose-50 text-rose-600', action: () => navigate('/wishlist') },
                     { label: 'Edit Profile', sub: 'Update details', icon: 'user', color: 'bg-emerald-50 text-emerald-600', action: () => setActiveSection('personal') },
                     { label: 'Settings', sub: 'Account settings', icon: 'gear', color: 'bg-violet-50 text-violet-600', action: () => setActiveSection('settings') },
                   ].map(({ label, sub, icon, color, action }) => (

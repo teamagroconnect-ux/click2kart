@@ -86,7 +86,8 @@ export function AuthProvider({ children }) {
         phone: data.phone,
         defaultAddress: data.defaultAddress,
         isKycComplete: !!data.isKycComplete,
-        role: data.role || (data.phone ? 'customer' : 'admin')
+        role: data.role || (data.phone ? 'customer' : 'admin'),
+        kyc: data.kyc // Include kyc data (which has profilePicture!)
       }
       setUser(nextUser)
       localStorage.setItem('user', JSON.stringify(nextUser))

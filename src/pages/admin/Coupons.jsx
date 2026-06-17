@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
+import PasswordConfirmModal from '../../components/PasswordConfirmModal'
 
 export default function Coupons(){
   const { notify } = useToast()
@@ -13,6 +14,7 @@ export default function Coupons(){
   })
   const [partners, setPartners] = useState([])
   const [newPartner, setNewPartner] = useState({ name:'', email:'', phone:'' })
+  const [passwordModal, setPasswordModal] = useState({ open: false, coupon: null, action: null })
   const load = async()=>{ const {data}=await api.get('/api/coupons'); setItems(data) }
   const loadPartners = async()=>{ const {data}=await api.get('/api/partner-accounts'); setPartners(data) }
   useEffect(()=>{ load(); loadPartners() }, [])
@@ -68,15 +70,24 @@ export default function Coupons(){
     load(); 
   }
 
-  const remove = async (c)=>{ 
-    if (c.isActive) {
-      if (!confirm(`Disable coupon "${c.code}"?`)) return;
-      await api.delete(`/api/coupons/${c._id}`); 
-    } else {
-      if (!confirm(`Permanently DELETE coupon "${c.code}"? This cannot be undone.`)) return;
-      await api.delete(`/api/coupons/${c._id}`); 
+  const handleRemove = async (password) => {
+    try {
+      const { coupon, action } = passwordModal;
+      // Send password directly in delete request body now
+      await api.delete(`/api/coupons/${coupon._id}`, { data: { password } });
+      load();
+      setPasswordModal({ open: false, coupon: null, action: null });
+    } catch (err) {
+      notify(err.response?.data?.error || 'Invalid password', 'error');
     }
-    load(); 
+  }
+
+  const remove = (c) => {
+    if (c.isActive) {
+      setPasswordModal({ open: true, coupon: c, action: 'disable' });
+    } else {
+      setPasswordModal({ open: true, coupon: c, action: 'delete' });
+    }
   }
 
   const toggleStatus = async (c) => {
@@ -98,6 +109,14 @@ export default function Coupons(){
   }
 
   return (
+    <>
+    <PasswordConfirmModal
+      open={passwordModal.open}
+      title={passwordModal.action === 'disable' ? 'Disable Coupon' : 'Delete Coupon'}
+      message={passwordModal.action === 'disable' ? `Enter deletion password to disable coupon "${passwordModal.coupon?.code}"` : `Enter deletion password to permanently delete coupon "${passwordModal.coupon?.code}"`}
+      onConfirm={handleRemove}
+      onCancel={() => setPasswordModal({ open: false, coupon: null, action: null })}
+    />
     <div className="space-y-8 max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -314,5 +333,6 @@ export default function Coupons(){
         </div>
       </div>
     </div>
+    </>
   )
 }

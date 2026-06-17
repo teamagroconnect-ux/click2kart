@@ -373,6 +373,12 @@ export default function Partners() {
                     <div className="text-sm font-bold text-gray-900">{viewingFullPartner.phone}</div>
                   </div>
                 )}
+                {viewingFullPartner.inviteCode && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Invite Code</span>
+                    <div className="text-xl font-black text-indigo-600">{viewingFullPartner.inviteCode}</div>
+                  </div>
+                )}
                 {viewingFullPartner.businessName && (
                   <div className="space-y-1">
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Business Name</span>
@@ -417,6 +423,44 @@ export default function Partners() {
                 )}
               </div>
             </div>
+
+            {viewingFullPartner.bankAccount && (viewingFullPartner.bankAccount.accountHolder || viewingFullPartner.bankAccount.accountNumber || viewingFullPartner.bankAccount.ifscCode || viewingFullPartner.bankAccount.bankName) && (
+              <div className="bg-white border border-gray-100 rounded-3xl p-6">
+                <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Bank Details</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {viewingFullPartner.bankAccount.accountHolder && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Account Holder</span>
+                      <div className="text-sm font-bold text-gray-900">{viewingFullPartner.bankAccount.accountHolder}</div>
+                    </div>
+                  )}
+                  {viewingFullPartner.bankAccount.accountNumber && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Account Number</span>
+                      <div className="text-sm font-bold text-gray-900 font-mono">{viewingFullPartner.bankAccount.accountNumber}</div>
+                    </div>
+                  )}
+                  {viewingFullPartner.bankAccount.ifscCode && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">IFSC Code</span>
+                      <div className="text-sm font-bold text-gray-900 font-mono">{viewingFullPartner.bankAccount.ifscCode}</div>
+                    </div>
+                  )}
+                  {viewingFullPartner.bankAccount.bankName && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Bank Name</span>
+                      <div className="text-sm font-bold text-gray-900">{viewingFullPartner.bankAccount.bankName}</div>
+                    </div>
+                  )}
+                  {viewingFullPartner.bankAccount.branch && (
+                    <div className="space-y-1 md:col-span-2">
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Branch</span>
+                      <div className="text-sm font-bold text-gray-900">{viewingFullPartner.bankAccount.branch}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-white border border-gray-100 rounded-3xl p-6">

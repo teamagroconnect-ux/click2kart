@@ -4,6 +4,19 @@ import { useCart } from '../lib/CartContext'
 import { CONFIG } from '../shared/lib/config.js'
 import logoImg from '../click2kart.png'
 import ConfirmModal from './ConfirmModal'
+import { getImageUrl } from '../lib/cloudinary'
+
+function Avatar({ user, size = 'md' }) {
+  const sz = { sm: 'h-8 w-8', md: 'h-12 w-12', lg: 'h-16 w-16' }[size]
+  const avatarUrl = user?.kyc?.profilePicture
+  if (avatarUrl)
+    return <img src={getImageUrl(avatarUrl)} alt={user.name} className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`} />
+  return (
+    <div className={`${sz} rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center font-black text-white ring-2 ring-white shadow-md`}>
+      {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+    </div>
+  )
+}
 
 function classNames(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -150,15 +163,16 @@ export default function UserLayout() {
               <div className="hidden sm:flex items-center gap-3">
                 {user ? (
                   <div className="flex items-center gap-4">
-                    <div className="flex flex-col items-end">
-                      <Link to="/profile" className="inline-flex flex-col items-end gap-0.5 px-4 py-2.5 rounded-2xl border border-gray-200 bg-white shadow-lg shadow-gray-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-100 transition-all cursor-pointer">
+                    <Link to="/profile" className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-gray-200 bg-white shadow-lg shadow-gray-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-100 transition-all cursor-pointer">
+                      <Avatar user={user} size="md" />
+                      <div className="flex flex-col items-start gap-0.5">
                         <div className="inline-flex items-center gap-2">
                           <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
                           <span className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900">{user.name}</span>
                         </div>
                         <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-gray-500 leading-none">BUSINESS ACCOUNT</span>
-                      </Link>
-                    </div>
+                      </div>
+                    </Link>
                     <button
                       type="button"
                       onClick={handleLogout}

@@ -49,24 +49,39 @@ export default function MyCoupons() {
                 className={`bg-white border border-gray-100 rounded-3xl p-6 shadow-sm transition-all cursor-pointer hover:shadow-md ${!c.isActive ? 'opacity-60 grayscale' : ''}`}
                 onClick={() => setExpandedId(isExpanded ? null : (c._id || index))}
               >
+                {/* Coupon Code First */}
+                <div className="mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-center">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-indigo-200 mb-2">
+                    {c.isPremium ? 'PREMIUM COUPON CODE' : 'YOUR COUPON CODE'}
+                  </div>
+                  <div className="text-3xl font-black text-white tracking-widest">{c.code}</div>
+                  <div className="mt-3 flex justify-center gap-2">
+                    <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${c.isActive ? 'bg-white/20 text-white' : 'bg-red-500/20 text-white'}`}>
+                      {c.isActive ? 'ACTIVE' : 'DISABLED'}
+                    </div>
+                    {c.isPremium && (
+                      <div className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-yellow-400/90 text-yellow-900">
+                        PREMIUM
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-sm tracking-tighter shadow-inner ${c.type === 'PERCENT' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
                       {c.type === 'PERCENT' ? `${c.value}%` : `₹${c.value}`}
                     </div>
                     <div>
-                      <div className="text-xl font-black text-gray-900 tracking-tight">{c.code}</div>
+                      <div className="text-sm font-black text-gray-900 tracking-tight">
+                        {c.type === 'PERCENT' ? 'Percentage Discount' : 'Flat Discount'}
+                      </div>
                       <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
-                        {c.type === 'PERCENT' ? 'Percentage Discount' : 'Flat Discount'} • {c.usageCount || 0} uses
+                        {c.usageCount || 0} uses
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border ${c.isActive ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                      {c.isActive ? 'ACTIVE' : 'DISABLED'}
-                    </div>
-                    <svg className={`w-6 h-6 text-gray-300 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-                  </div>
+                  <svg className={`w-6 h-6 text-gray-300 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
                 </div>
 
                 {isExpanded && (
@@ -88,7 +103,7 @@ export default function MyCoupons() {
                         )}
                         {c.expiryDate && (
                           <div>
-                            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">EXPIRY</div>
+                            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">EXPIRY DATE</div>
                             <div className="text-sm font-black text-gray-900">{new Date(c.expiryDate).toLocaleDateString()}</div>
                           </div>
                         )}
