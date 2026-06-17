@@ -27,3 +27,5 @@ export const getCloudinaryUrl = (url, width, blur = false) => {
   // Insert transformations after '/upload/'
   return `${parts[0]}/upload/${transformations}/${parts[1]}`;
 };
+
+export const getImageUrl = getCloudinaryUrl;
