@@ -1,7 +1,7 @@
-/** Pack-size / MOQ helpers — MOQ defaults to packSize, else 1 */
+/** Pack-size / MOQ helpers — MOQ defaults to minOrderQty, else 1 */
 
 export function getPackSize(product) {
-  return Math.max(1, Math.round(Number(product?.packSize || 1)))
+  return Math.max(1, Math.round(Number(product?.minOrderQty || product?.packSize || 1)))
 }
 
 export function getEffectiveMoq(product) {

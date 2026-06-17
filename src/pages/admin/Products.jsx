@@ -293,10 +293,21 @@ export default function Products() {
                             <div className="text-[10px] text-gray-400 font-medium">MRP: ₹{p.mrp?.toLocaleString()} · {p.gst}% GST</div>
                           </td>
                           <td className="px-6 py-4">
-                            <div className={`inline-flex flex-col px-3 py-1 rounded-lg border ${p.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                              <span className="text-xs font-bold">{p.stock}</span>
-                              <span className="text-[8px] font-bold uppercase opacity-60">Units</span>
-                            </div>
+                            {p.variants?.length > 0 ? (
+                              <div className="space-y-1">
+                                {p.variants.slice(0, 3).map((v, idx) => (
+                                  <div key={idx} className={`inline-flex flex-col px-2 py-0.5 rounded-lg border ${v.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                                    <span className="text-[9px] font-bold">{v.stock} ({Object.values(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).join(', ')})</span>
+                                  </div>
+                                ))}
+                                {p.variants.length > 3 && <span className="text-[8px] text-gray-400">+{p.variants.length - 3} more</span>}
+                              </div>
+                            ) : (
+                              <div className={`inline-flex flex-col px-3 py-1 rounded-lg border ${p.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                                <span className="text-xs font-bold">{p.stock}</span>
+                                <span className="text-[8px] font-bold uppercase opacity-60">Units</span>
+                              </div>
+                            )}
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="relative inline-block">

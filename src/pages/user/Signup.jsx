@@ -70,10 +70,10 @@ export default function Signup() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-gray-50">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
+    <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-gradient-to-br from-violet-50 to-purple-50">
+      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[2.5rem] shadow-xl border border-violet-100 animate-in fade-in zoom-in-95 duration-500">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center h-16 w-16 rounded-3xl bg-blue-600 text-white text-2xl font-black shadow-xl shadow-blue-100 mb-4">
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-3xl bg-gradient-to-br from-violet-600 to-purple-600 text-white text-2xl font-black shadow-xl shadow-violet-200 mb-4">
             C2K
           </div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">
@@ -95,7 +95,7 @@ export default function Signup() {
                   name="name"
                   type="text"
                   required
-                  className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  className="w-full bg-violet-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                   placeholder="John Doe"
                   value={formData.name}
                   onChange={handleChange}
@@ -107,7 +107,7 @@ export default function Signup() {
                   name="email"
                   type="email"
                   required
-                  className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  className="w-full bg-violet-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                   placeholder="john.doe@example.com"
                   value={formData.email}
                   onChange={handleChange}
@@ -119,7 +119,7 @@ export default function Signup() {
                   name="phone"
                   type="tel"
                   required
-                  className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  className="w-full bg-violet-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                   placeholder="+91 91234 56789"
                   value={formData.phone}
                   onChange={handleChange}
@@ -132,7 +132,7 @@ export default function Signup() {
                   required
                   minLength={6}
                   autoComplete="new-password"
-                  inputClassName="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  inputClassName="w-full bg-violet-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleChange}
@@ -143,14 +143,14 @@ export default function Signup() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+              className="w-full bg-gradient-to-br from-violet-600 to-purple-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-violet-200 hover:from-violet-700 hover:to-purple-700 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
             >
               {loading ? 'Sending OTP...' : 'Send Verification Code'}
             </button>
 
             <p className="text-center text-xs text-gray-400 font-bold mt-6 uppercase tracking-widest">
               Already have an account?{' '}
-              <Link to="/login" state={{ from }} className="text-blue-600 hover:text-blue-700">
+              <Link to="/login" state={{ from }} className="text-violet-600 hover:text-violet-700">
                 Login
               </Link>
             </p>
@@ -163,7 +163,7 @@ export default function Signup() {
                 type="text"
                 required
                 maxLength={4}
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-6 text-3xl font-black text-center text-gray-900 tracking-[0.5em] placeholder-gray-300 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full bg-violet-50 border-none rounded-2xl px-5 py-6 text-3xl font-black text-center text-gray-900 tracking-[0.5em] placeholder-gray-300 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
                 placeholder="0000"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
@@ -173,7 +173,7 @@ export default function Signup() {
             <button
               type="submit"
               disabled={loading || otp.length < 4}
-              className="w-full bg-blue-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
+              className="w-full bg-gradient-to-br from-violet-600 to-purple-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-violet-200 hover:from-violet-700 hover:to-purple-700 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
             >
               {loading ? 'Verifying...' : 'Complete Registration'}
             </button>

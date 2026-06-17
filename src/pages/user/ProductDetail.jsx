@@ -573,7 +573,7 @@ export default function ProductDetail() {
 
   const sortedAsc = Array.isArray(p.bulkTiers) ? p.bulkTiers.slice().sort((a, b) => a.quantity - b.quantity) : []
   const sortedDesc = Array.isArray(p.bulkTiers) ? p.bulkTiers.slice().sort((a, b) => b.quantity - a.quantity) : []
-  const minTierQty = sortedAsc.length > 0 ? Math.max(1, Number(sortedAsc[0].quantity || 1)) : (Number(p.bulkDiscountQuantity) || 1)
+  const minTierQty = Math.max(1, Number(p.minOrderQty || 1))
   let effPrice = basePrice
   const hitTier = sortedDesc.find(t => qty >= Number(t.quantity || 0))
   if (hitTier) {

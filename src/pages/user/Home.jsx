@@ -809,8 +809,8 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Link>
-            <Link to="/partner/login" className="hm-btn-secondary">
-          Become a Partner
+            <Link to="/partner/login" className="hm-btn-primary">
+          Partner Login
         </Link>
           </div>
 
@@ -880,7 +880,7 @@ export default function Home() {
               { n: '500+', t: 'Active Partners',       delay: 0   },
               { n: '10+',  t: 'Crore Sales Generated', delay: 100 },
               { n: '50+',  t: 'Top Brands',        delay: 200 },
-              { n: '24/7', t: 'B2B Support',        delay: 300 },
+              { n: '1000+', t: 'Products',        delay: 300 },
             ].map((s, i) => (
               <StatItem key={i} n={s.n} t={s.t} delay={s.delay} />
             ))}
@@ -1027,27 +1027,27 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Partner Login CTA */}
-        <section className="py-12 sm:py-16 md:py-20 relative z-1" style={{ background: 'linear-gradient(135deg, #f9f7ff 0%, #ffffff 100%)' }}>
+        {/* Partner Program CTA */}
+        <section className="py-12 sm:py-16 md:py-20 relative z-1" style={{ background: 'linear-gradient(135deg, #f3f0ff 0%, #ffffff 100%)' }}>
           <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-indigo-200 bg-white shadow-sm mb-6">
-              <span className="h-1.5 w-1.5 rounded-full bg-purple-500 animate-pulse"></span>
-              <span className="text-[11px] font-black uppercase tracking-[0.25em] text-gray-500">Partner Program</span>
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-300 bg-white shadow-sm mb-6">
+              <span className="h-1.5 w-1.5 rounded-full bg-violet-600 animate-pulse"></span>
+              <span className="text-[11px] font-black uppercase tracking-[0.25em] text-violet-700">Premium Partner Program</span>
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 mb-3 tracking-tight">
-              Are You a Brand or Distributor?
+              Grow Your Business as a Click2Kart Partner
             </h2>
             <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-              Join our partner network and reach 500+ active B2B buyers. List your products, manage orders, and grow your business with Click2Kart.
+              Join India's leading B2B tech platform. Access exclusive tools, dedicated support, and premium features to scale your operations exponentially.
             </p>
             <Link
               to="/partner"
-              className="inline-flex items-center justify-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-[12px] font-black uppercase tracking-[0.25em] shadow-xl shadow-violet-200 hover:shadow-2xl hover:scale-[1.03] transition-all duration-300"
+              className="inline-flex items-center justify-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 text-white text-[12px] font-black uppercase tracking-[0.25em] shadow-xl shadow-violet-300 hover:shadow-2xl hover:scale-[1.03] transition-all duration-300"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-2m4 0h-2m-6 0H5a2 2 0 01-2-2v-3m10-7h4m-4 0h-4m4 0h-4M9 13h6" />
               </svg>
-              Partner Login
+              Explore Partner Program
             </Link>
           </div>
         </section>
