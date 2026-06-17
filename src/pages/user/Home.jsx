@@ -790,7 +790,7 @@ export default function Home() {
 
         {/* ── HERO ── */}
         <section className="hm-hero">
-          <div className="hm-eyebrow hm-float">
+          <div className="hm-eyebrow hm-float whitespace-nowrap">
             <span className="hm-eyebrow-dot" />
             India's Trusted B2B Tech Hub
           </div>
@@ -955,13 +955,13 @@ export default function Home() {
               dedicated account managers, and exclusive factory-direct stock.
             </p>
             <div className="hm-cta-btns">
-              <Link to="/signup" className="hm-btn-primary">
+              <Link to="/signup" className="hm-btn-primary whitespace-nowrap">
                 Create B2B Account
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Link>
-              <Link to="/products" className="hm-btn-secondary">
+              <Link to="/products" className="hm-btn-secondary whitespace-nowrap">
                 Browse Catalog
               </Link>
             </div>
@@ -1047,7 +1047,7 @@ export default function Home() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-2m4 0h-2m-6 0H5a2 2 0 01-2-2v-3m10-7h4m-4 0h-4m4 0h-4M9 13h6" />
               </svg>
-              Explore Partner Program
+              &lt;span className="whitespace-nowrap"&gt;Explore Partner Program&lt;/span&gt;
             </Link>
           </div>
         </section>

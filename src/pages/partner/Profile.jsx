@@ -64,36 +64,36 @@ const Avatar = ({ partner, size = 'md' }) => {
 /* ── Partner ID Card Component ── */
 const PartnerIDCard = React.forwardRef(({ partner }, ref) => {
   return (
-    <div ref={ref} className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 rounded-3xl p-6 text-white shadow-2xl overflow-hidden relative">
+    <div ref={ref} className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 rounded-2xl p-4 text-white shadow-2xl overflow-hidden relative max-w-xs mx-auto" style={{ aspectRatio: '1.586/1' }}>
       {/* Background Pattern */}
       <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
       <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
       
-      <div className="relative z-10">
+      <div className="relative z-10 h-full flex flex-col justify-between">
         {/* Top Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="h-12 w-auto flex items-center">
+        <div className="flex items-center justify-between mb-3">
+          <div className="h-8 w-auto flex items-center">
             <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-auto brightness-0 invert" />
           </div>
           <div className="text-right">
-            <div className="text-xs font-bold opacity-80">PARTNER ID CARD</div>
-            <div className="text-[10px] opacity-60">{CONFIG.BRAND_NAME}</div>
+            <div className="text-[10px] font-bold opacity-80">PARTNER ID CARD</div>
+            <div className="text-[8px] opacity-60">{CONFIG.BRAND_NAME}</div>
           </div>
         </div>
 
         {/* Partner Info */}
-        <div className="flex items-center gap-6 mb-6">
+        <div className="flex items-center gap-4 flex-1">
           {/* Photo */}
           <div className="flex-shrink-0">
             {partner?.profilePicture ? (
               <img 
                 src={getImageUrl(partner.profilePicture)} 
                 alt={partner?.name} 
-                className="h-24 w-24 rounded-2xl object-cover border-4 border-white/30 shadow-lg"
+                className="h-16 w-16 rounded-xl object-cover border-2 border-white/30 shadow-lg"
               />
             ) : (
-              <div className="h-24 w-24 rounded-2xl bg-white/20 flex items-center justify-center border-4 border-white/30 shadow-lg">
-                <div className="text-4xl font-black text-white/80">
+              <div className="h-16 w-16 rounded-xl bg-white/20 flex items-center justify-center border-2 border-white/30 shadow-lg">
+                <div className="text-2xl font-black text-white/80">
                   {partner?.name?.charAt(0)?.toUpperCase() || 'P'}
                 </div>
               </div>
@@ -101,16 +101,16 @@ const PartnerIDCard = React.forwardRef(({ partner }, ref) => {
           </div>
           
           {/* Details */}
-          <div className="flex-1">
-            <div className="text-2xl font-black mb-1" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
+          <div className="flex-1 min-w-0">
+            <div className="text-lg font-black mb-1 truncate" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
               {partner?.name || 'Partner Name'}
             </div>
-            <div className="text-sm opacity-90 mb-2 flex items-center gap-2">
-              <span className="px-2 py-0.5 bg-white/20 rounded-full text-[10px] font-bold uppercase">Partner</span>
-              <span className="text-xs opacity-70">{partner?.email || 'partner@example.com'}</span>
+            <div className="text-xs opacity-90 mb-1 flex items-center gap-2 flex-wrap">
+              <span className="px-1.5 py-0.5 bg-white/20 rounded-full text-[8px] font-bold uppercase flex-shrink-0">Partner</span>
+              <span className="text-[10px] opacity-70 truncate">{partner?.email || 'partner@example.com'}</span>
             </div>
             {partner?.phone && (
-              <div className="text-sm opacity-80">
+              <div className="text-xs opacity-80">
                 {partner.phone}
               </div>
             )}
@@ -118,8 +118,8 @@ const PartnerIDCard = React.forwardRef(({ partner }, ref) => {
         </div>
 
         {/* Bottom Footer */}
-        <div className="pt-4 border-t border-white/20 flex items-center justify-between">
-          <div className="text-xs opacity-70">
+        <div className="pt-2 mt-2 border-t border-white/20 flex items-center justify-between">
+          <div className="text-[10px] opacity-70">
             Valid: Permanent
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function PartnerProfile() {
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [partner, setPartner] = useState(null);
   const [formData, setFormData] = useState({
-    name: '', phone: '', bloodGroup: '', address: '', city: '', district: '', state: '', pincode: ''
+    name: '', phone: '', bloodGroup: '', address: '', city: '', district: '', state: '', pincode: '', profilePicture: ''
   });
   const [bankForm, setBankForm] = useState({ accountHolder: '', accountNumber: '', ifscCode: '', bankName: '' });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -174,7 +174,8 @@ export default function PartnerProfile() {
         city: data.city || '',
         district: data.district || '',
         state: data.state || '',
-        pincode: data.pincode || ''
+        pincode: data.pincode || '',
+        profilePicture: data.profilePicture || ''
       });
       setBankForm({
         accountHolder: data.bankAccount?.accountHolder || '',
@@ -186,6 +187,26 @@ export default function PartnerProfile() {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleProfilePictureChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      try {
+        setSaving(true);
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await api.post('/api/upload/image', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        setFormData(p => ({ ...p, profilePicture: response.data.url }));
+        notify('Profile picture uploaded!', 'success');
+      } catch (err) {
+        notify('Failed to upload profile picture', 'error');
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
@@ -374,6 +395,26 @@ export default function PartnerProfile() {
             <p className="text-gray-400 text-xs mt-1">Update your personal details</p>
           </div>
           <form onSubmit={handleSaveProfile} className="p-6 space-y-5">
+            {/* Profile Picture */}
+            <div className="flex items-center gap-6">
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-4xl font-black border-4 border-gray-100 overflow-hidden">
+                  {formData.profilePicture ? (
+                    <img src={getImageUrl(formData.profilePicture) || formData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    partner?.name?.charAt(0)?.toUpperCase() || 'P'
+                  )}
+                </div>
+                <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
+                  <Ico n="user" cls="w-8 h-8 text-white" />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleProfilePictureChange} />
+                </label>
+              </div>
+              <div>
+                <div className="font-bold text-gray-800">Profile Picture</div>
+                <div className="text-xs text-gray-400 mt-1">Click to change your photo</div>
+              </div>
+            </div>
             <div className="grid md:grid-cols-2 gap-5">
               <Field label="Full Name">
                 <input type="text" name="name" value={formData.name}
