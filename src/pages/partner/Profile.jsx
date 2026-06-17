@@ -56,7 +56,7 @@ const DigitalSeal = () => (
     <text fontSize="6.5" fontWeight="700" fill="rgba(255,255,255,0.65)" letterSpacing="2.2" fontFamily="Inter,sans-serif">
       <textPath href="#topArc" startOffset="10%">AUTHORISED  •  CLICK2KART</textPath>
     </text>
-    {/* Text on arc - bottom */>}
+    {/* Text on arc - bottom */}
     <path id="botArc" d="M 10,45 A 35,35 0 0,0 80,45" fill="none" />
     <text fontSize="6" fontWeight="600" fill="rgba(255,255,255,0.5)" letterSpacing="1.8" fontFamily="Inter,sans-serif">
       <textPath href="#botArc" startOffset="12%">VERIFIED  PARTNER  •  {new Date().getFullYear()}</textPath>
