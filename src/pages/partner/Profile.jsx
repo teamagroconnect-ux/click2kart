@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import html2canvas from 'html2canvas';
+import { QRCodeSVG } from 'qrcode.react';
 import api from '../../lib/api';
 import { useToast } from '../../components/Toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
@@ -68,102 +69,192 @@ const PartnerIDCard = React.forwardRef(({ partner }, ref) => {
     .filter(Boolean)
     .join(', ');
   
+  // Get joining date (placeholder for now, can be replaced with actual data from backend)
+  const joiningDate = partner?.createdAt 
+    ? new Date(partner.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+    : 'Date not available';
+  
   return (
-    <div ref={ref} className="bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 rounded-3xl p-8 text-white shadow-2xl overflow-hidden relative max-w-2xl mx-auto" style={{ aspectRatio: '1.586/1' }}>
-      {/* Background Pattern */}
-      <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-indigo-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-purple-500/10 to-transparent rounded-full translate-y-1/2 -translate-x-1/2" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/5 rounded-full" />
-      
-      <div className="relative z-10 h-full flex flex-col justify-between">
-        {/* Top Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="h-12 w-auto flex items-center gap-4">
-            <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-auto brightness-0 invert drop-shadow-lg" />
-            <div className="leading-tight">
-              <div className="text-base font-black uppercase tracking-widest">{CONFIG.BRAND_NAME}</div>
-              <div className="text-xs opacity-70">Partner Program</div>
+    <div ref={ref} className="bg-white rounded-3xl shadow-2xl overflow-hidden relative max-w-5xl mx-auto" style={{ aspectRatio: '1.586/1' }}>
+      {/* Left Section - White Background */}
+      <div className="flex h-full">
+        {/* Left Panel (70%) */}
+        <div className="w-3/5 bg-white p-8 relative overflow-hidden">
+          {/* Background patterns (subtle) */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-indigo-100/50 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
+          
+          <div className="relative z-10 h-full flex flex-col justify-between">
+            {/* Logo Section */}
+            <div className="flex items-center gap-6 mb-6">
+              <div className="h-20 w-auto">
+                <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-auto" />
+              </div>
+              <div className="flex flex-col gap-1">
+                <h2 className="text-4xl font-black text-indigo-900 leading-tight">
+                  Click<span className="text-orange-500">2</span><span className="text-green-600">kart</span>
+                </h2>
+                <p className="text-gray-500 text-sm font-medium">Indian's trusted b2b hub</p>
+                <p className="text-gray-600 font-semibold text-sm flex items-center gap-2">
+                  🌐 click2kart.net
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="text-right bg-white/10 backdrop-blur-sm px-5 py-3 rounded-2xl border border-white/10">
-            <div className="text-[9px] font-bold opacity-90 uppercase tracking-widest">ID CARD</div>
-            <div className="text-xs opacity-70">{new Date().getFullYear()}</div>
-          </div>
-        </div>
-
-        {/* Partner Info */}
-        <div className="flex items-start gap-7 flex-1 mb-5">
-          {/* Photo */}
-          <div className="flex-shrink-0">
-            {partner?.profilePicture ? (
-              <img 
-                src={getImageUrl(partner.profilePicture)} 
-                alt={partner?.name} 
-                className="h-28 w-28 rounded-2xl object-cover border-4 border-white/30 shadow-2xl"
-              />
-            ) : (
-              <div className="h-28 w-28 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center border-4 border-white/30 shadow-2xl">
-                <div className="text-5xl font-black text-white">
-                  {partner?.name?.charAt(0)?.toUpperCase() || 'P'}
+            
+            {/* Partner Photo and Details */}
+            <div className="flex items-start gap-8 mb-8">
+              {/* Photo */}
+              <div className="flex-shrink-0">
+                {partner?.profilePicture ? (
+                  <img 
+                    src={getImageUrl(partner.profilePicture)} 
+                    alt={partner?.name} 
+                    className="h-48 w-48 rounded-2xl object-cover border-4 border-indigo-100 shadow-lg"
+                  />
+                ) : (
+                  <div className="h-48 w-48 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center border-4 border-indigo-100 shadow-lg">
+                    <div className="text-7xl font-black text-white">
+                      {partner?.name?.charAt(0)?.toUpperCase() || 'P'}
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              {/* Name and Info */}
+              <div className="flex flex-col justify-center">
+                <h1 className="text-4xl font-black text-gray-900 leading-tight mb-4">
+                  {(partner?.name || 'PARTNER NAME').toUpperCase()}
+                </h1>
+                {partner?.kycVerified && (
+                  <div className="flex items-center gap-2 px-4 py-2 bg-indigo-700 text-white rounded-full border border-indigo-600 mb-4 w-fit">
+                    <span className="text-lg">✅</span>
+                    <span className="font-bold uppercase tracking-widest">Verified Partner</span>
+                  </div>
+                )}
+                
+                <div className="space-y-3">
+                  {partner?.email && (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700">
+                        ✉️
+                      </div>
+                      <span className="text-gray-700 font-semibold text-lg">{partner.email}</span>
+                    </div>
+                  )}
+                  {partner?.phone && (
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700">
+                        📞
+                      </div>
+                      <span className="text-gray-700 font-semibold text-lg">{partner.phone}</span>
+                    </div>
+                  )}
+                  {addressLine && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 mt-1">
+                        �
+                      </div>
+                      <span className="text-gray-700 font-semibold text-lg leading-snug">{addressLine}</span>
+                    </div>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
-          
-          {/* Details */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-2 flex-wrap">
-              <div className="text-3xl font-black leading-tight" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
-                {partner?.name || 'Partner Name'}
+            </div>
+            
+            {/* QR and Trust Badges */}
+            <div className="flex items-center gap-8 mt-auto">
+              <div className="flex items-center gap-4">
+                <div className="w-32 h-32 border-2 border-gray-300 rounded-2xl flex items-center justify-center bg-white p-2">
+                  <QRCodeSVG 
+                    value={`${window.location.origin}/partner/verify/${partner?._id || ''}`}
+                    size="100%"
+                    level="H"
+                  />
+                </div>
+                <div className="text-gray-700 font-medium text-sm">Scan to verify<br/>partner details</div>
               </div>
-              {partner?.kycVerified && (
-                <div className="flex items-center gap-1 px-3 py-1 bg-emerald-500/30 text-emerald-200 rounded-full border border-emerald-400/30">
-                  <span className="text-sm">✓</span>
-                  <span className="text-[10px] font-bold uppercase tracking-wider">Verified Partner</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Right Panel (30%) - Blue Gradient Background */}
+        <div className="w-2/5 bg-gradient-to-br from-indigo-800 to-indigo-900 text-white p-8 relative overflow-hidden">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-10" style={{ 
+            backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', 
+            backgroundSize: '20px 20px' 
+          }} />
+          
+          <div className="relative z-10 h-full flex flex-col justify-between">
+            {/* Top Right - ID Card Year */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-4 text-center mb-8">
+              <div className="text-2xl font-medium mb-1">ID CARD</div>
+              <div className="text-4xl font-black">{new Date().getFullYear()}</div>
+            </div>
+            
+            {/* Details List */}
+            <div className="space-y-6 mb-8">
+              {/* Blood Group */}
+              {partner?.bloodGroup && (
+                <div className="space-y-2 border-b border-white/20 pb-4">
+                  <div className="text-gray-300 font-semibold text-lg flex items-center gap-2">
+                    💧 BLOOD GROUP
+                  </div>
+                  <div className="text-2xl font-black">{partner.bloodGroup}</div>
                 </div>
               )}
+              
+              {/* Joining Date */}
+              <div className="space-y-2 border-b border-white/20 pb-4">
+                <div className="text-gray-300 font-semibold text-lg flex items-center gap-2">
+                  🗓️ JOINING DATE
+                </div>
+                <div className="text-2xl font-black">{joiningDate}</div>
+              </div>
+              
+              {/* Partner ID */}
+              <div className="space-y-2 border-b border-white/20 pb-4">
+                <div className="text-gray-300 font-semibold text-lg flex items-center gap-2">
+                  🛡️ PARTNER ID
+                </div>
+                <div className="text-2xl font-black font-mono">{partner?._id?.slice(-8) || '--------'}</div>
+              </div>
+              
+              {/* Invite Code */}
+              <div className="space-y-2">
+                <div className="text-gray-300 font-semibold text-lg flex items-center gap-2">
+                  🎁 INVITE CODE
+                </div>
+                <div className="text-3xl font-black">{partner?.inviteCode || '----'}</div>
+              </div>
             </div>
-            <div className="flex items-center gap-2 flex-wrap mb-3">
-              <span className="px-3 py-1 bg-gradient-to-r from-indigo-500/30 to-purple-500/30 rounded-full text-xs font-bold uppercase tracking-wider border border-white/10">
-                Premium Partner
-              </span>
+            
+            {/* Signature Area */}
+            <div className="mt-auto text-right">
+              <div className="text-3xl font-serif italic opacity-70 mb-2">Authorised</div>
+              <div className="text-lg font-semibold">Click2kart</div>
             </div>
-            {partner?.email && (
-              <div className="text-sm opacity-80 mb-1.5 flex items-center gap-2">
-                <span>✉️</span>
-                <span className="truncate">{partner.email}</span>
-              </div>
-            )}
-            {partner?.phone && (
-              <div className="text-sm opacity-80 flex items-center gap-2 mb-1.5">
-                <span>📞</span>
-                <span>{partner.phone}</span>
-              </div>
-            )}
-            {partner?.bloodGroup && (
-              <div className="text-sm opacity-80 flex items-center gap-2 mb-1.5">
-                <span>🩸</span>
-                <span className="font-bold">{partner.bloodGroup}</span>
-              </div>
-            )}
-            {addressLine && (
-              <div className="text-sm opacity-80 flex items-center gap-2">
-                <span>📍</span>
-                <span className="truncate">{addressLine}</span>
-              </div>
-            )}
           </div>
         </div>
-
-        {/* Bottom Info */}
-        <div className="pt-5 mt-5 border-t border-white/20 grid grid-cols-2 gap-6">
-          <div>
-            <div className="text-[9px] font-bold uppercase tracking-widest opacity-70 mb-1.5">Partner ID</div>
-            <div className="text-base font-mono font-bold bg-white/10 px-3 py-2 rounded-xl">{partner?._id?.slice(-8) || '--------'}</div>
+      </div>
+      
+      {/* Trust Badges at Bottom */}
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-br from-indigo-50 to-white/95 backdrop-blur-sm p-4 border-t-2 border-indigo-200">
+        <div className="flex items-center justify-center gap-8">
+          <div className="flex items-center gap-3 px-6 py-2 rounded-2xl border border-indigo-300 bg-white/50">
+            <span className="text-3xl">🏆</span>
+            <div className="font-semibold text-gray-700">Trusted Network</div>
           </div>
-          <div>
-            <div className="text-[9px] font-bold uppercase tracking-widest opacity-70 mb-1.5">Invite Code</div>
-            <div className="text-2xl font-black tracking-widest bg-white/10 px-3 py-2 rounded-xl">{partner?.inviteCode || '----'}</div>
+          <div className="flex items-center gap-3 px-6 py-2 rounded-2xl border border-indigo-300 bg-white/50">
+            <span className="text-3xl">🤝</span>
+            <div className="font-semibold text-gray-700">Genuine Partners</div>
+          </div>
+          <div className="flex items-center gap-3 px-6 py-2 rounded-2xl border border-indigo-300 bg-white/50">
+            <span className="text-3xl">🔐</span>
+            <div className="font-semibold text-gray-700">Secure Transactions</div>
+          </div>
+          <div className="flex items-center gap-3 px-6 py-2 rounded-2xl border border-indigo-300 bg-white/50">
+            <span className="text-3xl">🎧</span>
+            <div className="font-semibold text-gray-700">24x7 Support</div>
           </div>
         </div>
       </div>

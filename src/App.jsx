@@ -46,6 +46,7 @@ import MyCoupons from './pages/partner/MyCoupons.jsx'
 import MyBusinesses from './pages/partner/MyBusinesses.jsx'
 import Earnings from './pages/partner/Earnings.jsx'
 import ReferredOrders from './pages/partner/ReferredOrders.jsx'
+import PartnerVerify from './pages/partner/Verify.jsx'
 
 export default function App() {
   return (
@@ -99,6 +100,7 @@ export default function App() {
       <Route path="/partner" element={<PartnerLanding />} />
       <Route path="/partner/login" element={<PartnerLogin />} />
       <Route path="/partner/onboarding" element={<PartnerOnboarding />} />
+      <Route path="/partner/verify/:id" element={<PartnerVerify />} />
       <Route
         path="/partner"
         element={
