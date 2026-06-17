@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import api from '../../lib/api'
 import LoadingSpinner from '../../components/LoadingSpinner'
+import { useToast } from '../../components/Toast'
 
 const COLORS = ['#8b5cf6', '#7c3aed', '#a78bfa', '#6d28d9', '#c4b5fd', '#ddd6fe']
 
 export default function PartnerDashboard() {
+  const { notify } = useToast()
   const [loading, setLoading] = useState(true)
   const [dashboardData, setDashboardData] = useState(null)
 
@@ -20,6 +22,7 @@ export default function PartnerDashboard() {
         partnerName: data.name || 'Partner',
         partnerPhone: data.phone || '',
         partnerEmail: data.email || '',
+        inviteCode: data.inviteCode || '',
         totalSales: data.totalSales || 0,
         totalCommission: data.totalCommission || 0,
         totalPaid: data.totalPaid || 0,
@@ -32,6 +35,13 @@ export default function PartnerDashboard() {
       console.error(e)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const copyInviteCode = () => {
+    if (dashboardData?.inviteCode) {
+      navigator.clipboard.writeText(dashboardData.inviteCode)
+      notify('Invite code copied!', 'success')
     }
   }
 
@@ -50,6 +60,26 @@ export default function PartnerDashboard() {
           <div>
             <h1 className="text-3xl font-black text-gray-900 mb-2">Welcome back {dashboardData?.partnerName?.split(' ')[0] || 'Partner'}</h1>
             <p className="text-gray-500">Track your performance and earnings</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Invite Code Card */}
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+        <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute right-20 bottom-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2" />
+        <div className="relative z-10">
+          <div className="text-xs font-bold uppercase tracking-widest text-indigo-100 mb-2">Your Invite Code</div>
+          <div className="flex items-center gap-4">
+            <div className="text-4xl font-black tracking-widest">
+              {dashboardData?.inviteCode || '----'}
+            </div>
+            <button 
+              onClick={copyInviteCode}
+              className="bg-white/20 hover:bg-white/30 backdrop-blur-sm px-6 py-3 rounded-xl font-bold text-sm transition-all active:scale-[0.97] border border-white/30"
+            >
+              Copy Code
+            </button>
           </div>
         </div>
       </div>

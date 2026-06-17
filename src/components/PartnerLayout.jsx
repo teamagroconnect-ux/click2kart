@@ -7,15 +7,17 @@ const Icon = ({ name }) => (
   <span className="inline-flex items-center justify-center w-6 h-6 mr-3 flex-shrink-0">
     {name === 'dash' && (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7" />
-        <rect x="14" y="3" width="7" height="7" />
-        <rect x="14" y="14" width="7" height="7" />
-        <rect x="3" y="14" width="7" height="7" />
+        <rect x="3" y="3" width="7" height="7" rx="1.5" />
+        <rect x="14" y="3" width="7" height="7" rx="1.5" />
+        <rect x="14" y="14" width="7" height="7" rx="1.5" />
+        <rect x="3" y="14" width="7" height="7" rx="1.5" />
       </svg>
     )}
     {name === 'earnings' && (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        <path d="M12 1v22" />
+        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+        <path d="M16 15l-4 4-4-4" />
       </svg>
     )}
     {name === 'orders' && (
@@ -23,22 +25,30 @@ const Icon = ({ name }) => (
         <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
         <path d="M3 6h18" />
         <path d="M16 10a4 4 0 0 1-8 0" />
+        <path d="M12 8v4" />
+        <path d="M10 10h4" />
       </svg>
     )}
     {name === 'business' && (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M4 6h16v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6" />
-        <path d="M14 14h-4M12 14v-2" />
+        <path d="M3 21h18" />
+        <path d="M5 21V7l8-4 8 4v14" />
+        <path d="M9 21v-8a3 3 0 0 1 6 0v8" />
       </svg>
     )}
     {name === 'coupon' && (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M10 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6M14 4l8 4v6l-8 4M10 8l-2 2M10 12l-2 2M14 12l2 2M14 8l2-2" />
+        <path d="M10 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6" />
+        <path d="M14 4l8 4v6l-8 4" />
+        <path d="M10 8l-2 2M10 12l-2 2M14 12l2 2M14 8l2-2" />
+        <path d="M8 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
       </svg>
     )}
     {name === 'profile' && (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        <path d="M8 14l-4 4" />
+        <path d="M16 14l4 4" />
       </svg>
     )}
   </span>

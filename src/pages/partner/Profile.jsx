@@ -64,36 +64,40 @@ const Avatar = ({ partner, size = 'md' }) => {
 /* ── Partner ID Card Component ── */
 const PartnerIDCard = React.forwardRef(({ partner }, ref) => {
   return (
-    <div ref={ref} className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 rounded-2xl p-4 text-white shadow-2xl overflow-hidden relative max-w-xs mx-auto" style={{ aspectRatio: '1.586/1' }}>
+    <div ref={ref} className="bg-gradient-to-br from-indigo-900 via-indigo-800 to-purple-900 rounded-3xl p-6 text-white shadow-2xl overflow-hidden relative max-w-md mx-auto" style={{ aspectRatio: '1.586/1' }}>
       {/* Background Pattern */}
-      <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-      <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
       
       <div className="relative z-10 h-full flex flex-col justify-between">
         {/* Top Header */}
-        <div className="flex items-center justify-between mb-3">
-          <div className="h-8 w-auto flex items-center">
+        <div className="flex items-center justify-between mb-6">
+          <div className="h-10 w-auto flex items-center gap-3">
             <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-auto brightness-0 invert" />
+            <div>
+              <div className="text-xs font-black uppercase tracking-widest">{CONFIG.BRAND_NAME}</div>
+              <div className="text-[10px] opacity-60">Partner Program</div>
+            </div>
           </div>
-          <div className="text-right">
-            <div className="text-[10px] font-bold opacity-80">PARTNER ID CARD</div>
-            <div className="text-[8px] opacity-60">{CONFIG.BRAND_NAME}</div>
+          <div className="text-right bg-white/10 px-4 py-2 rounded-xl">
+            <div className="text-[10px] font-bold opacity-80 uppercase tracking-widest">ID Card</div>
+            <div className="text-[9px] opacity-60">{new Date().getFullYear()}</div>
           </div>
         </div>
 
         {/* Partner Info */}
-        <div className="flex items-center gap-4 flex-1">
+        <div className="flex items-center gap-6 flex-1 mb-4">
           {/* Photo */}
           <div className="flex-shrink-0">
             {partner?.profilePicture ? (
               <img 
                 src={getImageUrl(partner.profilePicture)} 
                 alt={partner?.name} 
-                className="h-16 w-16 rounded-xl object-cover border-2 border-white/30 shadow-lg"
+                className="h-24 w-24 rounded-2xl object-cover border-3 border-white/20 shadow-xl"
               />
             ) : (
-              <div className="h-16 w-16 rounded-xl bg-white/20 flex items-center justify-center border-2 border-white/30 shadow-lg">
-                <div className="text-2xl font-black text-white/80">
+              <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center border-3 border-white/20 shadow-xl">
+                <div className="text-4xl font-black text-white">
                   {partner?.name?.charAt(0)?.toUpperCase() || 'P'}
                 </div>
               </div>
@@ -102,25 +106,36 @@ const PartnerIDCard = React.forwardRef(({ partner }, ref) => {
           
           {/* Details */}
           <div className="flex-1 min-w-0">
-            <div className="text-lg font-black mb-1 truncate" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
+            <div className="text-2xl font-black mb-1" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
               {partner?.name || 'Partner Name'}
             </div>
-            <div className="text-xs opacity-90 mb-1 flex items-center gap-2 flex-wrap">
-              <span className="px-1.5 py-0.5 bg-white/20 rounded-full text-[8px] font-bold uppercase flex-shrink-0">Partner</span>
-              <span className="text-[10px] opacity-70 truncate">{partner?.email || 'partner@example.com'}</span>
+            <div className="text-sm opacity-90 mb-2 flex items-center gap-2 flex-wrap">
+              <span className="px-2 py-1 bg-white/20 rounded-lg text-[10px] font-bold uppercase">Partner</span>
             </div>
+            {partner?.email && (
+              <div className="text-sm opacity-80 mb-1 flex items-center gap-2">
+                <span>✉️</span>
+                <span className="truncate">{partner.email}</span>
+              </div>
+            )}
             {partner?.phone && (
-              <div className="text-xs opacity-80">
-                {partner.phone}
+              <div className="text-sm opacity-80 flex items-center gap-2">
+                <span>📞</span>
+                <span>{partner.phone}</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Bottom Footer */}
-        <div className="pt-2 mt-2 border-t border-white/20 flex items-center justify-between">
-          <div className="text-[10px] opacity-70">
-            Valid: Permanent
+        {/* Bottom Info */}
+        <div className="pt-4 mt-4 border-t border-white/20 grid grid-cols-2 gap-4">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-1">Partner ID</div>
+            <div className="text-sm font-mono font-bold">{partner?._id?.slice(-8) || '--------'}</div>
+          </div>
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-1">Invite Code</div>
+            <div className="text-xl font-black tracking-wider">{partner?.inviteCode || '----'}</div>
           </div>
         </div>
       </div>
