@@ -2,6 +2,7 @@ import React, { Fragment, useEffect, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
+import { getImageUrl } from '../../lib/cloudinary'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
@@ -11,6 +12,8 @@ export default function Partners() {
   const [loading, setLoading] = useState(true)
   const [selectedCode, setSelectedCode] = useState(null)
   const [viewingPartner, setViewingPartner] = useState(null)
+  const [viewingFullPartner, setViewingFullPartner] = useState(null)
+  const [loadingFullPartner, setLoadingFullPartner] = useState(false)
   const [form, setForm] = useState({ amount:'', method:'MANUAL', utr:'', razorpayPaymentId:'', notes:'' })
   const [partners, setPartners] = useState([])
   const [newPartner, setNewPartner] = useState({ name:'', email:'', phone:'', password:'' })
@@ -83,6 +86,19 @@ export default function Partners() {
     }
   }
 
+  const viewFullPartnerProfile = async (id) => {
+    setLoadingFullPartner(true)
+    try {
+      const { data } = await api.get(`/api/partner-accounts/${id}`)
+      setViewingFullPartner(data)
+    } catch (err) {
+      console.error(err)
+      notify('Failed to load partner profile', 'error')
+    } finally {
+      setLoadingFullPartner(false)
+    }
+  }
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -111,14 +127,16 @@ export default function Partners() {
                 <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center py-4 italic">No partners</div>
               ) : (
                 partners.map(p => (
-                  <div key={p._id} className="flex items-center justify-between p-3 rounded-2xl bg-white border border-gray-100 group hover:border-gray-200 transition-all">
+                  <div key={p._id} onClick={() => viewFullPartnerProfile(p._id)} className="flex items-center justify-between p-3 rounded-2xl bg-white border border-gray-100 group hover:border-gray-200 transition-all cursor-pointer">
                     <div className="min-w-0">
                       <div className="text-xs font-black text-gray-900 truncate">{p.name}</div>
                       <div className="text-[9px] text-gray-500 font-bold truncate">{p.phone || 'No Phone'}</div>
                     </div>
-                    <button onClick={() => deletePartner(p._id)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button onClick={(e) => { e.stopPropagation(); deletePartner(p._id); }} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
@@ -175,7 +193,7 @@ export default function Partners() {
                       </td>
                       <td className="px-6 py-4 text-right">
                     <button 
-                      onClick={()=>openPayout(p.code)}
+                      onClick={(e) => { e.stopPropagation(); openPayout(p.code); }}
                       className="bg-blue-600 text-white px-4 py-2 rounded-xl text-[10px] font-black hover:bg-blue-500 transition-all uppercase tracking-widest"
                     >
                           Mark Paid
@@ -305,12 +323,192 @@ export default function Partners() {
         </div>
       )}
 
+      {viewingFullPartner && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl p-8 w-full max-w-5xl max-h-[90vh] overflow-y-auto space-y-8 animate-in zoom-in-95 custom-scrollbar">
+            <div className="flex items-center justify-between border-b border-gray-50 pb-6">
+              <div className="flex items-center gap-4">
+                {viewingFullPartner.profilePicture ? (
+                  <img src={getImageUrl(viewingFullPartner.profilePicture) || viewingFullPartner.profilePicture} alt={viewingFullPartner.name} className="h-14 w-14 rounded-2xl object-cover" />
+                ) : (
+                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center text-white font-black text-xl">
+                    {viewingFullPartner.name?.charAt(0) || 'P'}
+                  </div>
+                )}
+                <div>
+                  <h2 className="text-2xl font-black text-gray-900 tracking-tight">{viewingFullPartner.name || 'Partner Detail'}</h2>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {viewingFullPartner.email && <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{viewingFullPartner.email}</span>}
+                    {viewingFullPartner.phone && <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{viewingFullPartner.phone}</span>}
+                  </div>
+                </div>
+              </div>
+              <button onClick={() => setViewingFullPartner(null)} className="p-3 hover:bg-gray-50 rounded-2xl transition-colors text-gray-400">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            {/* Partner Profile Info */}
+            <div className="bg-white border border-gray-100 rounded-3xl p-6">
+              <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Partner Profile</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {viewingFullPartner.email && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</span>
+                    <div className="text-sm font-bold text-gray-900">{viewingFullPartner.email}</div>
+                  </div>
+                )}
+                {viewingFullPartner.phone && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Phone</span>
+                    <div className="text-sm font-bold text-gray-900">{viewingFullPartner.phone}</div>
+                  </div>
+                )}
+                {viewingFullPartner.businessName && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Business Name</span>
+                    <div className="text-sm font-bold text-gray-900">{viewingFullPartner.businessName}</div>
+                  </div>
+                )}
+                {viewingFullPartner.gstNumber && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">GSTIN</span>
+                    <div className="text-sm font-bold text-gray-900">{viewingFullPartner.gstNumber}</div>
+                  </div>
+                )}
+                {viewingFullPartner.panNumber && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">PAN</span>
+                    <div className="text-sm font-bold text-gray-900">{viewingFullPartner.panNumber}</div>
+                  </div>
+                )}
+                {viewingFullPartner.city && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">City</span>
+                    <div className="text-sm font-bold text-gray-900">{viewingFullPartner.city}</div>
+                  </div>
+                )}
+                {viewingFullPartner.district && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">District</span>
+                    <div className="text-sm font-bold text-gray-900">{viewingFullPartner.district}</div>
+                  </div>
+                )}
+                {viewingFullPartner.state && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">State</span>
+                    <div className="text-sm font-bold text-gray-900">{viewingFullPartner.state}</div>
+                  </div>
+                )}
+                {viewingFullPartner.pincode && (
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pincode</span>
+                    <div className="text-sm font-bold text-gray-900">{viewingFullPartner.pincode}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Earnings Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-white border border-gray-100 rounded-3xl p-6">
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Total Sales</div>
+                <div className="text-2xl font-black text-gray-900">₹{viewingFullPartner.totalSales?.toLocaleString() || 0}</div>
+              </div>
+              <div className="bg-white border border-gray-100 rounded-3xl p-6">
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Total Earnings</div>
+                <div className="text-2xl font-black text-violet-600">₹{viewingFullPartner.totalCommission?.toLocaleString() || 0}</div>
+              </div>
+              <div className="bg-white border border-gray-100 rounded-3xl p-6">
+                <div className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Current Balance</div>
+                <div className="text-2xl font-black text-blue-600">₹{viewingFullPartner.balance?.toLocaleString() || 0}</div>
+              </div>
+            </div>
+
+            {/* Coupons */}
+            <div className="bg-white border border-gray-100 rounded-3xl p-6">
+              <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Partner Coupons</h3>
+              {viewingFullPartner.coupons?.length > 0 ? (
+                <div className="space-y-3">
+                  {viewingFullPartner.coupons.map((coupon, idx) => (
+                    <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-100 gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="font-black text-xl text-violet-700 font-mono">{coupon.code}</div>
+                        {coupon.isActive ? (
+                          <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest">Active</span>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-black uppercase tracking-widest">Inactive</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-gray-600">
+                        <div><span className="font-black">Commission:</span> {coupon.partnerCommissionPercent}%</div>
+                        <div><span className="font-black">Sales:</span> ₹{coupon.sales?.toLocaleString() || 0}</div>
+                        <div><span className="font-black">Used:</span> {coupon.usageCount} times</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400 italic text-xs font-medium">No coupons yet</div>
+              )}
+            </div>
+
+            {/* Referred Businesses */}
+            <div className="bg-white border border-gray-100 rounded-3xl p-6">
+              <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Referred Businesses</h3>
+              {viewingFullPartner.referredBusinesses?.length > 0 ? (
+                <div className="space-y-3">
+                  {viewingFullPartner.referredBusinesses.map((business, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                      <div>
+                        <div className="text-sm font-bold text-gray-900">{business.name}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          {business.email && <div className="text-xs text-gray-500">{business.email}</div>}
+                          {business.phone && <div className="text-xs text-gray-500">{business.phone}</div>}
+                        </div>
+                      </div>
+                      <div className="text-xs text-gray-400 font-bold">Joined {new Date(business.createdAt).toLocaleDateString()}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400 italic text-xs font-medium">No referred businesses yet</div>
+              )}
+            </div>
+
+            {/* Payouts */}
+            <div className="bg-white border border-gray-100 rounded-3xl p-6">
+              <h3 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Payout History</h3>
+              {viewingFullPartner.payouts?.length > 0 ? (
+                <div className="space-y-3">
+                  {viewingFullPartner.payouts.map((payout, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                      <div>
+                        <div className="text-sm font-bold text-gray-900">₹{payout.amount?.toLocaleString()}</div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(payout.createdAt).toLocaleDateString()} • {payout.method}
+                          {payout.utr && ` • UTR: ${payout.utr}`}
+                          {payout.razorpayPaymentId && ` • Razorpay: ${payout.razorpayPaymentId}`}
+                        </div>
+                      </div>
+                      <div className="text-sm font-black text-emerald-600">Paid</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-400 italic text-xs font-medium">No payouts yet</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {selectedCode && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white rounded-[2.5rem] shadow-2xl p-8 w-full max-w-md space-y-6 animate-in zoom-in-95">
             <div className="space-y-1">
               <h2 className="text-xl font-black text-gray-900 tracking-tight">Record Payout</h2>
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Partner: {selectedCode}</p>
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Coupon: {selectedCode}</p>
             </div>
             
             <form onSubmit={submitPayout} className="space-y-4">

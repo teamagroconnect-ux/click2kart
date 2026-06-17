@@ -4,7 +4,7 @@ import { CONFIG } from '../shared/lib/config.js'
 import logoImg from '../click2kart.png'
 
 const Icon = ({ name }) => (
-  <span className="inline-block w-5 h-5 mr-3 align-middle">
+  <span className="inline-flex items-center justify-center w-6 h-6 mr-3 flex-shrink-0">
     {name === 'dash' && (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="3" width="7" height="7" />
