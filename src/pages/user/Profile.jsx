@@ -16,7 +16,9 @@ const Ico = ({ n, cls = 'w-5 h-5' }) => {
     lock: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
     cart: 'M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z',
     chevronRight: 'M9 5l7 7-7 7',
-    chevronLeft: 'M15 19l-7-7 7-7'
+    chevronLeft: 'M15 19l-7-7 7-7',
+    logout: 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
+    camera: 'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9zM15 12a3 3 0 11-6 0 3 3 0 016 0z'
   }
   return (
     <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
@@ -31,18 +33,21 @@ export default function Profile() {
   const navigate = useNavigate()
   const location = useLocation()
   const { notify } = useToast()
-  const { token, refreshProfile } = useAuth()
+  const { token, refreshProfile, logout: authLogout } = useAuth()
   
-  const [activeSection, setActiveSection] = useState('overview')
+  const [activeSection, setActiveSection] = useState('profile')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [changingPassword, setChangingPassword] = useState(false)
-  const [showPasswordChange, setShowPasswordChange] = useState(false)
+  const [savingAddress, setSavingAddress] = useState(false)
   const [user, setUser] = useState(null)
   const [formData, setFormData] = useState({
-    businessName: '', gstin: '', pan: '', addressLine1: '', addressLine2: '', city: '', state: '', pincode: ''
+    businessName: '', gstin: '', pan: '', addressLine1: '', addressLine2: '', city: '', district: '', state: '', pincode: ''
+  });
+  const [addressForm, setAddressForm] = useState({
+    name: '', phone: '', addressLine1: '', addressLine2: '', city: '', district: '', state: '', pincode: '', type: 'home'
   })
-  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [showAddAddress, setShowAddAddress] = useState(false)
+  const [profilePicture, setProfilePicture] = useState(null)
 
   useEffect(() => {
     if (!token) {
@@ -63,9 +68,32 @@ export default function Profile() {
         addressLine1: data.kyc?.addressLine1 || '',
         addressLine2: data.kyc?.addressLine2 || '',
         city: data.kyc?.city || '',
+        district: data.kyc?.district || '',
         state: data.kyc?.state || '',
         pincode: data.kyc?.pincode || ''
       })
+      if (data.kyc?.profilePicture) {
+        setProfilePicture(data.kyc.profilePicture)
+      }
+      // Initialize address form with default address if available
+      if (data.defaultAddress) {
+        try {
+          const addr = typeof data.defaultAddress === 'string' ? JSON.parse(data.defaultAddress) : data.defaultAddress
+          setAddressForm({
+            name: addr.name || '',
+            phone: addr.phone || data.phone || '',
+            addressLine1: addr.addressLine1 || '',
+            addressLine2: addr.addressLine2 || '',
+            city: addr.city || '',
+            district: addr.district || '',
+            state: addr.state || '',
+            pincode: addr.pincode || '',
+            type: addr.type || 'home'
+          })
+        } catch (e) {
+          // If parsing fails, use default
+        }
+      }
     } catch (e) {
       console.error(e)
     } finally {
@@ -77,7 +105,7 @@ export default function Profile() {
     e.preventDefault()
     setSaving(true)
     try {
-      const { data } = await api.put('/api/user/kyc', formData)
+      const { data } = await api.put('/api/user/kyc', { ...formData, profilePicture })
       setUser(data)
       notify('Profile updated!', 'success')
       refreshProfile()
@@ -88,26 +116,35 @@ export default function Profile() {
     }
   }
 
-  const handlePasswordUpdate = async (e) => {
+  const handleSaveAddress = async (e) => {
     e.preventDefault()
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      notify('Passwords do not match', 'error')
-      return
-    }
-    if (passwordForm.newPassword.length < 6) {
-      notify('Minimum 6 characters', 'error')
-      return
-    }
-    setChangingPassword(true)
+    setSavingAddress(true)
     try {
-      await api.put('/api/user/change-password', passwordForm)
-      notify('Password changed!', 'success')
-      setShowPasswordChange(false)
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      // Update user's address
+      await api.put('/api/user/profile', { address: JSON.stringify(addressForm) })
+      await loadUser()
+      notify('Address saved!', 'success')
+      setShowAddAddress(false)
     } catch (e) {
-      notify(e?.response?.data?.error || 'Failed', 'error')
+      notify(e?.response?.data?.error || 'Failed to save', 'error')
     } finally {
-      setChangingPassword(false)
+      setSavingAddress(false)
+    }
+  }
+
+  const handleLogout = () => {
+    authLogout()
+    navigate('/login')
+  }
+
+  const handleProfilePictureChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (event) => {
+        setProfilePicture(event.target.result)
+      }
+      reader.readAsDataURL(file)
     }
   }
 
@@ -150,20 +187,42 @@ export default function Profile() {
               {user?.kyc?.businessName && (
                 <p className="text-violet-200 text-sm mt-1">{user.kyc.businessName}</p>
               )}
+              {/* KYC Status Badge */}
+              <div className="mt-2">
+                {user?.isKycComplete ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-widest">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    KYC Verified
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold uppercase tracking-widest">
+                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                    KYC Pending
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-2xl border border-white/30 font-black">
-              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+            {/* Profile Picture with Upload */}
+            <div className="relative group">
+              <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-3xl border border-white/30 font-black overflow-hidden">
+                {profilePicture ? (
+                  <img src={profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+                )}
+              </div>
+              <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
+                <Ico n="camera" cls="w-6 h-6 text-white" />
+                <input type="file" accept="image/*" className="hidden" onChange={handleProfilePictureChange} />
+              </label>
             </div>
           </div>
 
           {/* Mobile Nav */}
           <div className="lg:hidden pf-nav-strip flex overflow-x-auto px-4 pb-0 gap-1">
             {[
-              { id: 'overview', label: 'Overview', icon: 'home' },
-              { id: 'profile', label: 'Profile', icon: 'user' },
-              { id: 'addresses', label: 'Addresses', icon: 'map' },
-              { id: 'support', label: 'Support', icon: 'help' },
-              { id: 'settings', label: 'Settings', icon: 'gear' }
+              { id: 'profile', label: 'Business Profile', icon: 'user' },
+              { id: 'addresses', label: 'Addresses', icon: 'map' }
             ].map((item) => (
               <button key={item.id} onClick={() => setActiveSection(item.id)}
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold rounded-t-xl transition-all
@@ -173,6 +232,10 @@ export default function Profile() {
                 {item.label}
               </button>
             ))}
+            <button onClick={handleLogout} className="flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold rounded-t-xl text-violet-200 hover:text-white transition-all">
+              <Ico n="logout" cls="w-4 h-4" />
+              Logout
+            </button>
           </div>
         </div>
 
@@ -180,8 +243,16 @@ export default function Profile() {
           {/* Desktop Sidebar */}
           <aside className="hidden lg:flex flex-col gap-3 w-56 flex-shrink-0">
             <div className="bg-white rounded-2xl p-4 border border-violet-100 shadow-sm flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center font-black text-white text-lg">
-                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+              <div className="relative w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center font-black text-white text-lg overflow-hidden group">
+                {profilePicture ? (
+                  <img src={profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                ) : (
+                  <span>{user?.name?.charAt(0)?.toUpperCase() || 'U'}</span>
+                )}
+                <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
+                  <Ico n="camera" cls="w-5 h-5 text-white" />
+                  <input type="file" accept="image/*" className="hidden" onChange={handleProfilePictureChange} />
+                </label>
               </div>
               <div className="min-w-0">
                 <div className="pf-display font-black text-gray-800 text-sm truncate">{user?.name}</div>
@@ -191,11 +262,8 @@ export default function Profile() {
 
             <nav className="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
               {[
-                { id: 'overview', label: 'Overview', icon: 'home' },
-                { id: 'profile', label: 'Profile & KYC', icon: 'user' },
-                { id: 'addresses', label: 'Saved Addresses', icon: 'map' },
-                { id: 'support', label: 'Support', icon: 'help' },
-                { id: 'settings', label: 'Settings', icon: 'gear' }
+                { id: 'profile', label: 'Business Profile', icon: 'user' },
+                { id: 'addresses', label: 'Saved Addresses', icon: 'map' }
               ].map((item) => (
                 <button key={item.id} onClick={() => setActiveSection(item.id)}
                   className={`w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-left transition-all border-l-2
@@ -205,77 +273,17 @@ export default function Profile() {
                   {item.label}
                 </button>
               ))}
+              <button onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-left transition-all border-l-2 border-transparent text-red-600 hover:bg-red-50"
+              >
+                <Ico n="logout" cls="w-5 h-5" />
+                Logout
+              </button>
             </nav>
           </aside>
 
           {/* Main Content */}
-          <main className="flex-1 min-w-0">
-            {/* Overview */}
-            {activeSection === 'overview' && (
-              <div className="pf-panel space-y-4">
-                <div className="bg-gradient-to-br from-violet-600 to-purple-600 rounded-2xl p-5 text-white relative overflow-hidden">
-                  <div className="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
-                  <div className="absolute right-8 bottom-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2"></div>
-                  <p className="text-violet-200 text-xs font-bold uppercase tracking-widest mb-1">Welcome back</p>
-                  <h2 className="pf-display font-black text-2xl leading-tight mb-3">{user?.name?.split(' ')[0]}</h2>
-                  <p className="text-violet-200 text-sm">{user?.email}</p>
-                  {user?.isKycComplete && (
-                    <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                      KYC Verified
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <button 
-                    onClick={() => setActiveSection('profile')}
-                    className="bg-white rounded-2xl p-4 border border-violet-100 shadow-sm hover:shadow-md hover:border-violet-200 active:scale-[0.97] transition-all text-left"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center mb-3">
-                      <Ico n="user" cls="w-5 h-5" />
-                    </div>
-                    <div className="pf-display font-black text-gray-800 text-sm">Edit Profile</div>
-                    <div className="text-gray-400 text-xs mt-0.5">Update KYC details</div>
-                  </button>
-                  <button 
-                    onClick={() => navigate('/orders')}
-                    className="bg-white rounded-2xl p-4 border border-violet-100 shadow-sm hover:shadow-md hover:border-violet-200 active:scale-[0.97] transition-all text-left"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-3">
-                      <Ico n="package" cls="w-5 h-5" />
-                    </div>
-                    <div className="pf-display font-black text-gray-800 text-sm">My Orders</div>
-                    <div className="text-gray-400 text-xs mt-0.5">View order history</div>
-                  </button>
-                </div>
-
-                <div className="bg-white rounded-2xl border border-violet-100 shadow-sm p-5">
-                  <h3 className="pf-display font-black text-gray-800 mb-3">Quick Links</h3>
-                  <div className="space-y-2">
-                    <Link to="/products" className="flex items-center justify-between p-3 rounded-xl hover:bg-violet-50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center">
-                          <Ico n="cart" cls="w-4 h-4" />
-                        </div>
-                        <span className="text-sm font-semibold text-gray-700">Browse Catalog</span>
-                      </div>
-                      <Ico n="chevronRight" cls="w-4 h-4 text-violet-500" />
-                    </Link>
-                    <Link to="/cart" className="flex items-center justify-between p-3 rounded-xl hover:bg-violet-50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
-                          <Ico n="package" cls="w-4 h-4" />
-                        </div>
-                        <span className="text-sm font-semibold text-gray-700">View Cart</span>
-                      </div>
-                      <Ico n="chevronRight" cls="w-4 h-4 text-violet-500" />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            )}
-
+          <main className="flex-1 min-w-0 space-y-4">
             {/* Profile & KYC */}
             {activeSection === 'profile' && (
               <div className="pf-panel bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
@@ -310,10 +318,14 @@ export default function Profile() {
                     <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Address Line 2</label>
                     <textarea value={formData.addressLine2} onChange={e => setFormData(p => ({...p, addressLine2: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-violet-50/50 text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="Landmark, area (optional)" rows={2} />
                   </div>
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">City</label>
                       <input type="text" value={formData.city} onChange={e => setFormData(p => ({...p, city: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-violet-50/50 text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="City" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">District</label>
+                      <input type="text" value={formData.district} onChange={e => setFormData(p => ({...p, district: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-violet-50/50 text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="District" />
                     </div>
                     <div>
                       <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">State</label>
@@ -335,109 +347,108 @@ export default function Profile() {
             {activeSection === 'addresses' && (
               <div className="pf-panel space-y-3">
                 <div className="bg-white rounded-2xl border border-violet-100 shadow-sm p-5">
-                  <h3 className="pf-display font-black text-gray-800 mb-4">Saved Addresses</h3>
-                  <div className="text-center py-10 text-gray-400">
-                    <div className="w-16 h-16 rounded-2xl bg-violet-50 text-violet-300 flex items-center justify-center mx-auto mb-3">
-                      <Ico n="map" cls="w-8 h-8" />
-                    </div>
-                    <p className="text-sm">No saved addresses yet</p>
-                    <button className="mt-4 px-6 py-2 rounded-xl bg-violet-600 text-white text-xs font-black uppercase tracking-widest hover:bg-violet-700 transition-colors">
-                      Add Address
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="pf-display font-black text-gray-800">Saved Addresses</h3>
+                    <button 
+                      onClick={() => setShowAddAddress(!showAddAddress)} 
+                      className="px-4 py-2 rounded-xl bg-violet-600 text-white text-xs font-black uppercase tracking-widest hover:bg-violet-700 transition-colors"
+                    >
+                      {showAddAddress ? 'Cancel' : 'Add Address'}
                     </button>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Support */}
-            {activeSection === 'support' && (
-              <div className="pf-panel space-y-3">
-                <div className="bg-white rounded-2xl border border-violet-100 shadow-sm p-5">
-                  <h3 className="pf-display font-black text-gray-800 mb-4">Get Support</h3>
-                  <div className="space-y-4">
-                    <a href={`mailto:support@click2kart.com`} className="flex items-center gap-4 p-4 rounded-xl bg-violet-50 border border-violet-100 hover:bg-violet-100 transition-colors">
-                      <div className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
+                  
+                  {/* Add Address Form */}
+                  {showAddAddress && (
+                    <form onSubmit={handleSaveAddress} className="mb-6 p-4 border border-violet-100 rounded-xl bg-violet-50/50 space-y-4">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Full Name</label>
+                          <input type="text" value={addressForm.name} onChange={e => setAddressForm(p => ({...p, name: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-white text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="Full name" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Phone Number</label>
+                          <input type="text" value={addressForm.phone} onChange={e => setAddressForm(p => ({...p, phone: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-white text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="Phone number" />
+                        </div>
                       </div>
                       <div>
-                        <div className="font-bold text-gray-800">Email Support</div>
-                        <div className="text-sm text-gray-500">support@click2kart.com</div>
-                      </div>
-                    </a>
-                    <a href={`tel:+911234567890`} className="flex items-center gap-4 p-4 rounded-xl bg-violet-50 border border-violet-100 hover:bg-violet-100 transition-colors">
-                      <div className="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Address Line 1</label>
+                        <textarea value={addressForm.addressLine1} onChange={e => setAddressForm(p => ({...p, addressLine1: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-white text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="Street address" rows={2} />
                       </div>
                       <div>
-                        <div className="font-bold text-gray-800">Phone Support</div>
-                        <div className="text-sm text-gray-500">+91 123 456 7890</div>
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Address Line 2</label>
+                        <textarea value={addressForm.addressLine2} onChange={e => setAddressForm(p => ({...p, addressLine2: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-white text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="Landmark, area (optional)" rows={2} />
                       </div>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Settings */}
-            {activeSection === 'settings' && (
-              <div className="pf-panel space-y-3">
-                <div>
-                  <h2 className="pf-display font-black text-gray-800">Settings</h2>
-                  <p className="text-gray-400 text-xs mt-0.5">Security and account preferences</p>
-                </div>
-
-                {!showPasswordChange ? (
-                  <button onClick={() => setShowPasswordChange(true)}
-                    className="w-full bg-white rounded-2xl border border-violet-100 shadow-sm p-4 text-left flex items-center gap-4 hover:border-violet-200 hover:shadow-md active:scale-[0.98] transition-all"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center flex-shrink-0">
-                      <Ico n="lock" cls="w-5 h-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="pf-display font-black text-gray-800 text-sm">Change Password</div>
-                      <div className="text-gray-400 text-xs mt-0.5">Update your account credentials</div>
-                    </div>
-                    <Ico n="chevronRight" cls="w-4 h-4 text-gray-300" />
-                  </button>
-                ) : (
-                  <div className="bg-white rounded-2xl border border-violet-100 shadow-sm overflow-hidden">
-                    <div className="px-5 py-4 border-b border-violet-50 flex items-center gap-3">
-                      <button onClick={() => { setShowPasswordChange(false); setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' }); }}
-                        className="p-1.5 rounded-lg hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition-colors"
-                      >
-                        <Ico n="chevronLeft" cls="w-4 h-4" />
-                      </button>
-                      <h3 className="pf-display font-black text-gray-800 text-sm">Change Password</h3>
-                    </div>
-                    <form onSubmit={handlePasswordUpdate} className="p-5 space-y-4">
-                      <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Current Password</label>
-                        <input type="password" value={passwordForm.currentPassword} onChange={e => setPasswordForm(p => ({...p, currentPassword: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-violet-50/50 text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="Current password" />
+                      <div className="grid md:grid-cols-4 gap-4">
+                        <div>
+                          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">City</label>
+                          <input type="text" value={addressForm.city} onChange={e => setAddressForm(p => ({...p, city: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-white text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="City" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">District</label>
+                          <input type="text" value={addressForm.district} onChange={e => setAddressForm(p => ({...p, district: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-white text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="District" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">State</label>
+                          <input type="text" value={addressForm.state} onChange={e => setAddressForm(p => ({...p, state: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-white text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="State" />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Pincode</label>
+                          <input type="text" value={addressForm.pincode} onChange={e => setAddressForm(p => ({...p, pincode: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-white text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="Pincode" />
+                        </div>
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">New Password</label>
-                        <input type="password" value={passwordForm.newPassword} onChange={e => setPasswordForm(p => ({...p, newPassword: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-violet-50/50 text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="At least 6 characters" />
+                        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Address Type</label>
+                        <div className="flex gap-3">
+                          {['home', 'work', 'other'].map(type => (
+                            <label key={type} className="flex items-center gap-2 cursor-pointer">
+                              <input 
+                                type="radio" 
+                                name="type" 
+                                value={type} 
+                                checked={addressForm.type === type} 
+                                onChange={e => setAddressForm(p => ({...p, type: e.target.value}))} 
+                                className="w-4 h-4 text-violet-600 border-gray-300 focus:ring-violet-500" 
+                              />
+                              <span className="text-sm font-semibold text-gray-700 capitalize">{type}</span>
+                            </label>
+                          ))}
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5">Confirm Password</label>
-                        <input type="password" value={passwordForm.confirmPassword} onChange={e => setPasswordForm(p => ({...p, confirmPassword: e.target.value}))} className="w-full px-4 py-3 rounded-xl border border-violet-200 bg-violet-50/50 text-gray-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" placeholder="Repeat new password" />
-                      </div>
-                      {passwordForm.newPassword && passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
-                        <p className="text-red-500 text-xs font-semibold">Passwords don't match</p>
-                      )}
-                      <button type="submit"
-                        disabled={changingPassword || passwordForm.newPassword !== passwordForm.confirmPassword || !passwordForm.newPassword}
-                        className="w-full py-3.5 rounded-xl font-black text-sm text-white bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 active:scale-[0.98] transition-all shadow-lg shadow-violet-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {changingPassword ? 'Updating...' : 'Update Password'}
+                      <button type="submit" disabled={savingAddress} className="w-full py-3.5 rounded-xl font-black text-sm text-white bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 active:scale-[0.98] transition-all shadow-lg shadow-violet-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                        {savingAddress ? 'Saving...' : 'Save Address'}
                       </button>
                     </form>
-                  </div>
-                )}
+                  )}
+
+                  {/* Display Address */}
+                  {user?.defaultAddress ? (
+                    <div className="p-4 border border-gray-200 rounded-xl bg-gray-50">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <div className="text-sm font-black text-gray-800 flex items-center gap-2">
+                            {addressForm.name}
+                            <span className="text-xs px-2 py-0.5 bg-violet-100 text-violet-700 rounded-full font-semibold capitalize">{addressForm.type}</span>
+                          </div>
+                          <div className="text-sm font-semibold text-gray-600">{addressForm.phone}</div>
+                        </div>
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        {addressForm.addressLine1}
+                        {addressForm.addressLine2 && `, ${addressForm.addressLine2}`}
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        {addressForm.city}, {addressForm.district}, {addressForm.state} - {addressForm.pincode}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-10 text-gray-400">
+                      <div className="w-16 h-16 rounded-2xl bg-violet-50 text-violet-300 flex items-center justify-center mx-auto mb-3">
+                        <Ico n="map" cls="w-8 h-8" />
+                      </div>
+                      <p className="text-sm">No saved addresses yet</p>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </main>

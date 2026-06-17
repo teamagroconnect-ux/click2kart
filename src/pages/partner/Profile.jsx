@@ -153,7 +153,7 @@ export default function PartnerProfile() {
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [partner, setPartner] = useState(null);
   const [formData, setFormData] = useState({
-    name: '', phone: '', bloodGroup: '', address: '', city: '', state: '', pincode: ''
+    name: '', phone: '', bloodGroup: '', address: '', city: '', district: '', state: '', pincode: ''
   });
   const [bankForm, setBankForm] = useState({ accountHolder: '', accountNumber: '', ifscCode: '', bankName: '' });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -172,6 +172,7 @@ export default function PartnerProfile() {
         bloodGroup: data.bloodGroup || '',
         address: data.address || '',
         city: data.city || '',
+        district: data.district || '',
         state: data.state || '',
         pincode: data.pincode || ''
       });
@@ -183,13 +184,6 @@ export default function PartnerProfile() {
       });
     } catch (e) {
       console.error(e);
-      // Mock data if API fails
-      setPartner({
-        name: 'John Doe',
-        email: 'john@example.com',
-        phone: '+91 9876543210',
-        kycVerified: true
-      });
     } finally {
       setLoading(false);
     }
@@ -423,7 +417,7 @@ export default function PartnerProfile() {
                 rows={3}
               />
             </Field>
-            <div className="grid md:grid-cols-3 gap-5">
+            <div className="grid md:grid-cols-4 gap-5">
               <Field label="City">
                 <input 
                   type="text" 
@@ -432,6 +426,16 @@ export default function PartnerProfile() {
                   onChange={e => setFormData(p => ({ ...p, city: e.target.value }))}
                   className={inputCls} 
                   placeholder="City"
+                />
+              </Field>
+              <Field label="District">
+                <input 
+                  type="text" 
+                  name="district" 
+                  value={formData.district}
+                  onChange={e => setFormData(p => ({ ...p, district: e.target.value }))}
+                  className={inputCls} 
+                  placeholder="District"
                 />
               </Field>
               <Field label="State">

@@ -44,6 +44,8 @@ import PartnerOnboarding from './pages/partner/Onboarding.jsx'
 import PartnerProfile from './pages/partner/Profile.jsx'
 import MyCoupons from './pages/partner/MyCoupons.jsx'
 import MyBusinesses from './pages/partner/MyBusinesses.jsx'
+import Earnings from './pages/partner/Earnings.jsx'
+import ReferredOrders from './pages/partner/ReferredOrders.jsx'
 
 export default function App() {
   return (
@@ -109,8 +111,8 @@ export default function App() {
         <Route path="dashboard" element={<PartnerDashboard />} />
         <Route path="my-coupons" element={<MyCoupons />} />
         <Route path="my-businesses" element={<MyBusinesses />} />
-        <Route path="earnings" element={<PartnerDashboard />} />
-        <Route path="orders" element={<PartnerDashboard />} />
+        <Route path="earnings" element={<Earnings />} />
+        <Route path="orders" element={<ReferredOrders />} />
         <Route path="add-business" element={<UserSignup />} />
         <Route path="profile" element={<PartnerProfile />} />
       </Route>
