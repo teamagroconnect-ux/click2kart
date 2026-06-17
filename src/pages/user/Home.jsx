@@ -809,8 +809,8 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Link>
-            <Link to="/partner/login" className="hm-btn-primary">
-          Partner Login
+            <Link to="/partner" className="hm-btn-primary">
+          Explore Partner Program
         </Link>
           </div>
 

@@ -15,9 +15,8 @@ const Icon = ({ name }) => (
     )}
     {name === 'earnings' && (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 1v22" />
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-        <path d="M16 15l-4 4-4-4" />
+        <path d="M3 3v18h18" />
+        <path d="M7 13l3-3 4 4 5-6" />
       </svg>
     )}
     {name === 'orders' && (
@@ -38,17 +37,18 @@ const Icon = ({ name }) => (
     )}
     {name === 'coupon' && (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M10 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6" />
-        <path d="M14 4l8 4v6l-8 4" />
-        <path d="M10 8l-2 2M10 12l-2 2M14 12l2 2M14 8l2-2" />
-        <path d="M8 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z" />
+        <rect x="2" y="8" width="20" height="8" rx="1" />
+        <path d="M8 8v8" />
+        <path d="M16 8v8" />
+        <circle cx="8" cy="10" r="0.5" fill="currentColor" />
+        <circle cx="8" cy="14" r="0.5" fill="currentColor" />
+        <circle cx="16" cy="10" r="0.5" fill="currentColor" />
+        <circle cx="16" cy="14" r="0.5" fill="currentColor" />
       </svg>
     )}
     {name === 'profile' && (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        <path d="M8 14l-4 4" />
-        <path d="M16 14l4 4" />
       </svg>
     )}
   </span>

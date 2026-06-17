@@ -63,41 +63,47 @@ const Avatar = ({ partner, size = 'md' }) => {
 
 /* ── Partner ID Card Component ── */
 const PartnerIDCard = React.forwardRef(({ partner }, ref) => {
+  // Format address into 1 line
+  const addressLine = [partner?.address, partner?.city, partner?.district, partner?.state, partner?.pincode]
+    .filter(Boolean)
+    .join(', ');
+  
   return (
-    <div ref={ref} className="bg-gradient-to-br from-indigo-900 via-indigo-800 to-purple-900 rounded-3xl p-6 text-white shadow-2xl overflow-hidden relative max-w-md mx-auto" style={{ aspectRatio: '1.586/1' }}>
+    <div ref={ref} className="bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 rounded-3xl p-8 text-white shadow-2xl overflow-hidden relative max-w-2xl mx-auto" style={{ aspectRatio: '1.586/1' }}>
       {/* Background Pattern */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-      <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+      <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-indigo-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-gradient-to-tr from-purple-500/10 to-transparent rounded-full translate-y-1/2 -translate-x-1/2" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-white/5 rounded-full" />
       
       <div className="relative z-10 h-full flex flex-col justify-between">
         {/* Top Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="h-10 w-auto flex items-center gap-3">
-            <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-auto brightness-0 invert" />
-            <div>
-              <div className="text-xs font-black uppercase tracking-widest">{CONFIG.BRAND_NAME}</div>
-              <div className="text-[10px] opacity-60">Partner Program</div>
+          <div className="h-12 w-auto flex items-center gap-4">
+            <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-auto brightness-0 invert drop-shadow-lg" />
+            <div className="leading-tight">
+              <div className="text-base font-black uppercase tracking-widest">{CONFIG.BRAND_NAME}</div>
+              <div className="text-xs opacity-70">Partner Program</div>
             </div>
           </div>
-          <div className="text-right bg-white/10 px-4 py-2 rounded-xl">
-            <div className="text-[10px] font-bold opacity-80 uppercase tracking-widest">ID Card</div>
-            <div className="text-[9px] opacity-60">{new Date().getFullYear()}</div>
+          <div className="text-right bg-white/10 backdrop-blur-sm px-5 py-3 rounded-2xl border border-white/10">
+            <div className="text-[9px] font-bold opacity-90 uppercase tracking-widest">ID CARD</div>
+            <div className="text-xs opacity-70">{new Date().getFullYear()}</div>
           </div>
         </div>
 
         {/* Partner Info */}
-        <div className="flex items-center gap-6 flex-1 mb-4">
+        <div className="flex items-start gap-7 flex-1 mb-5">
           {/* Photo */}
           <div className="flex-shrink-0">
             {partner?.profilePicture ? (
               <img 
                 src={getImageUrl(partner.profilePicture)} 
                 alt={partner?.name} 
-                className="h-24 w-24 rounded-2xl object-cover border-3 border-white/20 shadow-xl"
+                className="h-28 w-28 rounded-2xl object-cover border-4 border-white/30 shadow-2xl"
               />
             ) : (
-              <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center border-3 border-white/20 shadow-xl">
-                <div className="text-4xl font-black text-white">
+              <div className="h-28 w-28 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center border-4 border-white/30 shadow-2xl">
+                <div className="text-5xl font-black text-white">
                   {partner?.name?.charAt(0)?.toUpperCase() || 'P'}
                 </div>
               </div>
@@ -106,36 +112,58 @@ const PartnerIDCard = React.forwardRef(({ partner }, ref) => {
           
           {/* Details */}
           <div className="flex-1 min-w-0">
-            <div className="text-2xl font-black mb-1" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
-              {partner?.name || 'Partner Name'}
+            <div className="flex items-center gap-3 mb-2 flex-wrap">
+              <div className="text-3xl font-black leading-tight" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
+                {partner?.name || 'Partner Name'}
+              </div>
+              {partner?.kycVerified && (
+                <div className="flex items-center gap-1 px-3 py-1 bg-emerald-500/30 text-emerald-200 rounded-full border border-emerald-400/30">
+                  <span className="text-sm">✓</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider">Verified Partner</span>
+                </div>
+              )}
             </div>
-            <div className="text-sm opacity-90 mb-2 flex items-center gap-2 flex-wrap">
-              <span className="px-2 py-1 bg-white/20 rounded-lg text-[10px] font-bold uppercase">Partner</span>
+            <div className="flex items-center gap-2 flex-wrap mb-3">
+              <span className="px-3 py-1 bg-gradient-to-r from-indigo-500/30 to-purple-500/30 rounded-full text-xs font-bold uppercase tracking-wider border border-white/10">
+                Premium Partner
+              </span>
             </div>
             {partner?.email && (
-              <div className="text-sm opacity-80 mb-1 flex items-center gap-2">
+              <div className="text-sm opacity-80 mb-1.5 flex items-center gap-2">
                 <span>✉️</span>
                 <span className="truncate">{partner.email}</span>
               </div>
             )}
             {partner?.phone && (
-              <div className="text-sm opacity-80 flex items-center gap-2">
+              <div className="text-sm opacity-80 flex items-center gap-2 mb-1.5">
                 <span>📞</span>
                 <span>{partner.phone}</span>
+              </div>
+            )}
+            {partner?.bloodGroup && (
+              <div className="text-sm opacity-80 flex items-center gap-2 mb-1.5">
+                <span>🩸</span>
+                <span className="font-bold">{partner.bloodGroup}</span>
+              </div>
+            )}
+            {addressLine && (
+              <div className="text-sm opacity-80 flex items-center gap-2">
+                <span>📍</span>
+                <span className="truncate">{addressLine}</span>
               </div>
             )}
           </div>
         </div>
 
         {/* Bottom Info */}
-        <div className="pt-4 mt-4 border-t border-white/20 grid grid-cols-2 gap-4">
+        <div className="pt-5 mt-5 border-t border-white/20 grid grid-cols-2 gap-6">
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-1">Partner ID</div>
-            <div className="text-sm font-mono font-bold">{partner?._id?.slice(-8) || '--------'}</div>
+            <div className="text-[9px] font-bold uppercase tracking-widest opacity-70 mb-1.5">Partner ID</div>
+            <div className="text-base font-mono font-bold bg-white/10 px-3 py-2 rounded-xl">{partner?._id?.slice(-8) || '--------'}</div>
           </div>
           <div>
-            <div className="text-[10px] font-bold uppercase tracking-widest opacity-70 mb-1">Invite Code</div>
-            <div className="text-xl font-black tracking-wider">{partner?.inviteCode || '----'}</div>
+            <div className="text-[9px] font-bold uppercase tracking-widest opacity-70 mb-1.5">Invite Code</div>
+            <div className="text-2xl font-black tracking-widest bg-white/10 px-3 py-2 rounded-xl">{partner?.inviteCode || '----'}</div>
           </div>
         </div>
       </div>
