@@ -300,7 +300,7 @@ export default function PartnerProfile() {
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [partner, setPartner] = useState(null);
   const [formData, setFormData] = useState({
-    name: '', phone: '', bloodGroup: '', dob: '', address: '', city: '', district: '', state: '', pincode: '', profilePicture: ''
+    name: '', phone: '', bloodGroup: '', dob: '', address: '', city: '', district: '', state: '', pincode: '', profilePicture: '', panCard: '', aadhaarCard: ''
   });
   const [bankForm, setBankForm] = useState({ accountHolder: '', accountNumber: '', ifscCode: '', bankName: '' });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -321,7 +321,9 @@ export default function PartnerProfile() {
         district: data.district || '',
         state: data.state || '',
         pincode: data.pincode || '',
-        profilePicture: data.profilePicture || ''
+        profilePicture: data.profilePicture || '',
+        panCard: data.panCard || '',
+        aadhaarCard: data.aadhaarCard || ''
       });
       setBankForm({
         accountHolder: data.bankAccount?.accountHolder || '',
@@ -336,7 +338,7 @@ export default function PartnerProfile() {
     }
   };
 
-  const handleProfilePictureChange = async (e) => {
+  const handleFileUpload = async (e, fieldName) => {
     const file = e.target.files[0];
     if (!file) return;
     try {
@@ -344,14 +346,18 @@ export default function PartnerProfile() {
       const fd = new FormData();
       fd.append('file', file);
       const response = await api.post('/api/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      setFormData(p => ({ ...p, profilePicture: response.data.url }));
-      notify('Profile picture uploaded!', 'success');
+      setFormData(p => ({ ...p, [fieldName]: response.data.url }));
+      notify(`${fieldName.replace('pan', 'Pan').replace('aadhaar', 'Aadhaar')} uploaded!`, 'success');
     } catch {
-      notify('Failed to upload profile picture', 'error');
+      notify('Failed to upload file', 'error');
     } finally {
       setSaving(false);
     }
   };
+
+  const handleProfilePictureChange = (e) => handleFileUpload(e, 'profilePicture');
+  const handlePanCardChange = (e) => handleFileUpload(e, 'panCard');
+  const handleAadhaarCardChange = (e) => handleFileUpload(e, 'aadhaarCard');
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
@@ -594,6 +600,45 @@ export default function PartnerProfile() {
                 <input type="text" value={formData.pincode}
                   onChange={e => setFormData(p => ({ ...p, pincode: e.target.value.replace(/\D/g,'').slice(0,6) }))}
                   className={inputCls} placeholder="Pincode" />
+              </Field>
+            </div>
+
+            {/* Document uploads */}
+            <div className="grid md:grid-cols-2 gap-5">
+              <Field label="PAN Card (Upload)">
+                <div className="relative group">
+                  {formData.panCard ? (
+                    <div className="w-full h-40 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50 flex items-center justify-center overflow-hidden">
+                      <img src={getImageUrl(formData.panCard) || formData.panCard} alt="PAN Card" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-full h-40 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 transition-colors">
+                      <Ico n="user" cls="w-8 h-8 text-indigo-400 mb-2" />
+                      <div className="text-xs text-indigo-500 font-semibold">Click to upload PAN Card</div>
+                    </div>
+                  )}
+                  <label className="absolute inset-0 cursor-pointer rounded-xl">
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePanCardChange} />
+                  </label>
+                </div>
+              </Field>
+
+              <Field label="Aadhaar Card (Upload)">
+                <div className="relative group">
+                  {formData.aadhaarCard ? (
+                    <div className="w-full h-40 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50 flex items-center justify-center overflow-hidden">
+                      <img src={getImageUrl(formData.aadhaarCard) || formData.aadhaarCard} alt="Aadhaar Card" className="w-full h-full object-cover" />
+                    </div>
+                  ) : (
+                    <div className="w-full h-40 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 transition-colors">
+                      <Ico n="user" cls="w-8 h-8 text-indigo-400 mb-2" />
+                      <div className="text-xs text-indigo-500 font-semibold">Click to upload Aadhaar Card</div>
+                    </div>
+                  )}
+                  <label className="absolute inset-0 cursor-pointer rounded-xl">
+                    <input type="file" accept="image/*" className="hidden" onChange={handleAadhaarCardChange} />
+                  </label>
+                </div>
               </Field>
             </div>
 

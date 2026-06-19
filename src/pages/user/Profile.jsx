@@ -77,8 +77,8 @@ export default function Profile() {
   const [changingPassword, setChangingPassword] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [formData, setFormData] = useState({ 
-    name: '', phone: '',
-    businessName: '', gstin: '', pan: '', addressLine1: '', addressLine2: '', 
+    name: '', phone: '', dob: '',
+    businessName: '', gstin: '', pan: '', panCard: '', aadhaarCard: '', addressLine1: '', addressLine2: '', 
     city: '', district: '', state: '', pincode: '', profilePicture: ''
   });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -92,8 +92,9 @@ export default function Profile() {
     try {
       const { data } = await api.get('/api/user/me');
       setFormData({
-        name: data.name || '', phone: data.phone || '',
+        name: data.name || '', phone: data.phone || '', dob: data.dob ? new Date(data.dob).toISOString().split('T')[0] : '',
         businessName: data.kyc?.businessName || '', gstin: data.kyc?.gstin || '', pan: data.kyc?.pan || '',
+        panCard: data.kyc?.panCard || '', aadhaarCard: data.kyc?.aadhaarCard || '',
         addressLine1: data.kyc?.addressLine1 || '', addressLine2: data.kyc?.addressLine2 || '',
         city: data.kyc?.city || '', district: data.kyc?.district || '', state: data.kyc?.state || '', 
         pincode: data.kyc?.pincode || '', profilePicture: data.kyc?.profilePicture || ''
@@ -102,7 +103,7 @@ export default function Profile() {
     finally { setLoading(false); }
   };
 
-  const handleProfilePictureChange = async (e) => {
+  const handleFileUpload = async (e, fieldName) => {
     const file = e.target.files[0];
     if (file) {
       try {
@@ -112,27 +113,33 @@ export default function Profile() {
         const response = await api.post('/api/upload/image', formDataUpload, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
-        setFormData(p => ({ ...p, profilePicture: response.data.url }));
-        notify('Profile picture uploaded!', 'success');
+        setFormData(p => ({ ...p, [fieldName]: response.data.url }));
+        notify(`${fieldName} uploaded!`, 'success');
       } catch (err) {
-        notify('Failed to upload profile picture', 'error');
+        notify('Failed to upload file', 'error');
       } finally {
         setSaving(false);
       }
     }
   };
 
+  const handleProfilePictureChange = (e) => handleFileUpload(e, 'profilePicture');
+  const handlePanCardChange = (e) => handleFileUpload(e, 'panCard');
+  const handleAadhaarCardChange = (e) => handleFileUpload(e, 'aadhaarCard');
+
   const handleSaveProfile = async (e) => {
     e.preventDefault(); 
     setSaving(true);
     try { 
       // Update personal info
-      await api.put('/api/user/profile', { name: formData.name, phone: formData.phone });
+      await api.put('/api/user/profile', { name: formData.name, phone: formData.phone, dob: formData.dob });
       // Update KYC/business info
       await api.put('/api/user/kyc', {
         businessName: formData.businessName,
         gstin: formData.gstin,
         pan: formData.pan,
+        panCard: formData.panCard,
+        aadhaarCard: formData.aadhaarCard,
         addressLine1: formData.addressLine1,
         addressLine2: formData.addressLine2,
         city: formData.city,
@@ -384,6 +391,11 @@ export default function Profile() {
                     <Field label="Email Address">
                       <input type="email" value={user?.email || ''} disabled className={disabledCls} />
                     </Field>
+                    <Field label="Date of Birth">
+                      <input type="date" name="dob" value={formData.dob}
+                        onChange={e => setFormData(p => ({ ...p, dob: e.target.value }))}
+                        className={inputCls} />
+                    </Field>
                     <Field label="Phone Number">
                       <input type="tel" name="phone" value={formData.phone}
                         onChange={e => setFormData(p => ({ ...p, phone: e.target.value.replace(/\D/g,'').slice(0,10) }))}
@@ -403,6 +415,45 @@ export default function Profile() {
                       <input type="text" value={formData.pan}
                         onChange={e => setFormData(p => ({ ...p, pan: e.target.value }))}
                         className={inputCls} placeholder="ABCDE1234F" />
+                    </Field>
+                  </div>
+
+                  {/* Document uploads */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <Field label="PAN Card (Upload)">
+                      <div className="relative group">
+                        {formData.panCard ? (
+                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 flex items-center justify-center overflow-hidden">
+                            <img src={getImageUrl(formData.panCard) || formData.panCard} alt="PAN Card" className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 flex flex-col items-center justify-center cursor-pointer hover:border-violet-400 transition-colors">
+                            <Ico n="user" cls="w-8 h-8 text-violet-400 mb-2" />
+                            <div className="text-xs text-violet-500 font-semibold">Click to upload PAN Card</div>
+                          </div>
+                        )}
+                        <label className="absolute inset-0 cursor-pointer rounded-xl">
+                          <input type="file" accept="image/*" className="hidden" onChange={handlePanCardChange} />
+                        </label>
+                      </div>
+                    </Field>
+
+                    <Field label="Aadhaar Card (Upload)">
+                      <div className="relative group">
+                        {formData.aadhaarCard ? (
+                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 flex items-center justify-center overflow-hidden">
+                            <img src={getImageUrl(formData.aadhaarCard) || formData.aadhaarCard} alt="Aadhaar Card" className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 flex flex-col items-center justify-center cursor-pointer hover:border-violet-400 transition-colors">
+                            <Ico n="user" cls="w-8 h-8 text-violet-400 mb-2" />
+                            <div className="text-xs text-violet-500 font-semibold">Click to upload Aadhaar Card</div>
+                          </div>
+                        )}
+                        <label className="absolute inset-0 cursor-pointer rounded-xl">
+                          <input type="file" accept="image/*" className="hidden" onChange={handleAadhaarCardChange} />
+                        </label>
+                      </div>
                     </Field>
                   </div>
                   <Field label="Address Line 1">

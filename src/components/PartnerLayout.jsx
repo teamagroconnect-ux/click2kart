@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { CONFIG } from '../shared/lib/config.js'
-import logoImg from '../click2kart.png'
+
 
 const Icon = ({ name }) => (
   <span className="inline-flex items-center justify-center w-6 h-6 mr-3 flex-shrink-0">
@@ -101,14 +101,11 @@ export default function PartnerLayout() {
             <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
           <div className="flex items-center gap-3">
-            <div className="h-10 md:h-12 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-1 overflow-hidden">
-              <img src={logoImg} alt="Click2Kart" className="h-full w-auto object-contain" />
+            <div className="h-10 md:h-12 w-28 md:w-32 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-1 overflow-hidden">
+              <img src="/newlogo.png" alt="Click2Kart" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <span className="text-sm md:text-base font-black tracking-tight text-gray-900">{CONFIG.BRAND_NAME}</span>
-                <span className="px-2 py-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-[10px] font-black text-white rounded-lg tracking-widest uppercase">Partner</span>
-              </div>
+              <span className="px-2 py-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-[10px] font-black text-white rounded-lg tracking-widest uppercase">Partner</span>
               <div className="text-[9px] md:text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">Partner Portal</div>
             </div>
           </div>

@@ -1,8 +1,96 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import ConfirmModal from '../../components/ConfirmModal'
 import ImageUpload from '../../components/ImageUpload'
+
+function SearchableSelect({ 
+  options, 
+  value, 
+  onChange, 
+  placeholder, 
+  label, 
+  required = false,
+  emptyOptionLabel = "Select..."
+}) {
+  const [search, setSearch] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef(null)
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const filteredOptions = options.filter(opt => 
+    opt.name.toLowerCase().includes(search.toLowerCase())
+  )
+
+  const selectedOption = options.find(opt => opt._id === value)
+
+  return (
+    <div className="space-y-1" ref={containerRef}>
+      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">{label}</label>
+      <div className="relative">
+        <input
+          type="text"
+          className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+          placeholder={placeholder}
+          value={selectedOption ? selectedOption.name : search}
+          onFocus={() => setIsOpen(true)}
+          onChange={(e) => {
+            setSearch(e.target.value)
+            if (!isOpen) setIsOpen(true)
+          }}
+          required={required}
+        />
+        {isOpen && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-lg z-50 max-h-60 overflow-y-auto custom-scrollbar">
+            {emptyOptionLabel && (
+              <button
+                type="button"
+                onClick={() => {
+                  onChange('')
+                  setSearch('')
+                  setIsOpen(false)
+                }}
+                className="w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-gray-50"
+              >
+                {emptyOptionLabel}
+              </button>
+            )}
+            {filteredOptions.map(opt => (
+              <button
+                key={opt._id}
+                type="button"
+                onClick={() => {
+                  onChange(opt._id)
+                  setSearch(opt.name)
+                  setIsOpen(false)
+                }}
+                className={`w-full text-left px-4 py-3 text-sm font-bold transition-all ${
+                  opt._id === value 
+                    ? 'bg-blue-50 text-blue-600' 
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {opt.name}
+              </button>
+            ))}
+            {filteredOptions.length === 0 && emptyOptionLabel && (
+              <div className="px-4 py-3 text-sm font-bold text-gray-400">No options found</div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function Products() {
   const { notify } = useToast()
@@ -420,27 +508,31 @@ export default function Products() {
                     </div>
 
                     <div className="grid grid-cols-3 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Brand</label>
-                        <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.brandId} onChange={e => setForm({ ...form, brandId: e.target.value })}>
-                          <option value="">No Brand</option>
-                          {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
-                        </select>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Category</label>
-                        <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value, subCategoryId: '' })} required>
-                          <option value="">Select Category...</option>
-                          {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                        </select>
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Subcategory</label>
-                        <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.subCategoryId} onChange={e => setForm({ ...form, subCategoryId: e.target.value })}>
-                          <option value="">Select Subcategory...</option>
-                          {subcategories.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-                        </select>
-                      </div>
+                      <SearchableSelect
+                        label="Brand"
+                        placeholder="No Brand"
+                        options={brands}
+                        value={form.brandId}
+                        onChange={(val) => setForm({ ...form, brandId: val })}
+                        emptyOptionLabel="No Brand"
+                      />
+                      <SearchableSelect
+                        label="Category"
+                        placeholder="Select Category..."
+                        options={categories}
+                        value={form.categoryId}
+                        onChange={(val) => setForm({ ...form, categoryId: val, subCategoryId: '' })}
+                        required
+                        emptyOptionLabel="Select Category..."
+                      />
+                      <SearchableSelect
+                        label="Subcategory"
+                        placeholder="Select Subcategory..."
+                        options={subcategories}
+                        value={form.subCategoryId}
+                        onChange={(val) => setForm({ ...form, subCategoryId: val })}
+                        emptyOptionLabel="Select Subcategory..."
+                      />
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -479,7 +571,7 @@ export default function Products() {
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Weight (g)</label>
-                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 500" value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} />
+                        <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. 500" value={form.weight} onChange={e => setForm({ ...form, weight: e.target.value })} required />
                       </div>
                       <div className="space-y-1">
                         <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">HSN Code</label>
@@ -648,27 +740,31 @@ export default function Products() {
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">MRP (₹)</label>
                 <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="1099" value={editing.mrp || ''} onChange={e => setEditing({ ...editing, mrp: e.target.value })} />
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Brand (Optional)</label>
-                <select className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none appearance-none" value={editing.brandId || ''} onChange={e => setEditing({ ...editing, brandId: e.target.value })}>
-                  <option value="">No Brand</option>
-                  {brands.map(b => <option key={b._id} value={b._id}>{b.name}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Category</label>
-                <select className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none appearance-none" value={editing.categoryId || ''} onChange={e => setEditing({ ...editing, categoryId: e.target.value, subCategoryId: '' })} required>
-                  <option value="">Select category</option>
-                  {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Subcategory</label>
-                <select className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none appearance-none" value={editing.subCategoryId || ''} onChange={e => setEditing({ ...editing, subCategoryId: e.target.value })}>
-                  <option value="">Select subcategory</option>
-                  {subcategories.map(s => <option key={s._id} value={s._id}>{s.name}</option>)}
-                </select>
-              </div>
+              <SearchableSelect
+                label="Brand (Optional)"
+                placeholder="No Brand"
+                options={brands}
+                value={editing.brandId || ''}
+                onChange={(val) => setEditing({ ...editing, brandId: val })}
+                emptyOptionLabel="No Brand"
+              />
+              <SearchableSelect
+                label="Category"
+                placeholder="Select category"
+                options={categories}
+                value={editing.categoryId || ''}
+                onChange={(val) => setEditing({ ...editing, categoryId: val, subCategoryId: '' })}
+                required
+                emptyOptionLabel="Select category"
+              />
+              <SearchableSelect
+                label="Subcategory"
+                placeholder="Select subcategory"
+                options={subcategories}
+                value={editing.subCategoryId || ''}
+                onChange={(val) => setEditing({ ...editing, subCategoryId: val })}
+                emptyOptionLabel="Select subcategory"
+              />
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Current Stock (Read Only)</label>
                 <div className="w-full bg-gray-100 border-2 border-transparent rounded-2xl px-4 py-3 text-sm font-bold text-gray-500 cursor-not-allowed">
@@ -708,7 +804,7 @@ export default function Products() {
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Weight (grams)</label>
-                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 500" value={editing.weight} onChange={e => setEditing({ ...editing, weight: e.target.value })} />
+                <input className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-bold transition-all outline-none" placeholder="e.g. 500" value={editing.weight} onChange={e => setEditing({ ...editing, weight: e.target.value })} required />
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">HSN Code</label>

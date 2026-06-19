@@ -34,12 +34,13 @@ export default function Catalogue({ initialBrand, brandName }) {
   const [recOpen, setRecOpen] = useState(false)
   const [recItems, setRecItems] = useState([])
   const searchRef = useRef(null)
-  const limit = 12
+  const [currentPage, setCurrentPage] = useState(1)
+  const limit = 20
 
   // --- REACT QUERY FETCHERS ---
-  const fetchProducts = async ({ pageParam = 1 }) => {
+  const fetchProducts = async () => {
     const { data } = await api.get('/api/products', {
-      params: { q, page: pageParam, limit, brand: brand || undefined, category: category || undefined, subCategory: subCategory || undefined },
+      params: { q, page: currentPage, limit, brand: brand || undefined, category: category || undefined, subCategory: subCategory || undefined },
     })
     return data
   }
@@ -54,19 +55,12 @@ export default function Catalogue({ initialBrand, brandName }) {
   // --- QUERIES ---
   const {
     data: productData,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
     isLoading: loadingProducts,
     refetch: refetchProducts,
     isPlaceholderData
-  } = useInfiniteQuery({
-    queryKey: ['products', { q, brand, category, subCategory, limit, authed }],
+  } = useQuery({
+    queryKey: ['products', { q, brand, category, subCategory, limit, currentPage, authed }],
     queryFn: fetchProducts,
-    getNextPageParam: (lastPage) => {
-      const next = lastPage.page + 1
-      return next <= lastPage.totalPages ? next : undefined
-    },
     enabled: viewMode === 'PRODUCTS' || !!q,
     staleTime: 1000 * 60 * 30, // 30 minutes for products
     gcTime: 1000 * 60 * 60 * 24, // Keep in garbage collection for 24 hours
@@ -106,13 +100,44 @@ export default function Catalogue({ initialBrand, brandName }) {
   })
 
   const items = useMemo(() => {
-    return productData?.pages.flatMap(page => page.items) || []
+    return productData?.items || []
   }, [productData])
 
-  const total = productData?.pages[0]?.total || 0
-  const page = productData?.pages.length || 1
-  const totalPages = productData?.pages[0]?.totalPages || 1
+  const total = productData?.total || 0
+  const page = productData?.page || 1
+  const totalPages = productData?.totalPages || 1
   const loading = loadingProducts || loadingGrouped
+
+  // Reset current page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [q, brand, category, subCategory])
+
+  // Generate pagination page numbers
+  const getPageNumbers = useMemo(() => {
+    const pages = []
+    const maxVisible = 5
+    if (totalPages <= maxVisible) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 5; i++) pages.push(i)
+        pages.push('...')
+        pages.push(totalPages)
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1)
+        pages.push('...')
+        for (let i = totalPages - 4; i <= totalPages; i++) pages.push(i)
+      } else {
+        pages.push(1)
+        pages.push('...')
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i)
+        pages.push('...')
+        pages.push(totalPages)
+      }
+    }
+    return pages
+  }, [currentPage, totalPages])
 
   useEffect(() => {
     if (q) {
@@ -856,26 +881,35 @@ export default function Catalogue({ initialBrand, brandName }) {
       .ct-empty-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(124,58,237,.38); background: #6d28d9; }
       .ct-empty-btn:active { transform: translateY(0) scale(0.96); }
 
-      /* ─── LOAD MORE ─── */
-      .ct-lm-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px 0 24px; }
-      .ct-lm-btn {
-        display: flex; align-items: center; gap: 10px;
-        padding: 14px 36px; border-radius: 16px;
+      /* ─── PAGINATION ─── */
+      .ct-pagination-wrap { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px 0 24px; }
+      .ct-pagination { display: flex; align-items: center; gap: 8px; }
+      .ct-page-btn {
+        padding: 10px 14px; border-radius: 12px;
         background: white; border: 1.5px solid rgba(124,58,237,.2);
-        color: #7c3aed; font-size: 11px; font-weight: 800; letter-spacing: .15em; text-transform: uppercase;
+        color: #1e1b2e; font-size: 13px; font-weight: 700;
         cursor: pointer; font-family: 'DM Sans', sans-serif;
-        box-shadow: 0 4px 14px rgba(124,58,237,.06); 
-        transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all .2s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 2px 8px rgba(0,0,0,.04);
       }
-      .ct-lm-btn:hover { 
-        border-color: #7c3aed; 
-        background: #fdfcff;
-        box-shadow: 0 8px 24px rgba(124,58,237,.15); 
-        transform: translateY(-3px); 
+      .ct-page-btn:hover:not(:disabled) {
+        border-color: #7c3aed;
+        color: #7c3aed;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(124,58,237,.15);
       }
-      .ct-lm-btn:active { transform: translateY(-1px) scale(0.96); }
-      .ct-lm-sub { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: #9ca3af; }
-      .ct-end { display: flex; justify-content: center; padding: 32px 0; }
+      .ct-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      .ct-page-btn.active {
+        background: linear-gradient(135deg, #7c3aed, #6366f1);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(124,58,237,.3);
+      }
+      .ct-page-ellipsis { padding: 0 8px; color: #9ca3af; font-weight: 700; }
+      .ct-pagination-info {
+        font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+        color: #9ca3af;
+      }
       .ct-end-pill {
         display: inline-flex; align-items: center; gap: 7px;
         padding: 8px 20px; border-radius: 100px;
@@ -1469,20 +1503,44 @@ export default function Catalogue({ initialBrand, brandName }) {
               </div>
             )}
 
-            {/* load more */}
-            {!loading && hasNextPage && (
-              <div className="ct-lm-wrap">
-                <button className="ct-lm-btn" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-                  {isFetchingNextPage ? 'Loading...' : 'Load More'}
-                  {!isFetchingNextPage && <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>}
-                </button>
-              </div>
-            )}
-            {!loading && !hasNextPage && total > 0 && (
-              <div className="ct-end">
-                <div className="ct-end-pill">
-                  <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" /></svg>
-                  End of collection
+            {/* pagination */}
+            {!loading && total > 0 && (
+              <div className="ct-pagination-wrap">
+                <div className="ct-pagination">
+                  <button
+                    className="ct-page-btn"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1 || loadingProducts}
+                  >
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+
+                  {getPageNumbers.map((pageNum, index) => (
+                    pageNum === '...' ? (
+                      <span key={`ellipsis-${index}`} className="ct-page-ellipsis">...</span>
+                    ) : (
+                      <button
+                        key={pageNum}
+                        className={`ct-page-btn ${currentPage === pageNum ? 'active' : ''}`}
+                        onClick={() => setCurrentPage(pageNum)}
+                        disabled={loadingProducts}
+                      >
+                        {pageNum}
+                      </button>
+                    )
+                  ))}
+
+                  <button
+                    className="ct-page-btn"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages || loadingProducts}
+                  >
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                </div>
+
+                <div className="ct-pagination-info">
+                  Showing {(currentPage - 1) * limit + 1}-{Math.min(currentPage * limit, total)} of {total} products
                 </div>
               </div>
             )}
