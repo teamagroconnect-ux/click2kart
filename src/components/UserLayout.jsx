@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import { useCart } from '../lib/CartContext'
+import { useAuth } from '../lib/AuthContext'
 import { CONFIG } from '../shared/lib/config.js'
 
 import ConfirmModal from './ConfirmModal'
@@ -10,7 +11,7 @@ function Avatar({ user, size = 'md' }) {
   const sz = { sm: 'h-8 w-8', md: 'h-12 w-12', lg: 'h-16 w-16' }[size]
   const avatarUrl = user?.kyc?.profilePicture
   if (avatarUrl)
-    return <img src={getImageUrl(avatarUrl)} alt={user.name} className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`} />
+    return <img src={getImageUrl(avatarUrl) || avatarUrl} alt={user.name} className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`} />
   return (
     <div className={`${sz} rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center font-black text-white ring-2 ring-white shadow-md`}>
       {user?.name?.charAt(0)?.toUpperCase() || 'U'}
@@ -25,7 +26,7 @@ function classNames(...classes) {
 export default function UserLayout() {
   const location = useLocation()
   const { cartCount } = useCart()
-  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isPwaInstalled, setIsPwaInstalled] = useState(false)
