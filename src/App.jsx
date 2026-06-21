@@ -19,6 +19,7 @@ import InventoryPage from './pages/admin/InventoryPage.jsx'
 import StaffManagement from './pages/admin/StaffManagement.jsx'
 import Stores from './pages/admin/Stores.jsx'
 import Offers from './pages/admin/Offers.jsx'
+import OfflineCustomers from './pages/admin/OfflineCustomers.jsx'
 import Home from './pages/user/Home.jsx'
 import Catalogue from './pages/user/Catalogue.jsx'
 import BrandPage from './pages/user/BrandPage.jsx'
@@ -77,6 +78,7 @@ export default function App() {
         <Route path="staff" element={<StaffManagement />} />
         <Route path="stores" element={<Stores />} />
         <Route path="offers" element={<Offers />} />
+        <Route path="offline-customers" element={<OfflineCustomers />} />
       </Route>
 
       <Route path="/" element={<UserLayout />}>

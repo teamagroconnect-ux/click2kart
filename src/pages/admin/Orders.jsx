@@ -198,6 +198,7 @@ export default function Orders(){
           <table className="w-full text-left text-sm border-collapse">
             <thead className="bg-gray-50/50 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
               <tr>
+                <th className="px-6 py-4">Order ID</th>
                 <th className="px-6 py-4">Customer</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4">Amount</th>
@@ -209,12 +210,12 @@ export default function Orders(){
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan="5" className="px-6 py-8"><div className="h-4 bg-gray-100 rounded w-full"></div></td>
+                    <td colSpan="6" className="px-6 py-8"><div className="h-4 bg-gray-100 rounded w-full"></div></td>
                   </tr>
                 ))
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-12 text-center text-gray-400 italic font-medium">No orders found.</td>
+                  <td colSpan="6" className="px-6 py-12 text-center text-gray-400 italic font-medium">No orders found.</td>
                 </tr>
               ) : (
                 items.map(o => {
@@ -232,6 +233,9 @@ export default function Orders(){
                         className={`group hover:bg-gray-50/50 transition-all cursor-pointer ${isExpanded ? 'bg-gray-50/80' : ''}`}
                         onClick={() => toggle(o._id)}
                       >
+                        <td className="px-6 py-4">
+                          <div className="font-mono font-bold text-gray-900 text-sm">#{o._id.slice(-8)}</div>
+                        </td>
                         <td className="px-6 py-4">
                           <div className="font-bold text-gray-900">{o.customer.name}</div>
                           <div className="text-[11px] text-gray-400 font-medium tracking-tight">{o.customer.phone}</div>

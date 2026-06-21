@@ -1,9 +1,16 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { CONFIG } from '../../shared/lib/config'
 const logoImg = '/logo.png'
 
 export default function PartnerLanding() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    const token = localStorage.getItem('partnerToken')
+    if (token) {
+      navigate('/partner/dashboard', { replace: true })
+    }
+  }, [navigate])
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-indigo-50/50 font-sans">
       {/* Background Decorations */}
@@ -18,12 +25,13 @@ export default function PartnerLanding() {
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
-              <div className="h-12 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-1 overflow-hidden">
-                <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-auto object-contain" />
+              <div className="h-12 w-28 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-1 overflow-hidden">
+                <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-full object-contain" />
               </div>
-              <div>
-                <div className="text-base font-black tracking-tight text-gray-900">{CONFIG.BRAND_NAME}</div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Partner Program</div>
+              <div className="flex flex-col">
+                <span className="text-base md:text-lg font-black text-gray-900 leading-tight">Click2Kart</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">B2B Marketplace</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Partner Program</span>
               </div>
             </Link>
             <div className="flex items-center gap-3">

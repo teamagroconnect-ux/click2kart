@@ -61,12 +61,15 @@ export default function InventoryPage() {
   const { notify } = useToast()
   const [catalogSearch, setCatalogSearch] = useState('')
   const [catalogProducts, setCatalogProducts] = useState([])
+  const [catalogTotal, setCatalogTotal] = useState(0)
+  const [catalogPage, setCatalogPage] = useState(1)
   const [catalogLoading, setCatalogLoading] = useState(false)
   const [activeCatalogProduct, setActiveCatalogProduct] = useState(null)
   const [bulkQuantities, setBulkQuantities] = useState({})
   const [bulkPrices, setBulkPrices] = useState({})
   const [bulkNote, setBulkNote] = useState('')
   const [bulkSubmitting, setBulkSubmitting] = useState(false)
+  const CATALOG_PAGE_SIZE = 12
 
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
@@ -117,8 +120,9 @@ export default function InventoryPage() {
     const run = async () => {
       setCatalogLoading(true)
       try {
-        const { data } = await api.get('/api/products', { params: { q: catalogSearch.trim(), limit: 12, page: 1 }, signal: ctrl.signal })
+        const { data } = await api.get('/api/products', { params: { q: catalogSearch.trim(), limit: CATALOG_PAGE_SIZE, page: catalogPage }, signal: ctrl.signal })
         setCatalogProducts(data.items || [])
+        setCatalogTotal(data.total || 0)
       } catch { /* ignore */ }
       finally {
         if (!ctrl.signal.aborted) setCatalogLoading(false)
@@ -126,6 +130,11 @@ export default function InventoryPage() {
     }
     const id = setTimeout(run, 200)
     return () => { clearTimeout(id); ctrl.abort() }
+  }, [catalogSearch, catalogPage, CATALOG_PAGE_SIZE])
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCatalogPage(1)
   }, [catalogSearch])
 
   const submitBulk = async (e) => {
@@ -313,29 +322,61 @@ export default function InventoryPage() {
         </div>
 
         {catalogProducts.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {catalogProducts.map(p => {
-              const pSkus = buildSkuRows(p)
-              return (
-                <div key={p._id} className="relative group rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col cursor-pointer hover:border-violet-300 hover:ring-1 hover:ring-violet-300 transition-all" onClick={() => setActiveCatalogProduct(p)}>
-                  <div className="aspect-square bg-gray-50 relative flex border-b border-gray-100">
-                    {p.images?.[0]?.url ? (
-                      <img src={p.images[0].url} alt="" className="w-full h-full object-contain p-2" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-300">📦</div>
-                    )}
-                  </div>
-                  <div className="p-3 flex flex-col flex-1">
-                    <div className="text-[11px] font-bold text-gray-900 leading-tight line-clamp-2 mb-1">{p.name}</div>
-                    <div className="mt-auto flex items-center justify-between text-[10px] text-gray-500 font-medium">
-                      <span>{pSkus.length} {pSkus.length === 1 ? 'SKU' : 'SKUs'}</span>
-                      <span className="text-violet-600 font-bold bg-violet-50 px-1.5 py-0.5 rounded">Add</span>
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {catalogProducts.map(p => {
+                const pSkus = buildSkuRows(p)
+                return (
+                  <div key={p._id} className="relative group rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden flex flex-col cursor-pointer hover:border-violet-300 hover:ring-1 hover:ring-violet-300 transition-all" onClick={() => setActiveCatalogProduct(p)}>
+                    <div className="aspect-square bg-gray-50 relative flex border-b border-gray-100">
+                      {p.images?.[0]?.url ? (
+                        <img src={p.images[0].url} alt="" className="w-full h-full object-contain p-2" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300">📦</div>
+                      )}
+                    </div>
+                    <div className="p-3 flex flex-col flex-1">
+                      <div className="text-[11px] font-bold text-gray-900 leading-tight line-clamp-2 mb-1">{p.name}</div>
+                      <div className="mt-auto flex items-center justify-between text-[10px] text-gray-500 font-medium">
+                        <span>{pSkus.length} {pSkus.length === 1 ? 'SKU' : 'SKUs'}</span>
+                        <span className="text-violet-600 font-bold bg-violet-50 px-1.5 py-0.5 rounded">Add</span>
+                      </div>
                     </div>
                   </div>
+                )
+              })}
+            </div>
+            
+            {/* Pagination Controls */}
+            {catalogTotal > CATALOG_PAGE_SIZE && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-[11px] text-gray-500 font-medium">
+                  Showing {((catalogPage - 1) * CATALOG_PAGE_SIZE) + 1} - {Math.min(catalogPage * CATALOG_PAGE_SIZE, catalogTotal)} of {catalogTotal} products
                 </div>
-              )
-            })}
-          </div>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCatalogPage(p => Math.max(1, p - 1))}
+                    disabled={catalogPage === 1}
+                    className="px-3 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 text-[11px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-3 py-1.5 text-[11px] font-bold text-gray-500">
+                    Page {catalogPage} of {Math.ceil(catalogTotal / CATALOG_PAGE_SIZE)}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setCatalogPage(p => p + 1)}
+                    disabled={catalogPage >= Math.ceil(catalogTotal / CATALOG_PAGE_SIZE)}
+                    className="px-3 py-1.5 border border-gray-200 rounded-lg bg-white text-gray-700 text-[11px] font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-all"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         ) : (
           <div className="py-10 text-center text-gray-400 text-sm font-medium">
             {catalogSearch ? 'No products found matching your search.' : 'Type to search products'}

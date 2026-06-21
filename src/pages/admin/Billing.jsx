@@ -10,9 +10,9 @@ export default function Billing(){
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const [selected, setSelected] = useState([])
-  const [customer, setCustomer] = useState({ name:'', phone:'', email:'', address:'' })
-  const [couponCode, setCouponCode] = useState('')
-  const [couponInfo, setCouponInfo] = useState(null)
+  const [customer, setCustomer] = useState({ name:'', phone:'', email:'', whatsappNumber:'', address:'' })
+  const [customerType, setCustomerType] = useState('online') // 'online' | 'offline'
+  const [selectedOfflineCustomer, setSelectedOfflineCustomer] = useState(null)
   const [paymentType, setPaymentType] = useState('CASH')
   const limit = 8
   const [selectedProductId, setSelectedProductId] = useState(null)
@@ -82,84 +82,28 @@ export default function Billing(){
       gstTotal += lineGst
     }
     const totalAmount = subtotal+gstTotal
-    let discount=0
-    if (couponInfo?.valid){ discount = couponInfo.discount }
-    const payable = Math.max(0, totalAmount - discount)
-    return { subtotal, gstTotal, total: totalAmount, discount, payable }
-  }, [selected, couponInfo])
+    const payable = totalAmount
+    return { subtotal, gstTotal, total: totalAmount, payable }
+  }, [selected])
 
-  const applyCoupon = async () => {
-    if (!couponCode) return setCouponInfo(null)
-    try {
-      const { data } = await api.post('/api/coupons/validate', { code: couponCode, amount: totals.total })
-      setCouponInfo(data)
-    } catch (e) {
-      setCouponInfo({ valid:false })
-    }
-  }
-  
-  function CustomerEmailLookup({ onPick }) {
+  function CustomerLookup({ onPick, type = 'online' }) {
     const [q, setQ] = useState('')
     const [list, setList] = useState([])
     const [loading, setLoading] = useState(false)
     useEffect(() => {
-      const s = q.trim()
-      if (s.length < 3) { setList([]); return }
+      if (q.trim().length < 2) { setList([]); return }
       setLoading(true)
-      api.get('/api/admin/customers', { params: { q: s } })
-        .then(({ data }) => {
-          const arr = data.items || data || []
-          setList(arr)
-          const match = arr.find(c => (c.email || '').toLowerCase() === s.toLowerCase())
-          if (match && onPick) onPick(match)
-        })
-        .catch(() => setList([]))
-        .finally(() => setLoading(false))
-    }, [q])
-    return (
-      <div className="space-y-2">
-        <input
-          className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-3 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          placeholder="Enter customer email"
-          value={q}
-          onChange={e=>setQ(e.target.value)}
-        />
-        {loading && <div className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Searching...</div>}
-        {!loading && list.length > 0 && (
-          <div className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
-            {list.map(c => (
-              <button
-                key={c._id}
-                onClick={()=>onPick && onPick(c)}
-                className="w-full text-left px-4 py-2 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors"
-              >
-                <div className="text-sm font-black text-gray-900">{c.name}</div>
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{c.email || 'No email'}</div>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    )
-  }
-  
-  function CustomerLookup({ onPick }) {
-    const [q, setQ] = useState('')
-    const [list, setList] = useState([])
-    const [loading, setLoading] = useState(false)
-    useEffect(() => {
-      if (q.trim().length < 3) { setList([]); return }
-      setLoading(true)
-      api.get('/api/admin/customers', { params: { q } })
+      const endpoint = type === 'offline' ? '/api/admin/offline-customers' : '/api/admin/customers'
+      api.get(endpoint, { params: { q } })
         .then(({ data }) => setList(data.items || data || []))
         .catch(() => setList([]))
         .finally(() => setLoading(false))
-    }, [q])
+    }, [q, type])
     return (
       <div className="space-y-2">
         <input
           className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-3 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-          placeholder="Enter name or email"
+          placeholder={`Search ${type === 'offline' ? 'offline' : ''} customers...`}
           value={q}
           onChange={e=>setQ(e.target.value)}
         />
@@ -173,7 +117,7 @@ export default function Billing(){
                 className="w-full text-left px-4 py-2 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors"
               >
                 <div className="text-sm font-black text-gray-900">{c.name}</div>
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{c.email || 'No email'}</div>
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{c.phone}</div>
               </button>
             ))}
           </div>
@@ -189,7 +133,13 @@ export default function Billing(){
       variantSku: x.variantSku,
       quantity: x.quantity
     }))
-    const payload = { customer, items, couponCode: couponInfo?.valid ? couponCode : undefined, paymentType }
+    const customerData = {
+      ...customer,
+      id: customerType === 'online' ? selectedOfflineCustomer?._id : null,
+      offlineCustomerId: customerType === 'offline' ? selectedOfflineCustomer?._id : null,
+      isOffline: customerType === 'offline'
+    }
+    const payload = { customer: customerData, items, paymentType }
     try {
       const { data } = await api.post('/api/bills', payload)
       notify('Bill generated','success')
@@ -199,7 +149,7 @@ export default function Billing(){
       const pdfUrl = `${api.defaults.baseURL}/api/bills/${data._id}/pdf?token=${token}`
       window.open(pdfUrl, '_blank')
 
-      setSelected([]); setCouponCode(''); setCouponInfo(null)
+      setSelected([])
     } catch (err) {
       const code = err?.response?.data?.error || 'bill_failed'
       notify(`Bill failed: ${code}`, 'error')
@@ -280,21 +230,87 @@ export default function Billing(){
           </div>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Customer Email</div>
-              <CustomerEmailLookup onPick={(c)=>setCustomer({ name:c.name, phone:c.phone, email:c.email, address:c.address })} />
+            {/* Customer Type Toggle */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setCustomerType('online')
+                  setSelectedOfflineCustomer(null)
+                  setCustomer({ name:'', phone:'', email:'', whatsappNumber:'', address:'' })
+                }}
+                className={`flex-1 py-2 rounded-xl text-[10px] font-black border transition-all ${customerType === 'online' ? 'bg-blue-600 text-white border-blue-600' : 'bg-transparent text-gray-500 border-gray-200 hover:border-gray-300'}`}
+              >
+                Online Customer
+              </button>
+              <button
+                onClick={() => {
+                  setCustomerType('offline')
+                  setSelectedOfflineCustomer(null)
+                  setCustomer({ name:'', phone:'', email:'', whatsappNumber:'', address:'' })
+                }}
+                className={`flex-1 py-2 rounded-xl text-[10px] font-black border transition-all ${customerType === 'offline' ? 'bg-violet-600 text-white border-violet-600' : 'bg-transparent text-gray-500 border-gray-200 hover:border-gray-300'}`}
+              >
+                Offline Customer
+              </button>
             </div>
-            {customer.email && (
-              <div className="space-y-1">
-                <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Selected Customer</div>
-                <div className="text-sm font-black text-gray-900">{customer.name || '-'}</div>
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{customer.email}</div>
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">{customer.phone || '-'}</div>
-              </div>
-            )}
+
+            {/* Customer Lookup */}
+            <div className="space-y-2">
+              <div className="text-[10px] font-black uppercase tracking-widest text-gray-400">Select {customerType} Customer</div>
+              <CustomerLookup
+                type={customerType}
+                onPick={(c) => {
+                  setSelectedOfflineCustomer(c)
+                  setCustomer({
+                    name: c.name,
+                    phone: c.phone,
+                    email: c.email || '',
+                    whatsappNumber: c.whatsappNumber || '',
+                    address: c.address || ''
+                  })
+                }}
+              />
+            </div>
+
+            {/* Manual Customer Details */}
+            <div className="space-y-2">
+              <input
+                required
+                className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Customer Name"
+                value={customer.name}
+                onChange={e=>setCustomer({...customer, name: e.target.value})}
+              />
+              <input
+                required
+                className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Phone Number"
+                value={customer.phone}
+                onChange={e=>setCustomer({...customer, phone: e.target.value})}
+              />
+              <input
+                className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="WhatsApp Number"
+                value={customer.whatsappNumber}
+                onChange={e=>setCustomer({...customer, whatsappNumber: e.target.value})}
+              />
+              <input
+                className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Email (optional)"
+                value={customer.email}
+                onChange={e=>setCustomer({...customer, email: e.target.value})}
+              />
+              <textarea
+                className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Address (optional)"
+                value={customer.address}
+                onChange={e=>setCustomer({...customer, address: e.target.value})}
+                rows={2}
+              />
+            </div>
             
             <div className="space-y-3 pt-4">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-500 ml-1">Order Summary</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1">Order Summary</h4>
               <div className="max-h-[200px] overflow-y-auto pr-2 space-y-3 custom-scrollbar">
                 {selected.map(it => {
                   const isBulkApplied = it.bulkQty > 0 && it.quantity >= it.bulkQty;
@@ -317,7 +333,7 @@ export default function Billing(){
                               <span className="ml-1 text-emerald-400">₹{it.price - it.bulkRed}</span>
                             </>
                           ) : (
-                            `₹{it.price}`
+                            `₹${it.price}`
                           )}
                           {' '} × {it.quantity}
                         </div>
@@ -343,18 +359,6 @@ export default function Billing(){
               </div>
             </div>
 
-            <div className="pt-6 border-t border-gray-100 space-y-4">
-              <div className="flex gap-2">
-                <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-xs font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500" placeholder="Promo Code" value={couponCode} onChange={e=>setCouponCode(e.target.value)} />
-                <button onClick={applyCoupon} className="bg-blue-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black hover:bg-blue-500 transition-all uppercase tracking-widest shadow-lg shadow-blue-900/20">Apply</button>
-              </div>
-              {couponInfo && (
-                <div className={`px-4 py-2 rounded-xl text-[10px] font-bold border ${couponInfo.valid ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                  {couponInfo.valid ? `🎉 Savings: ₹${couponInfo.discount}` : 'Invalid coupon code'}
-                </div>
-              )}
-            </div>
-
             <div className="space-y-2 pt-4">
               <div className="flex justify-between text-xs font-bold text-gray-400">
                 <span>Subtotal</span>
@@ -364,12 +368,6 @@ export default function Billing(){
                 <span>GST (Tax)</span>
                 <span>₹{totals.gstTotal.toFixed(2)}</span>
               </div>
-              {totals.discount > 0 && (
-                <div className="flex justify-between text-xs font-bold text-emerald-400">
-                  <span>Discount</span>
-                  <span>- ₹{totals.discount.toFixed(2)}</span>
-                </div>
-              )}
               <div className="flex justify-between text-lg font-black pt-4 border-t border-gray-100 text-gray-900 tracking-tight">
                 <span>Total Payable</span>
                 <span className="text-violet-600">₹{totals.payable.toFixed(2)}</span>

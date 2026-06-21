@@ -110,10 +110,10 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-500">Loading settings...</p>
+          <div className="w-16 h-16 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-violet-500">Loading settings...</p>
         </div>
       </div>
     );
@@ -121,12 +121,12 @@ export default function Settings() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 flex items-center justify-center">
         <div className="bg-white rounded-2xl p-8 shadow-lg max-w-md w-full text-center">
-          <p className="text-red-500 text-lg mb-4">{error}</p>
+          <p className="text-violet-500 text-lg mb-4">{error}</p>
           <button 
             onClick={loadSettings}
-            className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all"
+            className="bg-gradient-to-r from-violet-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-violet-700 hover:to-purple-700 transition-all"
           >
             Try Again
           </button>
@@ -136,71 +136,71 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 to-purple-50 py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Settings</h1>
-          <p className="text-slate-500">Manage your store configuration, security, and preferences</p>
+          <h1 className="text-3xl font-bold text-violet-900 mb-2">Settings</h1>
+          <p className="text-violet-600">Manage your store configuration, security, and preferences</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Company Information Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-violet-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-4">
               <h2 className="text-lg font-bold text-white">Company Information</h2>
-              <p className="text-indigo-100 text-sm">Your business details</p>
+              <p className="text-violet-100 text-sm">Your business details</p>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Company Name</label>
+                <label className="block text-sm font-semibold text-violet-800 mb-2">Company Name</label>
                 <input
                   type="text"
                   value={settings.companyName || ''}
                   onChange={(e) => setSettings({ ...settings, companyName: e.target.value })}
                   onBlur={(e) => updateSettings('companyName', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">GSTIN</label>
+                <label className="block text-sm font-semibold text-violet-800 mb-2">GSTIN</label>
                 <input
                   type="text"
                   value={settings.companyGst || ''}
                   onChange={(e) => setSettings({ ...settings, companyGst: e.target.value })}
                   onBlur={(e) => updateSettings('companyGst', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Company Address</label>
+                <label className="block text-sm font-semibold text-violet-800 mb-2">Company Address</label>
                 <textarea
                   value={settings.companyAddress || ''}
                   onChange={(e) => setSettings({ ...settings, companyAddress: e.target.value })}
                   onBlur={(e) => updateSettings('companyAddress', e.target.value)}
                   rows={3}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none"
+                  className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all resize-none"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Phone</label>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">Phone</label>
                   <input
                     type="text"
                     value={settings.companyPhone || ''}
                     onChange={(e) => setSettings({ ...settings, companyPhone: e.target.value })}
                     onBlur={(e) => updateSettings('companyPhone', e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">Email</label>
                   <input
                     type="email"
                     value={settings.companyEmail || ''}
                     onChange={(e) => setSettings({ ...settings, companyEmail: e.target.value })}
                     onBlur={(e) => updateSettings('companyEmail', e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                   />
                 </div>
               </div>
@@ -208,86 +208,86 @@ export default function Settings() {
           </div>
 
           {/* Store Settings Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-violet-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-4">
               <h2 className="text-lg font-bold text-white">Store Settings</h2>
-              <p className="text-emerald-100 text-sm">Order and inventory configuration</p>
+              <p className="text-violet-100 text-sm">Order and inventory configuration</p>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Low Stock Threshold</label>
+                <label className="block text-sm font-semibold text-violet-800 mb-2">Low Stock Threshold</label>
                 <div className="flex items-center gap-3">
                   <input
                     type="number"
                     value={settings.lowStockThreshold || 5}
                     onChange={(e) => setSettings({ ...settings, lowStockThreshold: Number(e.target.value) })}
                     onBlur={(e) => updateSettings('lowStockThreshold', Number(e.target.value))}
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                    className="flex-1 bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                   />
-                  <span className="text-slate-500 text-sm">units</span>
+                  <span className="text-violet-600 text-sm">units</span>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Minimum Order Amount (₹)</label>
+                <label className="block text-sm font-semibold text-violet-800 mb-2">Minimum Order Amount (₹)</label>
                 <div className="flex items-center gap-3">
-                  <span className="text-emerald-600 font-bold text-lg">₹</span>
+                  <span className="text-violet-600 font-bold text-lg">₹</span>
                   <input
                     type="number"
                     value={settings.minimumOrderAmount || 5000}
                     onChange={(e) => setSettings({ ...settings, minimumOrderAmount: Number(e.target.value) })}
                     onBlur={(e) => updateSettings('minimumOrderAmount', Number(e.target.value))}
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                    className="flex-1 bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Tax Rate (%)</label>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">Tax Rate (%)</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="number"
                       value={settings.taxRate || 18}
                       onChange={(e) => setSettings({ ...settings, taxRate: Number(e.target.value) })}
                       onBlur={(e) => updateSettings('taxRate', Number(e.target.value))}
-                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                      className="flex-1 bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                     />
-                    <span className="text-slate-500 text-sm">%</span>
+                    <span className="text-violet-600 text-sm">%</span>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Shipping Fee (₹)</label>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">Shipping Fee (₹)</label>
                   <div className="flex items-center gap-3">
-                    <span className="text-emerald-600 font-bold text-lg">₹</span>
+                    <span className="text-violet-600 font-bold text-lg">₹</span>
                     <input
                       type="number"
                       value={settings.shippingFee || 0}
                       onChange={(e) => setSettings({ ...settings, shippingFee: Number(e.target.value) })}
                       onBlur={(e) => updateSettings('shippingFee', Number(e.target.value))}
-                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                      className="flex-1 bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                     />
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="flex items-center justify-between p-4 bg-violet-50 rounded-xl border border-violet-200">
                 <div>
-                  <p className="font-semibold text-slate-800">Birthday Wishes</p>
-                  <p className="text-sm text-slate-500">Automated birthday emails to customers</p>
+                  <p className="font-semibold text-violet-800">Birthday Wishes</p>
+                  <p className="text-sm text-violet-600">Automated birthday emails to customers</p>
                 </div>
                 <button
                   onClick={() => updateSettings('enableBirthdayWishes', !settings.enableBirthdayWishes)}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${settings.enableBirthdayWishes ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                  className={`w-12 h-6 rounded-full transition-colors relative ${settings.enableBirthdayWishes ? 'bg-violet-500' : 'bg-violet-300'}`}
                 >
                   <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${settings.enableBirthdayWishes ? 'left-7' : 'left-1'}`}></div>
                 </button>
               </div>
-              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div className="flex items-center justify-between p-4 bg-violet-50 rounded-xl border border-violet-200">
                 <div>
-                  <p className="font-semibold text-slate-800">Order Notifications</p>
-                  <p className="text-sm text-slate-500">Notify admin of new orders</p>
+                  <p className="font-semibold text-violet-800">Order Notifications</p>
+                  <p className="text-sm text-violet-600">Notify admin of new orders</p>
                 </div>
                 <button
                   onClick={() => updateSettings('enableOrderNotifications', !settings.enableOrderNotifications)}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${settings.enableOrderNotifications ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                  className={`w-12 h-6 rounded-full transition-colors relative ${settings.enableOrderNotifications ? 'bg-violet-500' : 'bg-violet-300'}`}
                 >
                   <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${settings.enableOrderNotifications ? 'left-7' : 'left-1'}`}></div>
                 </button>
@@ -296,135 +296,135 @@ export default function Settings() {
           </div>
 
           {/* Support Information Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-orange-600 to-red-600 px-6 py-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-violet-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-4">
               <h2 className="text-lg font-bold text-white">Support Information</h2>
-              <p className="text-orange-100 text-sm">Customer support contacts</p>
+              <p className="text-violet-100 text-sm">Customer support contacts</p>
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Support Phone</label>
+                <label className="block text-sm font-semibold text-violet-800 mb-2">Support Phone</label>
                 <input
                   type="text"
                   value={settings.supportPhone || ''}
                   onChange={(e) => setSettings({ ...settings, supportPhone: e.target.value })}
                   onBlur={(e) => updateSettings('supportPhone', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                  className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Support Email</label>
+                <label className="block text-sm font-semibold text-violet-800 mb-2">Support Email</label>
                 <input
                   type="email"
                   value={settings.supportEmail || ''}
                   onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
                   onBlur={(e) => updateSettings('supportEmail', e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                  className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Return Policy</label>
+                <label className="block text-sm font-semibold text-violet-800 mb-2">Return Policy</label>
                 <textarea
                   value={settings.returnPolicy || ''}
                   onChange={(e) => setSettings({ ...settings, returnPolicy: e.target.value })}
                   onBlur={(e) => updateSettings('returnPolicy', e.target.value)}
                   rows={4}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all resize-none"
+                  className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all resize-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Security Settings Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-rose-600 to-pink-600 px-6 py-4">
+          <div className="bg-white rounded-2xl shadow-sm border border-violet-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-4">
               <h2 className="text-lg font-bold text-white">Security Settings</h2>
-              <p className="text-rose-100 text-sm">Password management</p>
+              <p className="text-violet-100 text-sm">Password management</p>
             </div>
             <div className="p-6 space-y-6">
               <form onSubmit={handleUpdateLoginPassword} className="space-y-4">
                 <div>
-                  <h3 className="font-bold text-slate-800 mb-3">Change Login Password</h3>
+                  <h3 className="font-bold text-violet-800 mb-3">Change Login Password</h3>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Current Password</label>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">Current Password</label>
                   <input
                     type="password"
                     value={oldLoginPassword}
                     onChange={(e) => setOldLoginPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">New Password</label>
                   <input
                     type="password"
                     value={newLoginPassword}
                     onChange={(e) => setNewLoginPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm New Password</label>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">Confirm New Password</label>
                   <input
                     type="password"
                     value={confirmLoginPassword}
                     onChange={(e) => setConfirmLoginPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                     required
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={updatingLoginPassword}
-                  className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-3 rounded-xl font-bold text-sm hover:from-rose-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white py-3 rounded-xl font-bold text-sm hover:from-violet-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {updatingLoginPassword ? 'Updating...' : 'Update Login Password'}
                 </button>
               </form>
 
-              <div className="border-t border-slate-200 pt-6">
+              <div className="border-t border-violet-200 pt-6">
                 <form onSubmit={handleUpdateDeletionPassword} className="space-y-4">
                   <div>
-                    <h3 className="font-bold text-slate-800 mb-3">Change Deletion Password</h3>
-                    <p className="text-sm text-slate-500 mb-4">Required before deleting orders, customers, or products</p>
+                    <h3 className="font-bold text-violet-800 mb-3">Change Deletion Password</h3>
+                    <p className="text-sm text-violet-600 mb-4">Required before deleting orders, customers, or products</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Current Deletion Password</label>
+                    <label className="block text-sm font-semibold text-violet-800 mb-2">Current Deletion Password</label>
                     <input
                       type="password"
                       value={oldDeletionPassword}
                       onChange={(e) => setOldDeletionPassword(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                      className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">New Deletion Password</label>
+                    <label className="block text-sm font-semibold text-violet-800 mb-2">New Deletion Password</label>
                     <input
                       type="password"
                       value={newDeletionPassword}
                       onChange={(e) => setNewDeletionPassword(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                      className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm New Deletion Password</label>
+                    <label className="block text-sm font-semibold text-violet-800 mb-2">Confirm New Deletion Password</label>
                     <input
                       type="password"
                       value={confirmDeletionPassword}
                       onChange={(e) => setConfirmDeletionPassword(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                      className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
                       required
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={updatingDeletionPassword}
-                    className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-3 rounded-xl font-bold text-sm hover:from-rose-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white py-3 rounded-xl font-bold text-sm hover:from-violet-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {updatingDeletionPassword ? 'Updating...' : 'Update Deletion Password'}
                   </button>

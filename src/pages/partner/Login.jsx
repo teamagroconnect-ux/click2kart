@@ -75,9 +75,15 @@ export default function PartnerLogin() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12 bg-gray-50">
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
         <div className="text-center space-y-2">
-          <Link to="/partner" className="inline-flex items-center justify-center h-20 w-20 rounded-3xl bg-white shadow-xl shadow-gray-200 border border-gray-100 p-3 mb-4 overflow-hidden">
-            <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-auto object-contain" />
-          </Link>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Link to="/partner" className="inline-flex items-center justify-center h-16 w-28 rounded-3xl bg-white shadow-xl shadow-gray-200 border border-gray-100 p-1 overflow-hidden">
+              <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-full object-contain" />
+            </Link>
+            <div className="flex flex-col items-start">
+              <span className="text-2xl font-black text-gray-900 leading-tight">Click2Kart</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">B2B Marketplace</span>
+            </div>
+          </div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Partner Login</h2>
           <p className="text-sm text-gray-600 font-medium">Access your partner dashboard</p>
         </div>

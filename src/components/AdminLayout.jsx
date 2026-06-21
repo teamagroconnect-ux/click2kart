@@ -157,8 +157,9 @@ export default function AdminLayout() {
               <img src="/logo.png" alt="Click2Kart" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col">
-              <span className="px-2 py-0.5 bg-gray-900 text-[10px] font-black text-white rounded-lg tracking-widest uppercase">{role}</span>
-              <div className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em]">{role === 'admin' ? 'Admin Panel' : 'Staff Panel'}</div>
+              <span className="text-base md:text-lg font-black text-gray-900 leading-tight">Click2Kart</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">B2B Marketplace</span>
+              <span className="px-2 py-0.5 bg-gray-900 text-[8px] font-black text-white rounded-full tracking-widest uppercase mt-1 w-fit">{role === 'admin' ? 'Admin Panel' : 'Staff Panel'}</span>
             </div>
           </div>
         </div>
@@ -195,24 +196,12 @@ export default function AdminLayout() {
                   Products
                 </>
               ), 'products')}
-              {link('/admin/brands', (
+              {link('/admin/inventory', (
                 <>
-                  <Icon name="cat" />
-                  Brands
+                  <Icon name="inv" />
+                  Inventory
                 </>
-              ), 'brands')}
-              {link('/admin/categories', (
-                <>
-                  <Icon name="cat" />
-                  Categories
-                </>
-              ), 'categories')}
-              {link('/admin/subcategories', (
-                <>
-                  <Icon name="cat" />
-                  Subcategories
-                </>
-              ), 'subcategories')}
+              ), 'inventory')}
               {link('/admin/billing', (
                 <>
                   <Icon name="bill" />
@@ -225,6 +214,60 @@ export default function AdminLayout() {
                   Orders
                 </>
               ), 'orders')}
+              {link('/admin/offline-customers', (
+                <>
+                  <Icon name="cust" />
+                  Offline Customers
+                </>
+              ), 'offline-customers')}
+              {link('/admin/offers', (
+                <>
+                  <Icon name="offer" />
+                  Offers
+                </>
+              ), 'offers')}
+              {link('/admin/categories', (
+                <>
+                  <Icon name="cat" />
+                  Categories
+                </>
+              ), 'categories')}
+              {link('/admin/subcategories', (
+                <>
+                  <Icon name="cat" />
+                  Subcategories
+                </>
+              ), 'subcategories')}
+              {link('/admin/brands', (
+                <>
+                  <Icon name="cat" />
+                  Brands
+                </>
+              ), 'brands')}
+              {link('/admin/customers', (
+                <>
+                  <Icon name="cust" />
+                  Customers
+                </>
+              ), 'customers')}
+              {link('/admin/partners', (
+                <>
+                  <Icon name="partner" />
+                  Partners
+                </>
+              ), 'partners')}
+              {link('/admin/stores', (
+                <>
+                  <Icon name="inv" />
+                  Stores
+                </>
+              ), 'stores')}
+              {link('/admin/coupons', (
+                <>
+                  <Icon name="coupon" />
+                  Coupons
+                </>
+              ), 'coupons')}
               {link('/admin/payment-verification', (
                 <>
                   <span className="inline-block w-4 h-4 mr-2 align-middle">
@@ -236,47 +279,11 @@ export default function AdminLayout() {
                   Payment Verification
                 </>
               ), 'payment-verification')}
-              {link('/admin/coupons', (
-                <>
-                  <Icon name="coupon" />
-                  Coupons
-                </>
-              ), 'coupons')}
-              {link('/admin/offers', (
-                <>
-                  <Icon name="offer" />
-                  Offers
-                </>
-              ), 'offers')}
-              {link('/admin/partners', (
-                <>
-                  <Icon name="partner" />
-                  Partners
-                </>
-              ), 'partners')}
-              {link('/admin/customers', (
-                <>
-                  <Icon name="cust" />
-                  Customers
-                </>
-              ), 'customers')}
-              {link('/admin/inventory', (
-                <>
-                  <Icon name="inv" />
-                  Inventory
-                </>
-              ), 'inventory')}
-              {link('/admin/stores', (
-                <>
-                  <Icon name="inv" />
-                  Stores
-                </>
-              ), 'stores')}
               {link('/admin/staff', (
                 <>
                   <span className="inline-block w-4 h-4 mr-2 align-middle">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                       <circle cx="9" cy="7" r="4" />
                       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
                       <path d="M16 3.13a4 4 0 0 1 0 7.75" />

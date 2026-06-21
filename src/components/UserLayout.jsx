@@ -100,7 +100,7 @@ export default function UserLayout() {
       <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-xl shadow-sm transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex items-center justify-between h-14 sm:h-14 md:h-16 gap-4">
-            <Link to="/" className="flex items-center group">
+            <Link to="/" className="flex items-center group gap-3">
               <div className="relative h-12 w-24 sm:h-14 sm:w-28 md:h-16 md:w-32 transition-all duration-300 group-hover:scale-105">
                 <img
                   src="/logo.png"
@@ -108,7 +108,10 @@ export default function UserLayout() {
                   className="h-full w-full object-contain"
                 />
               </div>
-
+              <div className="flex flex-col">
+                <span className="text-lg md:text-xl font-black text-gray-900 leading-tight">Click2Kart</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">B2B Marketplace</span>
+              </div>
             </Link>
 
             <nav className="hidden lg:flex items-center gap-3">
@@ -250,7 +253,9 @@ export default function UserLayout() {
         <footer className="border-t border-gray-50 bg-white py-12 pb-32 lg:pb-12">
           <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <img src="/logo.png" alt="Click2Kart" className="h-12 w-auto rounded-xl border border-gray-100 shadow-sm" />
+              <div className="h-16 w-32 flex items-center justify-center rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <img src="/logo.png" alt="Click2Kart" className="h-full w-full object-contain" />
+              </div>
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart. All rights reserved.</span>
               <div className="flex gap-4 items-center">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
