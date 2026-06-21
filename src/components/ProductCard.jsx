@@ -141,6 +141,28 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
               </div>
             )}
           </div>
+          <button
+            onClick={share}
+            style={{
+              background: 'rgba(255,255,255,.95)',
+              border: '1px solid rgba(124,58,237,.18)',
+              borderRadius: '10px',
+              width: '36px',
+              height: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,.06)',
+              transition: 'all .2s'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M16 6l-4-4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 2v14" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
 
         {/* Product Image */}

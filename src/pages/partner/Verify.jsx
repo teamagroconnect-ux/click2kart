@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { getImageUrl } from '../../lib/cloudinary';
 import LoadingSpinner from '../../components/LoadingSpinner';
-import logoImg from '../../click2kart.png';
+const logoImg = '/logo.png';
 import { CONFIG } from '../../shared/lib/config';
 
 export default function PartnerVerify() {

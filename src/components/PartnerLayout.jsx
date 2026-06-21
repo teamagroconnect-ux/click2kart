@@ -74,7 +74,7 @@ export default function PartnerLayout() {
           [
             'flex items-center px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-200 group',
             isActive
-              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-200 scale-[1.02]'
+              ? 'bg-gradient-to-r from-orange-600 to-red-600 text-white shadow-lg shadow-orange-200 scale-[1.02]'
               : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900 hover:pl-5'
           ].join(' ')
         }
@@ -102,7 +102,7 @@ export default function PartnerLayout() {
           </button>
           <div className="flex items-center gap-3">
             <div className="h-10 md:h-12 w-28 md:w-32 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-1 overflow-hidden">
-              <img src="/newlogo.png" alt="Click2Kart" className="h-full w-full object-contain" />
+              <img src="/logo.png" alt="Click2Kart" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col">
               <span className="px-2 py-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-[10px] font-black text-white rounded-lg tracking-widest uppercase">Partner</span>

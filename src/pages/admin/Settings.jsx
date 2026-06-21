@@ -1,145 +1,439 @@
-import { useEffect, useState } from 'react'
-import api from '../../lib/api'
-import { useToast } from '../../components/Toast'
+import { useEffect, useState } from 'react';
+import api from '../../lib/api';
+import { useToast } from '../../components/Toast';
 
 export default function Settings() {
-  const [data, setData] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [updating, setUpdating] = useState(false)
-  const { notify } = useToast()
+  const [settings, setSettings] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [updating, setUpdating] = useState(false);
+  const { notify } = useToast();
+  
+  const [oldLoginPassword, setOldLoginPassword] = useState('');
+  const [newLoginPassword, setNewLoginPassword] = useState('');
+  const [confirmLoginPassword, setConfirmLoginPassword] = useState('');
+  const [updatingLoginPassword, setUpdatingLoginPassword] = useState(false);
+  
+  const [oldDeletionPassword, setOldDeletionPassword] = useState('');
+  const [newDeletionPassword, setNewDeletionPassword] = useState('');
+  const [confirmDeletionPassword, setConfirmDeletionPassword] = useState('');
+  const [updatingDeletionPassword, setUpdatingDeletionPassword] = useState(false);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true)
-      setError('')
-      try {
-        const { data } = await api.get('/api/admin/settings')
-        setData(data)
-      } catch (e) {
-        setError('Could not load settings.')
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [])
+    loadSettings();
+  }, []);
 
-  const handleUpdatePassword = async () => {
-    if (!newPassword || !confirmPassword) {
-      notify('Please fill both fields', 'error')
-      return
-    }
-    if (newPassword !== confirmPassword) {
-      notify('Passwords do not match', 'error')
-      return
-    }
-    if (newPassword.length < 6) {
-      notify('Password must be at least 6 characters', 'error')
-      return
-    }
-
-    setUpdating(true)
+  const loadSettings = async () => {
+    setLoading(true);
+    setError('');
     try {
-      await api.put('/api/admin/deletion-password', { newPassword })
-      notify('Deletion password updated!', 'success')
-      setNewPassword('')
-      setConfirmPassword('')
+      const { data } = await api.get('/api/admin/settings');
+      setSettings(data);
     } catch (e) {
-      console.error(e)
-      notify('Failed to update password', 'error')
+      setError('Could not load settings.');
     } finally {
-      setUpdating(false)
+      setLoading(false);
     }
+  };
+
+  const updateSettings = async (key, value) => {
+    setUpdating(true);
+    try {
+      const updatedSettings = { ...settings, [key]: value };
+      const { data } = await api.put('/api/admin/settings', updatedSettings);
+      setSettings(data);
+      notify('Settings updated successfully!', 'success');
+    } catch (e) {
+      notify('Failed to update settings', 'error');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleUpdateLoginPassword = async (e) => {
+    e.preventDefault();
+    if (!oldLoginPassword || !newLoginPassword || !confirmLoginPassword) {
+      notify('Please fill all fields', 'error');
+      return;
+    }
+    if (newLoginPassword !== confirmLoginPassword) {
+      notify('Passwords do not match', 'error');
+      return;
+    }
+    if (newLoginPassword.length < 6) {
+      notify('Password must be at least 6 characters', 'error');
+      return;
+    }
+
+    setUpdatingLoginPassword(true);
+    try {
+      await api.put('/api/admin/change-password', { oldPassword: oldLoginPassword, newPassword: newLoginPassword });
+      notify('Login password updated successfully!', 'success');
+      setOldLoginPassword('');
+      setNewLoginPassword('');
+      setConfirmLoginPassword('');
+    } catch (e) {
+      notify(e?.response?.data?.error || 'Failed to update login password', 'error');
+    } finally {
+      setUpdatingLoginPassword(false);
+    }
+  };
+
+  const handleUpdateDeletionPassword = async (e) => {
+    e.preventDefault();
+    if (!oldDeletionPassword || !newDeletionPassword || !confirmDeletionPassword) {
+      notify('Please fill all fields', 'error');
+      return;
+    }
+    if (newDeletionPassword !== confirmDeletionPassword) {
+      notify('Passwords do not match', 'error');
+      return;
+    }
+    if (newDeletionPassword.length < 6) {
+      notify('Password must be at least 6 characters', 'error');
+      return;
+    }
+
+    setUpdatingDeletionPassword(true);
+    try {
+      await api.put('/api/admin/deletion-password', { oldPassword: oldDeletionPassword, newPassword: newDeletionPassword });
+      notify('Deletion password updated successfully!', 'success');
+      setOldDeletionPassword('');
+      setNewDeletionPassword('');
+      setConfirmDeletionPassword('');
+    } catch (e) {
+      notify(e?.response?.data?.error || 'Failed to update deletion password', 'error');
+    } finally {
+      setUpdatingDeletionPassword(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-500">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+        <div className="bg-white rounded-2xl p-8 shadow-lg max-w-md w-full text-center">
+          <p className="text-red-500 text-lg mb-4">{error}</p>
+          <button 
+            onClick={loadSettings}
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div>
-        <h1 className="text-lg font-semibold text-gray-900">Store settings</h1>
-        <p className="text-[11px] text-gray-500">
-          Key details used on Click2Kart bills and stock alerts.
-        </p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Settings</h1>
+          <p className="text-slate-500">Manage your store configuration, security, and preferences</p>
+        </div>
 
-      {loading && <div className="text-sm text-gray-500">Loading settings…</div>}
-      {error && <div className="text-sm text-red-600">{error}</div>}
-
-      {data && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm space-y-2">
-            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Billing profile
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Company Information Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+              <h2 className="text-lg font-bold text-white">Company Information</h2>
+              <p className="text-indigo-100 text-sm">Your business details</p>
             </div>
-            <div className="text-sm text-gray-900 font-medium">{data.companyName}</div>
-            {data.companyAddress && (
-              <div className="text-xs text-gray-600 whitespace-pre-line">
-                {data.companyAddress}
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Company Name</label>
+                <input
+                  type="text"
+                  value={settings.companyName || ''}
+                  onChange={(e) => setSettings({ ...settings, companyName: e.target.value })}
+                  onBlur={(e) => updateSettings('companyName', e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                />
               </div>
-            )}
-            {data.companyGst && (
-              <div className="text-xs text-gray-700 mt-1">GSTIN: {data.companyGst}</div>
-            )}
-            <div className="text-xs text-gray-600 mt-2 space-y-0.5">
-              {data.companyPhone && <div>Phone: {data.companyPhone}</div>}
-              {data.companyEmail && <div>Email: {data.companyEmail}</div>}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">GSTIN</label>
+                <input
+                  type="text"
+                  value={settings.companyGst || ''}
+                  onChange={(e) => setSettings({ ...settings, companyGst: e.target.value })}
+                  onBlur={(e) => updateSettings('companyGst', e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Company Address</label>
+                <textarea
+                  value={settings.companyAddress || ''}
+                  onChange={(e) => setSettings({ ...settings, companyAddress: e.target.value })}
+                  onBlur={(e) => updateSettings('companyAddress', e.target.value)}
+                  rows={3}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all resize-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Phone</label>
+                  <input
+                    type="text"
+                    value={settings.companyPhone || ''}
+                    onChange={(e) => setSettings({ ...settings, companyPhone: e.target.value })}
+                    onBlur={(e) => updateSettings('companyPhone', e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={settings.companyEmail || ''}
+                    onChange={(e) => setSettings({ ...settings, companyEmail: e.target.value })}
+                    onBlur={(e) => updateSettings('companyEmail', e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm space-y-2">
-            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-              Inventory
+          {/* Store Settings Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4">
+              <h2 className="text-lg font-bold text-white">Store Settings</h2>
+              <p className="text-emerald-100 text-sm">Order and inventory configuration</p>
             </div>
-            <div className="text-sm text-gray-900">
-              Low stock threshold:{' '}
-              <span className="font-semibold">{data.lowStockThreshold}</span>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Low Stock Threshold</label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    value={settings.lowStockThreshold || 5}
+                    onChange={(e) => setSettings({ ...settings, lowStockThreshold: Number(e.target.value) })}
+                    onBlur={(e) => updateSettings('lowStockThreshold', Number(e.target.value))}
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                  />
+                  <span className="text-slate-500 text-sm">units</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Minimum Order Amount (₹)</label>
+                <div className="flex items-center gap-3">
+                  <span className="text-emerald-600 font-bold text-lg">₹</span>
+                  <input
+                    type="number"
+                    value={settings.minimumOrderAmount || 5000}
+                    onChange={(e) => setSettings({ ...settings, minimumOrderAmount: Number(e.target.value) })}
+                    onBlur={(e) => updateSettings('minimumOrderAmount', Number(e.target.value))}
+                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Tax Rate (%)</label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      value={settings.taxRate || 18}
+                      onChange={(e) => setSettings({ ...settings, taxRate: Number(e.target.value) })}
+                      onBlur={(e) => updateSettings('taxRate', Number(e.target.value))}
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                    />
+                    <span className="text-slate-500 text-sm">%</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Shipping Fee (₹)</label>
+                  <div className="flex items-center gap-3">
+                    <span className="text-emerald-600 font-bold text-lg">₹</span>
+                    <input
+                      type="number"
+                      value={settings.shippingFee || 0}
+                      onChange={(e) => setSettings({ ...settings, shippingFee: Number(e.target.value) })}
+                      onBlur={(e) => updateSettings('shippingFee', Number(e.target.value))}
+                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <p className="font-semibold text-slate-800">Birthday Wishes</p>
+                  <p className="text-sm text-slate-500">Automated birthday emails to customers</p>
+                </div>
+                <button
+                  onClick={() => updateSettings('enableBirthdayWishes', !settings.enableBirthdayWishes)}
+                  className={`w-12 h-6 rounded-full transition-colors relative ${settings.enableBirthdayWishes ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                >
+                  <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${settings.enableBirthdayWishes ? 'left-7' : 'left-1'}`}></div>
+                </button>
+              </div>
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <p className="font-semibold text-slate-800">Order Notifications</p>
+                  <p className="text-sm text-slate-500">Notify admin of new orders</p>
+                </div>
+                <button
+                  onClick={() => updateSettings('enableOrderNotifications', !settings.enableOrderNotifications)}
+                  className={`w-12 h-6 rounded-full transition-colors relative ${settings.enableOrderNotifications ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                >
+                  <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${settings.enableOrderNotifications ? 'left-7' : 'left-1'}`}></div>
+                </button>
+              </div>
             </div>
-            <div className="text-xs text-gray-600">
-              Products with stock at or below this number are treated as low stock for alerts.
+          </div>
+
+          {/* Support Information Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-orange-600 to-red-600 px-6 py-4">
+              <h2 className="text-lg font-bold text-white">Support Information</h2>
+              <p className="text-orange-100 text-sm">Customer support contacts</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Support Phone</label>
+                <input
+                  type="text"
+                  value={settings.supportPhone || ''}
+                  onChange={(e) => setSettings({ ...settings, supportPhone: e.target.value })}
+                  onBlur={(e) => updateSettings('supportPhone', e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Support Email</label>
+                <input
+                  type="email"
+                  value={settings.supportEmail || ''}
+                  onChange={(e) => setSettings({ ...settings, supportEmail: e.target.value })}
+                  onBlur={(e) => updateSettings('supportEmail', e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Return Policy</label>
+                <textarea
+                  value={settings.returnPolicy || ''}
+                  onChange={(e) => setSettings({ ...settings, returnPolicy: e.target.value })}
+                  onBlur={(e) => updateSettings('returnPolicy', e.target.value)}
+                  rows={4}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all resize-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Security Settings Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-rose-600 to-pink-600 px-6 py-4">
+              <h2 className="text-lg font-bold text-white">Security Settings</h2>
+              <p className="text-rose-100 text-sm">Password management</p>
+            </div>
+            <div className="p-6 space-y-6">
+              <form onSubmit={handleUpdateLoginPassword} className="space-y-4">
+                <div>
+                  <h3 className="font-bold text-slate-800 mb-3">Change Login Password</h3>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Current Password</label>
+                  <input
+                    type="password"
+                    value={oldLoginPassword}
+                    onChange={(e) => setOldLoginPassword(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
+                  <input
+                    type="password"
+                    value={newLoginPassword}
+                    onChange={(e) => setNewLoginPassword(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm New Password</label>
+                  <input
+                    type="password"
+                    value={confirmLoginPassword}
+                    onChange={(e) => setConfirmLoginPassword(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={updatingLoginPassword}
+                  className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-3 rounded-xl font-bold text-sm hover:from-rose-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {updatingLoginPassword ? 'Updating...' : 'Update Login Password'}
+                </button>
+              </form>
+
+              <div className="border-t border-slate-200 pt-6">
+                <form onSubmit={handleUpdateDeletionPassword} className="space-y-4">
+                  <div>
+                    <h3 className="font-bold text-slate-800 mb-3">Change Deletion Password</h3>
+                    <p className="text-sm text-slate-500 mb-4">Required before deleting orders, customers, or products</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Current Deletion Password</label>
+                    <input
+                      type="password"
+                      value={oldDeletionPassword}
+                      onChange={(e) => setOldDeletionPassword(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">New Deletion Password</label>
+                    <input
+                      type="password"
+                      value={newDeletionPassword}
+                      onChange={(e) => setNewDeletionPassword(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm New Deletion Password</label>
+                    <input
+                      type="password"
+                      value={confirmDeletionPassword}
+                      onChange={(e) => setConfirmDeletionPassword(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 font-medium focus:ring-2 focus:ring-rose-500 focus:border-transparent outline-none transition-all"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={updatingDeletionPassword}
+                    className="w-full bg-gradient-to-r from-rose-600 to-pink-600 text-white py-3 rounded-xl font-bold text-sm hover:from-rose-700 hover:to-pink-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {updatingDeletionPassword ? 'Updating...' : 'Update Deletion Password'}
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
         </div>
-      )}
-
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-4">
-        <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-          Deletion Protection
-        </div>
-        <p className="text-sm text-gray-600">
-          Update the password required before deleting any items. Default: <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">admin123</code>
-        </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="New deletion password"
-            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-          />
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm new password"
-            className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-          />
-        </div>
-        <button
-          onClick={handleUpdatePassword}
-          disabled={updating}
-          className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-2xl text-sm font-black uppercase tracking-widest hover:from-indigo-700 hover:to-purple-700 transition-all disabled:opacity-50"
-        >
-          {updating ? 'Updating...' : 'Update Deletion Password'}
-        </button>
-      </div>
-
-      <div className="text-[11px] text-gray-400">
-        To change these values, update the server environment variables (`COMPANY_*` and
-        `LOW_STOCK_THRESHOLD`) and redeploy the backend.
       </div>
     </div>
-  )
+  );
 }
-

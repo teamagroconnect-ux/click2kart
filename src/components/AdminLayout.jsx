@@ -154,7 +154,7 @@ export default function AdminLayout() {
           </button>
           <div className="flex items-center gap-3">
             <div className="h-12 w-32 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-1 overflow-hidden">
-              <img src="/newlogo.png" alt="Click2Kart" className="h-full w-full object-contain" />
+              <img src="/logo.png" alt="Click2Kart" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col">
               <span className="px-2 py-0.5 bg-gray-900 text-[10px] font-black text-white rounded-lg tracking-widest uppercase">{role}</span>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import PasswordInput from '../../components/PasswordInput'
 import { CONFIG } from '../../shared/lib/config'
-import logoImg from '../../click2kart.png'
+const logoImg = '/logo.png'
 
 export default function PartnerLogin() {
   const navigate = useNavigate()

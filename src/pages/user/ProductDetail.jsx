@@ -132,6 +132,18 @@ export default function ProductDetail() {
   const [hlSpecTab, setHlSpecTab] = useState('highlights')
   const authed = !!localStorage.getItem('token')
 
+  const shareProduct = (e) => {
+    e?.preventDefault()
+    e?.stopPropagation()
+    const url = window.location.href
+    const text = `Check out ${p?.name || 'this product'} on Click2Kart!`
+    if (navigator.share) {
+      navigator.share({ title: p?.name || 'Product', text, url }).catch(() => {})
+    } else {
+      navigator.clipboard?.writeText(url).catch(() => {})
+    }
+  }
+
   const variantAttrs = useMemo(() => {
     if (!p) return []
     const ordered = []
@@ -1729,6 +1741,36 @@ export default function ProductDetail() {
             {p.category && <><span>{(p.category?.name || p.category || '').toUpperCase()}</span><span className="pd-breadcrumb-sep">›</span></>}
             <span>{p.name}</span>
           </div>
+          <button
+            onClick={shareProduct}
+            style={{
+              background: 'white',
+              border: '1.5px solid rgba(124,58,237,.25)',
+              borderRadius: '12px',
+              width: '44px',
+              height: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(124,58,237,.06)',
+              transition: 'all .2s'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)'
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(124,58,237,.12)'
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)'
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(124,58,237,.06)'
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2">
+              <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M16 6l-4-4-4 4" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 2v14" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
         </div>
 
         {/* ── MAIN ── */}

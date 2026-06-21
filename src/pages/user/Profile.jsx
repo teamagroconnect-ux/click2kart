@@ -60,7 +60,7 @@ const Field = ({ label, children }) => (
   </div>
 )
 
-const inputCls = 'w-full px-4 py-3 rounded-xl border border-indigo-200 bg-white text-slate-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-300'
+const inputCls = 'w-full px-4 py-3 rounded-xl border border-emerald-200 bg-white text-slate-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-300'
 const disabledCls = 'w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 text-slate-400 font-semibold text-sm cursor-not-allowed'
 const btnPrimary = 'w-full py-3.5 rounded-xl font-black text-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed'
 
@@ -77,7 +77,7 @@ export default function Profile() {
   const [showPasswordChange, setShowPasswordChange] = useState(false)
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [formData, setFormData] = useState({ 
-    name: '', phone: '', dob: '',
+    name: '', phone: '', dob: '', whatsappNumber: '', sameAsPhone: false,
     businessName: '', gstin: '', pan: '', panCard: '', aadhaarCard: '', addressLine1: '', addressLine2: '', 
     city: '', district: '', state: '', pincode: '', profilePicture: ''
   })
@@ -92,6 +92,7 @@ export default function Profile() {
       const { data } = await api.get('/api/user/me')
       setFormData({
         name: data.name || '', phone: data.phone || '', dob: data.dob ? new Date(data.dob).toISOString().split('T')[0] : '',
+        whatsappNumber: data.whatsappNumber || '', sameAsPhone: data.whatsappNumber === data.phone,
         businessName: data.kyc?.businessName || '', gstin: data.kyc?.gstin || '', pan: data.kyc?.pan || '',
         panCard: data.kyc?.panCard || '', aadhaarCard: data.kyc?.aadhaarCard || '',
         addressLine1: data.kyc?.addressLine1 || '', addressLine2: data.kyc?.addressLine2 || '',
@@ -130,8 +131,9 @@ export default function Profile() {
     e.preventDefault() 
     setSaving(true)
     try { 
+      const finalWhatsappNumber = formData.sameAsPhone ? formData.phone : formData.whatsappNumber;
       // Update personal info
-      await api.put('/api/user/profile', { name: formData.name, phone: formData.phone, dob: formData.dob })
+      await api.put('/api/user/profile', { name: formData.name, phone: formData.phone, dob: formData.dob, whatsappNumber: finalWhatsappNumber })
       // Update KYC/business info
       await api.put('/api/user/kyc', {
         businessName: formData.businessName,
@@ -207,16 +209,16 @@ export default function Profile() {
         .pf-nav-strip { -ms-overflow-style:none; scrollbar-width:none; }
       `}</style>
 
-      <div className="pf-root min-h-screen bg-indigo-50 pb-20 lg:pb-8">
+      <div className="pf-root min-h-screen bg-emerald-50 pb-20 lg:pb-8">
 
         {/* ── TOP HEADER ── */}
-        <div className="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600 text-white">
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-green-600 text-white">
           <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
             <button onClick={() => navigate('/')} className="p-2 rounded-xl hover:bg-white/10 transition-colors flex-shrink-0">
               <Ico n="back" cls="w-4 h-4" />
             </button>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-indigo-200">My Account</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-200">My Account</p>
               <h1 className="pf-display font-black text-base leading-tight truncate">{user?.name || 'User'}</h1>
               {/* KYC Status Badge */}
               <div className="mt-1">
@@ -242,8 +244,8 @@ export default function Profile() {
               <button key={id} onClick={() => setActiveSection(id)}
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold rounded-t-xl transition-all
                   ${activeSection === id
-                    ? 'bg-indigo-50 text-indigo-600'
-                    : 'text-indigo-200 hover:text-white'}`}>
+                    ? 'bg-indigo-50 text-emerald-600'
+                    : 'text-emerald-200 hover:text-white'}`}>
                 <Ico n={icon} cls="w-4 h-4" />
                 {label}
               </button>
@@ -256,7 +258,7 @@ export default function Profile() {
           {/* ── DESKTOP SIDEBAR ── */}
           <aside className="hidden lg:flex flex-col gap-3 w-56 flex-shrink-0">
             {/* User card */}
-            <div className="bg-white rounded-2xl p-4 border border-indigo-100 shadow-sm flex items-center gap-3">
+            <div className="bg-white rounded-2xl p-4 border border-emerald-100 shadow-sm flex items-center gap-3">
               <Avatar user={user} size="md" />
               <div className="min-w-0">
                 <div className="pf-display font-black text-slate-800 text-sm truncate">{user?.name}</div>
@@ -265,12 +267,12 @@ export default function Profile() {
             </div>
 
             {/* Nav */}
-            <nav className="bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
+            <nav className="bg-white rounded-2xl border border-emerald-100 shadow-sm overflow-hidden">
               {navItems.map(({ id, label, icon }) => (
                 <button key={id} onClick={() => setActiveSection(id)}
                   className={`w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-left transition-all border-l-2
                     ${activeSection === id
-                      ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                      ? 'border-emerald-600 bg-indigo-50 text-emerald-700'
                       : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-800'}`}>
                   <Ico n={icon} cls="w-4 h-4 flex-shrink-0" />
                   {label}
@@ -294,12 +296,12 @@ export default function Profile() {
             {activeSection === 'overview' && (
               <div className="pf-panel space-y-4">
                 {/* Welcome card */}
-                <div className="bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-600 rounded-2xl p-5 text-white relative overflow-hidden">
+                <div className="bg-gradient-to-br from-emerald-600 via-teal-600 to-green-600 rounded-2xl p-5 text-white relative overflow-hidden">
                   <div className="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
                   <div className="absolute right-8 bottom-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2" />
-                  <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1">Welcome back</p>
+                  <p className="text-emerald-200 text-xs font-bold uppercase tracking-widest mb-1">Welcome back</p>
                   <h2 className="pf-display font-black text-2xl leading-tight mb-3">{user?.name?.split(' ')[0]} 👋</h2>
-                  <p className="text-indigo-200 text-sm">{user?.email}</p>
+                  <p className="text-emerald-200 text-sm">{user?.email}</p>
                 </div>
 
                 {/* Quick action grid */}
@@ -311,7 +313,7 @@ export default function Profile() {
                     { label: 'Browse Products', sub: 'Shop now', icon: 'heart', color: 'bg-orange-50 text-orange-600', action: () => navigate('/products') },
                   ].map(({ label, sub, icon, color, action }) => (
                     <button key={label} onClick={action}
-                      className="bg-white rounded-2xl p-4 border border-indigo-100 shadow-sm hover:shadow-md hover:border-indigo-200 active:scale-[0.98] transition-all text-left">
+                      className="bg-white rounded-2xl p-4 border border-emerald-100 shadow-sm hover:shadow-md hover:border-emerald-200 active:scale-[0.98] transition-all text-left">
                       <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center mb-3`}>
                         <Ico n={icon} cls="w-5 h-5" />
                       </div>
@@ -322,10 +324,10 @@ export default function Profile() {
                 </div>
 
                 {/* Profile summary */}
-                <div className="bg-white rounded-2xl p-4 border border-indigo-100 shadow-sm">
+                <div className="bg-white rounded-2xl p-4 border border-emerald-100 shadow-sm">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="pf-display font-black text-slate-800 text-sm">Profile Info</h3>
-                    <button onClick={() => setActiveSection('personal')} className="text-indigo-600 text-xs font-bold hover:underline">Edit →</button>
+                    <button onClick={() => setActiveSection('personal')} className="text-emerald-600 text-xs font-bold hover:underline">Edit →</button>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center gap-3 text-sm">
@@ -365,8 +367,8 @@ export default function Profile() {
 
             {/* ──── PERSONAL ──── */}
             {activeSection === 'personal' && (
-              <div className="pf-panel bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-indigo-100">
+              <div className="pf-panel bg-white rounded-2xl border border-emerald-100 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-emerald-100">
                   <h2 className="pf-display font-black text-slate-800">Personal & Business Info</h2>
                   <p className="text-slate-400 text-xs mt-0.5">Update your details</p>
                 </div>
@@ -374,7 +376,7 @@ export default function Profile() {
                   {/* Profile Picture */}
                   <div className="flex items-center gap-6">
                     <div className="relative group">
-                      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-3xl font-black border-4 border-indigo-100 overflow-hidden">
+                      <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white text-3xl font-black border-4 border-emerald-100 overflow-hidden">
                         {formData.profilePicture ? (
                           <img src={getImageUrl(formData.profilePicture) || formData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
@@ -393,24 +395,51 @@ export default function Profile() {
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-4">
-                    <Field label="Full Name">
-                      <input type="text" name="name" value={formData.name}
-                        onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
-                        className={inputCls} placeholder="Your full name" required />
-                    </Field>
-                    <Field label="Email Address">
-                      <input type="email" value={user?.email || ''} disabled className={disabledCls} />
-                    </Field>
-                    <Field label="Date of Birth">
-                      <input type="date" name="dob" value={formData.dob}
-                        onChange={e => setFormData(p => ({ ...p, dob: e.target.value }))}
-                        className={inputCls} />
-                    </Field>
-                    <Field label="Phone Number">
-                      <input type="tel" name="phone" value={formData.phone}
-                        onChange={e => setFormData(p => ({ ...p, phone: e.target.value.replace(/\D/g,'').slice(0,10) }))}
-                        className={inputCls} placeholder="10-digit mobile number" />
-                    </Field>
+              <Field label="Full Name">
+                <input type="text" name="name" value={formData.name}
+                  onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                  className={inputCls} placeholder="Your full name" required />
+              </Field>
+              <Field label="Email Address">
+                <input type="email" value={user?.email || ''} disabled className={disabledCls} />
+              </Field>
+              <Field label="Date of Birth">
+                <input type="date" name="dob" value={formData.dob}
+                  onChange={e => setFormData(p => ({ ...p, dob: e.target.value }))}
+                  className={inputCls} />
+              </Field>
+              <Field label="Phone Number">
+                <input type="tel" name="phone" value={formData.phone}
+                  onChange={e => setFormData(p => ({ ...p, phone: e.target.value.replace(/\D/g,'').slice(0,10) }))}
+                  className={inputCls} placeholder="10-digit mobile number" />
+              </Field>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">WhatsApp Number</label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={formData.sameAsPhone}
+                      onChange={(e) => setFormData(p => ({
+                        ...p,
+                        sameAsPhone: e.target.checked,
+                        whatsappNumber: e.target.checked ? p.phone : p.whatsappNumber
+                      }))}
+                      className="w-4 h-4 text-emerald-600 bg-emerald-50 border-emerald-200 rounded focus:ring-emerald-500"
+                    />
+                    <span className="text-xs font-bold text-slate-600">Same as phone</span>
+                  </label>
+                </div>
+                <input
+                  type="tel"
+                  name="whatsappNumber"
+                  value={formData.sameAsPhone ? formData.phone : formData.whatsappNumber}
+                  onChange={e => setFormData(p => ({ ...p, whatsappNumber: e.target.value.replace(/\D/g,'').slice(0,10) }))}
+                  disabled={formData.sameAsPhone}
+                  className={formData.sameAsPhone ? disabledCls : inputCls}
+                  placeholder="10-digit WhatsApp number"
+                />
+              </div>
                     <Field label="Business Name">
                       <input type="text" value={formData.businessName}
                         onChange={e => setFormData(p => ({ ...p, businessName: e.target.value }))}
@@ -433,13 +462,13 @@ export default function Profile() {
                     <Field label="PAN Card (Upload)">
                       <div className="relative group">
                         {formData.panCard ? (
-                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50 flex items-center justify-center overflow-hidden">
+                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-emerald-200 bg-indigo-50 flex items-center justify-center overflow-hidden">
                             <img src={getImageUrl(formData.panCard) || formData.panCard} alt="PAN Card" className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 transition-colors">
-                            <Ico n="user" cls="w-8 h-8 text-indigo-400 mb-2" />
-                            <div className="text-xs text-indigo-500 font-semibold">Click to upload PAN Card</div>
+                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-emerald-200 bg-indigo-50 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400 transition-colors">
+                            <Ico n="user" cls="w-8 h-8 text-emerald-400 mb-2" />
+                            <div className="text-xs text-emerald-500 font-semibold">Click to upload PAN Card</div>
                           </div>
                         )}
                         <label className="absolute inset-0 cursor-pointer rounded-xl">
@@ -451,13 +480,13 @@ export default function Profile() {
                     <Field label="Aadhaar Card (Upload)">
                       <div className="relative group">
                         {formData.aadhaarCard ? (
-                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50 flex items-center justify-center overflow-hidden">
+                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-emerald-200 bg-indigo-50 flex items-center justify-center overflow-hidden">
                             <img src={getImageUrl(formData.aadhaarCard) || formData.aadhaarCard} alt="Aadhaar Card" className="w-full h-full object-cover" />
                           </div>
                         ) : (
-                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 transition-colors">
-                            <Ico n="user" cls="w-8 h-8 text-indigo-400 mb-2" />
-                            <div className="text-xs text-indigo-500 font-semibold">Click to upload Aadhaar Card</div>
+                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-emerald-200 bg-indigo-50 flex flex-col items-center justify-center cursor-pointer hover:border-emerald-400 transition-colors">
+                            <Ico n="user" cls="w-8 h-8 text-emerald-400 mb-2" />
+                            <div className="text-xs text-emerald-500 font-semibold">Click to upload Aadhaar Card</div>
                           </div>
                         )}
                         <label className="absolute inset-0 cursor-pointer rounded-xl">
@@ -519,8 +548,8 @@ export default function Profile() {
 
                 {!showPasswordChange ? (
                   <button onClick={() => setShowPasswordChange(true)}
-                    className="w-full bg-white rounded-2xl border border-indigo-100 shadow-sm p-4 text-left flex items-center gap-3 hover:border-indigo-200 hover:shadow-md active:scale-[0.98] transition-all">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                    className="w-full bg-white rounded-2xl border border-emerald-100 shadow-sm p-4 text-left flex items-center gap-3 hover:border-emerald-200 hover:shadow-md active:scale-[0.98] transition-all">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
                       <Ico n="lock" cls="w-5 h-5" />
                     </div>
                     <div className="flex-1">
@@ -530,8 +559,8 @@ export default function Profile() {
                     <Ico n="chevR" cls="w-4 h-4 text-slate-300" />
                   </button>
                 ) : (
-                  <div className="bg-white rounded-2xl border border-indigo-100 shadow-sm overflow-hidden">
-                    <div className="px-5 py-4 border-b border-indigo-100 flex items-center gap-3">
+                  <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm overflow-hidden">
+                    <div className="px-5 py-4 border-b border-emerald-100 flex items-center gap-3">
                       <button onClick={() => { setShowPasswordChange(false); setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' }); }}
                         className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                         <Ico n="chevL" cls="w-4 h-4" />

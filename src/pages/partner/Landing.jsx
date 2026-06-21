@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { CONFIG } from '../../shared/lib/config'
-import logoImg from '../../click2kart.png'
+const logoImg = '/logo.png'
 
 export default function PartnerLanding() {
   return (

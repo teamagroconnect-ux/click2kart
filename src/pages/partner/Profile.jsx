@@ -5,7 +5,7 @@ import api from '../../lib/api';
 import { useToast } from '../../components/Toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { getImageUrl } from '../../lib/cloudinary';
-import logoImg from '../../click2kart.png';
+const logoImg = '/logo.png';
 import { CONFIG } from '../../shared/lib/config';
 
 const INDIAN_STATES = [
@@ -285,7 +285,7 @@ const Field = ({ label, children }) => (
 
 const inputCls = 'w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-300';
 const disabledCls = 'w-full px-4 py-3.5 rounded-xl border border-slate-100 bg-slate-50 text-slate-400 font-semibold text-sm cursor-not-allowed';
-const btnPrimary = 'w-full py-3.5 rounded-xl font-black text-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed';
+const btnPrimary = 'w-full py-3.5 rounded-xl font-black text-sm text-white bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 active:scale-[0.98] transition-all shadow-lg shadow-orange-200 disabled:opacity-50 disabled:cursor-not-allowed';
 const btnOutline = 'flex-1 py-3.5 rounded-xl font-bold text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 active:scale-[0.98] transition-all';
 
 /* ════════════════════════════════════════ MAIN COMPONENT ════════════════════════════════════════ */
@@ -300,7 +300,7 @@ export default function PartnerProfile() {
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [partner, setPartner] = useState(null);
   const [formData, setFormData] = useState({
-    name: '', phone: '', bloodGroup: '', dob: '', address: '', city: '', district: '', state: '', pincode: '', profilePicture: '', panCard: '', aadhaarCard: ''
+    name: '', phone: '', whatsappNumber: '', sameAsPhone: false, bloodGroup: '', dob: '', address: '', city: '', district: '', state: '', pincode: '', profilePicture: '', panCard: '', aadhaarCard: ''
   });
   const [bankForm, setBankForm] = useState({ accountHolder: '', accountNumber: '', ifscCode: '', bankName: '' });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -314,6 +314,8 @@ export default function PartnerProfile() {
       setFormData({
         name: data.name || '',
         phone: data.phone || '',
+        whatsappNumber: data.whatsappNumber || '',
+        sameAsPhone: data.whatsappNumber === data.phone,
         bloodGroup: data.bloodGroup || '',
         dob: data.dob ? data.dob.substring(0, 10) : '',
         address: data.address || '',
@@ -363,7 +365,9 @@ export default function PartnerProfile() {
     e.preventDefault();
     setSaving(true);
     try {
-      const { data } = await api.put('/api/partner/profile', formData);
+      const { sameAsPhone, ...rest } = formData;
+      const finalWhatsappNumber = sameAsPhone ? formData.phone : formData.whatsappNumber;
+      const { data } = await api.put('/api/partner/profile', { ...rest, whatsappNumber: finalWhatsappNumber });
       setPartner(data);
       notify('Profile updated!', 'success');
     } catch (e) {
@@ -468,7 +472,7 @@ export default function PartnerProfile() {
       {activeSection === 'overview' && (
         <div className="space-y-6">
           {/* Welcome */}
-          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-6 text-white relative overflow-hidden">
+          <div className="bg-gradient-to-br from-orange-600 to-red-600 rounded-2xl p-6 text-white relative overflow-hidden">
             <div className="absolute right-0 top-0 w-40 h-40 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
             <div className="absolute right-12 bottom-0 w-24 h-24 bg-white/5 rounded-full translate-y-1/2" />
             <p className="text-indigo-200 text-xs font-bold uppercase tracking-widest mb-1">Welcome back</p>
@@ -556,6 +560,33 @@ export default function PartnerProfile() {
                   onChange={e => setFormData(p => ({ ...p, phone: e.target.value.replace(/\D/g,'').slice(0,10) }))}
                   className={inputCls} placeholder="10-digit mobile number" />
               </Field>
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">WhatsApp Number</label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={formData.sameAsPhone}
+                      onChange={(e) => setFormData(p => ({
+                        ...p,
+                        sameAsPhone: e.target.checked,
+                        whatsappNumber: e.target.checked ? p.phone : p.whatsappNumber
+                      }))}
+                      className="w-4 h-4 text-orange-600 bg-orange-50 border-orange-200 rounded focus:ring-orange-500"
+                    />
+                    <span className="text-xs font-bold text-slate-600">Same as phone</span>
+                  </label>
+                </div>
+                <input
+                  type="tel"
+                  name="whatsappNumber"
+                  value={formData.sameAsPhone ? formData.phone : formData.whatsappNumber}
+                  onChange={e => setFormData(p => ({ ...p, whatsappNumber: e.target.value.replace(/\D/g,'').slice(0,10) }))}
+                  disabled={formData.sameAsPhone}
+                  className={formData.sameAsPhone ? disabledCls : inputCls}
+                  placeholder="10-digit WhatsApp number"
+                />
+              </div>
               <Field label="Date of Birth">
                 <input type="date" value={formData.dob}
                   onChange={e => setFormData(p => ({ ...p, dob: e.target.value }))}

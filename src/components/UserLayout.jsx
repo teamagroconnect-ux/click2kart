@@ -103,7 +103,7 @@ export default function UserLayout() {
             <Link to="/" className="flex items-center group">
               <div className="relative h-12 w-24 sm:h-14 sm:w-28 md:h-16 md:w-32 transition-all duration-300 group-hover:scale-105">
                 <img
-                  src="/newlogo.png"
+                  src="/logo.png"
                   alt="Click2Kart"
                   className="h-full w-full object-contain"
                 />
@@ -154,16 +154,16 @@ export default function UserLayout() {
               <div className="hidden sm:flex items-center gap-3">
                 {user ? (
                   <div className="flex items-center gap-4">
-                    <Link to="/profile" className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-gray-200 bg-white shadow-lg shadow-gray-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-100 transition-all cursor-pointer">
-                      <Avatar user={user} size="md" />
-                      <div className="flex flex-col items-start gap-0.5">
-                        <div className="inline-flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
-                          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900">{user.name}</span>
-                        </div>
-                        <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-gray-500 leading-none">BUSINESS ACCOUNT</span>
-                      </div>
-                    </Link>
+                    <Link to="/profile" className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-lg shadow-indigo-100 hover:shadow-xl hover:shadow-indigo-200 transition-all cursor-pointer">
+              <Avatar user={user} size="md" />
+              <div className="flex flex-col items-start gap-0.5">
+                <div className="inline-flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
+                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-900">{user.name}</span>
+                </div>
+                <span className="text-[9px] font-black uppercase tracking-[0.25em] text-indigo-600 leading-none">BUSINESS ACCOUNT</span>
+              </div>
+            </Link>
                     <button
                       type="button"
                       onClick={handleLogout}
@@ -250,7 +250,7 @@ export default function UserLayout() {
         <footer className="border-t border-gray-50 bg-white py-12 pb-32 lg:pb-12">
           <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <img src="/newlogo.png" alt="Click2Kart" className="h-12 w-auto rounded-xl border border-gray-100 shadow-sm" />
+              <img src="/logo.png" alt="Click2Kart" className="h-12 w-auto rounded-xl border border-gray-100 shadow-sm" />
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart. All rights reserved.</span>
               <div className="flex gap-4 items-center">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>

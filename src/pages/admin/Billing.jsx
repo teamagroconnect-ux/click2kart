@@ -15,6 +15,7 @@ export default function Billing(){
   const [couponInfo, setCouponInfo] = useState(null)
   const [paymentType, setPaymentType] = useState('CASH')
   const limit = 8
+  const [selectedProductId, setSelectedProductId] = useState(null)
 
   const load = async (p=1) => {
     setLoading(true)
@@ -23,41 +24,50 @@ export default function Billing(){
   }
   useEffect(()=>{ load(1) }, [q])
 
-  const addItem = (p) => {
-    if (p.stock <= 0) {
-      notify('This product is out of stock', 'error')
+  const addItem = (p, variant = null) => {
+    const stock = variant ? variant.stock : p.stock
+    if (stock <= 0) {
+      notify('This product/variant is out of stock', 'error')
       return
     }
-    const existing = selected.find(x=>x.productId===p._id)
+    const itemId = variant ? `${p._id}-${variant._id}` : p._id
+    const existing = selected.find(x=>x.id === itemId)
     if (existing) {
-      if (existing.quantity + 1 > p.stock) {
-        notify(`Only ${p.stock} units available in stock`, 'error')
+      if (existing.quantity + 1 > stock) {
+        notify(`Only ${stock} units available in stock`, 'error')
         return
       }
-      setSelected(selected.map(x=> x.productId===p._id? {...x, quantity: x.quantity+1}: x))
+      setSelected(selected.map(x=> x.id === itemId ? {...x, quantity: x.quantity+1}: x))
+    } else {
+      const price = variant ? variant.price : p.price
+      setSelected([...selected, { 
+        id: itemId,
+        productId:p._id, 
+        variantId: variant ? variant._id : null,
+        variantSku: variant ? variant.sku : null,
+        variantAttributes: variant ? variant.attributes : null,
+        name:p.name, 
+        price, 
+        gst:p.gst, 
+        quantity:1,
+        stock,
+        bulkQty: p.bulkDiscountQuantity || 0,
+        bulkRed: p.bulkDiscountPriceReduction || 0
+      }])
     }
-    else setSelected([...selected, { 
-      productId:p._id, 
-      name:p.name, 
-      price:p.price, 
-      gst:p.gst, 
-      quantity:1,
-      stock: p.stock,
-      bulkQty: p.bulkDiscountQuantity || 0,
-      bulkRed: p.bulkDiscountPriceReduction || 0
-    }])
+    setSelectedProductId(null)
   }
 
   const updateQty = (id, q) => {
     if (q < 1) return
-    const item = selected.find(x => x.productId === id)
+    const item = selected.find(x => x.id === id)
     if (item && q > item.stock) {
       notify(`Only ${item.stock} units available in stock`, 'error')
       return
     }
-    setSelected(selected.map(x => x.productId === id ? { ...x, quantity: q } : x))
+    setSelected(selected.map(x => x.id === id ? { ...x, quantity: q } : x))
   }
-  const removeItem = (id) => setSelected(selected.filter(x=>x.productId!==id))
+  const removeItem = (id) => setSelected(selected.filter(x=>x.id!==id))
 
   const totals = useMemo(()=>{
     let subtotal=0, gstTotal=0
@@ -173,7 +183,13 @@ export default function Billing(){
   }
 
   const submit = async () => {
-    const payload = { customer, items: selected.map(x=>({ productId:x.productId, quantity:x.quantity })), couponCode: couponInfo?.valid? couponCode: undefined, paymentType }
+    const items = selected.map(x => ({
+      productId: x.productId,
+      variantId: x.variantId,
+      variantSku: x.variantSku,
+      quantity: x.quantity
+    }))
+    const payload = { customer, items, couponCode: couponInfo?.valid ? couponCode : undefined, paymentType }
     try {
       const { data } = await api.post('/api/bills', payload)
       notify('Bill generated','success')
@@ -215,7 +231,13 @@ export default function Billing(){
               <div
                 key={p._id}
                 className="group bg-white border border-gray-100 rounded-3xl p-4 flex flex-col justify-between shadow-sm hover:shadow-md transition-all cursor-pointer border-transparent hover:border-blue-100"
-                onClick={() => addItem(p)}
+                onClick={() => {
+                  if (p.variants && p.variants.length > 0) {
+                    setSelectedProductId(p._id)
+                  } else {
+                    addItem(p)
+                  }
+                }}
               >
                 <div className="space-y-2">
                   <div className="font-bold text-gray-900 text-sm line-clamp-2 leading-tight group-hover:text-blue-600 transition-colors">
@@ -231,7 +253,7 @@ export default function Billing(){
                 <button
                   className="mt-3 w-full bg-gray-50 group-hover:bg-blue-600 text-gray-400 group-hover:text-white py-2 rounded-xl text-[10px] font-black transition-all uppercase tracking-widest"
                 >
-                  Add to Cart
+                  {p.variants && p.variants.length > 0 ? 'Select Variant' : 'Add to Cart'}
                 </button>
               </div>
             ))}
@@ -277,10 +299,11 @@ export default function Billing(){
                 {selected.map(it => {
                   const isBulkApplied = it.bulkQty > 0 && it.quantity >= it.bulkQty;
                   return (
-                    <div key={it.productId} className="flex items-center justify-between gap-4 group">
+                    <div key={it.id} className="flex items-center justify-between gap-4 group">
                       <div className="flex-1 min-w-0">
                         <div className="text-xs font-bold truncate flex items-center gap-2">
                           {it.name}
+                          {it.variantSku && <span className="text-gray-400 text-[9px]">({it.variantSku})</span>}
                           {isBulkApplied && (
                             <span className="bg-emerald-500/10 text-emerald-400 text-[8px] px-1 rounded uppercase font-black tracking-tighter border border-emerald-500/20">
                               Bulk applied
@@ -294,18 +317,18 @@ export default function Billing(){
                               <span className="ml-1 text-emerald-400">₹{it.price - it.bulkRed}</span>
                             </>
                           ) : (
-                            `₹${it.price}`
+                            `₹{it.price}`
                           )}
                           {' '} × {it.quantity}
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                       <div className="flex items-center bg-gray-100 rounded-lg p-1">
-                        <button onClick={() => updateQty(it.productId, it.quantity - 1)} className="w-6 h-6 flex items-center justify-center hover:text-violet-600 transition-colors text-xs">－</button>
+                        <button onClick={() => updateQty(it.id, it.quantity - 1)} className="w-6 h-6 flex items-center justify-center hover:text-violet-600 transition-colors text-xs">－</button>
                         <span className="w-6 text-center text-xs font-bold">{it.quantity}</span>
-                        <button onClick={() => updateQty(it.productId, it.quantity + 1)} className="w-6 h-6 flex items-center justify-center hover:text-violet-600 transition-colors text-xs">＋</button>
+                        <button onClick={() => updateQty(it.id, it.quantity + 1)} className="w-6 h-6 flex items-center justify-center hover:text-violet-600 transition-colors text-xs">＋</button>
                       </div>
-                      <button onClick={() => removeItem(it.productId)} className="text-gray-600 hover:text-red-400 transition-colors p-1">
+                      <button onClick={() => removeItem(it.id)} className="text-gray-600 hover:text-red-400 transition-colors p-1">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
                     </div>
@@ -375,6 +398,47 @@ export default function Billing(){
           </div>
         </div>
       </div>
+
+      {/* Variant Selection Modal */}
+      {selectedProductId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedProductId(null)}>
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-black text-gray-900">Select Variant</h2>
+              <button onClick={() => setSelectedProductId(null)} className="text-gray-400 hover:text-gray-600">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="space-y-3">
+              {products.find(p => p._id === selectedProductId)?.variants.map(variant => (
+                <button
+                  key={variant._id}
+                  onClick={() => addItem(products.find(p => p._id === selectedProductId), variant)}
+                  disabled={variant.stock <= 0}
+                  className={`w-full text-left p-4 rounded-2xl border transition-all ${variant.stock <= 0 ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed' : 'border-gray-200 hover:border-blue-200 hover:bg-blue-50'}`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-bold text-gray-900">
+                        {Object.entries(variant.attributes || {}).map(([key, val]) => (
+                          <span key={key} className="mr-2">{key}: {val}</span>
+                        ))}
+                      </div>
+                      {variant.sku && <div className="text-xs text-gray-500 mt-1">SKU: {variant.sku}</div>}
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-gray-900">₹{variant.price}</div>
+                      <div className={`text-xs font-bold mt-1 ${variant.stock <= 5 ? 'text-red-500' : 'text-gray-500'}`}>
+                        {variant.stock} in stock
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
