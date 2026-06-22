@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { CONFIG } from '../shared/lib/config.js'
+import BrandLogo from './BrandLogo'
 
 
 const Icon = ({ name }) => (
@@ -105,8 +106,7 @@ export default function PartnerLayout() {
               <img src="/logo.png" alt="Click2Kart" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col">
-              <span className="text-base md:text-lg font-black text-gray-900 leading-tight">Click2Kart</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">B2B Marketplace</span>
+                <BrandLogo variant="sm" />
               <span className="px-2 py-0.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-[8px] font-black text-white rounded-full tracking-widest uppercase mt-1 w-fit">Partner Portal</span>
             </div>
           </div>

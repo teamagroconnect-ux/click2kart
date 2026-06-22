@@ -1,9 +1,9 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import { useCart } from '../lib/CartContext'
-import { useAuth } from '../lib/AuthContext'
 import { CONFIG } from '../shared/lib/config.js'
-
+import logoImg from '../click2kart.png'
+import BrandLogo from './BrandLogo'
 import ConfirmModal from './ConfirmModal'
 import { getImageUrl } from '../lib/cloudinary'
 
@@ -11,7 +11,7 @@ function Avatar({ user, size = 'md' }) {
   const sz = { sm: 'h-8 w-8', md: 'h-12 w-12', lg: 'h-16 w-16' }[size]
   const avatarUrl = user?.kyc?.profilePicture
   if (avatarUrl)
-    return <img src={getImageUrl(avatarUrl) || avatarUrl} alt={user.name} className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`} />
+    return <img src={getImageUrl(avatarUrl)} alt={user.name} className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`} />
   return (
     <div className={`${sz} rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center font-black text-white ring-2 ring-white shadow-md`}>
       {user?.name?.charAt(0)?.toUpperCase() || 'U'}
@@ -26,7 +26,7 @@ function classNames(...classes) {
 export default function UserLayout() {
   const location = useLocation()
   const { cartCount } = useCart()
-  const { user } = useAuth()
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
   const navigate = useNavigate()
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isPwaInstalled, setIsPwaInstalled] = useState(false)
@@ -101,17 +101,14 @@ export default function UserLayout() {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex items-center justify-between h-14 sm:h-14 md:h-16 gap-4">
             <Link to="/" className="flex items-center group gap-3">
-              <div className="relative h-12 w-24 sm:h-14 sm:w-28 md:h-16 md:w-32 transition-all duration-300 group-hover:scale-105">
+              <div className="relative h-10 w-10 sm:h-12 sm:w-12 md:h-13 md:w-13 rounded-full bg-violet-500 shadow-lg shadow-violet-200 p-1.5 transition-all duration-300 group-hover:scale-105">
                 <img
-                  src="/logo.png"
+                  src={logoImg}
                   alt="Click2Kart"
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-contain rounded-full"
                 />
               </div>
-              <div className="flex flex-col">
-                <span className="text-lg md:text-xl font-black text-gray-900 leading-tight">Click2Kart</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">B2B Marketplace</span>
-              </div>
+              <BrandLogo className="ml-2 md:ml-2.5" />
             </Link>
 
             <nav className="hidden lg:flex items-center gap-3">
@@ -157,16 +154,16 @@ export default function UserLayout() {
               <div className="hidden sm:flex items-center gap-3">
                 {user ? (
                   <div className="flex items-center gap-4">
-                    <Link to="/profile" className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-indigo-200 bg-gradient-to-br from-indigo-50 to-purple-50 shadow-lg shadow-indigo-100 hover:shadow-xl hover:shadow-indigo-200 transition-all cursor-pointer">
-              <Avatar user={user} size="md" />
-              <div className="flex flex-col items-start gap-0.5">
-                <div className="inline-flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
-                  <span className="text-[11px] font-black uppercase tracking-[0.2em] text-indigo-900">{user.name}</span>
-                </div>
-                <span className="text-[9px] font-black uppercase tracking-[0.25em] text-indigo-600 leading-none">BUSINESS ACCOUNT</span>
-              </div>
-            </Link>
+                    <Link to="/profile" className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-gray-200 bg-white shadow-lg shadow-gray-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-100 transition-all cursor-pointer">
+                      <Avatar user={user} size="md" />
+                      <div className="flex flex-col items-start gap-0.5">
+                        <div className="inline-flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
+                          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900">{user.name}</span>
+                        </div>
+                        <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-gray-500 leading-none">BUSINESS ACCOUNT</span>
+                      </div>
+                    </Link>
                     <button
                       type="button"
                       onClick={handleLogout}
@@ -253,9 +250,7 @@ export default function UserLayout() {
         <footer className="border-t border-gray-50 bg-white py-12 pb-32 lg:pb-12">
           <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="h-16 w-32 flex items-center justify-center rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <img src="/logo.png" alt="Click2Kart" className="h-full w-full object-contain" />
-              </div>
+              <img src={logoImg} alt="Click2Kart" className="h-10 w-auto rounded-xl border border-gray-100 shadow-sm" />
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart. All rights reserved.</span>
               <div className="flex gap-4 items-center">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>

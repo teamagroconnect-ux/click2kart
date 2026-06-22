@@ -80,8 +80,7 @@ export default function PartnerLogin() {
               <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-full object-contain" />
             </Link>
             <div className="flex flex-col items-start">
-              <span className="text-2xl font-black text-gray-900 leading-tight">Click2Kart</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">B2B Marketplace</span>
+              <BrandLogo variant="sm" />
             </div>
           </div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Partner Login</h2>

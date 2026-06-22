@@ -29,8 +29,7 @@ export default function PartnerLanding() {
                 <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-full object-contain" />
               </div>
               <div className="flex flex-col">
-                <span className="text-base md:text-lg font-black text-gray-900 leading-tight">Click2Kart</span>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">B2B Marketplace</span>
+                <BrandLogo variant="sm" />
                 <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Partner Program</span>
               </div>
             </Link>
