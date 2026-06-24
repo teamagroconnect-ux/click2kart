@@ -289,208 +289,212 @@ export default function Products() {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #cbd5e1; }
       `}</style>
-      <div className="space-y-8 max-w-[1600px] mx-auto px-4 py-8">
-        {/* Premium Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+      <div className="space-y-6 max-w-[1600px] mx-auto px-4 py-6">
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight italic">Product Portfolio</h1>
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mt-1">Inventory Management & Global Catalog</p>
+            <h1 className="text-2xl font-bold text-gray-900">Product Catalogue</h1>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">Manage inventory, pricing, and variants</p>
           </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="relative group min-w-[300px]">
-              <input
-                placeholder="Search catalog..."
-                className="bg-white border border-gray-100 text-gray-900 text-sm rounded-2xl pl-10 pr-4 py-3 w-full outline-none focus:ring-2 focus:ring-gray-900 shadow-sm transition-all"
-                value={q}
-                onChange={e => setQ(e.target.value)}
-              />
-              <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-gray-900 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-            </div>
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
               onClick={() => setShowAddProduct(v => !v)}
-              className={`inline-flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all shadow-xl ${showAddProduct ? 'bg-gray-100 text-gray-800 border shadow-none' : 'bg-gray-900 text-white shadow-gray-900/20 hover:scale-105 active:scale-95'}`}
+              className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-sm border ${showAddProduct ? 'bg-gray-100 text-gray-800 border-gray-200 hover:bg-gray-200' : 'bg-gray-900 text-white border-gray-900 hover:bg-gray-800 shadow-md'}`}
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-              {showAddProduct ? 'Minimize Form' : 'New Listing'}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
+              {showAddProduct ? 'Close add form' : 'Add New Product'}
             </button>
+            <div className="relative flex-1 min-w-[200px] max-w-xs">
+              <input
+                placeholder="Search products..."
+                className="bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl pl-10 pr-4 py-2.5 w-full outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                value={q}
+                onChange={e => setQ(e.target.value)}
+              />
+              <svg className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+            </div>
           </div>
         </div>
 
-        {/* Quick Insights */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white border border-gray-100 p-6 rounded-[2rem] shadow-sm">
-            <div className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total SKU Count</div>
-            <div className="text-2xl font-black text-gray-900 mt-1">{total}</div>
-          </div>
-          <div className="bg-emerald-50/50 border border-emerald-100 p-6 rounded-[2rem] shadow-sm">
-            <div className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Healthy Stock</div>
-            <div className="text-2xl font-black text-emerald-700 mt-1">{items.filter(i => i.stock > 5).length}</div>
-          </div>
-          <div className="bg-rose-50/50 border border-rose-100 p-6 rounded-[2rem] shadow-sm">
-            <div className="text-[10px] font-black text-rose-600 uppercase tracking-widest">Low Inventory</div>
-            <div className="text-2xl font-black text-rose-700 mt-1">{items.filter(i => i.stock <= 5).length}</div>
-          </div>
-          <div className="bg-indigo-50/50 border border-indigo-100 p-6 rounded-[2rem] shadow-sm">
-            <div className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Multi-Variant</div>
-            <div className="text-2xl font-black text-indigo-700 mt-1">{items.filter(i => i.variants?.length > 0).length}</div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-8">
-          <div className="bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm flex flex-col">
-            <div className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left border-collapse">
-                <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">
-                  <tr>
-                    <th className="px-8 py-5">Product Details</th>
-                    <th className="px-8 py-5">Price Architecture</th>
-                    <th className="px-8 py-5 text-center">Stock Level</th>
-                    <th className="px-8 py-5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {loading ? (
-                    Array.from({ length: 5 }).map((_, i) => (
-                      <tr key={i} className="animate-pulse">
-                        <td colSpan="4" className="px-8 py-10"><div className="h-4 bg-gray-50 rounded-full w-full"></div></td>
-                      </tr>
-                    ))
-                  ) : items.length === 0 ? (
+        <div className="flex flex-col gap-6">
+          <div className={`space-y-4 flex flex-col min-h-[320px] ${showAddProduct ? 'max-h-[min(48vh,480px)]' : 'max-h-[min(78vh,820px)]'}`}>
+            <div className="flex items-center justify-between px-2">
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-400">Live Inventory ({total})</h3>
+              <div className="flex gap-2">
+                <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 uppercase">● In Stock</span>
+                <span className="flex items-center gap-1.5 text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg border border-red-100 uppercase">● Low Stock</span>
+              </div>
+            </div>
+            <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm flex flex-col flex-1">
+              <div className="overflow-y-auto flex-1 custom-scrollbar">
+                <table className="w-full text-sm border-collapse relative">
+                  <thead className="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider text-[10px] sticky top-0 z-10">
                     <tr>
-                      <td colSpan="4" className="px-8 py-20 text-center text-gray-300 font-black uppercase tracking-[0.3em] text-[10px]">Catalog is currently empty</td>
+                      <th className="px-6 py-4 text-left">Product Details</th>
+                      <th className="px-6 py-4 text-left">Price & GST</th>
+                      <th className="px-6 py-4 text-left">Stock</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
-                  ) : (
-                    items.map(p => (
-                      <tr key={p._id} className="group hover:bg-gray-50/30 transition-all cursor-pointer" onClick={() => setViewing(p)}>
-                        <td className="px-8 py-6">
-                          <div className="flex items-center gap-5">
-                            <div className="h-16 w-16 rounded-2xl bg-white border border-gray-100 overflow-hidden flex items-center justify-center p-1 group-hover:shadow-lg transition-all" onClick={(e) => { e.stopPropagation(); if (p.images?.[0]?.url) setPreview(p.images[0].url) }}>
-                              {p.images?.[0]?.url ? (
-                                <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain" />
-                              ) : (
-                                <span className="text-[9px] text-gray-300 font-black">NO IMG</span>
-                              )}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="font-black text-gray-900 text-sm truncate max-w-[300px]">
-                                {p.name}
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {!loading &&
+                      items.map(p => (
+                        <tr key={p._id} className="group hover:bg-gray-50/50 transition-all cursor-pointer" onClick={() => setViewing(p)}>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-4">
+                              <div className="h-14 w-14 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center p-1" onClick={(e) => { e.stopPropagation(); if (p.images?.[0]?.url) setPreview(p.images[0].url) }}>
+                                {p.images?.[0]?.url ? (
+                                  <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain" />
+                                ) : (
+                                  <span className="text-[9px] text-gray-400 font-bold">NO IMG</span>
+                                )}
                               </div>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-[9px] text-indigo-600 font-black uppercase tracking-tighter bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100">{p.brand?.name || 'GENERIC'}</span>
-                                <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">{p.category?.name || 'UNCATEGORIZED'}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-8 py-6">
-                          <div className="font-black text-gray-900 text-base tabular-nums">₹{p.price.toLocaleString()}</div>
-                          <div className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">MRP ₹{p.mrp?.toLocaleString() || 'N/A'} · {p.gst}% GST</div>
-                        </td>
-                        <td className="px-8 py-6">
-                          <div className="flex justify-center">
-                            {p.variants?.length > 0 ? (
-                              <div className="flex -space-x-2">
-                                {p.variants.slice(0, 4).map((v, idx) => (
-                                  <div key={idx} className={`h-8 w-8 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-black uppercase ${v.stock <= 5 ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`} title={`${v.stock} units`}>
-                                    {v.stock}
-                                  </div>
-                                ))}
-                                {p.variants.length > 4 && (
-                                  <div className="h-8 w-8 rounded-full border-2 border-white bg-gray-900 text-white flex items-center justify-center text-[8px] font-black">
-                                    +{p.variants.length - 4}
+                              <div className="min-w-0">
+                                <div className="font-bold text-gray-900 truncate max-w-[240px] text-sm">
+                                  {p.name}
+                                </div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[9px] text-blue-600 font-bold uppercase">{p.brand?.name || 'Unbranded'}</span>
+                                  <span className="text-[9px] text-gray-400 font-medium">{p.category?.name || 'General'}</span>
+                                  {p.variants?.length > 0 && (
+                                    <span className="px-1.5 py-0.5 bg-blue-50 text-blue-600 text-[8px] font-black rounded uppercase border border-blue-100">
+                                      {p.variants.length} Variants
+                                    </span>
+                                  )}
+                                </div>
+                                {p.variants?.length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mt-1">
+                                    {p.variants.slice(0, 3).map((v, idx) => (
+                                      <span key={idx} className="text-[8px] bg-gray-100 px-1 rounded text-gray-500 font-bold">
+                                        ({Object.values(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).join(', ')})
+                                      </span>
+                                    ))}
+                                    {p.variants.length > 3 && <span className="text-[8px] text-gray-400">+{p.variants.length - 3} more</span>}
                                   </div>
                                 )}
                               </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-gray-900">₹{p.price.toLocaleString()}</div>
+                            <div className="text-[10px] text-gray-400 font-medium">MRP: ₹{p.mrp?.toLocaleString()} · {p.gst}% GST</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            {p.variants?.length > 0 ? (
+                              <div className="space-y-1">
+                                {p.variants.slice(0, 3).map((v, idx) => (
+                                  <div key={idx} className={`inline-flex flex-col px-2 py-0.5 rounded-lg border ${v.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                                    <span className="text-[9px] font-bold">{v.stock} ({Object.values(v.attributes instanceof Map ? Object.fromEntries(v.attributes) : (v.attributes || {})).join(', ')})</span>
+                                  </div>
+                                ))}
+                                {p.variants.length > 3 && <span className="text-[8px] text-gray-400">+{p.variants.length - 3} more</span>}
+                              </div>
                             ) : (
-                              <div className={`px-4 py-2 rounded-2xl border ${p.stock <= 5 ? 'bg-rose-50 text-rose-600 border-rose-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
-                                <div className="text-sm font-black tabular-nums">{p.stock}</div>
-                                <div className="text-[8px] font-black uppercase opacity-60">Available</div>
+                              <div className={`inline-flex flex-col px-3 py-1 rounded-lg border ${p.stock <= 5 ? 'bg-red-50 text-red-600 border-red-100' : 'bg-emerald-50 text-emerald-600 border-emerald-100'}`}>
+                                <span className="text-xs font-bold">{p.stock}</span>
+                                <span className="text-[8px] font-bold uppercase opacity-60">Units</span>
                               </div>
                             )}
-                          </div>
-                        </td>
-                        <td className="px-8 py-6 text-right">
-                          <div className="relative inline-block" onClick={e => e.stopPropagation()}>
-                            <button 
-                              onClick={() => setOpenDropdown(openDropdown === p._id ? null : p._id)}
-                              className="p-2.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all border border-transparent hover:border-gray-200"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <circle cx="12" cy="6" r="1.5" strokeWidth="3" />
-                                <circle cx="12" cy="12" r="1.5" strokeWidth="3" />
-                                <circle cx="12" cy="18" r="1.5" strokeWidth="3" />
-                              </svg>
-                            </button>
-                            {openDropdown === p._id && (
-                              <>
-                                <div className="fixed inset-0 z-10" onClick={() => setOpenDropdown(null)} />
-                                <div className="absolute right-0 top-full mt-3 w-56 bg-white rounded-[2rem] border border-gray-100 shadow-2xl z-20 py-3 animate-in zoom-in-95 duration-100">
-                                  <button onClick={() => { setManagingVariants(p); setOpenDropdown(null); }} className="w-full px-5 py-3 text-left text-xs font-black uppercase tracking-widest flex items-center gap-3 hover:bg-indigo-50 text-indigo-600 transition-all">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                                    Variants
-                                  </button>
-                                  <button onClick={() => { openEdit(p); setOpenDropdown(null); }} className="w-full px-5 py-3 text-left text-xs font-black uppercase tracking-widest flex items-center gap-3 hover:bg-blue-50 text-blue-600 transition-all">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                    Configure
-                                  </button>
-                                  <button onClick={() => { reduceStock(p._id); setOpenDropdown(null); }} className="w-full px-5 py-3 text-left text-xs font-black uppercase tracking-widest flex items-center gap-3 hover:bg-amber-50 text-amber-600 transition-all">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M20 12H4" /></svg>
-                                    Quick Stock
-                                  </button>
-                                  <div className="border-t border-gray-50 my-2 mx-5" />
-                                  <button onClick={() => { remove(p); setOpenDropdown(null); }} className="w-full px-5 py-3 text-left text-xs font-black uppercase tracking-widest flex items-center gap-3 hover:bg-rose-50 text-rose-600 transition-all">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                                    Purge
-                                  </button>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-            <div className="flex justify-between items-center px-8 py-6 border-t border-gray-50 bg-gray-50/20">
-              <div className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
-                Tier {page} of {Math.max(1, Math.ceil(total / limit))}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="relative inline-block">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); setOpenDropdown(openDropdown === p._id ? null : p._id); }}
+                                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+                                title="Actions"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <circle cx="12" cy="6" r="2" />
+                                  <circle cx="12" cy="12" r="2" />
+                                  <circle cx="12" cy="18" r="2" />
+                                </svg>
+                              </button>
+                              {openDropdown === p._id && (
+                                <>
+                                  <div 
+                                    className="fixed inset-0 z-10"
+                                    onClick={(e) => { e.stopPropagation(); setOpenDropdown(null); }}
+                                  />
+                                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-gray-100 shadow-xl z-20 py-2">
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); setManagingVariants(p); setOpenDropdown(null); }}
+                                      className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-all text-indigo-600"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                      Manage Variants
+                                    </button>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); openEdit(p); setOpenDropdown(null); }}
+                                      className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-all text-blue-600"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                      Edit Product
+                                    </button>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); reduceStock(p._id); setOpenDropdown(null); }}
+                                      className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-all text-amber-600"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 12H4" /></svg>
+                                      Reduce Stock
+                                    </button>
+                                    <div className="border-t border-gray-100 my-1" />
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); remove(p); setOpenDropdown(null); }}
+                                      className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-red-50 transition-all text-red-600"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                      Delete Product
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
               </div>
-              <div className="flex gap-3">
-                <button onClick={() => load(Math.max(1, page - 1))} className="p-3 border border-gray-100 rounded-2xl bg-white hover:bg-gray-50 disabled:opacity-30 transition-all shadow-sm group" disabled={page === 1}>
-                  <svg className="w-4 h-4 group-active:-translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" /></svg>
-                </button>
-                <button onClick={() => load(page + 1)} className="p-3 border border-gray-100 rounded-2xl bg-white hover:bg-gray-50 disabled:opacity-30 transition-all shadow-sm group" disabled={page * limit >= total}>
-                  <svg className="w-4 h-4 group-active:translate-x-1 transition-transform" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" /></svg>
-                </button>
+              <div className="flex justify-between items-center px-6 py-4 border-t border-gray-50 bg-gray-50/30">
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  Page {page} of {Math.max(1, Math.ceil(total / limit))}
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => load(Math.max(1, page - 1))} className="p-2 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 disabled:opacity-30 transition-all shadow-sm" disabled={page === 1}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  <button onClick={() => load(page + 1)} className="p-2 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 disabled:opacity-30 transition-all shadow-sm" disabled={page * limit >= total}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Creation Section */}
-        {showAddProduct && (
-          <div className="bg-white border border-gray-100 rounded-[3rem] shadow-2xl overflow-hidden ring-4 ring-gray-900/5 animate-in slide-in-from-bottom-4 duration-300">
-            <div className="p-8 border-b border-gray-50 flex items-center justify-between">
+          {/* Creation Section — only when opened from header */}
+          {showAddProduct && (
+          <div className="flex flex-col bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden ring-1 ring-indigo-100/80 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="p-5 sm:p-6 border-b border-gray-50 flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h3 className="text-2xl font-black text-gray-900 italic">Create New Master Listing</h3>
-                <p className="text-[10px] text-indigo-600 font-black uppercase tracking-[0.2em] mt-1">Catalog Expansion Wizard</p>
+                <h3 className="text-lg font-bold text-gray-900">Add New Product</h3>
+                <p className="text-[10px] text-blue-600 font-bold uppercase tracking-widest mt-0.5">Catalogue wizard</p>
               </div>
-              <button type="button" onClick={() => setShowAddProduct(false)} className="p-3 rounded-2xl text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
+              <div className="flex items-start gap-3 flex-1 justify-end min-w-0">
+                <p className="text-[11px] text-gray-500 max-w-xl text-right max-md:text-left max-md:w-full">Variants and per-option SKUs: use <span className="font-bold text-indigo-600">Manage Variants</span> on the row after save.</p>
+                <button type="button" onClick={() => setShowAddProduct(false)} className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 shrink-0" title="Close">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
             </div>
             
-            <form onSubmit={create} className="p-8 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar">
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                {/* Left Column: Basic Info */}
-                <div className="xl:col-span-2 space-y-6">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Product Identity</label>
-                    <input className="w-full bg-gray-50 border-none rounded-[1.5rem] px-6 py-4 text-base font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="e.g. Premium Cotton Oversized Tee" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
-                  </div>
+            <form onSubmit={create} className="p-5 sm:p-6 space-y-5 overflow-y-auto max-h-[70vh] custom-scrollbar">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div className="space-y-4 sm:col-span-2 xl:col-span-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Product Name</label>
+                      <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. iPhone 16" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required />
+                    </div>
                     
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
