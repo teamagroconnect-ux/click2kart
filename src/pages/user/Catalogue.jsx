@@ -676,13 +676,13 @@ export default function Catalogue({ initialBrand, brandName }) {
       /* ─── PRODUCT GRID ─── */
       .ct-grid { 
         display: grid; 
-        gap: 20px; 
-        grid-template-columns: 1fr; 
+        gap: 16px; 
+        grid-template-columns: repeat(2, 1fr); 
         justify-content: center;
       }
-      @media (min-width: 480px)  { .ct-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; } }
-      @media (min-width: 768px)  { .ct-grid { grid-template-columns: repeat(3, 1fr); gap: 24px; } }
-      @media (min-width: 1280px) { .ct-grid { grid-template-columns: repeat(4, 1fr); gap: 28px; } }
+      @media (min-width: 480px)  { .ct-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; } }
+      @media (min-width: 768px)  { .ct-grid { grid-template-columns: repeat(3, 1fr); gap: 22px; } }
+      @media (min-width: 1280px) { .ct-grid { grid-template-columns: repeat(4, 1fr); gap: 26px; } }
 
       /* ─── SKELETON ─── */
       .ct-skel { background: white; border-radius: 20px; overflow: hidden; border: 1px solid rgba(124,58,237,.07); }

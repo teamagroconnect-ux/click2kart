@@ -64,15 +64,15 @@ export default function PartnerVerify() {
     : 'Date not available';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 py-12 px-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <Link to="/" className="inline-flex items-center gap-4 mb-6">
-            <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-16" />
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-3 mb-4">
+            <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-12" />
           </Link>
-          <h1 className="text-5xl font-black text-gray-900 mb-4">Partner Verification</h1>
-          <p className="text-gray-600 text-xl">Verify the authenticity of this partner</p>
+          <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">Partner Verification</h1>
+          <p className="text-gray-600 text-base md:text-lg">Verify the authenticity of this partner</p>
         </div>
 
         {/* Verification Card */}
@@ -80,78 +80,72 @@ export default function PartnerVerify() {
           {/* Left Section - White Background */}
           <div className="flex flex-col lg:flex-row">
             {/* Left Panel */}
-            <div className="lg:w-3/5 bg-white p-10 relative overflow-hidden">
+            <div className="lg:w-3/5 bg-white p-6 md:p-8 relative overflow-hidden">
               {/* Subtle background pattern */}
-              <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-indigo-100/30 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
+              <div className="absolute top-0 right-0 w-64 md:w-96 h-64 md:h-96 bg-gradient-to-br from-indigo-100/30 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
               
               <div className="relative z-10">
                 {/* Logo Section */}
-                <div className="flex items-center gap-6 mb-10">
-                  <div className="h-20 w-auto">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="h-16 w-auto">
                     <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-auto" />
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <h2 className="text-4xl font-black text-indigo-900 leading-tight">
-                      Click<span className="text-orange-500">2</span><span className="text-green-600">kart</span>
-                    </h2>
-                    <p className="text-gray-500 text-sm font-medium">Indian's trusted b2b hub</p>
                   </div>
                 </div>
                 
                 {/* Verification Badge */}
-                <div className={`inline-flex items-center gap-3 px-6 py-3 rounded-full mb-8 ${partner.kycVerified ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
-                  <span className="text-2xl">{partner.kycVerified ? '✅' : '⏳'}</span>
-                  <span className="text-xl font-black uppercase tracking-widest">
+                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 ${partner.kycVerified ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                  <span className="text-xl">{partner.kycVerified ? '✅' : '⏳'}</span>
+                  <span className="text-base font-black uppercase tracking-widest">
                     {partner.kycVerified ? 'Verified Partner' : 'Pending Verification'}
                   </span>
                 </div>
                 
                 {/* Partner Photo and Details */}
-                <div className="flex items-start gap-10 mb-10">
-                  <div className="flex-shrink-0">
+                <div className="flex flex-col sm:flex-row items-start gap-6 mb-6">
+                  <div className="flex-shrink-0 mx-auto sm:mx-0">
                     {partner?.profilePicture ? (
                       <img 
                         src={getImageUrl(partner.profilePicture)} 
                         alt={partner?.name} 
-                        className="h-52 w-52 rounded-3xl object-cover border-6 border-indigo-100 shadow-xl"
+                        className="h-36 w-36 sm:h-44 sm:w-44 rounded-2xl object-cover border-4 border-indigo-100 shadow-xl"
                       />
                     ) : (
-                      <div className="h-52 w-52 rounded-3xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center border-6 border-indigo-100 shadow-xl">
-                        <div className="text-8xl font-black text-white">
+                      <div className="h-36 w-36 sm:h-44 sm:w-44 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center border-4 border-indigo-100 shadow-xl">
+                        <div className="text-6xl font-black text-white">
                           {partner?.name?.charAt(0)?.toUpperCase() || 'P'}
                         </div>
                       </div>
                     )}
                   </div>
                   
-                  <div className="flex flex-col justify-center">
-                    <h1 className="text-5xl font-black text-gray-900 leading-tight mb-4">
+                  <div className="flex flex-col justify-center text-center sm:text-left w-full">
+                    <h1 className="text-2xl md:text-3xl font-black text-gray-900 leading-tight mb-3">
                       {(partner?.name || 'PARTNER NAME').toUpperCase()}
                     </h1>
                     
-                    <div className="space-y-4">
+                    <div className="space-y-3 w-full">
                       {partner?.email && (
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-700 text-2xl">
+                        <div className="flex items-center justify-center sm:justify-start gap-3">
+                          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-700 text-xl">
                             ✉️
                           </div>
-                          <span className="text-gray-700 font-semibold text-xl">{partner.email}</span>
+                          <span className="text-gray-700 font-semibold text-sm md:text-base break-all">{partner.email}</span>
                         </div>
                       )}
                       {partner?.phone && (
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-700 text-2xl">
+                        <div className="flex items-center justify-center sm:justify-start gap-3">
+                          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-700 text-xl">
                             📞
                           </div>
-                          <span className="text-gray-700 font-semibold text-xl">{partner.phone}</span>
+                          <span className="text-gray-700 font-semibold text-sm md:text-base">{partner.phone}</span>
                         </div>
                       )}
                       {addressLine && (
-                        <div className="flex items-start gap-4">
-                          <div className="w-12 h-12 bg-indigo-100 rounded-2xl flex items-center justify-center text-indigo-700 text-2xl mt-1">
+                        <div className="flex items-start justify-center sm:justify-start gap-3">
+                          <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-700 text-xl mt-1">
                             📍
                           </div>
-                          <span className="text-gray-700 font-semibold text-xl leading-snug">{addressLine}</span>
+                          <span className="text-gray-700 font-semibold text-sm md:text-base leading-snug">{addressLine}</span>
                         </div>
                       )}
                     </div>
@@ -161,81 +155,79 @@ export default function PartnerVerify() {
             </div>
             
             {/* Right Panel - Blue Gradient Background */}
-            <div className="lg:w-2/5 bg-gradient-to-br from-indigo-800 to-indigo-900 text-white p-10 relative overflow-hidden">
+            <div className="lg:w-2/5 bg-gradient-to-br from-indigo-800 to-indigo-900 text-white p-6 md:p-8 relative overflow-hidden">
               {/* Background Pattern */}
               <div className="absolute inset-0 opacity-10" style={{ 
                 backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', 
-                backgroundSize: '20px 20px' 
+                backgroundSize: '16px 16px' 
               }} />
               
               <div className="relative z-10 h-full flex flex-col">
                 {/* Verification Status */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-6 text-center mb-10">
-                  <div className="text-3xl font-medium mb-1">PARTNER ID</div>
-                  <div className="text-5xl font-black font-mono">{partner?._id?.slice(-8) || '--------'}</div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 md:p-6 text-center mb-6 md:mb-8">
+                  <div className="text-sm md:text-xl font-medium mb-1">PARTNER ID</div>
+                  <div className="text-3xl md:text-4xl font-black font-mono">{partner?._id?.slice(-8) || '--------'}</div>
                 </div>
                 
                 {/* Details List */}
-                <div className="space-y-8 flex-1">
+                <div className="space-y-5 md:space-y-6 flex-1">
                   {partner?.bloodGroup && (
-                    <div className="space-y-3 border-b border-white/20 pb-6">
-                      <div className="text-gray-300 font-semibold text-xl flex items-center gap-3">
+                    <div className="space-y-2 border-b border-white/20 pb-4">
+                      <div className="text-gray-300 font-semibold text-sm md:text-xl flex items-center gap-2 md:gap-3">
                         💧 BLOOD GROUP
                       </div>
-                      <div className="text-3xl font-black">{partner.bloodGroup}</div>
+                      <div className="text-xl md:text-2xl font-black">{partner.bloodGroup}</div>
                     </div>
                   )}
                   
-                  <div className="space-y-3 border-b border-white/20 pb-6">
-                    <div className="text-gray-300 font-semibold text-xl flex items-center gap-3">
+                  <div className="space-y-2 border-b border-white/20 pb-4">
+                    <div className="text-gray-300 font-semibold text-sm md:text-xl flex items-center gap-2 md:gap-3">
                       🗓️ JOINING DATE
                     </div>
-                    <div className="text-3xl font-black">{joiningDate}</div>
+                    <div className="text-lg md:text-xl font-black">{joiningDate}</div>
                   </div>
                   
-                  <div className="space-y-3">
-                    <div className="text-gray-300 font-semibold text-xl flex items-center gap-3">
+                  <div className="space-y-2">
+                    <div className="text-gray-300 font-semibold text-sm md:text-xl flex items-center gap-2 md:gap-3">
                       🎁 INVITE CODE
                     </div>
-                    <div className="text-4xl font-black">{partner?.inviteCode || '----'}</div>
+                    <div className="text-xl md:text-2xl font-black">{partner?.inviteCode || '----'}</div>
                   </div>
                 </div>
                 
                 {/* Trust Message */}
-                <div className="mt-10 text-center">
-                  <div className="text-2xl font-serif italic opacity-70 mb-2">Trusted Partner</div>
-                  <div className="text-xl font-semibold">Click2kart</div>
+                <div className="mt-6 md:mt-8 text-center">
+                  <div className="text-base md:text-2xl font-serif italic opacity-70 mb-1">Trusted Partner</div>
+                  <div className="text-sm md:text-xl font-semibold">Click2kart</div>
                 </div>
               </div>
             </div>
           </div>
           
           {/* Trust Badges at Bottom */}
-          <div className="bg-gradient-to-br from-indigo-50 to-white border-t-2 border-indigo-200 p-8">
-            <div className="flex flex-wrap items-center justify-center gap-8">
-              <div className="flex items-center gap-4 px-8 py-4 rounded-3xl border-2 border-indigo-300 bg-white/80 shadow-lg">
-                <span className="text-4xl">🏆</span>
-                <div className="font-semibold text-gray-700 text-xl">Trusted Network</div>
-              </div>
-              <div className="flex items-center gap-4 px-8 py-4 rounded-3xl border-2 border-indigo-300 bg-white/80 shadow-lg">
-                <span className="text-4xl">🤝</span>
-                <div className="font-semibold text-gray-700 text-xl">Genuine Partners</div>
-              </div>
-              <div className="flex items-center gap-4 px-8 py-4 rounded-3xl border-2 border-indigo-300 bg-white/80 shadow-lg">
-                <span className="text-4xl">🔐</span>
-                <div className="font-semibold text-gray-700 text-xl">Secure Transactions</div>
-              </div>
+          <div className="bg-gradient-to-br from-indigo-50 to-white border-t-2 border-indigo-200 p-4 md:p-6">
+            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
+              {[
+                { icon: '🏆', label: 'Trusted Network' },
+                { icon: '🤝', label: 'Genuine Partners' },
+                { icon: '🔐', label: 'Secure Transactions' },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2 px-4 py-3 md:px-6 md:py-4 rounded-2xl border-2 border-indigo-300 bg-white/80 shadow-md">
+                  <span className="text-2xl md:text-3xl">{item.icon}</span>
+                  <div className="font-semibold text-gray-700 text-xs md:text-base">{item.label}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
         
         {/* Back Button */}
-        <div className="text-center mt-12">
+        <div className="text-center mt-8 md:mt-12">
           <Link 
             to="/" 
-            className="inline-flex items-center gap-3 px-12 py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-3xl font-bold text-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-xl hover:scale-105 active:scale-95"
+            className="inline-flex items-center gap-2 md:gap-3 px-8 md:px-12 py-3 md:py-5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-2xl md:rounded-3xl font-bold text-base md:text-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-xl hover:scale-105 active:scale-95"
           >
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 md:w-8 md:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Back to Home

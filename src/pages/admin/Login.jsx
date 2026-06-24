@@ -28,35 +28,29 @@ export default function Login() {
     }
   }
 
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      submit(e)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="h-16 w-28 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-1 overflow-hidden">
+            <div className="h-20 w-40 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-2 overflow-hidden">
               <img src="/layoutlogo.png" alt="Click2Kart" className="h-full w-full object-contain" />
             </div>
-            <div className="flex flex-col items-start">
-              <span className="text-2xl font-black text-gray-900 leading-tight">Click2Kart</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">B2B Marketplace</span>
-            </div>
-          </div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-gray-200 bg-white text-[11px] text-gray-600 shadow-sm">
-            <span className="h-5 w-5 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-semibold text-white">
-              C2K
-            </span>
-            <span>Click2Kart Admin Console</span>
           </div>
         </div>
         <form
           onSubmit={submit}
+          onKeyDown={handleKeyPress}
           className="bg-white border border-gray-200 rounded-2xl px-6 py-6 md:px-8 md:py-7 shadow-lg space-y-4"
         >
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Sign in</h1>
-            <p className="text-xs text-gray-500 mt-1">
-              Use your admin credentials to manage inventory, orders and billing.
-            </p>
+            <h1 className="text-xl font-semibold text-gray-900">Admin Sign in</h1>
           </div>
           {error && (
             <div className="text-red-600 text-xs border border-red-200 bg-red-50 rounded-md px-3 py-2">
@@ -85,9 +79,6 @@ export default function Login() {
           <button className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg text-sm font-semibold transition-colors">
             Login
           </button>
-          <div className="text-[11px] text-gray-500 text-center pt-1">
-            Protected area • For Click2Kart staff only.
-          </div>
         </form>
       </div>
     </div>
