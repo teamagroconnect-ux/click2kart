@@ -1,15 +1,15 @@
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import { useCart } from '../lib/CartContext'
+import { useAuth } from '../lib/AuthContext'
 import { CONFIG } from '../shared/lib/config.js'
 import ConfirmModal from './ConfirmModal'
 import { getImageUrl } from '../lib/cloudinary'
 
 function Avatar({ user, size = 'md' }) {
-  const sz = { sm: 'h-8 w-8', md: 'h-12 w-12', lg: 'h-16 w-16' }[size]
+  const sz = { sm: 'h-8 w-8', md: 'h-10 w-10', lg: 'h-14 w-14' }[size]
   const avatarUrl = user?.kyc?.profilePicture || user?.avatar
   
-  // Get initials (first and last) instead of just first char
   const getInitials = (name = '') => {
     const names = name.trim().split(/\s+/)
     if (names.length === 0) return 'U'
@@ -17,11 +17,26 @@ function Avatar({ user, size = 'md' }) {
     return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase()
   }
   
-  if (avatarUrl)
-    return <img src={getImageUrl(avatarUrl)} alt={user?.name} className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`} />
   return (
-    <div className={`${sz} rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center font-black text-white ring-2 ring-white shadow-md`}>
-      {getInitials(user?.name)}
+    <div className={`${sz} rounded-xl overflow-hidden ring-2 ring-white shadow-md bg-gradient-to-br from-indigo-50 to-white flex-shrink-0`}>
+      {avatarUrl ? (
+        <img 
+          src={getImageUrl(avatarUrl)} 
+          alt={user?.name} 
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.style.display = 'none';
+            e.target.nextSibling.style.display = 'flex';
+          }}
+        />
+      ) : null}
+      <div 
+        className="w-full h-full items-center justify-center font-black text-indigo-600 text-xs tracking-tighter"
+        style={{ display: avatarUrl ? 'none' : 'flex' }}
+      >
+        {getInitials(user?.name)}
+      </div>
     </div>
   )
 }
@@ -33,7 +48,7 @@ function classNames(...classes) {
 export default function UserLayout() {
   const location = useLocation()
   const { cartCount } = useCart()
-  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isPwaInstalled, setIsPwaInstalled] = useState(false)
@@ -48,9 +63,8 @@ export default function UserLayout() {
   ]
 
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
-    window.location.reload()
+    logout()
+    navigate('/login')
   }
 
   useEffect(() => {}, [location.pathname])
@@ -139,18 +153,19 @@ export default function UserLayout() {
               ))}
             </nav>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 md:gap-4">
               <Link
                 to="/cart"
-                className="group relative h-11 w-11 md:h-12 md:w-12 flex items-center justify-center rounded-2xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-xl transition-all active:scale-95"
+                className="group relative h-10 w-10 md:h-12 md:w-12 flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-indigo-100 hover:shadow-lg hover:border-indigo-100 transition-all duration-300 active:scale-95"
               >
-                <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-700 group-hover:text-indigo-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                  <path d="M7 6h13l-1.2 7H9.2L7 6Z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="10" cy="19" r="1.5" fill="currentColor" />
-                  <circle cx="17" cy="19" r="1.5" fill="currentColor" />
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
+                <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-700 group-hover:text-indigo-600 transition-colors relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="9" cy="21" r="1" fill="currentColor" />
+                  <circle cx="20" cy="21" r="1" fill="currentColor" />
                 </svg>
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-5 w-5 flex items-center justify-center text-[10px] font-black text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg shadow-md border-2 border-white">
+                  <span className="absolute -top-1.5 -right-1.5 h-5 w-5 flex items-center justify-center text-[10px] font-black text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-200 border-2 border-white z-20 animate-in zoom-in duration-300">
                     {cartCount}
                   </span>
                 )}

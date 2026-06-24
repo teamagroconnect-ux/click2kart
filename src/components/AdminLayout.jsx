@@ -82,6 +82,13 @@ const Icon = ({ name }) => (
         <path d="m13 10V3L4 14h7v7l9-11h-7z" />
       </svg>
     )}
+    {name === 'ticket' && (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        <path d="M12 7v4" />
+        <path d="M12 11h.01" />
+      </svg>
+    )}
   </span>
 )
 
@@ -286,6 +293,12 @@ export default function AdminLayout() {
                   Staff Management
                 </>
               ), 'staff')}
+              {link('/admin/support-tickets', (
+                <>
+                  <Icon name="ticket" />
+                  Support Tickets
+                </>
+              ), 'support-tickets')}
               <div className="pt-6 mt-6 border-t border-gray-50">
                 <div className="text-[10px] font-black uppercase text-gray-400 tracking-[0.2em] mb-4 px-2">
                   System
