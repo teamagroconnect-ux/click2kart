@@ -115,10 +115,11 @@ export default function Profile() {
     if (!token) { navigate('/login', { state: { from: location.pathname } }); return; }
     loadProfile();
     loadAddresses();
+    loadTickets();
   }, [token]);
 
   useEffect(() => {
-    if (activeSection === 'support') loadTickets();
+    if (activeSection === 'support' && tickets.length === 0) loadTickets();
   }, [activeSection]);
 
   useEffect(() => {
@@ -127,8 +128,8 @@ export default function Profile() {
 
   const loadRecentOrders = async () => {
     try {
-      const { data } = await api.get('/api/orders/my-orders?limit=5');
-      setRecentOrders(data.orders || []);
+      const { data } = await api.get('/api/orders/my');
+      setRecentOrders(data.slice(0, 5) || []);
     } catch (e) { console.error('Failed to load recent orders', e); }
   };
 

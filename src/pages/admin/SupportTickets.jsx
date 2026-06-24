@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
+import { getImageUrl } from '../../lib/cloudinary'
 
 export default function SupportTickets() {
   const { notify } = useToast()
@@ -282,18 +283,26 @@ export default function SupportTickets() {
                 {/* User Profile */}
                 <div>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg">
-                      {selectedTicket.user?.name?.charAt(0)}
-                    </div>
+                    {userContext?.user?.kyc?.profilePicture ? (
+                      <img 
+                        src={getImageUrl(userContext.user.kyc.profilePicture)} 
+                        alt={userContext.user?.name} 
+                        className="h-14 w-14 rounded-2xl object-cover shadow-lg border-2 border-white"
+                      />
+                    ) : (
+                      <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white font-black text-lg shadow-lg">
+                        {userContext?.user?.name?.charAt(0) || selectedTicket.user?.name?.charAt(0)}
+                      </div>
+                    )}
                     <div>
-                      <div className="font-black text-gray-900 tracking-tight">{selectedTicket.user?.name}</div>
-                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{selectedTicket.user?.phone}</div>
+                      <div className="font-black text-gray-900 tracking-tight">{userContext?.user?.name || selectedTicket.user?.name}</div>
+                      <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{userContext?.user?.phone || selectedTicket.user?.phone}</div>
                     </div>
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                       <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Email</span>
-                      <span className="text-xs font-bold text-gray-700 truncate ml-4">{selectedTicket.user?.email}</span>
+                      <span className="text-xs font-bold text-gray-700 truncate ml-4">{userContext?.user?.email || selectedTicket.user?.email}</span>
                     </div>
                   </div>
                 </div>
