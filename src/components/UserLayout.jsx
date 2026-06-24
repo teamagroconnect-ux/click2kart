@@ -120,16 +120,16 @@ export default function UserLayout() {
     <div className="min-h-screen flex flex-col bg-white">
       <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-xl shadow-sm transition-all duration-300">
         <div className="px-4 md:px-8">
-          <div className="flex items-center justify-between h-14 sm:h-16 md:h-20 gap-4">
+          <div className="flex items-center justify-between h-12 sm:h-14 gap-3">
             <Link to="/" className="flex items-center group gap-3 flex-1">
               <img
                 src="/layoutlogo.png"
                 alt="Click2Kart"
-                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain transition-all duration-300 group-hover:scale-105"
+                className="h-7 sm:h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105"
               />
             </Link>
 
-            <nav className="hidden lg:flex items-center gap-3">
+            <nav className="hidden lg:flex items-center gap-2">
               {[
                 { to: '/', label: 'Dashboard' },
                 { to: '/products', label: 'Catalogue' },
@@ -141,7 +141,7 @@ export default function UserLayout() {
                   to={link.to}
                   className={({ isActive }) =>
                     classNames(
-                      'px-5 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] transition-all duration-300',
+                      'px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.15em] transition-all duration-300',
                       isActive
                         ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-100 scale-105'
                         : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
@@ -153,34 +153,33 @@ export default function UserLayout() {
               ))}
             </nav>
 
-            <div className="flex items-center gap-3 md:gap-4">
+            <div className="flex items-center gap-2 md:gap-3">
               <Link
                 to="/cart"
-                className="group relative h-10 w-10 md:h-12 md:w-12 flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-indigo-100 hover:shadow-lg hover:border-indigo-100 transition-all duration-300 active:scale-95"
+                className="group relative h-9 w-9 md:h-10 md:w-10 flex items-center justify-center rounded-xl bg-white border border-gray-100 shadow-sm hover:shadow-indigo-100 hover:shadow-lg hover:border-indigo-100 transition-all duration-300 active:scale-95"
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-xl" />
-                <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-700 group-hover:text-indigo-600 transition-colors relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg className="w-4 h-4 md:w-5 md:h-5 text-gray-700 group-hover:text-indigo-600 transition-colors relative z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" strokeLinecap="round" strokeLinejoin="round" />
                   <circle cx="9" cy="21" r="1" fill="currentColor" />
                   <circle cx="20" cy="21" r="1" fill="currentColor" />
                 </svg>
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-5 w-5 flex items-center justify-center text-[10px] font-black text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-200 border-2 border-white z-20 animate-in zoom-in duration-300">
+                  <span className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center text-[9px] font-black text-white bg-indigo-600 rounded-lg shadow-lg shadow-indigo-200 border-2 border-white z-20 animate-in zoom-in duration-300">
                     {cartCount}
                   </span>
                 )}
               </Link>
-              <div className="hidden sm:flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2">
                 {user ? (
-                  <div className="flex items-center gap-4">
-                    <Link to="/profile" className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl border border-gray-200 bg-white shadow-lg shadow-gray-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-100 transition-all cursor-pointer">
-                      <Avatar user={user} size="md" />
-                      <div className="flex flex-col items-start gap-0.5">
-                        <div className="inline-flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
-                          <span className="text-[11px] font-black uppercase tracking-[0.2em] text-gray-900">{user.name}</span>
+                  <div className="flex items-center gap-3">
+                    <Link to="/profile" className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 bg-white shadow-lg shadow-gray-100 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-100 transition-all cursor-pointer">
+                      <Avatar user={user} size="sm" />
+                      <div className="flex flex-col items-start gap-0">
+                        <div className="inline-flex items-center gap-1.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900">{user.name}</span>
                         </div>
-                        <span className="text-[9px] font-bold uppercase tracking-[0.25em] text-gray-500 leading-none">BUSINESS ACCOUNT</span>
                       </div>
                     </Link>
                     <button
@@ -188,9 +187,9 @@ export default function UserLayout() {
                       onClick={handleLogout}
                       title="Sign out"
                       aria-label="Sign out"
-                      className="h-14 w-14 inline-flex items-center justify-center rounded-3xl border border-gray-100 bg-white text-gray-400 shadow-lg shadow-gray-100 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 hover:shadow-xl hover:shadow-red-100 active:scale-95"
+                      className="h-10 w-10 inline-flex items-center justify-center rounded-2xl border border-gray-100 bg-white text-gray-400 shadow-lg shadow-gray-100 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 hover:shadow-xl hover:shadow-red-100 active:scale-95"
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                       </svg>
                     </button>
@@ -200,14 +199,14 @@ export default function UserLayout() {
                     <Link
                       to="/login"
                       state={{ from: location.pathname + location.search }}
-                      className="px-7 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
+                      className="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors"
                     >
                       Login
                     </Link>
                     <Link
                       to="/signup"
                       state={{ from: location.pathname + location.search }}
-                      className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[11px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:from-indigo-700 hover:to-purple-700 transition-all active:scale-95"
+                      className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:from-indigo-700 hover:to-purple-700 transition-all active:scale-95"
                     >
                       Get Started
                     </Link>
@@ -217,7 +216,7 @@ export default function UserLayout() {
                 {!isPwaInstalled && !getAppDismissed && (
                   <button
                     onClick={handleGetAppClick}
-                    className="ml-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:from-indigo-700 hover:to-purple-700 transition-all active:scale-95 lg:hidden"
+                    className="ml-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black text-[10px] uppercase tracking-[0.2em] shadow-xl shadow-indigo-200 hover:from-indigo-700 hover:to-purple-700 transition-all active:scale-95 lg:hidden"
                     title="Install App"
                   >
                     Install App
