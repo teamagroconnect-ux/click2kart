@@ -505,7 +505,7 @@ export default function Catalogue({ initialBrand, brandName }) {
       @media (min-width: 1024px) { 
         .ct-layout { 
           display: grid; 
-          grid-template-columns: 268px 1fr; 
+          grid-template-columns: 1fr 268px; 
           gap: 24px;
           padding: 0 32px;
         } 
@@ -1088,118 +1088,6 @@ export default function Catalogue({ initialBrand, brandName }) {
         {/* ══ LAYOUT ══ */}
         <div className="ct-layout">
 
-          {/* ── SIDEBAR ── */}
-          <aside className="ct-sidebar">
-            <div className="ct-sidebar-in">
-
-              {/* Sort */}
-              <div>
-                <div className="ct-sb-label">Sort By</div>
-                {sortOpts.map(o => (
-                  <button key={o.v} className={`ct-sb-sort-btn${sort === o.v ? ' on' : ''}`} onClick={() => setSort(o.v)}>
-                    <div className="ct-sb-sort-ico">{o.ico}</div>
-                    {o.l}
-                    {sort === o.v && (
-                      <svg style={{ marginLeft: 'auto', flexShrink: 0 }} width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {/* Categories */}
-              <div>
-                <div className="ct-sb-label">Categories</div>
-                <div className="ct-sb-cats">
-                  <button className={`ct-sb-cat-btn${category === '' ? ' on' : ''}`} onClick={() => { setCategory(''); setSubCategory(''); if (!brand) setBrowsePath(null) }}>
-                    <div className="ct-sb-cat-img"><span style={{ fontSize: 17 }}>📦</span></div>
-                    <div style={{ flex: 1, textAlign: 'left' }}>
-                      <div style={{ fontWeight: 700, fontSize: 13 }}>All Categories</div>
-                    </div>
-                    {category === '' && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" /></svg></div>}
-                  </button>
-                  {categories.map(c => (
-                    <button key={c._id} className={`ct-sb-cat-btn${category === c._id ? ' on' : ''}`} onClick={() => { setCategory(c._id); setBrowsePath('category') }}>
-                      <div className="ct-sb-cat-img">
-                        {c.image ? <img src={getCloudinaryUrl(c.image, 100)} alt={c.name} loading="lazy" width="50" height="50" /> : <span style={{ fontSize: 17 }}>📦</span>}
-                      </div>
-                      <div style={{ flex: 1, textAlign: 'left' }}>
-                        <div style={{ fontWeight: 700, fontSize: 13, textTransform: 'capitalize' }}>{c.name}</div>
-                      </div>
-                      {category === c._id && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" /></svg></div>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Subcategories (category specific) */}
-              {category && subcategories.length > 0 && (
-                <div>
-                  <div className="ct-sb-label">Subcategories</div>
-                  <div className="ct-sb-cats">
-                    {subcategories.map(s => (
-                      <button key={s._id} className={`ct-sb-cat-btn${subCategory === s._id ? ' on' : ''}`} onClick={() => setSubCategory(s._id)}>
-                        <div className="ct-sb-cat-img"><span style={{ fontSize: 17 }}>🔹</span></div>
-                        <div style={{ flex: 1, textAlign: 'left' }}>
-                          <div style={{ fontWeight: 700, fontSize: 13, textTransform: 'capitalize' }}>{s.name}</div>
-                        </div>
-                        {subCategory === s._id && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" /></svg></div>}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Brands */}
-              <div>
-                <div className="ct-sb-label">Filter by Brand</div>
-                <div className="ct-sb-cats">
-                  <button className={`ct-sb-cat-btn${brand === '' ? ' on' : ''}`} onClick={() => { setBrand(''); if (!category) setBrowsePath(null) }}>
-                    <div className="ct-sb-cat-img"><span style={{ fontSize: 17 }}>🏷️</span></div>
-                    <div style={{ flex: 1, textAlign: 'left' }}>
-                      <div style={{ fontWeight: 700, fontSize: 13 }}>All Brands</div>
-                    </div>
-                    {brand === '' && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" /></svg></div>}
-                  </button>
-                  {brands.map(b => (
-                    <button key={b._id} className={`ct-sb-cat-btn${brand === b._id ? ' on' : ''}`} onClick={() => { setBrand(b._id); setBrowsePath('brand') }}>
-                      <div className="ct-sb-cat-img">
-                        {b.logo ? <img src={getCloudinaryUrl(b.logo, 100)} alt={b.name} loading="lazy" width="50" height="50" /> : <span style={{ fontSize: 17 }}>🏭</span>}
-                      </div>
-                      <div style={{ flex: 1, textAlign: 'left' }}>
-                        <div style={{ fontWeight: 700, fontSize: 13, textTransform: 'capitalize' }}>{b.name}</div>
-                      </div>
-                      {brand === b._id && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" /></svg></div>}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Price Filter */}
-              <div>
-                <div className="ct-sb-label">Price Range (₹)</div>
-                {!authed && (
-                  <div className="ct-price-lock">
-                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                    <span style={{ fontSize: 11, fontWeight: 600 }}>Login to filter by price</span>
-                  </div>
-                )}
-                <div className="ct-price-row">
-                  <div className="ct-price-inp-w"><span className="ct-price-pfx">₹</span><input className="ct-price-inp" disabled={!authed} placeholder="Min" value={minPrice} onChange={e => setMinPrice(e.target.value)} /></div>
-                  <div className="ct-price-inp-w"><span className="ct-price-pfx">₹</span><input className="ct-price-inp" disabled={!authed} placeholder="Max" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} /></div>
-                </div>
-              </div>
-
-              {/* Stats */}
-              <div className="ct-sb-stats">
-                <div className="ct-sb-stat">
-                  <span className="ct-sb-stat-k" style={{ fontSize: 11 }}>Page</span>
-                  <span className="ct-sb-stat-vs">{page} / {totalPages}</span>
-                </div>
-              </div>
-
-            </div>
-          </aside>
-
           {/* ── MAIN ── */}
           <main className="ct-main">
 
@@ -1541,6 +1429,119 @@ export default function Catalogue({ initialBrand, brandName }) {
               </div>
             )}
           </main>
+
+          {/* ── SIDEBAR ── */}
+          <aside className="ct-sidebar">
+            <div className="ct-sidebar-in">
+
+              {/* Sort */}
+              <div>
+                <div className="ct-sb-label">Sort By</div>
+                {sortOpts.map(o => (
+                  <button key={o.v} className={`ct-sb-sort-btn${sort === o.v ? ' on' : ''}`} onClick={() => setSort(o.v)}>
+                    <div className="ct-sb-sort-ico">{o.ico}</div>
+                    {o.l}
+                    {sort === o.v && (
+                      <svg style={{ marginLeft: 'auto', flexShrink: 0 }} width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                    )}
+                  </button>
+                ))}
+              </div>
+
+              {/* Categories */}
+              <div>
+                <div className="ct-sb-label">Categories</div>
+                <div className="ct-sb-cats">
+                  <button className={`ct-sb-cat-btn${category === '' ? ' on' : ''}`} onClick={() => { setCategory(''); setSubCategory(''); if (!brand) setBrowsePath(null) }}>
+                    <div className="ct-sb-cat-img"><span style={{ fontSize: 17 }}>📦</span></div>
+                    <div style={{ flex: 1, textAlign: 'left' }}>
+                      <div style={{ fontWeight: 700, fontSize: 13 }}>All Categories</div>
+                    </div>
+                    {category === '' && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" /></svg></div>}
+                  </button>
+                  {categories.map(c => (
+                    <button key={c._id} className={`ct-sb-cat-btn${category === c._id ? ' on' : ''}`} onClick={() => { setCategory(c._id); setBrowsePath('category') }}>
+                      <div className="ct-sb-cat-img">
+                        {c.image ? <img src={getCloudinaryUrl(c.image, 100)} alt={c.name} loading="lazy" width="50" height="50" /> : <span style={{ fontSize: 17 }}>📦</span>}
+                      </div>
+                      <div style={{ flex: 1, textAlign: 'left' }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, textTransform: 'capitalize' }}>{c.name}</div>
+                      </div>
+                      {category === c._id && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" /></svg></div>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Subcategories (category specific) */}
+              {category && subcategories.length > 0 && (
+                <div>
+                  <div className="ct-sb-label">Subcategories</div>
+                  <div className="ct-sb-cats">
+                    {subcategories.map(s => (
+                      <button key={s._id} className={`ct-sb-cat-btn${subCategory === s._id ? ' on' : ''}`} onClick={() => setSubCategory(s._id)}>
+                        <div className="ct-sb-cat-img"><span style={{ fontSize: 17 }}>🔹</span></div>
+                        <div style={{ flex: 1, textAlign: 'left' }}>
+                          <div style={{ fontWeight: 700, fontSize: 13, textTransform: 'capitalize' }}>{s.name}</div>
+                        </div>
+                        {subCategory === s._id && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" /></svg></div>}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Brands */}
+              <div>
+                <div className="ct-sb-label">Filter by Brand</div>
+                <div className="ct-sb-cats">
+                  <button className={`ct-sb-cat-btn${brand === '' ? ' on' : ''}`} onClick={() => { setBrand(''); if (!category) setBrowsePath(null) }}>
+                    <div className="ct-sb-cat-img"><span style={{ fontSize: 17 }}>🏷️</span></div>
+                    <div style={{ flex: 1, textAlign: 'left' }}>
+                      <div style={{ fontWeight: 700, fontSize: 13 }}>All Brands</div>
+                    </div>
+                    {brand === '' && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" /></svg></div>}
+                  </button>
+                  {brands.map(b => (
+                    <button key={b._id} className={`ct-sb-cat-btn${brand === b._id ? ' on' : ''}`} onClick={() => { setBrand(b._id); setBrowsePath('brand') }}>
+                      <div className="ct-sb-cat-img">
+                        {b.logo ? <img src={getCloudinaryUrl(b.logo, 100)} alt={b.name} loading="lazy" width="50" height="50" /> : <span style={{ fontSize: 17 }}>🏭</span>}
+                      </div>
+                      <div style={{ flex: 1, textAlign: 'left' }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, textTransform: 'capitalize' }}>{b.name}</div>
+                      </div>
+                      {brand === b._id && <div className="ct-sb-cat-check"><svg width="9" height="9" fill="none" stroke="white" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7" /></svg></div>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price Filter */}
+              <div>
+                <div className="ct-sb-label">Price Range (₹)</div>
+                {!authed && (
+                  <div className="ct-price-lock">
+                    <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                    <span style={{ fontSize: 11, fontWeight: 600 }}>Login to filter by price</span>
+                  </div>
+                )}
+                <div className="ct-price-row">
+                  <div className="ct-price-inp-w"><span className="ct-price-pfx">₹</span><input className="ct-price-inp" disabled={!authed} placeholder="Min" value={minPrice} onChange={e => setMinPrice(e.target.value)} /></div>
+                  <div className="ct-price-inp-w"><span className="ct-price-pfx">₹</span><input className="ct-price-inp" disabled={!authed} placeholder="Max" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} /></div>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="ct-sb-stats">
+                <div className="ct-sb-stat">
+                  <span className="ct-sb-stat-k" style={{ fontSize: 11 }}>Page</span>
+                  <span className="ct-sb-stat-vs">{page} / {totalPages}</span>
+                </div>
+              </div>
+
+            </div>
+          </aside>
+
         </div>
 
         {/* mobile filter sheet */}

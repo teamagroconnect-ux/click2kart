@@ -8,11 +8,20 @@ import { getImageUrl } from '../lib/cloudinary'
 function Avatar({ user, size = 'md' }) {
   const sz = { sm: 'h-8 w-8', md: 'h-12 w-12', lg: 'h-16 w-16' }[size]
   const avatarUrl = user?.kyc?.profilePicture || user?.avatar
+  
+  // Get initials (first and last) instead of just first char
+  const getInitials = (name = '') => {
+    const names = name.trim().split(/\s+/)
+    if (names.length === 0) return 'U'
+    if (names.length === 1) return names[0].charAt(0).toUpperCase()
+    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase()
+  }
+  
   if (avatarUrl)
     return <img src={getImageUrl(avatarUrl)} alt={user?.name} className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`} />
   return (
     <div className={`${sz} rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center font-black text-white ring-2 ring-white shadow-md`}>
-      {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+      {getInitials(user?.name)}
     </div>
   )
 }
@@ -96,13 +105,13 @@ export default function UserLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-xl shadow-sm transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
+        <div className="px-4 md:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16 md:h-20 gap-4">
-            <Link to="/" className="flex items-center group gap-3">
+            <Link to="/" className="flex items-center group gap-3 flex-1">
               <img
                 src="/layoutlogo.png"
                 alt="Click2Kart"
-                className="h-10 sm:h-12 md:h-16 object-contain transition-all duration-300 group-hover:scale-105"
+                className="h-10 sm:h-12 md:h-14 lg:h-16 w-auto object-contain transition-all duration-300 group-hover:scale-105"
               />
             </Link>
 
