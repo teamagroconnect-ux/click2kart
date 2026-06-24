@@ -343,7 +343,7 @@ export default function Profile() {
     }
   };
 
-  const handleUploadImage = async (ticketId, e) => {
+  const handleUploadImage = async (ticketId, e, requestId = null) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const fd = new FormData();
@@ -351,11 +351,14 @@ export default function Profile() {
     try {
       notify('Uploading image...', 'info');
       const { data: uploadData } = await api.post('/api/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      const { data: ticketData } = await api.post(`/api/support-tickets/${ticketId}/upload-image`, { imageUrl: uploadData.url });
+      const { data: ticketData } = await api.post(`/api/support-tickets/${ticketId}/upload-image`, { 
+        imageUrl: uploadData.url,
+        requestId 
+      });
       setSelectedTicket(ticketData);
       notify('Image uploaded!', 'success');
     } catch (e) {
-      notify('Failed to upload image', 'error');
+      notify(e?.response?.data?.error || 'Failed to upload image', 'error');
     } finally {
       e.target.value = '';
     }
@@ -964,13 +967,20 @@ export default function Profile() {
                                 )}
                                 <p className="text-sm font-bold leading-relaxed whitespace-pre-wrap">{msg.message}</p>
                                 
-                                {msg.type === 'image_request' && (
+                                {msg.type === 'image_request' && !msg.isFulfilled && (
                                   <div className="mt-3 pt-3 border-t border-slate-50">
                                     <label className="flex items-center justify-center gap-2 w-full py-2 bg-violet-50 text-violet-600 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-violet-100 transition-all border border-violet-100 shadow-inner">
-                                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadImage(selectedTicket._id, e)} />
+                                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadImage(selectedTicket._id, e, msg._id)} />
                                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                                       Upload Requested Image
                                     </label>
+                                  </div>
+                                )}
+
+                                {msg.type === 'image_request' && msg.isFulfilled && (
+                                  <div className="mt-2 py-1.5 px-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center gap-2">
+                                    <svg className="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Request Fulfilled</span>
                                   </div>
                                 )}
 
@@ -1008,10 +1018,6 @@ export default function Profile() {
                     {selectedTicket.status !== 'Closed' && (
                       <div className="p-4 bg-white/95 backdrop-blur-md border-t border-slate-100">
                         <div className="flex gap-2 items-center bg-slate-50 p-2 rounded-2xl border border-slate-200 focus-within:border-violet-300 transition-all">
-                          <label className="p-3 text-slate-400 hover:text-violet-600 hover:bg-white rounded-xl transition-all cursor-pointer">
-                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadImage(selectedTicket._id, e)} />
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
-                          </label>
                           <input value={messageInput} onChange={e => setMessageInput(e.target.value)}
                             onKeyPress={e => e.key === 'Enter' && handleAddMessage(selectedTicket._id)}
                             placeholder="Type a message…"

@@ -317,7 +317,11 @@ export default function SupportTickets() {
                             </button>
                           )}
                           <div className="text-sm font-bold leading-relaxed whitespace-pre-wrap">
-                            {m.type === 'image_request' && <span className="mr-2 text-indigo-200">📷 Request:</span>}
+                            {m.type === 'image_request' && (
+                              <span className="mr-2 text-indigo-200">
+                                📷 {m.isFulfilled ? 'Request Fulfilled:' : 'Request:'}
+                              </span>
+                            )}
                             {m.message}
                           </div>
                           {m.type === 'image' && m.attachments?.length > 0 && (
