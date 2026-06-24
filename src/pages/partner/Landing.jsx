@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CONFIG } from '../../shared/lib/config'
-const logoImg = '/logo.png'
 
 export default function PartnerLanding() {
   const navigate = useNavigate()
@@ -25,13 +24,8 @@ export default function PartnerLanding() {
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-3">
-              <div className="h-12 w-28 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-1 overflow-hidden">
-                <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-full object-contain" />
-              </div>
-              <div className="flex flex-col">
-                <BrandLogo variant="sm" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Partner Program</span>
-              </div>
+              <img src="/layoutlogo.png" alt={CONFIG.BRAND_NAME} className="h-12 object-contain shadow-xl border border-gray-100 rounded-2xl" />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Partner Program</span>
             </Link>
             <div className="flex items-center gap-3">
               <Link 

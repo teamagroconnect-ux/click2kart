@@ -81,7 +81,7 @@ export default function Home() {
       "@type": "Organization",
       "name": "Click2Kart",
       "url": window.location.origin,
-      "logo": window.location.origin + "/logo.png",
+      "logo": window.location.origin + "/layoutlogo.png",
       "description": "India's Premier B2B Tech Hub for electronics wholesale."
     })
     api.get('/api/public/categories').then(({ data }) => setCats(data || [])).catch(() => setCats([]))

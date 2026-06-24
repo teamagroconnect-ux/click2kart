@@ -6,7 +6,6 @@ import { useAuth } from '../../lib/AuthContext'
 import PasswordInput from '../../components/PasswordInput'
 
 export default function Login() {
-  const logo = "/logo.png"
   const { notify } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
@@ -95,13 +94,7 @@ export default function Login() {
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="inline-flex items-center justify-center h-16 w-28 rounded-3xl bg-white shadow-xl border border-gray-100 p-1 overflow-hidden">
-              <img src={logo} alt="Click2Kart" className="h-full w-full object-contain" />
-            </div>
-            <div className="flex flex-col items-start">
-              <span className="text-2xl font-black text-gray-900 leading-tight">Click2Kart</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400">B2B Marketplace</span>
-            </div>
+            <img src="/layoutlogo.png" alt="Click2Kart" className="h-16 object-contain shadow-xl border border-gray-100 rounded-3xl" />
           </div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Welcome Back</h2>
           <p className="text-sm text-gray-500 font-medium">Access your B2B dashboard and inventory.</p>

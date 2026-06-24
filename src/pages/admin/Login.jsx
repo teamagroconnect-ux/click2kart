@@ -34,7 +34,7 @@ export default function Login() {
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="h-16 w-28 rounded-2xl bg-white flex items-center justify-center shadow-xl border border-gray-100 p-1 overflow-hidden">
-              <img src="/logo.png" alt="Click2Kart" className="h-full w-full object-contain" />
+              <img src="/layoutlogo.png" alt="Click2Kart" className="h-full w-full object-contain" />
             </div>
             <div className="flex flex-col items-start">
               <span className="text-2xl font-black text-gray-900 leading-tight">Click2Kart</span>

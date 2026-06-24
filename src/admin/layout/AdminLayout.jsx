@@ -30,9 +30,7 @@ export default function AdminLayout() {
     <div className="min-h-screen grid md:grid-cols-[260px_1fr] grid-cols-1 bg-gray-50/50">
       <button className="md:hidden p-4 bg-white border-b flex items-center justify-between z-50 sticky top-0" onClick={() => setOpen(!open)}>
         <div className="flex items-center gap-3">
-          <div className="h-10 w-24 rounded-xl bg-white flex items-center justify-center">
-            <img src="/logo.png" alt="Click2Kart" className="h-full w-full object-contain" />
-          </div>
+          <img src="/layoutlogo.png" alt="Click2Kart" className="h-10 object-contain rounded-xl" />
           <span className="font-black uppercase tracking-widest text-xs">Admin Console</span>
         </div>
         <svg className="w-6 h-6 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -40,9 +38,7 @@ export default function AdminLayout() {
 
       <aside className={`bg-white border-r p-6 space-y-2 fixed inset-y-0 left-0 z-40 w-[260px] transform transition-transform duration-300 ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 md:relative`}>
         <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="h-12 w-32 rounded-2xl bg-white flex items-center justify-center shadow-xl shadow-blue-100">
-            <img src="/logo.png" alt="Click2Kart" className="h-full w-full object-contain" />
-          </div>
+          <img src="/layoutlogo.png" alt="Click2Kart" className="h-12 object-contain shadow-xl shadow-blue-100 rounded-2xl" />
           <div>
             <div className="text-[9px] font-black text-blue-600 uppercase tracking-widest leading-none">Admin Panel</div>
           </div>

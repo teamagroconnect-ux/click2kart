@@ -2,8 +2,6 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import React, { useEffect, useState } from 'react'
 import { useCart } from '../lib/CartContext'
 import { CONFIG } from '../shared/lib/config.js'
-import logoImg from '../click2kart.png'
-import BrandLogo from './BrandLogo'
 import ConfirmModal from './ConfirmModal'
 import { getImageUrl } from '../lib/cloudinary'
 
@@ -101,14 +99,11 @@ export default function UserLayout() {
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           <div className="flex items-center justify-between h-14 sm:h-14 md:h-16 gap-4">
             <Link to="/" className="flex items-center group gap-3">
-              <div className="relative h-10 w-10 sm:h-12 sm:w-12 md:h-13 md:w-13 rounded-full bg-violet-500 shadow-lg shadow-violet-200 p-1.5 transition-all duration-300 group-hover:scale-105">
-                <img
-                  src={logoImg}
-                  alt="Click2Kart"
-                  className="h-full w-full object-contain rounded-full"
-                />
-              </div>
-              <BrandLogo className="ml-2 md:ml-2.5" />
+              <img
+                src="/layoutlogo.png"
+                alt="Click2Kart"
+                className="h-10 sm:h-12 md:h-16 object-contain transition-all duration-300 group-hover:scale-105"
+              />
             </Link>
 
             <nav className="hidden lg:flex items-center gap-3">
@@ -250,7 +245,7 @@ export default function UserLayout() {
         <footer className="border-t border-gray-50 bg-white py-12 pb-32 lg:pb-12">
           <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
             <div className="flex flex-col md:flex-row items-center gap-6">
-              <img src={logoImg} alt="Click2Kart" className="h-10 w-auto rounded-xl border border-gray-100 shadow-sm" />
+              <img src="/layoutlogo.png" alt="Click2Kart" className="h-10 w-auto rounded-xl border border-gray-100 shadow-sm" />
               <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart. All rights reserved.</span>
               <div className="flex gap-4 items-center">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>

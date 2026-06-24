@@ -4,7 +4,7 @@ import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { useCart } from '../../lib/CartContext'
 import { useToast } from '../../components/Toast'
-const logo = '/logo.png'
+const logo = '/layoutlogo.png'
 
 export default function Enquiry() {
   const { notify }  = useToast()

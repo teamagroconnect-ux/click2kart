@@ -5,7 +5,7 @@ import api from '../../lib/api';
 import { useToast } from '../../components/Toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { getImageUrl } from '../../lib/cloudinary';
-const logoImg = '/logo.png';
+const logoImg = '/layoutlogo.png';
 import { CONFIG } from '../../shared/lib/config';
 
 const INDIAN_STATES = [

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../../lib/api';
 import { useToast } from '../../components/Toast';
 import { CONFIG } from '../../shared/lib/config';
-const logoImg = '/logo.png';
+const logoImg = '/layoutlogo.png';
 
 export default function PartnerOnboarding() {
   const { notify } = useToast();

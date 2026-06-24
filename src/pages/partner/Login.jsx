@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import PasswordInput from '../../components/PasswordInput'
 import { CONFIG } from '../../shared/lib/config'
-const logoImg = '/logo.png'
 
 export default function PartnerLogin() {
   const navigate = useNavigate()
@@ -76,12 +75,9 @@ export default function PartnerLogin() {
       <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <Link to="/partner" className="inline-flex items-center justify-center h-16 w-28 rounded-3xl bg-white shadow-xl shadow-gray-200 border border-gray-100 p-1 overflow-hidden">
-              <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-full object-contain" />
+            <Link to="/partner" className="inline-flex items-center justify-center">
+              <img src="/layoutlogo.png" alt={CONFIG.BRAND_NAME} className="h-16 object-contain shadow-xl shadow-gray-200 border border-gray-100 rounded-3xl" />
             </Link>
-            <div className="flex flex-col items-start">
-              <BrandLogo variant="sm" />
-            </div>
           </div>
           <h2 className="text-3xl font-black text-gray-900 tracking-tight">Partner Login</h2>
           <p className="text-sm text-gray-600 font-medium">Access your partner dashboard</p>
