@@ -43,7 +43,7 @@ export default function ManualPayment() {
         codAdvance20: cod20,
         couponCode: loc.state?.couponCode || ''
       })
-      notify('Payment details submitted. Awaiting verification.', 'success')
+      notify('Payment details submitted. Verification in progress.', 'success')
       clearCart()
       nav('/orders')
     } catch { notify('Failed to submit payment details','error') }
@@ -318,14 +318,14 @@ export default function ManualPayment() {
                 <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
-                Secure Transaction
+                256-BIT SECURE VERIFICATION
               </div>
               <h1 className="mp-head-title">
-                Pay via <span>UPI</span>
+                Direct <span>Bank Transfer / UPI</span>
                 {cod20 && <span style={{fontSize:'55%',color:'#6b7280',fontFamily:'DM Sans',fontWeight:700,letterSpacing:'.04em',display:'block',marginTop:2}}>20% COD Advance Payment</span>}
               </h1>
               <p className="mp-head-sub">
-                {cod20 ? 'Pay 20% advance via UPI to confirm your COD order.' : 'Transfer the exact amount via UPI and submit your transaction details for verification.'}
+                {cod20 ? 'Pay 20% advance via UPI to confirm your COD order.' : 'Complete your payment using UPI or Netbanking below and submit verification details.'}
               </p>
 
               {/* amount banner */}

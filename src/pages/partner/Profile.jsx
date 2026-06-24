@@ -6,6 +6,7 @@ import { useToast } from '../../components/Toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { getImageUrl } from '../../lib/cloudinary';
 const logoImg = '/layoutlogo.png';
+const appIcon = '/app-icon.png';
 import { CONFIG } from '../../shared/lib/config';
 
 const INDIAN_STATES = [
@@ -96,12 +97,12 @@ const PartnerIDCard = React.forwardRef(({ partner }, ref) => {
 
           {/* Brand */}
           <div className="flex items-center gap-3 mb-4 relative z-10">
-            <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-10 w-auto" />
+            <img src={appIcon} alt={CONFIG.BRAND_NAME} className="h-12 w-auto" />
             <div>
               <div className="font-black leading-tight" style={{ fontSize: '20px', color: '#1e1b4b', letterSpacing: '-0.5px' }}>
                 Click<span style={{ color: '#f97316' }}>2</span><span style={{ color: '#16a34a' }}>kart</span>
               </div>
-              <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 600, letterSpacing: '0.3px' }}>Indian's trusted b2b hub</div>
+              <div style={{ fontSize: '9px', color: '#6b7280', fontWeight: 600, letterSpacing: '0.3px' }}>India's trusted b2b hub</div>
               <div style={{ fontSize: '9px', color: '#4f46e5', fontWeight: 700 }}>🌐 click2kart.net</div>
             </div>
           </div>

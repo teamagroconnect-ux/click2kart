@@ -800,27 +800,33 @@ export default function Enquiry() {
           align-items: center;
           justify-content: space-between;
           font-size: 14px;
-          padding: 6px 0;
+          padding: 10px 0;
+          border-bottom: 1px solid rgba(124, 58, 237, 0.04);
+        }
+
+        .eq-sumrow:last-child {
+          border-bottom: none;
         }
 
         .eq-sumrow-label {
-          color: #6b7280;
-          font-weight: 500;
+          color: #64748b;
+          font-weight: 600;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 12px;
         }
 
         .eq-sumrow-label-icon {
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          background: rgba(124, 58, 237, 0.1);
+          width: 28px;
+          height: 28px;
+          border-radius: 8px;
+          background: rgba(124, 58, 237, 0.08);
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 10px;
+          font-size: 14px;
           color: var(--primary);
+          flex-shrink: 0;
         }
 
         .eq-sumrow-val {
@@ -1874,10 +1880,15 @@ export default function Enquiry() {
                       className={`eq-pay-opt ${paymentMethod === 'RAZORPAY' ? 'active-violet' : ''}`}
                       onClick={() => setPaymentMethod('RAZORPAY')}
                     >
-                      <div className="eq-pay-ico violet">💳</div>
+                      <div className="eq-pay-ico violet">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <rect x="2" y="5" width="20" height="14" rx="2" />
+                          <line x1="2" y1="10" x2="22" y2="10" />
+                        </svg>
+                      </div>
                       <div className="eq-pay-info">
-                        <div className="eq-pay-name">Razorpay</div>
-                        <div className="eq-pay-desc violet">Online Payment · Auto Confirmation</div>
+                        <div className="eq-pay-name">Instant Online Payment</div>
+                        <div className="eq-pay-desc violet">Credit/Debit Cards, UPI, Netbanking · Instant Confirmation</div>
                       </div>
                       <div className="eq-pay-radio">
                         <div className="eq-pay-radio-dot" />
@@ -1891,10 +1902,14 @@ export default function Enquiry() {
                       className={`eq-pay-opt ${paymentMethod === 'MANUAL' ? 'active-green' : ''}`}
                       onClick={() => setPaymentMethod('MANUAL')}
                     >
-                      <div className="eq-pay-ico green">📱</div>
+                      <div className="eq-pay-ico green">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                        </svg>
+                      </div>
                       <div className="eq-pay-info">
-                        <div className="eq-pay-name">Manual Payment</div>
-                        <div className="eq-pay-desc green">UPI / Bank Transfer · Manual Approval</div>
+                        <div className="eq-pay-name">Direct Bank Transfer / UPI</div>
+                        <div className="eq-pay-desc green">Manual Verification · No Convenience Fees</div>
                       </div>
                       <div className="eq-pay-radio">
                         <div className="eq-pay-radio-dot" />
@@ -1909,14 +1924,19 @@ export default function Enquiry() {
                       onClick={() => setPaymentMethod('COD')}
                     >
                       <div className="eq-pay-ico blue">
-                        {svc.cod ? '🚚' : '🚫'}
+                        {svc.cod ? (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                            <path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 011-1h2.39a1 1 0 01.81.42l3.39 4.9a1 1 0 01.19.54V15a1 1 0 01-1 1h-3m-4 0h-1" />
+                          </svg>
+                        ) : '🚫'}
                       </div>
                       <div className="eq-pay-info">
                         <div className="eq-pay-name" style={{ color: (!svc.available || !svc.cod) ? '#9ca3af' : '#1e1b2e' }}>
-                          Cash on Delivery
+                          Partial COD (20% Advance)
                         </div>
                         <div className={`eq-pay-desc ${svc.cod ? 'blue' : 'gray'}`}>
-                          {svc.cod ? 'Pay 20% now · Rest on delivery' : 'Not available for this location'}
+                          {svc.cod ? 'Secure delivery with 20% commitment' : 'Not available for this location'}
                         </div>
                       </div>
                       {svc.available && svc.cod ? (
