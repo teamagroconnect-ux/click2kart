@@ -120,12 +120,12 @@ export default function UserLayout() {
     <div className="min-h-screen flex flex-col bg-white">
       <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur-xl shadow-sm transition-all duration-300">
         <div className="px-4 md:px-8">
-          <div className="flex items-center justify-between h-12 sm:h-14 gap-3">
+          <div className="flex items-center justify-between h-14 sm:h-16 gap-3">
             <Link to="/" className="flex items-center group gap-3 flex-1">
               <img
                 src="/layoutlogo.png"
                 alt="Click2Kart"
-                className="h-7 sm:h-9 w-auto object-contain transition-all duration-300 group-hover:scale-105"
+                className="h-8 sm:h-10 w-auto object-contain transition-all duration-300 group-hover:scale-105"
               />
             </Link>
 

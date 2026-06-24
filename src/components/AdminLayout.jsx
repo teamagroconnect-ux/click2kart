@@ -203,6 +203,18 @@ export default function AdminLayout() {
                   Inventory
                 </>
               ), 'inventory')}
+              {link('/admin/customers', (
+                <>
+                  <Icon name="cust" />
+                  Customers
+                </>
+              ), 'customers')}
+              {link('/admin/partners', (
+                <>
+                  <Icon name="partner" />
+                  Partners
+                </>
+              ), 'partners')}
               {link('/admin/billing', (
                 <>
                   <Icon name="bill" />
@@ -245,18 +257,6 @@ export default function AdminLayout() {
                   Brands
                 </>
               ), 'brands')}
-              {link('/admin/customers', (
-                <>
-                  <Icon name="cust" />
-                  Customers
-                </>
-              ), 'customers')}
-              {link('/admin/partners', (
-                <>
-                  <Icon name="partner" />
-                  Partners
-                </>
-              ), 'partners')}
               {link('/admin/stores', (
                 <>
                   <Icon name="inv" />
