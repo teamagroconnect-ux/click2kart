@@ -50,8 +50,9 @@ const Ico = ({ n, cls = 'w-5 h-5' }) => {
 /* ── Avatar ── */
 const Avatar = ({ user, size = 'md' }) => {
   const sz = { sm: 'w-9 h-9 text-sm', md: 'w-12 h-12 text-base', lg: 'w-16 h-16 text-xl' }[size];
-  if (user?.avatar)
-    return <img src={getImageUrl(user.avatar)} alt={user.name} className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`} />;
+  const avatarUrl = user?.kyc?.profilePicture || user?.avatar;
+  if (avatarUrl)
+    return <img src={getImageUrl(avatarUrl)} alt={user?.name} className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`} />;
   return (
     <div className={`${sz} rounded-2xl bg-gradient-to-br from-orange-500 to-blue-900 flex items-center justify-center font-black text-white ring-2 ring-white shadow-md`}>
       {user?.name?.charAt(0)?.toUpperCase() || 'U'}
@@ -84,7 +85,9 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
-  const [formData, setFormData] = useState({ name: '', phone: '' });
+  const [formData, setFormData] = useState({
+    name: '', phone: '', profilePicture: '', panCard: '', aadhaarCard: ''
+  });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -114,7 +117,13 @@ export default function Profile() {
   const loadProfile = async () => {
     try {
       const { data } = await api.get('/api/user/me');
-      setFormData({ name: data.name || '', phone: data.phone || '' });
+      setFormData({
+        name: data.name || '',
+        phone: data.phone || '',
+        profilePicture: data.kyc?.profilePicture || data.avatar || '',
+        panCard: data.kyc?.panCard || '',
+        aadhaarCard: data.kyc?.aadhaarCard || ''
+      });
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -123,6 +132,27 @@ export default function Profile() {
     try { const { data } = await api.get('/api/user/addresses'); setSavedAddresses(data); }
     catch (e) { console.error(e); }
   };
+
+  const handleFileUpload = async (e, fieldName) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      setSaving(true);
+      const fd = new FormData();
+      fd.append('file', file);
+      const response = await api.post('/api/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setFormData(p => ({ ...p, [fieldName]: response.data.url }));
+      notify(`${fieldName.replace('pan', 'PAN').replace('aadhaar', 'Aadhaar').replace('profilePicture', 'Profile picture')} uploaded!`, 'success');
+    } catch {
+      notify('Failed to upload file', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleProfilePictureChange = (e) => handleFileUpload(e, 'profilePicture');
+  const handlePanCardChange = (e) => handleFileUpload(e, 'panCard');
+  const handleAadhaarCardChange = (e) => handleFileUpload(e, 'aadhaarCard');
 
   const loadTickets = async () => {
     setTicketsLoading(true);
@@ -133,8 +163,16 @@ export default function Profile() {
 
   const handleSaveProfile = async (e) => {
     e.preventDefault(); setSaving(true);
-    try { await api.put('/api/user/profile', formData); await refreshProfile(); notify('Profile updated!', 'success'); }
-    catch (e) { notify(e?.response?.data?.error || 'Failed to update', 'error'); }
+    try {
+      // Send kyc data as a separate object
+      const { profilePicture, panCard, aadhaarCard, ...rest } = formData;
+      await api.put('/api/user/profile', {
+        ...rest,
+        kyc: { profilePicture, panCard, aadhaarCard }
+      });
+      await refreshProfile();
+      notify('Profile updated!', 'success');
+    } catch (e) { notify(e?.response?.data?.error || 'Failed to update', 'error'); }
     finally { setSaving(false); }
   };
 
@@ -417,22 +455,84 @@ export default function Profile() {
               <div className="pf-panel bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-100">
                   <h2 className="pf-display font-black text-slate-800">Personal Info</h2>
-                  <p className="text-slate-400 text-xs mt-0.5">Update your name and contact details</p>
+                  <p className="text-slate-400 text-xs mt-0.5">Update your name, contact details, and KYC documents</p>
                 </div>
-                <form onSubmit={handleSaveProfile} className="p-5 space-y-4">
-                  <Field label="Full Name">
-                    <input type="text" name="name" value={formData.name}
-                      onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
-                      className={inputCls} placeholder="Your full name" />
-                  </Field>
-                  <Field label="Email Address">
-                    <input type="email" value={user?.email || ''} disabled className={disabledCls} />
-                  </Field>
-                  <Field label="Phone Number">
-                    <input type="tel" name="phone" value={formData.phone}
-                      onChange={e => setFormData(p => ({ ...p, phone: e.target.value.replace(/\D/g,'').slice(0,10) }))}
-                      className={inputCls} placeholder="10-digit mobile number" />
-                  </Field>
+                <form onSubmit={handleSaveProfile} className="p-5 space-y-5">
+                  {/* Profile Picture */}
+                  <div className="flex items-center gap-6">
+                    <div className="relative group">
+                      <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-orange-500 to-blue-900 flex items-center justify-center text-white text-4xl font-black border-4 border-gray-100 overflow-hidden">
+                        {formData.profilePicture
+                          ? <img src={getImageUrl(formData.profilePicture) || formData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                          : user?.name?.charAt(0)?.toUpperCase() || 'U'
+                        }
+                      </div>
+                      <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
+                        <Ico n="user" cls="w-8 h-8 text-white" />
+                        <input type="file" accept="image/*" className="hidden" onChange={handleProfilePictureChange} />
+                      </label>
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-800">Profile Picture</div>
+                      <div className="text-xs text-gray-400 mt-1">Click to change your photo</div>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <Field label="Full Name">
+                      <input type="text" name="name" value={formData.name}
+                        onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                        className={inputCls} placeholder="Your full name" />
+                    </Field>
+                    <Field label="Email Address">
+                      <input type="email" value={user?.email || ''} disabled className={disabledCls} />
+                    </Field>
+                    <Field label="Phone Number">
+                      <input type="tel" name="phone" value={formData.phone}
+                        onChange={e => setFormData(p => ({ ...p, phone: e.target.value.replace(/\D/g,'').slice(0,10) }))}
+                        className={inputCls} placeholder="10-digit mobile number" />
+                    </Field>
+                  </div>
+
+                  {/* Document uploads */}
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <Field label="PAN Card (Upload)">
+                      <div className="relative group">
+                        {formData.panCard ? (
+                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50 flex items-center justify-center overflow-hidden">
+                            <img src={getImageUrl(formData.panCard) || formData.panCard} alt="PAN Card" className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 transition-colors">
+                            <Ico n="user" cls="w-8 h-8 text-orange-400 mb-2" />
+                            <div className="text-xs text-orange-500 font-semibold">Click to upload PAN Card</div>
+                          </div>
+                        )}
+                        <label className="absolute inset-0 cursor-pointer rounded-xl">
+                          <input type="file" accept="image/*" className="hidden" onChange={handlePanCardChange} />
+                        </label>
+                      </div>
+                    </Field>
+
+                    <Field label="Aadhaar Card (Upload)">
+                      <div className="relative group">
+                        {formData.aadhaarCard ? (
+                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50 flex items-center justify-center overflow-hidden">
+                            <img src={getImageUrl(formData.aadhaarCard) || formData.aadhaarCard} alt="Aadhaar Card" className="w-full h-full object-cover" />
+                          </div>
+                        ) : (
+                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-orange-200 bg-orange-50 flex flex-col items-center justify-center cursor-pointer hover:border-orange-400 transition-colors">
+                            <Ico n="user" cls="w-8 h-8 text-orange-400 mb-2" />
+                            <div className="text-xs text-orange-500 font-semibold">Click to upload Aadhaar Card</div>
+                          </div>
+                        )}
+                        <label className="absolute inset-0 cursor-pointer rounded-xl">
+                          <input type="file" accept="image/*" className="hidden" onChange={handleAadhaarCardChange} />
+                        </label>
+                      </div>
+                    </Field>
+                  </div>
+
                   <button type="submit" disabled={saving} className={btnPrimary}>
                     {saving ? 'Saving…' : 'Save Changes'}
                   </button>

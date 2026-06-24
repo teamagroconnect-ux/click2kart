@@ -631,12 +631,12 @@ export default function Catalogue({ initialBrand, brandName }) {
       .ct-sb-stat-vs { font-size: 12px; font-weight: 700; color: #6b7280; }
 
       /* ─── MAIN AREA ─── */
-      .ct-main { padding: 18px 14px 48px; }
-      @media (min-width: 640px)  { .ct-main { padding: 22px 18px 48px; } }
-      @media (min-width: 1024px) { .ct-main { padding: 26px 26px 56px; } }
+      .ct-main { padding: 20px 12px 48px; }
+      @media (min-width: 640px)  { .ct-main { padding: 24px 18px 48px; } }
+      @media (min-width: 1024px) { .ct-main { padding: 28px 26px 56px; } }
 
       /* mobile top bar */
-      .ct-mob-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+      .ct-mob-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 24px; }
       @media (min-width: 1024px) { .ct-mob-bar { display: none; } }
       .ct-filter-btn {
         display: flex; align-items: center; gap: 8px;
@@ -676,13 +676,13 @@ export default function Catalogue({ initialBrand, brandName }) {
       /* ─── PRODUCT GRID ─── */
       .ct-grid { 
         display: grid; 
-        gap: 16px; 
-        grid-template-columns: repeat(2, 1fr); 
+        gap: 20px; 
+        grid-template-columns: 1fr; 
         justify-content: center;
       }
-      @media (min-width: 540px)  { .ct-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; } }
-      @media (min-width: 768px)  { .ct-grid { grid-template-columns: repeat(3, 1fr); } }
-      @media (min-width: 1280px) { .ct-grid { grid-template-columns: repeat(4, 1fr); } }
+      @media (min-width: 480px)  { .ct-grid { grid-template-columns: repeat(2, 1fr); gap: 20px; } }
+      @media (min-width: 768px)  { .ct-grid { grid-template-columns: repeat(3, 1fr); gap: 24px; } }
+      @media (min-width: 1280px) { .ct-grid { grid-template-columns: repeat(4, 1fr); gap: 28px; } }
 
       /* ─── SKELETON ─── */
       .ct-skel { background: white; border-radius: 20px; overflow: hidden; border: 1px solid rgba(124,58,237,.07); }
@@ -1051,10 +1051,6 @@ export default function Catalogue({ initialBrand, brandName }) {
         {/* ══ DESKTOP TOP BAR ══ */}
         <div className="ct-topbar-desk">
           <div className="ct-desk-inner">
-            <div className="ct-brand">
-              <div className="ct-brand-ey"><span className="ct-brand-dot" />B2B Catalogue</div>
-              <div className="ct-brand-title">Wholesale <span>Products</span></div>
-            </div>
             <div className="ct-desk-search">
               <div className="ct-searchbar">
                 <div className="ct-searchbar-ico">

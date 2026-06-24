@@ -7,9 +7,9 @@ import { getImageUrl } from '../lib/cloudinary'
 
 function Avatar({ user, size = 'md' }) {
   const sz = { sm: 'h-8 w-8', md: 'h-12 w-12', lg: 'h-16 w-16' }[size]
-  const avatarUrl = user?.kyc?.profilePicture
+  const avatarUrl = user?.kyc?.profilePicture || user?.avatar
   if (avatarUrl)
-    return <img src={getImageUrl(avatarUrl)} alt={user.name} className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`} />
+    return <img src={getImageUrl(avatarUrl)} alt={user?.name} className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`} />
   return (
     <div className={`${sz} rounded-2xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center font-black text-white ring-2 ring-white shadow-md`}>
       {user?.name?.charAt(0)?.toUpperCase() || 'U'}
@@ -205,7 +205,7 @@ export default function UserLayout() {
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 pb-20 lg:pb-0 animate-in fade-in duration-700">
+      <main className="flex-1 min-h-0 pb-32 lg:pb-0 animate-in fade-in duration-700">
         {user && user.isKycComplete === false && (
           <div className="max-w-7xl mx-auto px-6 md:px-10 mt-4">
             <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3 text-[12px] font-bold flex items-center justify-between">
