@@ -28,6 +28,7 @@ export default function Catalogue({ initialBrand, brandName }) {
   const [subCategory, setSubCategory] = useState('')
   const [browsePath, setBrowsePath] = useState(initialBrand ? 'brand' : null)
   const [viewMode, setViewMode] = useState('PRODUCTS')
+  const [displayMode, setDisplayMode] = useState('GRID') // 'GRID' or 'LIST'
   const [sort, setSort] = useState('NEW')
   const [minPrice, setMinPrice] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
@@ -673,6 +674,121 @@ export default function Catalogue({ initialBrand, brandName }) {
       .ct-res-bar span { font-size: 13px; color: #6b7280; font-weight: 500; }
       .ct-page-info { font-size: 11px; font-weight: 600; color: #9ca3af; }
 
+      /* ─── VIEW TOGGLE ─── */
+      .ct-view-toggle {
+        display: flex;
+        gap: 4px;
+        background: white;
+        border: 1.5px solid rgba(124,58,237,.18);
+        border-radius: 14px;
+        padding: 4px;
+        box-shadow: 0 2px 12px rgba(124,58,237,.06);
+      }
+      .ct-view-btn {
+        width: 38px;
+        height: 32px;
+        border-radius: 10px;
+        border: none;
+        background: transparent;
+        color: #9ca3af;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all .2s;
+      }
+      .ct-view-btn:hover {
+        color: #7c3aed;
+        background: rgba(139,92,246,.06);
+      }
+      .ct-view-btn.on {
+        background: linear-gradient(135deg, #7c3aed, #6366f1);
+        color: white;
+        box-shadow: 0 4px 12px rgba(124,58,237,.35);
+      }
+
+      /* ─── PRODUCT LIST VIEW ─── */
+      .ct-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .ct-list-card {
+        background: white;
+        border-radius: 22px;
+        padding: 16px;
+        display: flex;
+        gap: 16px;
+        border: 1px solid rgba(124,58,237,.07);
+        box-shadow: 0 4px 16px rgba(0,0,0,.02);
+        transition: all .3s;
+        cursor: pointer;
+      }
+      .ct-list-card:hover {
+        transform: translateX(4px);
+        box-shadow: 0 8px 24px rgba(124,58,237,.1);
+        border-color: rgba(124,58,237,.18);
+      }
+      .ct-list-img-wrap {
+        width: 100px;
+        height: 100px;
+        border-radius: 18px;
+        background: white;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+      }
+      .ct-list-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+      .ct-list-img-placeholder {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #e5e7eb;
+      }
+      .ct-list-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 0;
+      }
+      .ct-list-name {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1e1b2e;
+        line-height: 1.3;
+      }
+      .ct-list-price-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .ct-list-price {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 22px;
+        color: #7c3aed;
+      }
+      .ct-list-discount {
+        font-size: 12px;
+        font-weight: 800;
+        color: #059669;
+      }
+      .ct-list-mrp {
+        font-size: 13px;
+        color: #9ca3af;
+        text-decoration: line-through;
+        font-weight: 500;
+      }
+
       /* ─── PRODUCT GRID ─── */
       .ct-grid { 
         display: grid; 
@@ -1135,9 +1251,28 @@ export default function Catalogue({ initialBrand, brandName }) {
                   )}
                 </div>
               </div>
-              <span className="ct-page-info">
-                {viewMode === 'PRODUCTS' ? `Page ${page} of ${totalPages}` : ''}
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div className="ct-view-toggle">
+                  <button className={`ct-view-btn${displayMode === 'GRID' ? ' on' : ''}`} onClick={() => setDisplayMode('GRID')}>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <rect x="3" y="3" width="7" height="7" rx="2" />
+                      <rect x="14" y="3" width="7" height="7" rx="2" />
+                      <rect x="3" y="14" width="7" height="7" rx="2" />
+                      <rect x="14" y="14" width="7" height="7" rx="2" />
+                    </svg>
+                  </button>
+                  <button className={`ct-view-btn${displayMode === 'LIST' ? ' on' : ''}`} onClick={() => setDisplayMode('LIST')}>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <line x1="4" y1="6" x2="20" y2="6" />
+                      <line x1="4" y1="12" x2="20" y2="12" />
+                      <line x1="4" y1="18" x2="20" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+                <span className="ct-page-info">
+                  {viewMode === 'PRODUCTS' ? `Page ${page} of ${totalPages}` : ''}
+                </span>
+              </div>
             </div>
 
             {/* premium loader */}
@@ -1339,14 +1474,86 @@ export default function Catalogue({ initialBrand, brandName }) {
               </div>
             )}
 
-            {/* grid */}
+            {/* grid/list view */}
             {!loading && (viewMode === 'PRODUCTS' || q) && (
-              <div className="ct-grid">
-                {filteredSorted.map((p, idx) => (
-                  <ProductCard key={p._id} p={p} authed={authed} addToCart={addToCart}
-                    navigate={navigate} index={idx} setRecOpen={setRecOpen} setRecItems={setRecItems} />
-                ))}
-              </div>
+              <>
+                {displayMode === 'GRID' ? (
+                  <div className="ct-grid">
+                    {filteredSorted.map((p, idx) => (
+                      <ProductCard key={p._id} p={p} authed={authed} addToCart={addToCart}
+                        navigate={navigate} index={idx} setRecOpen={setRecOpen} setRecItems={setRecItems} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="ct-list">
+                    {filteredSorted.map((p, idx) => {
+                      // Helper to get min price
+                      const safeNumber = (val) => {
+                        const num = Number(val);
+                        return isNaN(num) || !isFinite(num) ? 0 : num;
+                      };
+                      const getMinPrice = () => {
+                        if (!Array.isArray(p.variants) || p.variants.length === 0) return safeNumber(p.price || 0);
+                        const activeVariants = p.variants.filter(v => v.isActive !== false && safeNumber(v.price || 0) > 0);
+                        if (activeVariants.length === 0) return safeNumber(p.price || 0);
+                        return Math.min(...activeVariants.map(v => safeNumber(v.price || 0)));
+                      };
+                      const price = getMinPrice();
+                      const discount = p.mrp && Number(p.mrp) > price 
+                        ? Math.round(((Number(p.mrp) - price) / Number(p.mrp)) * 100) 
+                        : 0;
+
+                      return (
+                        <div 
+                          key={p._id} 
+                          className="ct-list-card" 
+                          onClick={() => navigate(`/product/${p._id}`)}
+                          style={{ animationDelay: `${idx * 40}ms` }}
+                        >
+                          <div className="ct-list-img-wrap">
+                            {p.images && p.images[0] ? (
+                              <img
+                                src={getCloudinaryUrl(p.images[0])}
+                                alt={p.name}
+                                className="ct-list-img"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="ct-list-img-placeholder">
+                                <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                  <circle cx="8.5" cy="8.5" r="1.5" />
+                                  <polyline points="21 15 16 10 5 21" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <div className="ct-list-content">
+                            <h3 className="ct-list-name">{p.name}</h3>
+                            <div className="ct-list-price-wrap">
+                              {authed ? (
+                                <>
+                                  <span className="ct-list-price">₹{price.toLocaleString()}</span>
+                                  {discount > 0 && <span className="ct-list-discount">{discount}% OFF</span>}
+                                  {p.mrp && Number(p.mrp) > price && <span className="ct-list-mrp">₹{Number(p.mrp).toLocaleString()}</span>}
+                                </>
+                              ) : (
+                                <span className="ct-price-mask">
+                                  <svg className="ct-eye" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                  </svg>
+                                  <span className="ct-stars-blur">••••</span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
 
             {/* Grouped View (Category-wise) */}
