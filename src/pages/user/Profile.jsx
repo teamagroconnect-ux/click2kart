@@ -929,8 +929,6 @@ export default function Profile() {
                 )}
               </div>
             )}
-              </div>
-            )}
 
             {/* ──── SETTINGS ──── */}
             {activeSection === 'settings' && (
