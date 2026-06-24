@@ -83,10 +83,14 @@ export default function Profile() {
   const [activeSection, setActiveSection] = useState('overview');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [originalKyc, setOriginalKyc] = useState({});
   const [changingPassword, setChangingPassword] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [formData, setFormData] = useState({
-    name: '', phone: '', profilePicture: '', panCard: '', aadhaarCard: ''
+    name: '', phone: '', 
+    profilePicture: '', panCard: '', aadhaarCard: '',
+    businessName: '', gstin: '', pan: '',
+    addressLine1: '', addressLine2: '', city: '', district: '', state: '', pincode: ''
   });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
   const [savedAddresses, setSavedAddresses] = useState([]);
@@ -117,12 +121,22 @@ export default function Profile() {
   const loadProfile = async () => {
     try {
       const { data } = await api.get('/api/user/me');
+      setOriginalKyc(data.kyc || {});
       setFormData({
         name: data.name || '',
         phone: data.phone || '',
         profilePicture: data.kyc?.profilePicture || data.avatar || '',
         panCard: data.kyc?.panCard || '',
-        aadhaarCard: data.kyc?.aadhaarCard || ''
+        aadhaarCard: data.kyc?.aadhaarCard || '',
+        businessName: data.kyc?.businessName || '',
+        gstin: data.kyc?.gstin || '',
+        pan: data.kyc?.pan || '',
+        addressLine1: data.kyc?.addressLine1 || '',
+        addressLine2: data.kyc?.addressLine2 || '',
+        city: data.kyc?.city || '',
+        district: data.kyc?.district || '',
+        state: data.kyc?.state || '',
+        pincode: data.kyc?.pincode || ''
       });
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -164,14 +178,37 @@ export default function Profile() {
   const handleSaveProfile = async (e) => {
     e.preventDefault(); setSaving(true);
     try {
-      // Send kyc data as a separate object
-      const { profilePicture, panCard, aadhaarCard, ...rest } = formData;
+      // Only save personal info, not KYC
       await api.put('/api/user/profile', {
-        ...rest,
-        kyc: { profilePicture, panCard, aadhaarCard }
+        name: formData.name,
+        phone: formData.phone
       });
       await refreshProfile();
       notify('Profile updated!', 'success');
+    } catch (e) { notify(e?.response?.data?.error || 'Failed to update', 'error'); }
+    finally { setSaving(false); }
+  };
+
+  const handleSaveKyc = async (e) => {
+    e.preventDefault(); setSaving(true);
+    try {
+      await api.put('/api/user/kyc', {
+        profilePicture: formData.profilePicture,
+        panCard: formData.panCard,
+        aadhaarCard: formData.aadhaarCard,
+        businessName: formData.businessName,
+        gstin: formData.gstin,
+        pan: formData.pan,
+        addressLine1: formData.addressLine1,
+        addressLine2: formData.addressLine2,
+        city: formData.city,
+        district: formData.district,
+        state: formData.state,
+        pincode: formData.pincode
+      });
+      await refreshProfile();
+      await loadProfile();
+      notify('KYC updated!', 'success');
     } catch (e) { notify(e?.response?.data?.error || 'Failed to update', 'error'); }
     finally { setSaving(false); }
   };
@@ -272,6 +309,7 @@ export default function Profile() {
   const navItems = [
     { id: 'overview',   label: 'Overview',   icon: 'home'  },
     { id: 'personal',   label: 'Profile',    icon: 'user'  },
+    { id: 'business',   label: 'Business',   icon: 'pkg'   },
     { id: 'addresses',  label: 'Addresses',  icon: 'map'   },
     { id: 'support',    label: 'Support',    icon: 'help'  },
     { id: 'settings',   label: 'Settings',   icon: 'gear'  },
@@ -455,9 +493,55 @@ export default function Profile() {
               <div className="pf-panel bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b border-slate-100">
                   <h2 className="pf-display font-black text-slate-800">Personal Info</h2>
-                  <p className="text-slate-400 text-xs mt-0.5">Update your name, contact details, and KYC documents</p>
+                  <p className="text-slate-400 text-xs mt-0.5">Update your name and contact details</p>
                 </div>
                 <form onSubmit={handleSaveProfile} className="p-5 space-y-5">
+                  {/* Profile Picture */}
+                  <div className="flex items-center gap-6">
+                    <div className="relative group">
+                      <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-4xl font-black border-4 border-gray-100 overflow-hidden">
+                        {formData.profilePicture
+                          ? <img src={getImageUrl(formData.profilePicture) || formData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                          : user?.name?.charAt(0)?.toUpperCase() || 'U'
+                        }
+                      </div>
+                    </div>
+                    <div>
+                      <div className="font-bold text-gray-800">Profile Picture</div>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <Field label="Full Name">
+                      <input type="text" name="name" value={formData.name}
+                        onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                        className={inputCls} placeholder="Your full name" />
+                    </Field>
+                    <Field label="Email Address">
+                      <input type="email" value={user?.email || ''} disabled className={disabledCls} />
+                    </Field>
+                    <Field label="Phone Number">
+                      <input type="tel" name="phone" value={formData.phone}
+                        onChange={e => setFormData(p => ({ ...p, phone: e.target.value.replace(/\D/g,'').slice(0,10) }))}
+                        className={inputCls} placeholder="10-digit mobile number" />
+                    </Field>
+                  </div>
+
+                  <button type="submit" disabled={saving} className={btnPrimary}>
+                    {saving ? 'Saving…' : 'Save Changes'}
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* ──── BUSINESS ──── */}
+            {activeSection === 'business' && (
+              <div className="pf-panel bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100">
+                  <h2 className="pf-display font-black text-slate-800">Business Info</h2>
+                  <p className="text-slate-400 text-xs mt-0.5">Update your business details and KYC documents</p>
+                </div>
+                <form onSubmit={handleSaveKyc} className="p-5 space-y-5">
                   {/* Profile Picture */}
                   <div className="flex items-center gap-6">
                     <div className="relative group">
@@ -479,18 +563,35 @@ export default function Profile() {
                   </div>
 
                   <div className="grid md:grid-cols-2 gap-5">
-                    <Field label="Full Name">
-                      <input type="text" name="name" value={formData.name}
-                        onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
-                        className={inputCls} placeholder="Your full name" />
+                    <Field label="Business Name">
+                      <input 
+                        type="text" 
+                        value={formData.businessName}
+                        onChange={e => setFormData(p => ({ ...p, businessName: e.target.value }))}
+                        className={originalKyc.businessName ? disabledCls : inputCls} 
+                        placeholder="Your business name"
+                        disabled={!!originalKyc.businessName}
+                      />
                     </Field>
-                    <Field label="Email Address">
-                      <input type="email" value={user?.email || ''} disabled className={disabledCls} />
+                    <Field label="GSTIN">
+                      <input 
+                        type="text" 
+                        value={formData.gstin}
+                        onChange={e => setFormData(p => ({ ...p, gstin: e.target.value }))}
+                        className={originalKyc.gstin ? disabledCls : inputCls} 
+                        placeholder="Your GSTIN"
+                        disabled={!!originalKyc.gstin}
+                      />
                     </Field>
-                    <Field label="Phone Number">
-                      <input type="tel" name="phone" value={formData.phone}
-                        onChange={e => setFormData(p => ({ ...p, phone: e.target.value.replace(/\D/g,'').slice(0,10) }))}
-                        className={inputCls} placeholder="10-digit mobile number" />
+                    <Field label="PAN Number">
+                      <input 
+                        type="text" 
+                        value={formData.pan}
+                        onChange={e => setFormData(p => ({ ...p, pan: e.target.value }))}
+                        className={originalKyc.pan ? disabledCls : inputCls} 
+                        placeholder="Your PAN number"
+                        disabled={!!originalKyc.pan}
+                      />
                     </Field>
                   </div>
 
@@ -530,6 +631,67 @@ export default function Profile() {
                           <input type="file" accept="image/*" className="hidden" onChange={handleAadhaarCardChange} />
                         </label>
                       </div>
+                    </Field>
+                  </div>
+
+                  {/* Address fields for KYC */}
+                  <div className="grid md:grid-cols-2 gap-5">
+                    <Field label="Address Line 1">
+                      <input 
+                        type="text" 
+                        value={formData.addressLine1}
+                        onChange={e => setFormData(p => ({ ...p, addressLine1: e.target.value }))}
+                        className={inputCls} 
+                        placeholder="Your address line 1"
+                      />
+                    </Field>
+                    <Field label="Address Line 2">
+                      <input 
+                        type="text" 
+                        value={formData.addressLine2}
+                        onChange={e => setFormData(p => ({ ...p, addressLine2: e.target.value }))}
+                        className={inputCls} 
+                        placeholder="Your address line 2 (optional)"
+                      />
+                    </Field>
+                    <Field label="City">
+                      <input 
+                        type="text" 
+                        value={formData.city}
+                        onChange={e => setFormData(p => ({ ...p, city: e.target.value }))}
+                        className={inputCls} 
+                        placeholder="Your city"
+                      />
+                    </Field>
+                    <Field label="District">
+                      <input 
+                        type="text" 
+                        value={formData.district}
+                        onChange={e => setFormData(p => ({ ...p, district: e.target.value }))}
+                        className={inputCls} 
+                        placeholder="Your district"
+                      />
+                    </Field>
+                    <Field label="State">
+                      <select 
+                        value={formData.state}
+                        onChange={e => setFormData(p => ({ ...p, state: e.target.value }))}
+                        className={inputCls} 
+                      >
+                        <option value="">Select state</option>
+                        {INDIAN_STATES.map(state => (
+                          <option key={state} value={state}>{state}</option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Pincode">
+                      <input 
+                        type="text" 
+                        value={formData.pincode}
+                        onChange={e => setFormData(p => ({ ...p, pincode: e.target.value.replace(/\D/g,'').slice(0,6) }))}
+                        className={inputCls} 
+                        placeholder="Your pincode"
+                      />
                     </Field>
                   </div>
 
