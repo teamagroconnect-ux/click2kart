@@ -32,15 +32,20 @@ export function AuthProvider({ children }) {
       return null
     }
   })
+  const [initialLoad, setInitialLoad] = useState(true)
 
   useEffect(() => {
     if (!token) {
       setUser(null)
       localStorage.removeItem('token')
+      localStorage.removeItem('user')
       localStorage.removeItem('session_expires')
+      setInitialLoad(false)
       return
     }
     localStorage.setItem('token', token)
+    // Ensure profile is refreshed whenever token changes or on load
+    refreshProfile().finally(() => setInitialLoad(false))
   }, [token])
 
   // auto-logout when session expires

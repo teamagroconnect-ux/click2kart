@@ -105,8 +105,11 @@ export default function Profile() {
   const [ticketsLoading, setTicketsLoading] = useState(false);
   const [showNewTicketModal, setShowNewTicketModal] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState(null);
-  const [newTicketForm, setNewTicketForm] = useState({ subject: '', description: '', category: 'Other' });
+  const [newTicketForm, setNewTicketForm] = useState({ subject: '', description: '', category: 'Other', relatedOrder: '' });
   const [messageInput, setMessageInput] = useState('');
+  const [recentOrders, setRecentOrders] = useState([]);
+
+  const adminIcon = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" // Female executive icon
 
   useEffect(() => {
     if (!token) { navigate('/login', { state: { from: location.pathname } }); return; }
@@ -117,6 +120,17 @@ export default function Profile() {
   useEffect(() => {
     if (activeSection === 'support') loadTickets();
   }, [activeSection]);
+
+  useEffect(() => {
+    if (showNewTicketModal) loadRecentOrders();
+  }, [showNewTicketModal]);
+
+  const loadRecentOrders = async () => {
+    try {
+      const { data } = await api.get('/api/orders/my-orders?limit=5');
+      setRecentOrders(data.orders || []);
+    } catch (e) { console.error('Failed to load recent orders', e); }
+  };
 
   const loadProfile = async () => {
     try {
@@ -788,87 +802,133 @@ export default function Profile() {
                     </div>
 
                     {ticketsLoading ? (
-                      <div className="py-10 flex justify-center"><LoadingSpinner text="Loading tickets…" /></div>
+                      <div className="py-10 flex justify-center"><div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin" /></div>
                     ) : tickets.length === 0 ? (
-                      <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-10 text-center">
-                        <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-slate-300">
-                          <Ico n="help" cls="w-7 h-7" />
-                        </div>
-                        <h3 className="pf-display font-black text-slate-700 mb-1">No tickets yet</h3>
-                        <p className="text-slate-400 text-sm mb-4">Raise a ticket for orders, payments, returns…</p>
-                        <button onClick={() => setShowNewTicketModal(true)} className="px-5 py-2.5 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-700 transition-all">
-                          Create Ticket
+                      <div className="bg-white rounded-3xl border-2 border-dashed border-slate-100 p-12 text-center">
+                        <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner">🎧</div>
+                        <h3 className="pf-display font-black text-slate-800 text-lg mb-1">How can we help?</h3>
+                        <p className="text-slate-400 text-sm mb-6 max-w-xs mx-auto">Raise a ticket for orders, payments, returns, or technical support.</p>
+                        <button onClick={() => setShowNewTicketModal(true)} className="px-8 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-2xl font-black text-sm hover:from-violet-700 hover:to-indigo-700 shadow-xl shadow-violet-200 transition-all active:scale-95">
+                          Create Your First Ticket
                         </button>
                       </div>
                     ) : (
-                      tickets.map(t => (
-                        <button key={t._id} onClick={() => setSelectedTicket(t)}
-                          className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-4 text-left hover:border-violet-200 hover:shadow-md active:scale-[0.98] transition-all">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="flex-1 min-w-0">
-                              <div className="pf-display font-black text-slate-800 text-sm truncate">{t.subject}</div>
-                              <div className="text-slate-400 text-xs mt-1 line-clamp-1">{t.description}</div>
-                              <div className="text-slate-300 text-[10px] mt-1.5">{new Date(t.updatedAt).toLocaleDateString()}</div>
+                      <div className="grid gap-3">
+                        {tickets.map(t => (
+                          <button key={t._id} onClick={() => setSelectedTicket(t)}
+                            className="w-full bg-white rounded-3xl border border-slate-100 shadow-sm p-5 text-left hover:border-violet-200 hover:shadow-lg transition-all active:scale-[0.98] group">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="text-[10px] font-black text-violet-600 bg-violet-50 px-2 py-0.5 rounded-md uppercase tracking-widest">#{t.ticketId || 'TK-NEW'}</span>
+                                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">{t.category}</span>
+                                </div>
+                                <div className="pf-display font-black text-slate-800 text-sm truncate group-hover:text-violet-600 transition-colors">{t.subject}</div>
+                                <div className="text-slate-400 text-xs mt-1 line-clamp-1 font-medium">{t.description}</div>
+                                <div className="flex items-center gap-2 mt-3">
+                                  <div className="h-1 w-1 rounded-full bg-slate-200"></div>
+                                  <div className="text-slate-300 text-[10px] font-bold uppercase tracking-widest">{new Date(t.updatedAt).toLocaleDateString()}</div>
+                                </div>
+                              </div>
+                              <span className={statusBadge(t.status)}>{t.status}</span>
                             </div>
-                            <span className={statusBadge(t.status)}>{t.status}</span>
-                          </div>
-                        </button>
-                      ))
+                          </button>
+                        ))}
+                      </div>
                     )}
                   </>
                 ) : (
-                  /* Ticket Detail */
-                  <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                    <div className="px-4 py-3 border-b border-slate-100 flex items-center gap-3">
-                      <button onClick={() => setSelectedTicket(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-                        <Ico n="chevL" cls="w-4 h-4" />
+                  /* Ticket Detail - WhatsApp Style */
+                  <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden flex flex-col h-[600px] bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-repeat">
+                    <div className="px-5 py-4 bg-white/95 backdrop-blur-md border-b border-slate-100 flex items-center gap-4 z-10 shadow-sm">
+                      <button onClick={() => setSelectedTicket(null)} className="p-2 rounded-xl hover:bg-slate-50 text-slate-400 hover:text-slate-600 transition-colors">
+                        <Ico n="chevL" cls="w-5 h-5" />
                       </button>
                       <div className="flex-1 min-w-0">
-                        <div className="pf-display font-black text-slate-800 text-sm truncate">{selectedTicket.subject}</div>
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="pf-display font-black text-slate-800 text-sm truncate">#{selectedTicket.ticketId}</span>
                           <span className={statusBadge(selectedTicket.status)}>{selectedTicket.status}</span>
-                          <span className="text-slate-300 text-[10px]">{selectedTicket.category}</span>
                         </div>
+                        <div className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mt-0.5">{selectedTicket.subject}</div>
                       </div>
                       {selectedTicket.status !== 'Resolved' && (
                         <button onClick={() => handleResolveTicket(selectedTicket._id)}
-                          className="flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl font-bold text-xs hover:bg-emerald-100 transition-colors">
-                          <Ico n="check" cls="w-3.5 h-3.5" /> Resolve
+                          className="px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-100 transition-colors shadow-sm">
+                          Resolve
                         </button>
                       )}
                     </div>
 
-                    {/* Messages */}
-                    <div className="p-4 space-y-3 max-h-80 overflow-y-auto bg-slate-50/50">
+                    {/* Messages Area */}
+                    <div className="flex-1 p-5 space-y-4 overflow-y-auto custom-scrollbar">
+                      <div className="flex justify-center mb-4">
+                        <div className="bg-white/80 backdrop-blur-sm px-4 py-1.5 rounded-full border border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest shadow-sm">
+                          Support Request Initiated
+                        </div>
+                      </div>
+
+                      {/* Initial Problem */}
+                      <div className="flex justify-start">
+                        <div className="bg-white rounded-2xl rounded-tl-none p-4 shadow-sm border border-slate-100 max-w-[85%]">
+                          <div className="text-[10px] font-black text-violet-600 uppercase tracking-widest mb-1.5 flex items-center gap-2">
+                            <span className="h-1 w-1 rounded-full bg-violet-600"></span>
+                            Original Request
+                          </div>
+                          <p className="text-sm font-bold text-slate-700 leading-relaxed">{selectedTicket.description}</p>
+                        </div>
+                      </div>
+
                       {selectedTicket.messages?.map((msg, i) => (
-                        <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm font-medium leading-relaxed
+                        <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
+                          {msg.sender === 'admin' && (
+                            <img src={adminIcon} alt="Support" className="h-8 w-8 rounded-full border border-white shadow-sm mb-1" />
+                          )}
+                          <div className={`max-w-[80%] px-5 py-3 rounded-2xl shadow-md relative
                             ${msg.sender === 'user'
-                              ? 'bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-br-sm'
-                              : 'bg-white text-slate-700 border border-slate-100 rounded-bl-sm shadow-sm'}`}>
-                            <p>{msg.message}</p>
-                            <p className={`text-[10px] mt-1.5 font-semibold ${msg.sender === 'user' ? 'text-violet-200' : 'text-slate-300'}`}>
-                              {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </p>
+                              ? 'bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-br-none'
+                              : 'bg-white text-slate-700 border border-slate-100 rounded-bl-none shadow-sm'}`}>
+                            <p className="text-sm font-bold leading-relaxed">{msg.message}</p>
+                            <div className={`text-[9px] mt-2 font-black uppercase tracking-widest flex items-center justify-between gap-4 ${
+                              msg.sender === 'user' ? 'text-violet-200' : 'text-slate-300'
+                            }`}>
+                              <span>{msg.sender === 'user' ? 'You' : 'Executive Support'}</span>
+                              <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
                           </div>
                         </div>
                       ))}
+
+                      {selectedTicket.status === 'Open' && (
+                        <div className="flex justify-center mt-6">
+                          <div className="bg-white/90 backdrop-blur-sm py-3 px-6 rounded-2xl border border-slate-100 text-center shadow-sm max-w-xs animate-pulse">
+                            <p className="text-[11px] font-black text-slate-600 uppercase tracking-widest italic">"Our executive will assist you soon..."</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Reply box */}
-                    <div className="p-3 border-t border-slate-100 flex gap-2">
-                      <input value={messageInput} onChange={e => setMessageInput(e.target.value)}
-                        onKeyPress={e => e.key === 'Enter' && handleAddMessage(selectedTicket._id)}
-                        placeholder="Type a reply…"
-                        className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all" />
-                      <button onClick={() => handleAddMessage(selectedTicket._id)}
-                        disabled={!messageInput.trim()}
-                        className="p-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl disabled:opacity-40 transition-all active:scale-95 flex-shrink-0">
-                        <Ico n="send" cls="w-4 h-4" />
-                      </button>
-                    </div>
+                    {/* Chat Input */}
+                    {selectedTicket.status !== 'Closed' && (
+                      <div className="p-4 bg-white/95 backdrop-blur-md border-t border-slate-100">
+                        <div className="flex gap-2 items-center bg-slate-50 p-2 rounded-2xl border border-slate-200 focus-within:border-violet-300 transition-all">
+                          <input value={messageInput} onChange={e => setMessageInput(e.target.value)}
+                            onKeyPress={e => e.key === 'Enter' && handleAddMessage(selectedTicket._id)}
+                            placeholder="Type a message…"
+                            className="flex-1 px-4 py-2 bg-transparent text-sm font-bold text-slate-700 placeholder-slate-400 outline-none" />
+                          <button onClick={() => handleAddMessage(selectedTicket._id)}
+                            disabled={!messageInput.trim()}
+                            className="p-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl shadow-lg shadow-violet-100 disabled:opacity-40 transition-all active:scale-95">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
+              </div>
+            )}
               </div>
             )}
 
@@ -1012,35 +1072,66 @@ export default function Profile() {
       {/* ════ NEW TICKET MODAL ════ */}
       {showNewTicketModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-white px-5 py-4 border-b border-slate-100 flex items-center justify-between z-10">
-              <h2 className="pf-display font-black text-slate-800">New Support Ticket</h2>
+          <div className="bg-white w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
+            <div className="sticky top-0 bg-white px-6 py-5 border-b border-slate-100 flex items-center justify-between z-10">
+              <div>
+                <h2 className="pf-display font-black text-slate-800 text-lg">Support Request</h2>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">We're here to help you</p>
+              </div>
               <button onClick={() => setShowNewTicketModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
-                <Ico n="close" cls="w-4 h-4" />
+                <Ico n="close" cls="w-5 h-5" />
               </button>
             </div>
-            <form onSubmit={handleCreateTicket} className="p-5 space-y-4">
-              <Field label="Subject">
-                <input type="text" value={newTicketForm.subject}
-                  onChange={e => setNewTicketForm(p => ({ ...p, subject: e.target.value }))}
-                  className={inputCls} required />
-              </Field>
-              <Field label="Category">
-                <select value={newTicketForm.category}
-                  onChange={e => setNewTicketForm(p => ({ ...p, category: e.target.value }))}
-                  className={inputCls}>
-                  {['Order','Product','Payment','Return/Refund','Other'].map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </Field>
-              <Field label="Description">
+            <form onSubmit={handleCreateTicket} className="p-6 space-y-6">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Field label="Category">
+                  <select value={newTicketForm.category}
+                    onChange={e => setNewTicketForm(p => ({ ...p, category: e.target.value }))}
+                    className={inputCls}>
+                    {['Order','Product','Payment','Return/Refund','Other'].map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </Field>
+                <Field label="Subject">
+                  <input type="text" value={newTicketForm.subject}
+                    onChange={e => setNewTicketForm(p => ({ ...p, subject: e.target.value }))}
+                    className={inputCls} placeholder="Brief title of issue" required />
+                </Field>
+              </div>
+
+              {/* Recent Orders Suggestions */}
+              {recentOrders.length > 0 && (
+                <div>
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 block">Link Recent Order (Optional)</label>
+                  <div className="flex gap-2 overflow-x-auto pb-2 pf-nav-strip">
+                    {recentOrders.map(o => (
+                      <button
+                        key={o._id}
+                        type="button"
+                        onClick={() => setNewTicketForm(p => ({ ...p, relatedOrder: p.relatedOrder === o._id ? '' : o._id, subject: p.relatedOrder === o._id ? '' : `Issue with Order #${o.orderId}` }))}
+                        className={`flex-shrink-0 px-4 py-2 rounded-xl border text-left transition-all ${
+                          newTicketForm.relatedOrder === o._id 
+                            ? 'bg-violet-600 border-violet-600 text-white shadow-lg shadow-violet-200' 
+                            : 'bg-white border-slate-100 text-slate-600 hover:border-violet-200'
+                        }`}
+                      >
+                        <div className="text-[10px] font-black uppercase tracking-wider mb-0.5">#{o.orderId}</div>
+                        <div className={`text-[9px] font-bold ${newTicketForm.relatedOrder === o._id ? 'text-violet-100' : 'text-slate-400'}`}>₹{o.total?.toLocaleString()} · {new Date(o.createdAt).toLocaleDateString()}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <Field label="How can we help?">
                 <textarea value={newTicketForm.description}
                   onChange={e => setNewTicketForm(p => ({ ...p, description: e.target.value }))}
-                  className={`${inputCls} h-28 resize-none`} required />
+                  className={`${inputCls} h-32 resize-none`} placeholder="Please describe your issue in detail..." required />
               </Field>
+
               <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => setShowNewTicketModal(false)} className={btnOutline}>Cancel</button>
-                <button type="submit" className="flex-1 py-3.5 rounded-xl font-black text-sm text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-lg shadow-violet-200 transition-all active:scale-[0.98]">
-                  Submit Ticket
+                <button type="button" onClick={() => setShowNewTicketModal(false)} className={btnOutline}>Discard</button>
+                <button type="submit" className="flex-1 py-4 rounded-2xl font-black text-sm text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-xl shadow-violet-200 transition-all active:scale-[0.98]">
+                  Submit Request
                 </button>
               </div>
             </form>
