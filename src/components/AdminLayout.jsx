@@ -190,7 +190,7 @@ export default function AdminLayout() {
                   <Icon name="dash" />
                   Dashboard
                 </>
-              ), null, true)}
+              ), 'dashboard', true)}
               {link('/admin/products', (
                 <>
                   <Icon name="prod" />

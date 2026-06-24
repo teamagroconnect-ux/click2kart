@@ -5,6 +5,8 @@ import { useAuth } from '../../lib/AuthContext';
 import { useToast } from '../../components/Toast';
 import LoadingSpinner from '../../components/LoadingSpinner';
 import { getImageUrl } from '../../lib/cloudinary';
+import { io } from 'socket.io-client';
+import { CONFIG } from '../../shared/lib/config';
 
 const INDIAN_STATES = [
   'Andhra Pradesh','Arunachal Pradesh','Assam','Bihar','Chhattisgarh',
@@ -107,6 +109,8 @@ export default function Profile() {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [newTicketForm, setNewTicketForm] = useState({ subject: '', description: '', category: 'Other', relatedOrder: '' });
   const [messageInput, setMessageInput] = useState('');
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [editValue, setEditValue] = useState('');
   const [recentOrders, setRecentOrders] = useState([]);
 
   const adminIcon = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" // Female executive icon
@@ -121,6 +125,21 @@ export default function Profile() {
   useEffect(() => {
     if (activeSection === 'support' && tickets.length === 0) loadTickets();
   }, [activeSection]);
+
+  useEffect(() => {
+    let socket;
+    if (selectedTicket) {
+      socket = io(CONFIG.API_BASE_URL)
+      socket.on(`ticket_update_${selectedTicket._id}`, (updatedTicket) => {
+        setSelectedTicket(updatedTicket)
+        // Also update the ticket in the list
+        setTickets(prev => prev.map(t => t._id === updatedTicket._id ? updatedTicket : t))
+      })
+    }
+    return () => {
+      if (socket) socket.disconnect()
+    }
+  }, [selectedTicket?._id])
 
   useEffect(() => {
     if (showNewTicketModal) loadRecentOrders();
@@ -309,6 +328,37 @@ export default function Profile() {
     if (!messageInput.trim()) return;
     try { const { data } = await api.post(`/api/support-tickets/${ticketId}/messages`, { message: messageInput }); setSelectedTicket(data); setMessageInput(''); loadTickets(); }
     catch (e) { notify(e?.response?.data?.error || 'Failed', 'error'); }
+  };
+
+  const handleEditMessage = async (ticketId, messageId) => {
+    if (!editValue.trim()) return;
+    try {
+      const { data } = await api.put(`/api/support-tickets/${ticketId}/messages/${messageId}`, { message: editValue });
+      setSelectedTicket(data);
+      setEditingMessageId(null);
+      setEditValue('');
+      notify('Message updated!', 'success');
+    } catch (e) {
+      notify('Failed to update message', 'error');
+    }
+  };
+
+  const handleUploadImage = async (ticketId, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      notify('Uploading image...', 'info');
+      const { data: uploadData } = await api.post('/api/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const { data: ticketData } = await api.post(`/api/support-tickets/${ticketId}/upload-image`, { imageUrl: uploadData.url });
+      setSelectedTicket(ticketData);
+      notify('Image uploaded!', 'success');
+    } catch (e) {
+      notify('Failed to upload image', 'error');
+    } finally {
+      e.target.value = '';
+    }
   };
 
   const handleResolveTicket = async (ticketId) => {
@@ -880,7 +930,7 @@ export default function Profile() {
                       </div>
 
                       {selectedTicket.messages?.map((msg, i) => (
-                        <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2`}>
+                        <div key={i} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'} items-end gap-2 group`}>
                           {msg.sender === 'admin' && (
                             <img src={adminIcon} alt="Support" className="h-8 w-8 rounded-full border border-white shadow-sm mb-1" />
                           )}
@@ -888,11 +938,57 @@ export default function Profile() {
                             ${msg.sender === 'user'
                               ? 'bg-gradient-to-br from-violet-600 to-indigo-600 text-white rounded-br-none'
                               : 'bg-white text-slate-700 border border-slate-100 rounded-bl-none shadow-sm'}`}>
-                            <p className="text-sm font-bold leading-relaxed">{msg.message}</p>
+                            
+                            {editingMessageId === msg._id ? (
+                              <div className="flex flex-col gap-2 min-w-[200px]">
+                                <textarea
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  className="bg-white/10 border border-white/20 rounded-lg p-2 text-sm text-white focus:outline-none"
+                                  autoFocus
+                                />
+                                <div className="flex justify-end gap-2">
+                                  <button onClick={() => setEditingMessageId(null)} className="text-[10px] font-bold uppercase hover:underline">Cancel</button>
+                                  <button onClick={() => handleEditMessage(selectedTicket._id, msg._id)} className="text-[10px] font-black uppercase bg-white text-violet-600 px-2 py-1 rounded-md">Save</button>
+                                </div>
+                              </div>
+                            ) : (
+                              <>
+                                {msg.sender === 'user' && (
+                                  <button 
+                                    onClick={() => { setEditingMessageId(msg._id); setEditValue(msg.message); }}
+                                    className="absolute -left-8 top-2 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-slate-400 hover:text-violet-600"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                  </button>
+                                )}
+                                <p className="text-sm font-bold leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                                
+                                {msg.type === 'image_request' && (
+                                  <div className="mt-3 pt-3 border-t border-slate-50">
+                                    <label className="flex items-center justify-center gap-2 w-full py-2 bg-violet-50 text-violet-600 rounded-xl text-[10px] font-black uppercase tracking-widest cursor-pointer hover:bg-violet-100 transition-all border border-violet-100 shadow-inner">
+                                      <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadImage(selectedTicket._id, e)} />
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                                      Upload Requested Image
+                                    </label>
+                                  </div>
+                                )}
+
+                                {msg.type === 'image' && msg.attachments?.length > 0 && (
+                                  <div className="mt-2 rounded-xl overflow-hidden border border-black/5 shadow-inner">
+                                    <img src={getImageUrl(msg.attachments[0])} alt="Attached" className="max-w-full h-auto max-h-[300px] object-contain mx-auto" />
+                                  </div>
+                                )}
+                              </>
+                            )}
+
                             <div className={`text-[9px] mt-2 font-black uppercase tracking-widest flex items-center justify-between gap-4 ${
                               msg.sender === 'user' ? 'text-violet-200' : 'text-slate-300'
                             }`}>
-                              <span>{msg.sender === 'user' ? 'You' : 'Executive Support'}</span>
+                              <div className="flex items-center gap-2">
+                                <span>{msg.sender === 'user' ? 'You' : 'Executive Support'}</span>
+                                {msg.isEdited && <span className="italic opacity-70">(Edited)</span>}
+                              </div>
                               <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                           </div>
@@ -912,6 +1008,10 @@ export default function Profile() {
                     {selectedTicket.status !== 'Closed' && (
                       <div className="p-4 bg-white/95 backdrop-blur-md border-t border-slate-100">
                         <div className="flex gap-2 items-center bg-slate-50 p-2 rounded-2xl border border-slate-200 focus-within:border-violet-300 transition-all">
+                          <label className="p-3 text-slate-400 hover:text-violet-600 hover:bg-white rounded-xl transition-all cursor-pointer">
+                            <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadImage(selectedTicket._id, e)} />
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                          </label>
                           <input value={messageInput} onChange={e => setMessageInput(e.target.value)}
                             onKeyPress={e => e.key === 'Enter' && handleAddMessage(selectedTicket._id)}
                             placeholder="Type a message…"
@@ -1106,15 +1206,15 @@ export default function Profile() {
                       <button
                         key={o._id}
                         type="button"
-                        onClick={() => setNewTicketForm(p => ({ ...p, relatedOrder: p.relatedOrder === o._id ? '' : o._id, subject: p.relatedOrder === o._id ? '' : `Issue with Order #${o.orderId}` }))}
+                        onClick={() => setNewTicketForm(p => ({ ...p, relatedOrder: p.relatedOrder === o._id ? '' : o._id, subject: p.relatedOrder === o._id ? '' : `Issue with Order #${o._id.slice(-6).toUpperCase()}` }))}
                         className={`flex-shrink-0 px-4 py-2 rounded-xl border text-left transition-all ${
                           newTicketForm.relatedOrder === o._id 
                             ? 'bg-violet-600 border-violet-600 text-white shadow-lg shadow-violet-200' 
                             : 'bg-white border-slate-100 text-slate-600 hover:border-violet-200'
                         }`}
                       >
-                        <div className="text-[10px] font-black uppercase tracking-wider mb-0.5">#{o.orderId}</div>
-                        <div className={`text-[9px] font-bold ${newTicketForm.relatedOrder === o._id ? 'text-violet-100' : 'text-slate-400'}`}>₹{o.total?.toLocaleString()} · {new Date(o.createdAt).toLocaleDateString()}</div>
+                        <div className="text-[10px] font-black uppercase tracking-wider mb-0.5">#{o._id.slice(-6).toUpperCase()}</div>
+                        <div className={`text-[9px] font-bold ${newTicketForm.relatedOrder === o._id ? 'text-violet-100' : 'text-slate-400'}`}>₹{o.totalEstimate?.toLocaleString()} · {new Date(o.createdAt).toLocaleDateString()}</div>
                       </button>
                     ))}
                   </div>

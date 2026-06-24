@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../../lib/api'
 
 const COMPONENTS = [
+  { id: 'dashboard', label: 'Dashboard' },
   { id: 'products', label: 'Products' },
   { id: 'brands', label: 'Brands' },
   { id: 'categories', label: 'Categories' },
@@ -10,12 +11,14 @@ const COMPONENTS = [
   { id: 'orders', label: 'Orders' },
   { id: 'payment-verification', label: 'Payment Verification' },
   { id: 'coupons', label: 'Coupons' },
-  { id: 'offers', label: 'Offers' },
   { id: 'partners', label: 'Partners' },
   { id: 'customers', label: 'Customers' },
   { id: 'inventory', label: 'Inventory' },
   { id: 'stores', label: 'Stores' },
-  { id: 'settings', label: 'Settings' }
+  { id: 'offers', label: 'Offers' },
+  { id: 'offline-customers', label: 'Offline Customers' },
+  { id: 'support-tickets', label: 'Support Tickets' },
+  { id: 'staff', label: 'Staff Management' }
 ]
 
 export default function StaffManagement() {
