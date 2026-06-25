@@ -1328,11 +1328,11 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
   }
 
   const addAttr = async () => {
-    const val = attrInput.trim().toLowerCase()
+    const val = attrInput.trim()
     if (!val) return
     const currentAttrs = Array.isArray(product.attributes) ? product.attributes : []
-    const attrNames = currentAttrs.map(a => a.split(':')[0])
-    if (attrNames.includes(val)) return notify('Attribute already exists', 'error')
+    const attrNames = currentAttrs.map(a => a.split(':')[0].toLowerCase())
+    if (attrNames.includes(val.toLowerCase())) return notify('Attribute already exists', 'error')
     
     const next = [...currentAttrs, `${val}:`]
     await updateAttributes(next)
@@ -1349,14 +1349,14 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
   const addAttrValue = async (attrName, value) => {
     const rawVal = value.trim()
     if (!rawVal) return
-    const newVals = rawVal.split(',').map(v => v.trim().toLowerCase()).filter(Boolean)
+    const newVals = rawVal.split(',').map(v => v.trim()).filter(Boolean)
     
     const currentAttrs = [...(product.attributes || [])]
-    const idx = currentAttrs.findIndex(a => a.startsWith(`${attrName}:`))
+    const idx = currentAttrs.findIndex(a => a.toLowerCase().startsWith(`${attrName.toLowerCase()}:`))
     if (idx === -1) return
 
     const [name, valuesStr] = currentAttrs[idx].split(':')
-    const existingValues = valuesStr ? valuesStr.split(',').filter(Boolean).map(v => v.toLowerCase()) : []
+    const existingValues = valuesStr ? valuesStr.split(',').filter(Boolean) : []
     
     const finalValues = [...new Set([...existingValues, ...newVals])]
     
@@ -1367,11 +1367,11 @@ function VariantManager({ product, setEditing, onChanged, editingVariant, setEdi
 
   const removeAttrValue = async (attrName, valToRemove) => {
     const currentAttrs = [...(product.attributes || [])]
-    const idx = currentAttrs.findIndex(a => a.startsWith(`${attrName}:`))
+    const idx = currentAttrs.findIndex(a => a.toLowerCase().startsWith(`${attrName.toLowerCase()}:`))
     if (idx === -1) return
 
     const [name, valuesStr] = currentAttrs[idx].split(':')
-    const values = valuesStr.split(',').filter(v => v !== valToRemove)
+    const values = valuesStr.split(',').filter(v => v.toLowerCase() !== valToRemove.toLowerCase())
     
     currentAttrs[idx] = `${name}:${values.join(',')}`
     await updateAttributes(currentAttrs)
