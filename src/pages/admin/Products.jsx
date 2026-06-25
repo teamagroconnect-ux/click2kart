@@ -1122,14 +1122,6 @@ export default function Products() {
         </div>
       )}
 
-      <ConfirmModal
-        open={!!toDelete}
-        title="Delete Product?"
-        message={`Are you sure you want to remove "${toDelete?.name}"? This action cannot be undone.`}
-        onConfirm={confirmDelete}
-        onCancel={() => setToDelete(null)}
-      />
-
       {viewing && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 sm:p-8 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto">
           <div className="bg-white border border-gray-100 rounded-[2rem] p-6 md:p-10 w-full max-w-4xl shadow-2xl space-y-8 animate-in zoom-in-95 duration-300 my-auto relative">

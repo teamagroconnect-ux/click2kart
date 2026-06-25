@@ -147,6 +147,7 @@ export default function Coupons(){
                   <select className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none appearance-none" value={form.type} onChange={e=>setForm({...form, type:e.target.value})}>
                     <option value="PERCENT">Percentage</option>
                     <option value="FLAT">Flat Amount</option>
+                    <option value="PRODUCT">Product-based</option>
                   </select>
                 </div>
                 <div className="space-y-1">
