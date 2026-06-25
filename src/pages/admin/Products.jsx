@@ -99,7 +99,7 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', volumetricWeight: { length: '', width: '', height: '' }, hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '', partnerBenefit: { type: 'PERCENT', value: '' }, userDiscount: { type: 'PERCENT', value: '' } })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', volumetricWeight: { length: '', width: '', height: '' }, hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '', partnerBenefit: { discountType: 'PERCENT', value: '' }, userDiscount: { discountType: 'PERCENT', value: '' }, isLive: false })
   const [editing, setEditing] = useState(null)
   const [viewing, setViewing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -191,14 +191,20 @@ export default function Products() {
       variantDisplayType: form.variantDisplayType || 'selector',
       variants: [],
       partnerBenefit: form.partnerBenefit,
-      userDiscount: form.userDiscount
+      userDiscount: form.userDiscount,
+      isLive: form.isLive
     })
-    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', volumetricWeight: { length: '', width: '', height: '' }, hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '', partnerBenefit: { type: 'PERCENT', value: '' }, userDiscount: { type: 'PERCENT', value: '' } }); setShowAddProduct(false); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', volumetricWeight: { length: '', width: '', height: '' }, hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '', partnerBenefit: { discountType: 'PERCENT', value: '' }, userDiscount: { discountType: 'PERCENT', value: '' }, isLive: false }); setShowAddProduct(false); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
     const qty = Number(prompt('Reduce by quantity?')||'0')
     if (qty>0){ await api.patch(`/api/products/${id}/stock`, { quantity: qty }); load(page) }
+  }
+
+  const toggleLive = async (product) => {
+    await api.put(`/api/products/${product._id}`, { isLive: !product.isLive })
+    load(page)
   }
 
   const openEdit = (p) => {
@@ -232,8 +238,9 @@ export default function Products() {
       specKey: '',
       specValue: '',
       variantDisplayType: p.variantDisplayType || 'selector',
-      partnerBenefit: p.partnerBenefit || { type: 'PERCENT', value: '' },
-      userDiscount: p.userDiscount || { type: 'PERCENT', value: '' }
+      partnerBenefit: p.partnerBenefit || { discountType: 'PERCENT', value: '' },
+      userDiscount: p.userDiscount || { discountType: 'PERCENT', value: '' },
+      isLive: p.isLive || false
     }
     setEditing(ed)
     return ed
@@ -277,7 +284,8 @@ export default function Products() {
         images: (v.images || '').toString().split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
       })),
       partnerBenefit: editing.partnerBenefit,
-      userDiscount: editing.userDiscount
+      userDiscount: editing.userDiscount,
+      isLive: editing.isLive
     }
     // Remove stock from payload to prevent accidental reset to 0
     delete payload.stock;
@@ -379,16 +387,19 @@ export default function Products() {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <div className="font-bold text-gray-900 truncate max-w-[200px] text-sm">
-                                    {p.name}
-                                  </div>
-                                  {p.isActive ? (
-                                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black rounded-full border border-emerald-100 uppercase">Live</span>
-                                  ) : (
-                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[8px] font-black rounded-full border border-gray-200 uppercase">Hidden</span>
-                                  )}
-                                </div>
+                  <div className="flex items-center gap-2">
+                    <div className="font-bold text-gray-900 truncate max-w-[200px] text-sm">
+                      {p.name}
+                    </div>
+                    {p.isLive ? (
+                      <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[8px] font-black rounded-full border border-green-100 uppercase">Live</span>
+                    ) : (
+                      <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[8px] font-black rounded-full border border-gray-200 uppercase">Hidden</span>
+                    )}
+                    {!p.isActive ? (
+                      <span className="px-2 py-0.5 bg-red-50 text-red-600 text-[8px] font-black rounded-full border border-red-100 uppercase">Inactive</span>
+                    ) : null}
+                  </div>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="text-[9px] text-blue-600 font-bold uppercase">{p.brand?.name || 'Unbranded'}</span>
                                   <span className="text-[9px] text-gray-400 font-medium">{p.category?.name || 'General'}</span>
@@ -452,6 +463,13 @@ export default function Products() {
                                     onClick={(e) => { e.stopPropagation(); setOpenDropdown(null); }}
                                   />
                                   <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl border border-gray-100 shadow-xl z-20 py-2">
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); toggleLive(p); setOpenDropdown(null); }}
+                                      className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-all text-green-600"
+                                    >
+                                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                      {p.isLive ? 'Hide Product' : 'Show Product'}
+                                    </button>
                                     <button 
                                       onClick={(e) => { e.stopPropagation(); setManagingVariants(p); setOpenDropdown(null); }}
                                       className="w-full px-4 py-2 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-all text-indigo-600"
@@ -703,8 +721,8 @@ export default function Products() {
                           <div className="flex gap-2">
                             <select
                               className="w-24 bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                              value={form.partnerBenefit?.type || 'PERCENT'}
-                              onChange={e => setForm({ ...form, partnerBenefit: { ...form.partnerBenefit, type: e.target.value } })}
+                              value={form.partnerBenefit?.discountType || 'PERCENT'}
+                              onChange={e => setForm({ ...form, partnerBenefit: { ...form.partnerBenefit, discountType: e.target.value } })}
                             >
                               <option value="PERCENT">%</option>
                               <option value="FLAT">₹</option>
@@ -724,8 +742,8 @@ export default function Products() {
                           <div className="flex gap-2">
                             <select
                               className="w-24 bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                              value={form.userDiscount?.type || 'PERCENT'}
-                              onChange={e => setForm({ ...form, userDiscount: { ...form.userDiscount, type: e.target.value } })}
+                              value={form.userDiscount?.discountType || 'PERCENT'}
+                              onChange={e => setForm({ ...form, userDiscount: { ...form.userDiscount, discountType: e.target.value } })}
                             >
                               <option value="PERCENT">%</option>
                               <option value="FLAT">₹</option>
@@ -925,6 +943,24 @@ export default function Products() {
                 </button>
               </div>
 
+              <div className="flex items-center justify-between p-3 bg-gray-50/50 rounded-2xl border border-gray-100 mt-1 md:col-span-3">
+                <div>
+                  <div className="text-[10px] font-bold text-gray-500 uppercase ml-1">Product Live Status</div>
+                  <div className="text-[10px] text-gray-400 ml-1">{editing.isLive ? 'Product is visible to customers' : 'Product is hidden from customers'}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setEditing(e => ({ ...e, isLive: !e.isLive }))}
+                  className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none ${editing.isLive ? 'bg-green-600' : 'bg-gray-200'}`}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${editing.isLive ? 'translate-x-9' : 'translate-x-1'}`}
+                  />
+                  <span className="absolute left-2 text-[8px] font-bold text-white uppercase">{editing.isLive ? 'ON' : ''}</span>
+                  <span className="absolute right-2 text-[8px] font-bold text-gray-400 uppercase">{editing.isLive ? '' : 'OFF'}</span>
+                </button>
+              </div>
+
               <div className="space-y-1 md:col-span-3">
                 <p className="text-[11px] text-gray-500 bg-violet-50/80 border border-violet-100 rounded-xl px-3 py-2">Option SKUs and variant stock are managed in <span className="font-bold text-violet-700">Manage Variants</span>, not here.</p>
               </div>
@@ -1003,8 +1039,8 @@ export default function Products() {
                       <div className="flex gap-2">
                         <select
                           className="w-24 bg-white border-none rounded-xl px-2 py-2 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                          value={editing.partnerBenefit?.type || 'PERCENT'}
-                          onChange={e => setEditing({ ...editing, partnerBenefit: { ...editing.partnerBenefit, type: e.target.value } })}
+                          value={editing.partnerBenefit?.discountType || 'PERCENT'}
+                          onChange={e => setEditing({ ...editing, partnerBenefit: { ...editing.partnerBenefit, discountType: e.target.value } })}
                         >
                           <option value="PERCENT">%</option>
                           <option value="FLAT">₹</option>
@@ -1024,8 +1060,8 @@ export default function Products() {
                       <div className="flex gap-2">
                         <select
                           className="w-24 bg-white border-none rounded-xl px-2 py-2 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                          value={editing.userDiscount?.type || 'PERCENT'}
-                          onChange={e => setEditing({ ...editing, userDiscount: { ...editing.userDiscount, type: e.target.value } })}
+                          value={editing.userDiscount?.discountType || 'PERCENT'}
+                          onChange={e => setEditing({ ...editing, userDiscount: { ...editing.userDiscount, discountType: e.target.value } })}
                         >
                           <option value="PERCENT">%</option>
                           <option value="FLAT">₹</option>
