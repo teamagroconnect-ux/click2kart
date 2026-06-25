@@ -99,7 +99,7 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', volumetricWeight: { length: '', width: '', height: '' }, hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '' })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', volumetricWeight: { length: '', width: '', height: '' }, hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '', partnerBenefit: { type: 'PERCENT', value: '' }, userDiscount: { type: 'PERCENT', value: '' } })
   const [editing, setEditing] = useState(null)
   const [viewing, setViewing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -189,9 +189,11 @@ export default function Products() {
       hsnCode: form.hsnCode || '',
       attributes: [],
       variantDisplayType: form.variantDisplayType || 'selector',
-      variants: []
+      variants: [],
+      partnerBenefit: form.partnerBenefit,
+      userDiscount: form.userDiscount
     })
-    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', volumetricWeight: { length: '', width: '', height: '' }, hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '' }); setShowAddProduct(false); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', volumetricWeight: { length: '', width: '', height: '' }, hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '', partnerBenefit: { type: 'PERCENT', value: '' }, userDiscount: { type: 'PERCENT', value: '' } }); setShowAddProduct(false); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -229,7 +231,9 @@ export default function Products() {
       specifications: Array.isArray(p.specifications) ? p.specifications.map(s => ({ key: s.key || '', value: s.value || '' })).filter(s => s.key && s.value) : [],
       specKey: '',
       specValue: '',
-      variantDisplayType: p.variantDisplayType || 'selector'
+      variantDisplayType: p.variantDisplayType || 'selector',
+      partnerBenefit: p.partnerBenefit || { type: 'PERCENT', value: '' },
+      userDiscount: p.userDiscount || { type: 'PERCENT', value: '' }
     }
     setEditing(ed)
     return ed
@@ -271,7 +275,9 @@ export default function Products() {
         mrp: v.mrp ? Number(v.mrp) : undefined,
         weight: Number(v.weight || 0),
         images: (v.images || '').toString().split(',').map(s=>s.trim()).filter(Boolean).map(url => ({ url }))
-      }))
+      })),
+      partnerBenefit: editing.partnerBenefit,
+      userDiscount: editing.userDiscount
     }
     // Remove stock from payload to prevent accidental reset to 0
     delete payload.stock;
@@ -360,7 +366,12 @@ export default function Products() {
                         <tr key={p._id} className="group hover:bg-gray-50/50 transition-all cursor-pointer" onClick={() => setViewing(p)}>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-4">
-                              <div className="h-14 w-14 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center p-1" onClick={(e) => { e.stopPropagation(); if (p.images?.[0]?.url) setPreview(p.images[0].url) }}>
+                              <div className="h-14 w-14 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center p-1 relative" onClick={(e) => { e.stopPropagation(); if (p.images?.[0]?.url) setPreview(p.images[0].url) }}>
+                                {!p.isActive && (
+                                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center rounded-xl">
+                                    <span className="text-[8px] font-black text-white uppercase bg-black/60 px-2 py-0.5 rounded-full">Hidden</span>
+                                  </div>
+                                )}
                                 {p.images?.[0]?.url ? (
                                   <img src={p.images[0].url} alt={p.name} className="h-full w-full object-contain" />
                                 ) : (
@@ -368,8 +379,15 @@ export default function Products() {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <div className="font-bold text-gray-900 truncate max-w-[240px] text-sm">
-                                  {p.name}
+                                <div className="flex items-center gap-2">
+                                  <div className="font-bold text-gray-900 truncate max-w-[200px] text-sm">
+                                    {p.name}
+                                  </div>
+                                  {p.isActive ? (
+                                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[8px] font-black rounded-full border border-emerald-100 uppercase">Live</span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-[8px] font-black rounded-full border border-gray-200 uppercase">Hidden</span>
+                                  )}
                                 </div>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="text-[9px] text-blue-600 font-bold uppercase">{p.brand?.name || 'Unbranded'}</span>
@@ -675,6 +693,55 @@ export default function Products() {
                       )}
                     </div>
                   </div>
+
+                  <div className="space-y-2 p-3 bg-gray-50/50 rounded-2xl border border-gray-100">
+                    <div className="text-[10px] font-bold text-gray-500 uppercase ml-1">Partner & User Discounts</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Partner Benefit</label>
+                          <div className="flex gap-2">
+                            <select
+                              className="w-24 bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                              value={form.partnerBenefit?.type || 'PERCENT'}
+                              onChange={e => setForm({ ...form, partnerBenefit: { ...form.partnerBenefit, type: e.target.value } })}
+                            >
+                              <option value="PERCENT">%</option>
+                              <option value="FLAT">₹</option>
+                            </select>
+                            <input
+                              className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                              placeholder="Value"
+                              value={form.partnerBenefit?.value || ''}
+                              onChange={e => setForm({ ...form, partnerBenefit: { ...form.partnerBenefit, value: e.target.value } })}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">User Discount</label>
+                          <div className="flex gap-2">
+                            <select
+                              className="w-24 bg-white border border-gray-200 rounded-xl px-2 py-2 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                              value={form.userDiscount?.type || 'PERCENT'}
+                              onChange={e => setForm({ ...form, userDiscount: { ...form.userDiscount, type: e.target.value } })}
+                            >
+                              <option value="PERCENT">%</option>
+                              <option value="FLAT">₹</option>
+                            </select>
+                            <input
+                              className="flex-1 bg-white border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                              placeholder="Value"
+                              value={form.userDiscount?.value || ''}
+                              onChange={e => setForm({ ...form, userDiscount: { ...form.userDiscount, value: e.target.value } })}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Images</label>
@@ -924,6 +991,57 @@ export default function Products() {
                 </div>
               </div>
 
+              <div className="space-y-4 md:col-span-2 bg-gray-50/50 p-4 rounded-3xl border border-gray-100">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Partner & User Discounts</label>
+                  <div className="text-[10px] font-bold text-blue-600">Product-specific benefits</div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">Partner Benefit</label>
+                      <div className="flex gap-2">
+                        <select
+                          className="w-24 bg-white border-none rounded-xl px-2 py-2 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                          value={editing.partnerBenefit?.type || 'PERCENT'}
+                          onChange={e => setEditing({ ...editing, partnerBenefit: { ...editing.partnerBenefit, type: e.target.value } })}
+                        >
+                          <option value="PERCENT">%</option>
+                          <option value="FLAT">₹</option>
+                        </select>
+                        <input
+                          className="flex-1 bg-white border-none rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                          placeholder="Value"
+                          value={editing.partnerBenefit?.value || ''}
+                          onChange={e => setEditing({ ...editing, partnerBenefit: { ...editing.partnerBenefit, value: e.target.value } })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold text-gray-400 uppercase ml-1">User Discount</label>
+                      <div className="flex gap-2">
+                        <select
+                          className="w-24 bg-white border-none rounded-xl px-2 py-2 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                          value={editing.userDiscount?.type || 'PERCENT'}
+                          onChange={e => setEditing({ ...editing, userDiscount: { ...editing.userDiscount, type: e.target.value } })}
+                        >
+                          <option value="PERCENT">%</option>
+                          <option value="FLAT">₹</option>
+                        </select>
+                        <input
+                          className="flex-1 bg-white border-none rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                          placeholder="Value"
+                          value={editing.userDiscount?.value || ''}
+                          onChange={e => setEditing({ ...editing, userDiscount: { ...editing.userDiscount, value: e.target.value } })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-1 md:col-span-3">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">Description</label>
                 <textarea className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-500 rounded-2xl px-4 py-3 text-sm font-medium transition-all outline-none min-h-[120px]" placeholder="Detailed product specifications..." value={editing.description} onChange={e => setEditing({ ...editing, description: e.target.value })} />
@@ -1021,6 +1139,30 @@ export default function Products() {
                 <p className="text-[10px] text-blue-600 font-black uppercase tracking-[0.2em]">Product Details</p>
               </div>
               <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Product Status:</div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const newStatus = !viewing.isActive;
+                        await api.put(`/api/products/${viewing._id}`, { isActive: newStatus });
+                        setViewing({ ...viewing, isActive: newStatus });
+                        notify(`Product ${newStatus ? 'Live' : 'Hidden'}`, 'success');
+                        load(page);
+                      } catch (err) {
+                        notify('Update failed', 'error');
+                      }
+                    }}
+                    className={`relative inline-flex h-9 w-20 items-center rounded-full transition-colors focus:outline-none ${viewing.isActive ? 'bg-emerald-600' : 'bg-gray-300'}`}
+                  >
+                    <span
+                      className={`inline-block h-7 w-7 transform rounded-full bg-white transition-transform shadow-sm ${viewing.isActive ? 'translate-x-11' : 'translate-x-1'}`}
+                    />
+                    <span className="absolute left-2 text-[8px] font-black text-white uppercase">{viewing.isActive ? 'LIVE' : ''}</span>
+                    <span className="absolute right-2 text-[8px] font-black text-gray-500 uppercase">{!viewing.isActive ? 'HIDDEN' : ''}</span>
+                  </button>
+                </div>
                 <button 
                   onClick={() => { const p = viewing; setViewing(null); openEdit(p); }} 
                   className="px-6 py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
