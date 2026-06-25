@@ -3,6 +3,7 @@ import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
 import ConfirmModal from '../../components/ConfirmModal'
 import ImageUpload from '../../components/ImageUpload'
+import PasswordConfirmModal from '../../components/PasswordConfirmModal'
 
 function SearchableSelect({ 
   options, 
@@ -102,6 +103,7 @@ export default function Products() {
   const [editing, setEditing] = useState(null)
   const [viewing, setViewing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [managingVariants, setManagingVariants] = useState(null)
   const [editingVariant, setEditingVariant] = useState(null)
   const [brands, setBrands] = useState([])
@@ -278,8 +280,23 @@ export default function Products() {
     await api.put(`/api/products/${editing._id}`, payload)
     setEditing(null); load(page); notify('Product updated','success')
   }
-  const remove = (p) => setToDelete(p)
-  const confirmDelete = async () => { if (!toDelete) return; await api.delete(`/api/products/${toDelete._id}`); setToDelete(null); load(page); notify('Product deleted','success') }
+  const remove = (p) => {
+    setToDelete(p)
+    setDeleteModalOpen(true)
+  }
+  
+  const handleDeleteConfirm = async (password) => {
+    if (!toDelete) return
+    try {
+      await api.delete(`/api/products/${toDelete._id}`, { data: { password } })
+      setToDelete(null)
+      setDeleteModalOpen(false)
+      load(page)
+      notify('Product deleted','success')
+    } catch {
+      notify('Invalid deletion password','error')
+    }
+  }
 
   return (
     <>
@@ -1124,6 +1141,16 @@ export default function Products() {
         </div>
       )}
       </div>
+      <PasswordConfirmModal
+        open={deleteModalOpen}
+        title="Delete Product"
+        message="Enter deletion password to confirm product removal:"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          setDeleteModalOpen(false)
+          setToDelete(null)
+        }}
+      />
     </>
   )
 }
