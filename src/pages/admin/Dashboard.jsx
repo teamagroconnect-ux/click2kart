@@ -119,7 +119,7 @@ export default function Dashboard() {
           to="/admin/products"
         />
         <StatCard 
-          label="Support Health" 
+          label="Support Tickets" 
           value={stats?.pendingSupportTickets ?? 0} 
           sub={`${stats?.inProgressSupportTickets ?? 0} in progress, ${stats?.resolvedSupportTickets ?? 0} resolved`}
           icon={<svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>}
@@ -203,7 +203,7 @@ export default function Dashboard() {
           {/* Top Buyers */}
           <div className="bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm">
             <div className="p-6 border-b border-gray-50 bg-gray-50/30">
-              <h3 className="text-xs font-black text-gray-900 uppercase tracking-widest">VIP Customers</h3>
+              <h3 className="text-xs font-black text-gray-900 uppercase tracking-widest">Top Buyers</h3>
             </div>
             <div className="divide-y divide-gray-50">
               {revenue.topBuyers.slice(0, 5).map((b, i) => (
@@ -219,7 +219,7 @@ export default function Dashboard() {
                   </div>
                   <div className="text-right">
                     <div className="text-sm font-black text-gray-900">₹{Math.round(b.total).toLocaleString()}</div>
-                    <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">Premium</div>
+                    <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-tighter">Top</div>
                   </div>
                 </div>
               ))}

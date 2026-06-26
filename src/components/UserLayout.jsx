@@ -337,8 +337,8 @@ export default function UserLayout() {
       />
       <ConfirmModal
         open={showUpgradeModal}
-        title="Premium Required"
-        message="Get App is a premium feature. Upgrade to premium to enable app installation. Proceed to upgrade?"
+        title="Feature Available"
+        message="Get App is a partner-only feature. Complete your KYC to enable app installation. Proceed to profile?"
         onCancel={() => setShowUpgradeModal(false)}
         onConfirm={() => { setShowUpgradeModal(false); navigate('/profile') }}
       />

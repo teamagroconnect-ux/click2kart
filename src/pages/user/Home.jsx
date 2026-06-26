@@ -1032,13 +1032,13 @@ export default function Home() {
           <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-300 bg-white shadow-sm mb-6">
               <span className="h-1.5 w-1.5 rounded-full bg-violet-600 animate-pulse"></span>
-              <span className="text-[11px] font-black uppercase tracking-[0.25em] text-violet-700">Premium Partner Program</span>
+              <span className="text-[11px] font-black uppercase tracking-[0.25em] text-violet-700">Top Partner Program</span>
             </div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 mb-3 tracking-tight">
               Grow Your Business as a Click2Kart Partner
             </h2>
             <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-              Join India's leading B2B tech platform. Access exclusive tools, dedicated support, and premium features to scale your operations exponentially.
+              Join India's leading B2B tech platform. Access exclusive tools, dedicated support, and advanced features to scale your operations exponentially.
             </p>
             <Link
               to="/partner"

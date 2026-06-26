@@ -1382,7 +1382,7 @@ export default function Catalogue({ initialBrand, brandName }) {
                 {viewMode === 'START' && (
                   <>
                     <h2 className="ct-flow-h">How would you like to browse?</h2>
-                    <p className="ct-flow-desc">Select your preferred way to discover our premium wholesale products</p>
+                    <p className="ct-flow-desc">Select your preferred way to discover our high-quality wholesale products</p>
                     <div className="ct-grid-flow">
                       <div className="ct-start-card" onClick={() => setBrowsePath('brand')}>
                         <div className="ct-start-ico">🏷️</div>
@@ -1530,6 +1530,11 @@ export default function Catalogue({ initialBrand, brandName }) {
                           </div>
                           <div className="ct-list-content">
                             <h3 className="ct-list-name">{p.name}</h3>
+                            {p.category && (
+                              <div className="text-xs text-gray-500 font-medium">
+                                {p.category.name}
+                              </div>
+                            )}
                             <div className="ct-list-price-wrap">
                               {authed ? (
                                 <>
@@ -1547,6 +1552,17 @@ export default function Catalogue({ initialBrand, brandName }) {
                                 </span>
                               )}
                             </div>
+                            {authed && (
+                              <button
+                                className="mt-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  addToCart(p);
+                                }}
+                              >
+                                Add to Cart
+                              </button>
+                            )}
                           </div>
                         </div>
                       );
