@@ -15,6 +15,7 @@ export default function Coupons(){
   const [partners, setPartners] = useState([])
   const [newPartner, setNewPartner] = useState({ name:'', email:'', phone:'' })
   const [passwordModal, setPasswordModal] = useState({ open: false, coupon: null, action: null })
+  const [partnerDeleteModal, setPartnerDeleteModal] = useState({ open: false, partnerId: null })
   const load = async()=>{ const {data}=await api.get('/api/coupons'); setItems(data) }
   const loadPartners = async()=>{ const {data}=await api.get('/api/partner-accounts'); setPartners(data) }
   useEffect(()=>{ load(); loadPartners() }, [])
@@ -102,10 +103,19 @@ export default function Coupons(){
     loadPartners()
   }
 
-  const deletePartner = async (id) => {
-    if (!confirm("Are you sure you want to delete this partner? Coupons linked to this partner will remain but will lose the partner link.")) return;
-    await api.put(`/api/partner-accounts/${id}`, { isActive: false });
-    loadPartners();
+  const deletePartner = (id) => {
+    setPartnerDeleteModal({ open: true, partnerId: id });
+  }
+
+  const handlePartnerDeleteConfirm = async (password) => {
+    try {
+      await api.post('/api/admin/verify-deletion-password', { password });
+      await api.put(`/api/partner-accounts/${partnerDeleteModal.partnerId}`, { isActive: false });
+      setPartnerDeleteModal({ open: false, partnerId: null });
+      loadPartners();
+    } catch (err) {
+      notify('Invalid password or failed to remove partner', 'error');
+    }
   }
 
   return (
@@ -116,6 +126,13 @@ export default function Coupons(){
       message={passwordModal.action === 'disable' ? `Enter deletion password to disable coupon "${passwordModal.coupon?.code}"` : `Enter deletion password to permanently delete coupon "${passwordModal.coupon?.code}"`}
       onConfirm={handleRemove}
       onCancel={() => setPasswordModal({ open: false, coupon: null, action: null })}
+    />
+    <PasswordConfirmModal
+      open={partnerDeleteModal.open}
+      title="Remove Partner"
+      message="Enter deletion password to confirm partner removal (coupons linked to this partner will remain but lose the partner link):"
+      onConfirm={handlePartnerDeleteConfirm}
+      onCancel={() => setPartnerDeleteModal({ open: false, partnerId: null })}
     />
     <div className="space-y-8 max-w-6xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

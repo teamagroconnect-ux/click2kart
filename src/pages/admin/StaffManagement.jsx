@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../../lib/api'
+import PasswordConfirmModal from '../../components/PasswordConfirmModal'
+import { useToast } from '../../components/Toast'
 
 const COMPONENTS = [
   { id: 'dashboard', label: 'Dashboard' },
@@ -26,6 +28,8 @@ export default function StaffManagement() {
   const [form, setForm] = useState({ name: '', email: '', password: '', permissions: [] })
   const [editing, setEditing] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [staffToDelete, setStaffToDelete] = useState(null)
 
   const load = async () => {
     try {
@@ -67,13 +71,21 @@ export default function StaffManagement() {
     }
   }
 
-  const remove = async (id) => {
-    if (!window.confirm('Are you sure?')) return
+  const remove = (id) => {
+    setStaffToDelete(id)
+    setDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = async (password) => {
     try {
-      await api.delete(`/api/admin/staff/${id}`)
+      await api.post('/api/admin/verify-deletion-password', { password })
+      await api.delete(`/api/admin/staff/${staffToDelete}`)
+      setDeleteModalOpen(false)
+      setStaffToDelete(null)
       load()
     } catch (err) {
-      alert('Failed to delete staff')
+      console.error(err)
+      alert('Invalid password or failed to delete staff')
     }
   }
 
@@ -233,6 +245,17 @@ export default function StaffManagement() {
           </div>
         </div>
       )}
+
+      <PasswordConfirmModal
+        open={deleteModalOpen}
+        title="Delete Staff Member"
+        message="Enter deletion password to confirm deletion:"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => {
+          setDeleteModalOpen(false)
+          setStaffToDelete(null)
+        }}
+      />
     </div>
   )
 }

@@ -22,13 +22,16 @@ export default function Login() {
   })
 
   const [loading, setLoading] = useState(false)
-  const [mode, setMode] = useState('password') // 'password' | 'otp'
+  const [mode, setMode] = useState('password') // 'password' | 'otp' | 'setPassword'
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
   const [otpSent, setOtpSent] = useState(false)
   const [otp, setOtp] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [otpLoginToken, setOtpLoginToken] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -50,7 +53,7 @@ export default function Login() {
       } finally {
         setLoading(false)
       }
-    } else {
+    } else if (mode === 'otp') {
       if (!otpSent) {
         setLoading(true)
         try {
@@ -66,11 +69,10 @@ export default function Login() {
         setLoading(true)
         try {
           const { data } = await api.post('/api/auth/customer/login-otp/verify', { email: formData.email, otp })
-          setAuth(data.token, { ...data.user, role: 'customer' })
-          try { await refreshProfile() } catch {}
-          sessionStorage.removeItem('login_redirect')
-          notify('Logged in successfully', 'success')
-          navigate(from)
+          // Instead of logging in directly, show password set prompt
+          setOtpLoginToken(data)
+          setMode('setPassword')
+          notify('OTP verified! Please set a new password.', 'success')
         } catch (err) {
           const code = err?.response?.data?.error
           const msg = code === 'account_pending_approval'
@@ -80,6 +82,34 @@ export default function Login() {
         } finally {
           setLoading(false)
         }
+      }
+    } else if (mode === 'setPassword') {
+      if (newPassword !== confirmNewPassword) {
+        notify('Passwords do not match', 'error')
+        return
+      }
+      if (newPassword.length < 6) {
+        notify('Password must be at least 6 characters', 'error')
+        return
+      }
+      setLoading(true)
+      try {
+        // First log in with the OTP token
+        setAuth(otpLoginToken.token, { ...otpLoginToken.user, role: 'customer' })
+        // Then change the password (currentPassword can be empty since we just logged in via OTP)
+        await api.put('/api/user/change-password', {
+          currentPassword: '',
+          newPassword: newPassword,
+          confirmPassword: confirmNewPassword
+        })
+        try { await refreshProfile() } catch {}
+        sessionStorage.removeItem('login_redirect')
+        notify('Password set successfully! Welcome back!', 'success')
+        navigate(from)
+      } catch (err) {
+        notify(err?.response?.data?.error || 'Failed to set password', 'error')
+      } finally {
+        setLoading(false)
       }
     }
   }
@@ -107,18 +137,21 @@ export default function Login() {
 
         <form className="mt-4 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
-            <div className="group">
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Email Address</label>
-              <input
-                name="email"
-                type="email"
-                required
-                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                placeholder="john.doe@example.com"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
+            {mode !== 'setPassword' && (
+              <div className="group">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Email Address</label>
+                <input
+                  name="email"
+                  type="email"
+                  required
+                  className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="john.doe@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  disabled={mode === 'setPassword'}
+                />
+              </div>
+            )}
             {mode==='password' ? (
               <div className="group">
                 <div className="flex items-center justify-between ml-1 mb-1">
@@ -137,7 +170,7 @@ export default function Login() {
                   onChange={handleChange}
                 />
               </div>
-            ) : (
+            ) : mode === 'otp' ? (
               <div className="grid grid-cols-3 gap-2 items-end">
                 <div className="col-span-2">
                   <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">{otpSent ? 'Enter OTP' : 'One-Time Password'}</label>
@@ -174,6 +207,43 @@ export default function Login() {
                   {otpSent ? 'Resend OTP' : 'Send OTP'}
                 </button>
               </div>
+            ) : (
+              <>
+                <div className="group">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">New Password</label>
+                  <PasswordInput
+                    name="newPassword"
+                    required
+                    autoComplete="new-password"
+                    inputClassName="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e)=>setNewPassword(e.target.value)}
+                  />
+                </div>
+                <div className="group">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Confirm New Password</label>
+                  <PasswordInput
+                    name="confirmNewPassword"
+                    required
+                    autoComplete="new-password"
+                    inputClassName="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                    placeholder="••••••••"
+                    value={confirmNewPassword}
+                    onChange={(e)=>setConfirmNewPassword(e.target.value)}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('otp')
+                    setOtpLoginToken(null)
+                  }}
+                  className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-700"
+                >
+                  ← Back to OTP
+                </button>
+              </>
             )}
           </div>
 
@@ -182,7 +252,7 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-blue-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
           >
-            {loading ? 'Authenticating...' : (mode==='password' ? 'Sign In' : (otpSent ? 'Verify & Sign In' : 'Send OTP'))}
+            {loading ? 'Processing...' : (mode==='password' ? 'Sign In' : (mode==='otp' ? (otpSent ? 'Verify & Set Password' : 'Send OTP') : 'Set Password & Sign In'))}
           </button>
 
           <p className="text-center text-xs text-gray-400 font-bold mt-6 uppercase tracking-widest">
