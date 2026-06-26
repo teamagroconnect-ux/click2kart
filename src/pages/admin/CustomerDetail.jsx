@@ -59,7 +59,7 @@ export default function CustomerDetail() {
     </div>
   )
   if (!data) return <div className="p-8">Not found</div>
-  const { user, orders, bills } = data
+  const { user, orders, bills, partner } = data
   return (
     <>
       <div className="max-w-6xl mx-auto p-8 space-y-8">
@@ -171,6 +171,19 @@ export default function CustomerDetail() {
           </div>
         </div>
 
+        {partner && (
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
+            <h3 className="text-lg font-black text-gray-900 italic mb-6">Partner Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <KycItem label="Partner Name" value={partner.name} />
+              <KycItem label="Partner Email" value={partner.email} />
+              <KycItem label="Partner Phone" value={partner.phone} />
+              <KycItem label="Invite Code" value={partner.inviteCode} />
+              <KycItem label="Business Name" value={partner.businessName} />
+              <KycItem label="GST Number" value={partner.gstNumber} />
+            </div>
+          </div>
+        )}
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
           <h3 className="text-lg font-black text-gray-900 italic mb-6">KYC & Account Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

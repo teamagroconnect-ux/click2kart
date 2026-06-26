@@ -91,6 +91,7 @@ export default function Customers() {
               <tr>
                 <th className="px-8 py-5">Customer Profile</th>
                 <th className="px-8 py-5">Contact Info</th>
+                <th className="px-8 py-5">Partner Info</th>
                 <th className="px-8 py-5">Engagement</th>
                 <th className="px-8 py-5">Status</th>
                 <th className="px-8 py-5 text-right">Actions</th>
@@ -100,12 +101,12 @@ export default function Customers() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan="5" className="px-8 py-10"><div className="h-4 bg-gray-50 rounded-full w-full"></div></td>
+                    <td colSpan="6" className="px-8 py-10"><div className="h-4 bg-gray-50 rounded-full w-full"></div></td>
                   </tr>
                 ))
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-8 py-20 text-center text-gray-400 italic font-medium uppercase tracking-[0.2em] text-[10px]">No customers match your criteria.</td>
+                  <td colSpan="6" className="px-8 py-20 text-center text-gray-400 italic font-medium uppercase tracking-[0.2em] text-[10px]">No customers match your criteria.</td>
                 </tr>
               ) : (
                 items.map((c) => (
@@ -124,6 +125,16 @@ export default function Customers() {
                     <td className="px-8 py-6">
                       <div className="font-bold text-gray-700">{c.phone}</div>
                       <div className="text-xs text-gray-400 font-medium">{c.email || 'No Email Address'}</div>
+                    </td>
+                    <td className="px-8 py-6">
+                      {c.partner ? (
+                        <div className="space-y-1">
+                          <div className="font-bold text-gray-800 text-xs">{c.partner.name}</div>
+                          <div className="text-[10px] text-gray-500 font-medium">{c.partner.email || c.partner.phone || 'No contact'}</div>
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">Direct Signup</div>
+                      )}
                     </td>
                     <td className="px-8 py-6">
                       <div className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 font-black text-[10px] tracking-widest border border-indigo-100 uppercase">
