@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
+import PasswordConfirmModal from '../../components/PasswordConfirmModal'
 
 export default function CustomerDetail() {
   const { id } = useParams()
@@ -9,6 +10,7 @@ export default function CustomerDetail() {
   const { notify } = useToast()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const load = async () => {
     setLoading(true)
     try {
@@ -20,11 +22,19 @@ export default function CustomerDetail() {
   }
   useEffect(() => { load() }, [id])
 
+  const handleDeleteConfirm = async (password) => {
+    try {
+      await api.delete(`/api/admin/customers/${id}`, { data: { password } })
+      setDeleteModalOpen(false)
+      notify('Customer deleted', 'success')
+      nav('/admin/customers')
+    } catch {
+      notify('Invalid deletion password', 'error')
+    }
+  }
+
   const remove = async () => {
-    if (!confirm('Delete this customer permanently?')) return
-    await api.delete(`/api/admin/customers/${id}`)
-    notify('Customer deleted', 'success')
-    nav('/admin/customers')
+    setDeleteModalOpen(true)
   }
 
   const approve = async () => {
@@ -180,6 +190,16 @@ export default function CustomerDetail() {
         )}
       </div>
     </div>
+
+    <PasswordConfirmModal
+      open={deleteModalOpen}
+      title="Delete Customer"
+      message="Enter deletion password to confirm permanent removal:"
+      onConfirm={handleDeleteConfirm}
+      onCancel={() => {
+        setDeleteModalOpen(false)
+      }}
+    />
   )
 }
 

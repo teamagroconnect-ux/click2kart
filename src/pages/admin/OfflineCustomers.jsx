@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../lib/api";
 import { useToast } from "../../components/Toast";
-import ConfirmModal from "../../components/ConfirmModal";
+import PasswordConfirmModal from "../../components/PasswordConfirmModal";
 
 export default function OfflineCustomers() {
   const [items, setItems] = useState([]);
@@ -42,13 +42,19 @@ export default function OfflineCustomers() {
     load();
   };
 
+  const handleDeleteConfirm = async (password) => {
+    try {
+      await api.delete(`/admin/offline-customers/${toDelete._id}`, { data: { password } });
+      setToDelete(null);
+      notify("Customer deleted", "success");
+      load();
+    } catch {
+      notify("Invalid deletion password", "error");
+    }
+  };
+
   const handleDelete = async () => {
-    setToDelete(null);
-    const password = prompt("Enter deletion password:");
-    if (!password) return;
-    await api.delete(`/admin/offline-customers/${toDelete._id}`, { data: { password } });
-    notify("Customer deleted", "success");
-    load();
+    // Now handled by PasswordConfirmModal
   };
 
   const openEdit = (item) => {
@@ -219,10 +225,11 @@ export default function OfflineCustomers() {
       </div>
 
       {toDelete && (
-        <ConfirmModal
-          title="Delete Customer"
-          message="Are you sure you want to delete this customer?"
-          onConfirm={handleDelete}
+        <PasswordConfirmModal
+          open={!!toDelete}
+          title="Delete Offline Customer"
+          message="Enter deletion password to confirm permanent removal:"
+          onConfirm={handleDeleteConfirm}
           onCancel={() => setToDelete(null)}
         />
       )}
