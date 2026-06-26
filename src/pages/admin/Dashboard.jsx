@@ -63,18 +63,31 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-[1600px] mx-auto space-y-10 pb-12">
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
+        }
+        .gradient-bg {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .glass-card {
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(10px);
+        }
+      `}</style>
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 p-6 bg-gradient-to-r from-indigo-600 to-purple-700 rounded-[2.5rem] text-white shadow-xl">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Executive Dashboard</h1>
-          <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.2em] mt-1">Platform Overview & Performance</p>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="h-2 w-2 rounded-full bg-white animate-pulse"></span>
+            <span className="text-[10px] font-black uppercase tracking-wider opacity-80">Live Dashboard</span>
+          </div>
+          <h1 className="text-3xl font-black tracking-tight">Executive Dashboard</h1>
+          <p className="text-sm font-bold opacity-80 uppercase tracking-[0.2em] mt-1">Platform Overview & Performance</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="px-4 py-2 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
-            <span className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">Live Metrics</span>
-          </div>
-          <button onClick={() => window.location.reload()} className="p-2.5 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-md transition-all text-gray-500">
+          <button onClick={() => window.location.reload()} className="p-2.5 bg-white/20 border border-white/30 rounded-2xl shadow-sm hover:bg-white/30 hover:shadow-md transition-all text-white">
             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           </button>
         </div>
@@ -107,11 +120,11 @@ export default function Dashboard() {
         />
         <StatCard 
           label="Support Health" 
-          value={stats?.pendingCustomers ?? 0} 
-          sub={`${stats?.skippedCustomers ?? 0} skipped customers`}
+          value={stats?.pendingSupportTickets ?? 0} 
+          sub={`${stats?.inProgressSupportTickets ?? 0} in progress, ${stats?.resolvedSupportTickets ?? 0} resolved`}
           icon={<svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>}
           color="rose"
-          to="/admin/customers"
+          to="/admin/support-tickets"
         />
       </div>
 
@@ -305,15 +318,18 @@ export default function Dashboard() {
 
 function StatCard({ label, value, sub, icon, color, to }) {
   const colors = {
-    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-    amber: 'bg-amber-50 text-amber-600 border-amber-100',
-    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-    rose: 'bg-rose-50 text-rose-600 border-rose-100',
+    indigo: 'bg-gradient-to-br from-indigo-50 to-purple-50 text-indigo-600 border-indigo-100',
+    amber: 'bg-gradient-to-br from-amber-50 to-orange-50 text-amber-600 border-amber-100',
+    emerald: 'bg-gradient-to-br from-emerald-50 to-green-50 text-emerald-600 border-emerald-100',
+    rose: 'bg-gradient-to-br from-rose-50 to-pink-50 text-rose-600 border-rose-100',
   }
 
   const content = (
-    <div className="p-6 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm hover:shadow-md transition-all relative overflow-hidden group">
-      <div className={`h-14 w-14 rounded-2xl ${colors[color]} flex items-center justify-center mb-4 transition-transform group-hover:scale-110 duration-500`}>
+    <div className="p-6 bg-white border border-gray-100 rounded-[2.5rem] shadow-md hover:shadow-xl transition-all relative overflow-hidden group hover:-translate-y-2 duration-300">
+      {/* Decorative gradient background */}
+      <div className="absolute top-0 left-0 w-full h-full opacity-0 group-hover:opacity-10 transition-opacity bg-gradient-to-br from-indigo-50 to-purple-50" />
+      
+      <div className={`h-14 w-14 rounded-2xl ${colors[color]} flex items-center justify-center mb-4 transition-all group-hover:scale-110 group-hover:rotate-5 duration-500 shadow-sm`}>
         {icon}
       </div>
       <div>
@@ -324,7 +340,7 @@ function StatCard({ label, value, sub, icon, color, to }) {
           {sub}
         </p>
       </div>
-      <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0">
+      <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 text-gray-400 group-hover:text-indigo-500">
         <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
       </div>
     </div>

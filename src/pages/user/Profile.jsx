@@ -88,6 +88,10 @@ export default function Profile() {
   const [originalKyc, setOriginalKyc] = useState({});
   const [changingPassword, setChangingPassword] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [passwordChangeMode, setPasswordChangeMode] = useState('password'); // 'password' or 'otp'
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '', phone: '', 
     profilePicture: '', panCard: '', aadhaarCard: '',
@@ -257,6 +261,35 @@ export default function Profile() {
       notify('Password changed!', 'success');
       setShowPasswordChange(false);
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (e) { notify(e?.response?.data?.error || 'Failed', 'error'); }
+    finally { setChangingPassword(false); }
+  };
+
+  const handleSendOTP = async () => {
+    setOtpLoading(true);
+    try {
+      await api.post('/api/auth/customer/forgot-password', { email: user.email });
+      setOtpSent(true);
+      notify('OTP sent to email!', 'success');
+    } catch (e) {
+      notify(e?.response?.data?.error || 'Failed to send OTP', 'error');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handlePasswordUpdateViaOTP = async (e) => {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) { notify('Passwords do not match', 'error'); return; }
+    if (passwordForm.newPassword.length < 6) { notify('Minimum 6 characters', 'error'); return; }
+    setChangingPassword(true);
+    try {
+      await api.post('/api/auth/customer/reset-password', { email: user.email, otp, newPassword: passwordForm.newPassword });
+      notify('Password changed!', 'success');
+      setShowPasswordChange(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setOtpSent(false);
+      setOtp('');
     } catch (e) { notify(e?.response?.data?.error || 'Failed', 'error'); }
     finally { setChangingPassword(false); }
   };
@@ -1054,37 +1087,124 @@ export default function Profile() {
                 ) : (
                   <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                     <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-                      <button onClick={() => { setShowPasswordChange(false); setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' }); }}
+                      <button onClick={() => { setShowPasswordChange(false); setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' }); setPasswordChangeMode('password'); setOtpSent(false); setOtp(''); }}
                         className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
                         <Ico n="chevL" cls="w-4 h-4" />
                       </button>
                       <h3 className="pf-display font-black text-slate-800 text-sm">Change Password</h3>
                     </div>
-                    <form onSubmit={handlePasswordUpdate} className="p-5 space-y-4">
-                      <Field label="Current Password">
-                        <input type="password" name="currentPassword" value={passwordForm.currentPassword}
-                          onChange={e => setPasswordForm(p => ({ ...p, currentPassword: e.target.value }))}
-                          className={inputCls} placeholder="Current password" />
-                      </Field>
-                      <Field label="New Password">
-                        <input type="password" name="newPassword" value={passwordForm.newPassword}
-                          onChange={e => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
-                          className={inputCls} placeholder="At least 6 characters" />
-                      </Field>
-                      <Field label="Confirm Password">
-                        <input type="password" name="confirmPassword" value={passwordForm.confirmPassword}
-                          onChange={e => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
-                          className={inputCls} placeholder="Repeat new password" />
-                      </Field>
-                      {passwordForm.newPassword && passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
-                        <p className="text-red-500 text-xs font-semibold">Passwords don't match</p>
+                    <div className="p-5">
+                      <div className="flex gap-2 mb-5 p-1 bg-slate-50 rounded-xl">
+                        <button
+                          onClick={() => setPasswordChangeMode('password')}
+                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                            passwordChangeMode === 'password'
+                              ? 'bg-white text-violet-600 shadow-sm'
+                              : 'text-slate-400 hover:text-slate-600'
+                          }`}
+                        >
+                          Via Current Password
+                        </button>
+                        <button
+                          onClick={() => setPasswordChangeMode('otp')}
+                          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                            passwordChangeMode === 'otp'
+                              ? 'bg-white text-violet-600 shadow-sm'
+                              : 'text-slate-400 hover:text-slate-600'
+                          }`}
+                        >
+                          Via OTP
+                        </button>
+                      </div>
+
+                      {passwordChangeMode === 'password' ? (
+                        <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                          <Field label="Current Password">
+                            <input type="password" name="currentPassword" value={passwordForm.currentPassword}
+                              onChange={e => setPasswordForm(p => ({ ...p, currentPassword: e.target.value }))}
+                              className={inputCls} placeholder="Current password" />
+                          </Field>
+                          <Field label="New Password">
+                            <input type="password" name="newPassword" value={passwordForm.newPassword}
+                              onChange={e => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
+                              className={inputCls} placeholder="At least 6 characters" />
+                          </Field>
+                          <Field label="Confirm Password">
+                            <input type="password" name="confirmPassword" value={passwordForm.confirmPassword}
+                              onChange={e => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                              className={inputCls} placeholder="Repeat new password" />
+                          </Field>
+                          {passwordForm.newPassword && passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
+                            <p className="text-red-500 text-xs font-semibold">Passwords don't match</p>
+                          )}
+                          <button type="submit"
+                            disabled={changingPassword || passwordForm.newPassword !== passwordForm.confirmPassword || !passwordForm.newPassword}
+                            className={btnPrimary}>
+                            {changingPassword ? 'Updating…' : 'Update Password'}
+                          </button>
+                        </form>
+                      ) : (
+                        <form onSubmit={handlePasswordUpdateViaOTP} className="space-y-4">
+                          <div className="grid grid-cols-2 gap-3">
+                            <Field label="Email">
+                              <input
+                                type="email"
+                                value={user.email}
+                                disabled
+                                className={disabledCls}
+                              />
+                            </Field>
+                            <div className="space-y-1">
+                              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5 block">
+                                {otpSent ? 'Enter OTP' : 'Send OTP'}
+                              </label>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  inputMode="numeric"
+                                  maxLength="4"
+                                  value={otp}
+                                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                                  disabled={!otpSent}
+                                  className={inputCls}
+                                  placeholder={otpSent ? '1234' : ''}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleSendOTP}
+                                  disabled={otpLoading}
+                                  className="px-3 rounded-xl bg-violet-100 text-violet-600 text-xs font-bold hover:bg-violet-200 transition-all disabled:opacity-50"
+                                >
+                                  {otpLoading ? 'Sending...' : (otpSent ? 'Resend' : 'Send')}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                          {otpSent && (
+                            <>
+                              <Field label="New Password">
+                                <input type="password" name="newPassword" value={passwordForm.newPassword}
+                                  onChange={e => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
+                                  className={inputCls} placeholder="At least 6 characters" />
+                              </Field>
+                              <Field label="Confirm Password">
+                                <input type="password" name="confirmPassword" value={passwordForm.confirmPassword}
+                                  onChange={e => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                                  className={inputCls} placeholder="Repeat new password" />
+                              </Field>
+                              {passwordForm.newPassword && passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
+                                <p className="text-red-500 text-xs font-semibold">Passwords don't match</p>
+                              )}
+                            </>
+                          )}
+                          <button type="submit"
+                            disabled={changingPassword || !otpSent || !otp || passwordForm.newPassword !== passwordForm.confirmPassword || !passwordForm.newPassword}
+                            className={btnPrimary}>
+                            {changingPassword ? 'Updating…' : 'Update Password'}
+                          </button>
+                        </form>
                       )}
-                      <button type="submit"
-                        disabled={changingPassword || passwordForm.newPassword !== passwordForm.confirmPassword || !passwordForm.newPassword}
-                        className={btnPrimary}>
-                        {changingPassword ? 'Updating…' : 'Update Password'}
-                      </button>
-                    </form>
+                    </div>
                   </div>
                 )}
               </div>

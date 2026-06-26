@@ -299,6 +299,10 @@ export default function PartnerProfile() {
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [passwordChangeMode, setPasswordChangeMode] = useState('password');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
   const [partner, setPartner] = useState(null);
   const [formData, setFormData] = useState({
     name: '', phone: '', whatsappNumber: '', sameAsPhone: false, bloodGroup: '', dob: '', address: '', city: '', district: '', state: '', pincode: '', profilePicture: '', panCard: '', aadhaarCard: ''
@@ -398,7 +402,7 @@ export default function PartnerProfile() {
     if (passwordForm.newPassword.length < 6) return notify('Minimum 6 characters', 'error');
     setChangingPassword(true);
     try {
-      await api.put('/api/partner/change-password', passwordForm);
+      await api.put('/api/public/partner/change-password', passwordForm);
       notify('Password changed!', 'success');
       setShowPasswordChange(false);
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -407,6 +411,35 @@ export default function PartnerProfile() {
     } finally {
       setChangingPassword(false);
     }
+  };
+
+  const handleSendOTP = async () => {
+    setOtpLoading(true);
+    try {
+      await api.post('/api/public/partner/forgot-password', { email: partner.email });
+      setOtpSent(true);
+      notify('OTP sent to email!', 'success');
+    } catch (e) {
+      notify(e?.response?.data?.error || 'Failed to send OTP', 'error');
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handlePasswordUpdateViaOTP = async (e) => {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) { notify('Passwords do not match', 'error'); return; }
+    if (passwordForm.newPassword.length < 6) { notify('Minimum 6 characters', 'error'); return; }
+    setChangingPassword(true);
+    try {
+      await api.post('/api/public/partner/reset-password', { email: partner.email, otp, newPassword: passwordForm.newPassword });
+      notify('Password changed!', 'success');
+      setShowPasswordChange(false);
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setOtpSent(false);
+      setOtp('');
+    } catch (e) { notify(e?.response?.data?.error || 'Failed', 'error'); }
+    finally { setChangingPassword(false); }
   };
 
   const handleDownloadID = async () => {
@@ -741,37 +774,124 @@ export default function PartnerProfile() {
           ) : (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
-                <button onClick={() => { setShowPasswordChange(false); setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' }); }}
+                <button onClick={() => { setShowPasswordChange(false); setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' }); setPasswordChangeMode('password'); setOtpSent(false); setOtp(''); }}
                   className="p-2 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors">
                   <Ico n="chevL" cls="w-5 h-5" />
                 </button>
                 <h3 className="font-black text-gray-800 text-sm">Change Password</h3>
               </div>
-              <form onSubmit={handlePasswordUpdate} className="p-6 space-y-5">
-                <Field label="Current Password">
-                  <input type="password" value={passwordForm.currentPassword}
-                    onChange={e => setPasswordForm(p => ({ ...p, currentPassword: e.target.value }))}
-                    className={inputCls} placeholder="Current password" />
-                </Field>
-                <Field label="New Password">
-                  <input type="password" value={passwordForm.newPassword}
-                    onChange={e => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
-                    className={inputCls} placeholder="At least 6 characters" />
-                </Field>
-                <Field label="Confirm Password">
-                  <input type="password" value={passwordForm.confirmPassword}
-                    onChange={e => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
-                    className={inputCls} placeholder="Repeat new password" />
-                </Field>
-                {passwordForm.newPassword && passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
-                  <p className="text-red-500 text-xs font-semibold">Passwords don't match</p>
+              <div className="p-6">
+                <div className="flex gap-2 mb-5 p-1 bg-gray-50 rounded-xl">
+                  <button
+                    onClick={() => setPasswordChangeMode('password')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                      passwordChangeMode === 'password'
+                        ? 'bg-white text-indigo-600 shadow-sm'
+                        : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    Via Current Password
+                  </button>
+                  <button
+                    onClick={() => setPasswordChangeMode('otp')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                      passwordChangeMode === 'otp'
+                        ? 'bg-white text-indigo-600 shadow-sm'
+                        : 'text-gray-400 hover:text-gray-600'
+                    }`}
+                  >
+                    Via OTP
+                  </button>
+                </div>
+
+                {passwordChangeMode === 'password' ? (
+                  <form onSubmit={handlePasswordUpdate} className="space-y-5">
+                    <Field label="Current Password">
+                      <input type="password" value={passwordForm.currentPassword}
+                        onChange={e => setPasswordForm(p => ({ ...p, currentPassword: e.target.value }))}
+                        className={inputCls} placeholder="Current password" />
+                    </Field>
+                    <Field label="New Password">
+                      <input type="password" value={passwordForm.newPassword}
+                        onChange={e => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
+                        className={inputCls} placeholder="At least 6 characters" />
+                    </Field>
+                    <Field label="Confirm Password">
+                      <input type="password" value={passwordForm.confirmPassword}
+                        onChange={e => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                        className={inputCls} placeholder="Repeat new password" />
+                    </Field>
+                    {passwordForm.newPassword && passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
+                      <p className="text-red-500 text-xs font-semibold">Passwords don't match</p>
+                    )}
+                    <button type="submit"
+                      disabled={changingPassword || passwordForm.newPassword !== passwordForm.confirmPassword || !passwordForm.newPassword}
+                      className={btnPrimary}>
+                      {changingPassword ? 'Updating…' : 'Update Password'}
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handlePasswordUpdateViaOTP} className="space-y-5">
+                    <div className="grid md:grid-cols-2 gap-5">
+                      <Field label="Email">
+                        <input
+                          type="email"
+                          value={partner.email}
+                          disabled
+                          className={disabledCls}
+                        />
+                      </Field>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 block">
+                          {otpSent ? 'Enter OTP' : 'Send OTP'}
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength="4"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                            disabled={!otpSent}
+                            className={inputCls}
+                            placeholder={otpSent ? '1234' : ''}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleSendOTP}
+                            disabled={otpLoading}
+                            className="px-3 rounded-xl bg-indigo-100 text-indigo-600 text-xs font-bold hover:bg-indigo-200 transition-all disabled:opacity-50"
+                          >
+                            {otpLoading ? 'Sending...' : (otpSent ? 'Resend' : 'Send')}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    {otpSent && (
+                      <>
+                        <Field label="New Password">
+                          <input type="password" name="newPassword" value={passwordForm.newPassword}
+                            onChange={e => setPasswordForm(p => ({ ...p, newPassword: e.target.value }))}
+                            className={inputCls} placeholder="At least 6 characters" />
+                        </Field>
+                        <Field label="Confirm Password">
+                          <input type="password" name="confirmPassword" value={passwordForm.confirmPassword}
+                            onChange={e => setPasswordForm(p => ({ ...p, confirmPassword: e.target.value }))}
+                            className={inputCls} placeholder="Repeat new password" />
+                        </Field>
+                        {passwordForm.newPassword && passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
+                          <p className="text-red-500 text-xs font-semibold">Passwords don't match</p>
+                        )}
+                      </>
+                    )}
+                    <button type="submit"
+                      disabled={changingPassword || !otpSent || !otp || passwordForm.newPassword !== passwordForm.confirmPassword || !passwordForm.newPassword}
+                      className={btnPrimary}>
+                      {changingPassword ? 'Updating…' : 'Update Password'}
+                    </button>
+                  </form>
                 )}
-                <button type="submit"
-                  disabled={changingPassword || passwordForm.newPassword !== passwordForm.confirmPassword || !passwordForm.newPassword}
-                  className={btnPrimary}>
-                  {changingPassword ? 'Updating…' : 'Update Password'}
-                </button>
-              </form>
+              </div>
             </div>
           )}
         </div>
