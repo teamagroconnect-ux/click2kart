@@ -265,45 +265,64 @@ export default function UserLayout() {
       </nav>
 
       {location.pathname === '/' && (
-        <footer className="border-t border-gray-50 bg-white py-12 pb-32 lg:pb-12">
-          <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <img src="/layoutlogo.png" alt="Click2Kart" className="h-10 w-auto rounded-xl border border-gray-100 shadow-sm" />
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart. All rights reserved.</span>
-              <div className="flex gap-4 items-center">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Store Status: Online</span>
+        <footer className="border-t border-gray-100 bg-gradient-to-b from-white to-gray-50 py-12 pb-32 lg:pb-12 relative overflow-hidden">
+          {/* Background blobs */}
+          <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 blur-3xl" />
+          <div className="absolute -bottom-20 -right-20 w-64 h-64 rounded-full bg-gradient-to-br from-blue-500/10 to-cyan-500/10 blur-3xl" />
+
+          <div className="max-w-7xl mx-auto px-6 md:px-10 relative z-10">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-10">
+              <div className="flex flex-col md:flex-row items-center gap-6">
+                <img src="/layoutlogo.png" alt="Click2Kart" className="h-12 w-auto rounded-2xl border border-gray-100 shadow-lg" />
+                <div className="flex flex-col items-center md:items-start gap-2">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart. All rights reserved.</span>
+                  <div className="flex gap-4 items-center">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Store Status: Online</span>
+                  </div>
+                </div>
               </div>
+              <Link
+                to="/partner"
+                className="inline-flex items-center gap-3 px-6 py-3.5 rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white font-black text-xs uppercase tracking-[0.25em] shadow-xl shadow-indigo-300 hover:shadow-2xl hover:shadow-indigo-400 hover:scale-105 transition-all active:scale-95 relative overflow-hidden"
+              >
+                <span className="relative z-10">Explore Partner Program</span>
+                <span className="relative z-10">→</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 translate-x-[-150%] transition-transform duration-700 hover:translate-x-[150%]" />
+              </Link>
             </div>
-            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
+
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8 pt-8 border-t border-gray-100">
               <div className="flex items-center gap-4">
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-md hover:scale-110 transition-transform">
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-11 h-11 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg hover:scale-110 transition-all">
                   <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                   </svg>
                 </a>
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-md hover:scale-110 transition-transform">
+                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-11 h-11 rounded-full bg-blue-600 flex items-center justify-center text-white shadow-lg hover:scale-110 transition-all">
                   <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
                   </svg>
                 </a>
-                <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white shadow-md hover:scale-110 transition-transform">
+                <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="w-11 h-11 rounded-full bg-black flex items-center justify-center text-white shadow-lg hover:scale-110 transition-all">
                   <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                   </svg>
                 </a>
               </div>
-              <a 
-                href={`mailto:${CONFIG.SUPPORT_EMAIL}`} 
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-700 hover:bg-white transition-all"
-              >
-                <span>Support</span>
-                <span className="text-violet-600">{CONFIG.SUPPORT_EMAIL}</span>
-              </a>
-              <div className="hidden md:block h-8 w-[1px] bg-gray-100"></div>
-              <div className="flex gap-6 md:gap-8">
-                <Link to="/privacy-policy" className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors">Privacy Policy</Link>
-                <Link to="/terms-of-service" className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors">Terms of Service</Link>
+              <div className="flex flex-col md:flex-row items-center gap-8">
+                <a
+                  href={`mailto:${CONFIG.SUPPORT_EMAIL}`}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-gray-50 border border-gray-100 text-[10px] font-black uppercase tracking-widest text-gray-700 hover:bg-white hover:border-indigo-200 transition-all shadow-sm hover:shadow-md"
+                >
+                  <span>Support</span>
+                  <span className="text-indigo-600">{CONFIG.SUPPORT_EMAIL}</span>
+                </a>
+                <div className="h-8 w-[1px] bg-gray-200 hidden md:block"></div>
+                <div className="flex gap-6 md:gap-8">
+                  <Link to="/privacy-policy" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-gray-900 transition-colors">Privacy Policy</Link>
+                  <Link to="/terms-of-service" className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-gray-900 transition-colors">Terms of Service</Link>
+                </div>
               </div>
             </div>
           </div>

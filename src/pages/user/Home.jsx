@@ -170,26 +170,35 @@ export default function Home() {
         .hm-hero {
           position: relative;
           min-height: 100svh;
-          display: flex; flex-direction: column;
-          align-items: center; justify-content: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
           padding: 180px 24px 140px;
-          overflow: hidden; z-index: 1;
+          overflow: hidden;
+          z-index: 1;
         }
 
         .hm-eyebrow {
-          display: inline-flex; align-items: center; gap: 14px;
-          padding: 16px 40px; border-radius: 120px;
-          background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,245,255,0.98));
+          display: inline-flex;
+          align-items: center;
+          gap: 14px;
+          padding: 12px 28px;
+          border-radius: 120px;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 245, 255, 0.98));
           backdrop-filter: blur(30px) saturate(150%);
-          border: 1px solid rgba(124,58,237,0.5);
+          border: 1px solid rgba(124, 58, 237, 0.5);
           color: #7c3aed;
-          font-size: 10px; font-weight: 900; letter-spacing: 0.32em; text-transform: uppercase;
+          font-size: clamp(7px, 2vw, 10px);
+          font-weight: 900;
+          letter-spacing: 0.32em;
+          text-transform: uppercase;
           margin-bottom: 52px;
           animation: hmFadeUp 0.9s ease both;
-          box-shadow: 
-            0 30px 80px -20px rgba(124,58,237,0.35),
-            0 0 40px -10px rgba(124,58,237,0.25) inset,
-            0 0 0 1px rgba(255,255,255,0.6) inset;
+          box-shadow:
+            0 30px 80px -20px rgba(124, 58, 237, 0.35),
+            0 0 40px -10px rgba(124, 58, 237, 0.25) inset,
+            0 0 0 1px rgba(255, 255, 255, 0.6) inset;
         }
         .hm-eyebrow-dot {
           width: 10px; height: 10px; border-radius: 50%;
@@ -367,10 +376,17 @@ export default function Home() {
         .hm-trust-desc { font-size: 14px; color: #6b7280; line-height: 1.75; font-weight: 450; }
 
         .hm-scroll-hint {
-          position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
-          display: flex; flex-direction: column; align-items: center; gap: 14px;
+          position: absolute;
+          bottom: 40px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
           opacity: 0.35;
           animation: hmFadeUp 0.9s 1.2s ease both;
+          z-index: 10;
         }
         .hm-scroll-hint span { font-size: 9px; letter-spacing: 0.26em; text-transform: uppercase; color: #9ca3af; font-weight: 800; }
         .hm-scroll-line {
