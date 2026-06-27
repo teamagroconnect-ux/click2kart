@@ -77,8 +77,8 @@ export default function Home() {
     const neutral = [
       { key: 'n1', label: 'GST-ready invoicing · bulk price tiers', pill: 'B2B' },
       { key: 'n2', label: 'Pan-India dispatch on stocked SKUs', pill: 'Logistics' },
-      { key: 'n3', label: 'Login for wholesale rates on the catalogue', pill: 'Secure' },
-      { key: 'n4', label: 'Verified catalogue · partner onboarding', pill: 'Click2Kart' },
+      { key: 'n3', label: 'Verified retailer network · secure payments', pill: 'Trusted' },
+      { key: 'n4', label: 'Factory-direct stock · 100% genuine products', pill: 'Click2Kart' },
     ]
     const base = fromApi.length > 0 ? fromApi : neutral
     return [...base, ...base]
@@ -445,7 +445,7 @@ export default function Home() {
           display: flex;
           gap: 24px;
           padding: 16px 0;
-          animation: hmScrollBrands 25s linear infinite;
+          animation: hmScrollBrands 15s linear infinite;
         }
         .hm-brands-grid:hover {
           animation-play-state: paused;
