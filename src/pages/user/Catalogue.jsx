@@ -730,8 +730,8 @@ export default function Catalogue({ initialBrand, brandName }) {
         border-color: rgba(124,58,237,.18);
       }
       .ct-list-img-wrap {
-        width: 100px;
-        height: 100px;
+        width: 140px;
+        height: 140px;
         border-radius: 18px;
         background: white;
         flex-shrink: 0;
@@ -1365,7 +1365,7 @@ export default function Catalogue({ initialBrand, brandName }) {
                               />
                             ) : (
                               <div className="ct-list-img-placeholder">
-                                <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg width="60" height="60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
                                   <circle cx="8.5" cy="8.5" r="1.5" />
                                   <polyline points="21 15 16 10 5 21" />
@@ -1377,7 +1377,7 @@ export default function Catalogue({ initialBrand, brandName }) {
                             <h3 className="ct-list-name">{p.name}</h3>
                             {p.category && (
                               <div className="text-xs text-gray-500 font-medium">
-                                {p.category.name}
+                                {(p.category.name || '').toUpperCase()}
                               </div>
                             )}
                             <div className="ct-list-price-wrap">
@@ -1397,7 +1397,7 @@ export default function Catalogue({ initialBrand, brandName }) {
                                 </span>
                               )}
                             </div>
-                            {authed && (
+                            {authed && !(p.variants?.length > 0) && (
                               <button
                                 className="mt-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all"
                                 onClick={(e) => {
