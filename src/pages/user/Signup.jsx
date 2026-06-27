@@ -23,6 +23,9 @@ export default function Signup() {
 
   const [step, setStep] = useState(1) // 1: Details, 2: OTP
   const [loading, setLoading] = useState(false)
+  const [validatingInviteCode, setValidatingInviteCode] = useState(false)
+  const [validInviteCode, setValidInviteCode] = useState(null) // null = not validated, true/false = validated
+  const [partnerName, setPartnerName] = useState('')
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -31,6 +34,26 @@ export default function Signup() {
     inviteCode: ''
   })
   const [otp, setOtp] = useState('')
+  
+  // Validate invite code when user types
+  const validateInviteCode = async (code) => {
+    if (!code.trim()) {
+      setValidInviteCode(null)
+      setPartnerName('')
+      return
+    }
+    setValidatingInviteCode(true)
+    try {
+      const response = await api.get('/api/validate-invite-code', { params: { code: code.trim() } })
+      setValidInviteCode(true)
+      setPartnerName(response.data.partnerName)
+    } catch (err) {
+      setValidInviteCode(false)
+      setPartnerName('')
+    } finally {
+      setValidatingInviteCode(false)
+    }
+  }
 
   const handleSendOTP = async (e) => {
     e.preventDefault()
@@ -40,9 +63,33 @@ export default function Signup() {
       notify('OTP sent to your email', 'success')
       setStep(2)
     } catch (err) {
-      notify(err?.response?.data?.error || 'Failed to send OTP', 'error')
+      const errorMsg = err?.response?.data?.error || 'Failed to send OTP'
+      if (errorMsg === 'invalid_invite_code') {
+        setValidInviteCode(false)
+        setPartnerName('')
+      }
+      notify(errorMsg, 'error')
     } finally {
       setLoading(false)
+    }
+  }
+  
+  // Update validateInviteCode when formData.inviteCode changes
+  const debounce = (func, delay) => {
+    let timerId
+    return (...args) => {
+      clearTimeout(timerId)
+      timerId = setTimeout(() => func.apply(this, args), delay)
+    }
+  }
+
+  const debouncedValidate = React.useCallback(debounce(validateInviteCode, 500), [])
+  
+  const handleChange = (e) => {
+    const newFormData = { ...formData, [e.target.name]: e.target.value }
+    setFormData(newFormData)
+    if (e.target.name === 'inviteCode') {
+      debouncedValidate(e.target.value)
     }
   }
 
@@ -54,20 +101,16 @@ export default function Signup() {
         email: formData.email,
         otp
       })
-      setAuth(data.token, { ...data.user, role: 'customer' })
-      try { await refreshProfile() } catch {}
-      sessionStorage.removeItem('login_redirect')
-      notify('Account created successfully!', 'success')
-      navigate(from)
+      // Wait, but in backend, we don't auto-login anymore, right? Wait let's check backend!
+      // Oh, in backend verify-otp, we return { message: "application_submitted", pendingApproval: true }
+      // So we should adjust frontend accordingly!
+      notify('Account created successfully! Please wait for admin approval.', 'success')
+      navigate('/login')
     } catch (err) {
       notify(err?.response?.data?.error || 'Invalid OTP', 'error')
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
   return (
@@ -144,11 +187,24 @@ export default function Signup() {
                 <input
                   name="inviteCode"
                   type="text"
-                  className="w-full bg-violet-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                  className={`w-full bg-violet-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-violet-500 transition-all ${validInviteCode === false ? 'ring-2 ring-red-500' : validInviteCode === true ? 'ring-2 ring-green-500' : ''}`}
                   placeholder="Partner invite code"
                   value={formData.inviteCode}
                   onChange={handleChange}
                 />
+                {validatingInviteCode && (
+                  <div className="mt-2 text-xs text-gray-500">Checking invite code...</div>
+                )}
+                {validInviteCode === true && partnerName && (
+                  <div className="mt-2 text-xs text-green-600 font-semibold">
+                    ✓ Invited by {partnerName}
+                  </div>
+                )}
+                {validInviteCode === false && (
+                  <div className="mt-2 text-xs text-red-600 font-semibold">
+                    ✗ Invalid invite code
+                  </div>
+                )}
               </div>
             </div>
 
