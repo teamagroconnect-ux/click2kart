@@ -71,8 +71,8 @@ export default function Home() {
     return cleanup
   }, [])
 
-  const line1 = CONFIG.HERO_TITLE_LINE1 || 'Top B2B'
-  const line2 = CONFIG.HERO_TITLE_LINE2 || 'Wholesale Platform'
+  const line1 = CONFIG.HERO_TITLE_LINE1 || 'India\'s Premier'
+  const line2 = CONFIG.HERO_TITLE_LINE2 || 'B2B Marketplace'
 
   useEffect(() => {
     setSEO('Click2Kart | India\'s Premier B2B Tech Hub', 'Direct wholesale access to top-tier electronics. GST compliant billing, bulk-only pricing, and Pan-India logistics for modern enterprises.')
@@ -824,7 +824,7 @@ export default function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Link>
-            <Link to="/partner" className="hm-btn-secondary">
+            <Link to="/partner" className="hm-btn-secondary" style={{ whiteSpace: 'nowrap' }}>
               Explore Partner Program
             </Link>
           </div>

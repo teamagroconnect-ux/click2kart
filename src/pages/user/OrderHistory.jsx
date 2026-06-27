@@ -126,7 +126,8 @@ export default function OrderHistory() {
 
         .oh-root{
           font-family:'DM Sans',system-ui,sans-serif;
-          background:#f5f3ff; min-height:100vh; color:#1e1b2e;
+          background: linear-gradient(180deg, #fdfcff 0%, #f5f3ff 100%);
+          min-height:100vh; color:#1e1b2e;
           position:relative; overflow-x:hidden;
           padding-bottom:env(safe-area-inset-bottom,0px);
         }
@@ -676,8 +677,8 @@ export default function OrderHistory() {
                                 {canRateProduct && (
                                   <div className="oh-rate-row" onClick={(e) => e.stopPropagation()}>
                                     {already ? (
-                                      <span className="oh-rate-done">Thanks — your product rating was saved.</span>
-                                    ) : (
+                              <span className="oh-rate-done">Thanks, you have rated this product!</span>
+                            ) : (
                                       <>
                                         <span className="oh-rate-lbl">Rate product</span>
                                         <div className="oh-rate-stars">
@@ -785,7 +786,7 @@ export default function OrderHistory() {
                         )}
 
                         {/* SHIPPING */}
-                        {order.shipping?.waybill && (
+                        {order.shipping?.waybill && !(['DELIVERED', 'FULFILLED'].includes(order.status)) && (
                           <>
                             <div className="oh-divider" />
                             <div>
