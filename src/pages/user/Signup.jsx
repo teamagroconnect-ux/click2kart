@@ -44,7 +44,7 @@ export default function Signup() {
     }
     setValidatingInviteCode(true)
     try {
-      const response = await api.get('/api/validate-invite-code', { params: { code: code.trim() } })
+      const response = await api.get('/api/public/validate-invite-code', { params: { code: code.trim() } })
       setValidInviteCode(true)
       setPartnerName(response.data.partnerName)
     } catch (err) {
