@@ -65,22 +65,22 @@ export default function PartnerLanding() {
               </p>
 
               <div className="flex flex-wrap gap-4">
-                <a 
-                  href="mailto:partners@click2kart.com"
-                  className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black uppercase tracking-widest text-sm shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/40 hover:-translate-y-1 transition-all"
-                >
-                  Join Now
-                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                  </svg>
-                </a>
-                <Link 
-                  to="/partner/login"
-                  className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white border border-gray-200 text-gray-900 font-black uppercase tracking-widest text-sm shadow-xl hover:bg-gray-50 hover:-translate-y-1 transition-all"
-                >
-                  Partner Login
-                </Link>
-              </div>
+        <Link 
+          to="/partner/onboarding"
+          className="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black uppercase tracking-widest text-sm shadow-2xl shadow-indigo-500/30 hover:shadow-indigo-500/40 hover:-translate-y-1 transition-all"
+        >
+          Join Now
+          <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </Link>
+        <Link 
+          to="/partner/login"
+          className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white border border-gray-200 text-gray-900 font-black uppercase tracking-widest text-sm shadow-xl hover:bg-gray-50 hover:-translate-y-1 transition-all"
+        >
+          Partner Login
+        </Link>
+      </div>
 
               {/* Trust Metrics */}
               <div className="grid grid-cols-3 gap-6 pt-4">
@@ -169,18 +169,18 @@ export default function PartnerLanding() {
         </section>
 
         {/* Benefits */}
-        <section className="max-w-7xl mx-auto px-6 py-20">
-          <div className="text-center mb-12">
-            <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100 mb-4">
-              <span className="text-[11px] font-black uppercase tracking-widest text-indigo-700">Why Join Us</span>
-            </span>
-            <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-4">
-              Premium Partner Benefits
-            </h2>
-            <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto">
-              Everything you need to grow your earnings and maximize success.
-            </p>
-          </div>
+      <section className="max-w-7xl mx-auto px-6 py-20">
+        <div className="text-center mb-12">
+          <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 border border-indigo-100 mb-4">
+            <span className="text-[11px] font-black uppercase tracking-widest text-indigo-700">Why Join Us</span>
+          </span>
+          <h2 className="text-3xl md:text-5xl font-black text-gray-900 mb-4">
+            Top Partner Benefits
+          </h2>
+          <p className="text-lg text-gray-600 font-medium max-w-2xl mx-auto">
+            Everything you need to grow your earnings and maximize success.
+          </p>
+        </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             {[
@@ -227,28 +227,30 @@ export default function PartnerLanding() {
         </section>
 
         {/* CTA Section */}
-        <section className="max-w-7xl mx-auto px-6 pb-24">
-          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-[3rem] p-12 md:p-16 text-center text-white relative overflow-hidden">
-            <div className="absolute inset-0 opacity-20">
-              <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.3),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(255,255,255,0.3),transparent_40%)]" />
-            </div>
-            <div className="relative z-10">
-              <h2 className="text-3xl md:text-5xl font-black mb-4">Ready to become a partner?</h2>
-              <p className="text-lg text-white/90 font-medium mb-8 max-w-2xl mx-auto">
-                Start earning today. Send us an email to get started with your partner journey.
-              </p>
-              <a 
-                href="mailto:partners@click2kart.com"
-                className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-white text-indigo-700 font-black uppercase tracking-widest text-sm shadow-2xl hover:shadow-3xl hover:-translate-y-1 transition-all"
-              >
-                Email Us Now
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </a>
+      <section className="max-w-7xl mx-auto px-6 pb-24">
+        <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 rounded-[3rem] p-12 md:p-16 text-center text-white relative overflow-hidden">
+          <div className="absolute inset-0 opacity-20">
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,.3),transparent_40%),radial-gradient(circle_at_80%_80%,rgba(255,255,255,.3),transparent_40%)]">
+
             </div>
           </div>
-        </section>
+          <div className="relative z-10">
+            <h2 className="text-3xl md:text-5xl font-black mb-4">Ready to become a partner?</h2>
+            <p className="text-lg text-white/90 font-medium mb-8 max-w-2xl mx-auto">
+              Start earning today. Apply now and our team will review your application.
+            </p>
+            <Link 
+              to="/partner/onboarding"
+              className="inline-flex items-center gap-3 px-10 py-5 rounded-2xl bg-white text-indigo-700 font-black uppercase tracking-widest text-sm shadow-2xl hover:shadow-3xl hover:-translate-y-1 transition-all"
+            >
+              Apply Now
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+      </section>
       </div>
     </div>
   )

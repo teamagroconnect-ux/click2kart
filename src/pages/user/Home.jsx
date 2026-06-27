@@ -71,7 +71,7 @@ export default function Home() {
     return cleanup
   }, [])
 
-  const line1 = CONFIG.HERO_TITLE_LINE1 || 'Premium B2B'
+  const line1 = CONFIG.HERO_TITLE_LINE1 || 'Top B2B'
   const line2 = CONFIG.HERO_TITLE_LINE2 || 'Wholesale Platform'
 
   useEffect(() => {
