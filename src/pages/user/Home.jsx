@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { CONFIG } from '../../shared/lib/config.js'
-import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
+import { SEO } from '../../shared/lib/seo.js'
 import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
 
@@ -49,41 +49,17 @@ export default function Home() {
   const [brands, setBrands] = useState([])
   const [recs, setRecs] = useState([])
   const [offers, setOffers] = useState([])
+  
   useEffect(() => {
     const fn = () => setScrollY(window.scrollY)
     window.addEventListener('scroll', fn, { passive: true })
     return () => window.removeEventListener('scroll', fn)
-  }, [])
-  useEffect(() => {
-    setSEO('Wholesale Electronics Supplier India | Click2Kart', 'Buy wholesale electronics like chargers, mobiles, accessories at best B2B prices. GST invoice, fast delivery across India.')
-    const cleanup = injectJsonLd({
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "Click2Kart",
-      "url": location.origin,
-      "logo": (CONFIG.LOGO_URL || ""),
-      "contactPoint": {
-        "@type": "ContactPoint",
-        "telephone": CONFIG.SUPPORT_PHONE_DISPLAY,
-        "contactType": "customer service"
-      }
-    })
-    return cleanup
   }, [])
 
   const line1 = CONFIG.HERO_TITLE_LINE1 || 'India\'s Premier'
   const line2 = CONFIG.HERO_TITLE_LINE2 || 'B2B Marketplace'
 
   useEffect(() => {
-    setSEO('Click2Kart | India\'s Premier B2B Tech Hub', 'Direct wholesale access to top-tier electronics. GST compliant billing, bulk-only pricing, and Pan-India logistics for modern enterprises.')
-    injectJsonLd({
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "Click2Kart",
-      "url": window.location.origin,
-      "logo": window.location.origin + "/layoutlogo.png",
-      "description": "India's Premier B2B Tech Hub for electronics wholesale."
-    })
     api.get('/api/public/categories').then(({ data }) => setCats(data || [])).catch(() => setCats([]))
     api.get('/api/brands', { params: { active: true } }).then(({ data }) => setBrands(data || [])).catch(() => setBrands([]))
     api.get('/api/recommendations/trending').then(({ data }) => setRecs(data || [])).catch(() => setRecs([]))
@@ -110,6 +86,11 @@ export default function Home() {
 
   return (
     <>
+      <SEO
+        title="India's Premier B2B Electronics Wholesale Marketplace"
+        description="Buy electronics wholesale across India with GST billing, secure payments, logistics support and trusted B2B suppliers on Click2Kart."
+        url="/"
+      />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700&display=swap');
 

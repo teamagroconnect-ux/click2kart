@@ -5,7 +5,7 @@ import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { useCart, getStockStatus } from '../../lib/CartContext'
 import { useAuth } from '../../lib/AuthContext'
-import { setSEO } from '../../shared/lib/seo.js'
+import { SEO } from '../../shared/lib/seo.js'
 import RecommendationModal from '../../components/RecommendationModal'
 import ProductCard from '../../components/ProductCard'
 
@@ -234,11 +234,9 @@ export default function Catalogue({ initialBrand, brandName }) {
     } else { setSug([]); setShowSug(false) }
     return () => t && clearTimeout(t)
   }, [q])
-  useEffect(() => {
-    const title = category ? `${category} · Wholesale | Click2Kart`
-      : q ? `Search: ${q} | Click2Kart` : 'B2B Collection | Click2Kart'
-    setSEO(title, 'Discover quality wholesale electronics with exclusive B2B pricing, GST billing, and bulk discounts.')
-  }, [q, category])
+  const seoTitle = category ? `${category} · Wholesale`
+    : q ? `Search: ${q}` : 'B2B Collection'
+  const seoDescription = 'Discover quality wholesale electronics with exclusive B2B pricing, GST billing, and bulk discounts.'
 
   const filteredSorted = useMemo(() => {
     const safeNumber = (val) => {
@@ -275,7 +273,13 @@ export default function Catalogue({ initialBrand, brandName }) {
   ]
 
   if (loading && items.length === 0) return (
-    <div className="ct">
+    <>
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        url="/products"
+      />
+      <div className="ct">
       <style>{`
         .ct { font-family: 'DM Sans', system-ui, sans-serif; background: #f5f3ff; min-height: 100vh; position: relative; overflow-x: hidden; padding-top: env(safe-area-inset-top, 0px); }
         .ct-skel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; }
@@ -302,11 +306,17 @@ export default function Catalogue({ initialBrand, brandName }) {
           </div>
         ))}
       </div>
-    </div>
+      </div>
+    </>
   )
 
   return (
     <>
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        url="/products"
+      />
       <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&display=swap');
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

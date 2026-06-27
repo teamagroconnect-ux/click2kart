@@ -24,6 +24,8 @@ import SupportTickets from './pages/admin/SupportTickets.jsx'
 import Home from './pages/user/Home.jsx'
 import Catalogue from './pages/user/Catalogue.jsx'
 import BrandPage from './pages/user/BrandPage.jsx'
+import UserBrands from './pages/user/Brands.jsx'
+import UserCategories from './pages/user/Categories.jsx'
 import ProductDetail from './pages/user/ProductDetail.jsx'
 import Enquiry from './pages/user/Enquiry.jsx'
 import PartnerLayout from './components/PartnerLayout.jsx'
@@ -86,6 +88,8 @@ export default function App() {
       <Route path="/" element={<UserLayout />}>
         <Route index element={<Home />} />
         <Route path="products" element={<Catalogue />} />
+        <Route path="brands" element={<UserBrands />} />
+        <Route path="categories" element={<UserCategories />} />
         <Route path="brand/:slug" element={<BrandPage />} />
         <Route path="products/:idOrSlug" element={<ProductDetail />} />
         <Route path="order" element={<Enquiry />} />

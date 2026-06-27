@@ -12,23 +12,18 @@
   </url>
 
   <url>
-    <loc>https://click2kart.net/categories</loc>
-    <priority>0.7</priority>
-  </url>
-
-  <url>
     <loc>https://click2kart.net/brands</loc>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://click2kart.net/about</loc>
-    <priority>0.6</priority>
+    <loc>https://click2kart.net/categories</loc>
+    <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://click2kart.net/contact</loc>
-    <priority>0.6</priority>
+    <loc>https://click2kart.net/partner</loc>
+    <priority>0.7</priority>
   </url>
 
   <url>
@@ -37,23 +32,8 @@
   </url>
 
   <url>
-    <loc>https://click2kart.net/terms</loc>
+    <loc>https://click2kart.net/terms-of-service</loc>
     <priority>0.5</priority>
-  </url>
-
-  <url>
-    <loc>https://click2kart.net/login</loc>
-    <priority>0.5</priority>
-  </url>
-
-  <url>
-    <loc>https://click2kart.net/register</loc>
-    <priority>0.5</priority>
-  </url>
-
-  <url>
-    <loc>https://click2kart.net/partner</loc>
-    <priority>0.7</priority>
   </url>
 
 </urlset>
