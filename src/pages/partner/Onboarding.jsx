@@ -10,14 +10,44 @@ export default function PartnerOnboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [loadingPin, setLoadingPin] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    bloodGroup: '',
+    pincode: '',
+    state: '',
+    district: '',
     password: ''
   });
   const [otp, setOtp] = useState('');
+
+  const handlePincodeChange = async (e) => {
+    const pincode = e.target.value;
+    setFormData({ ...formData, pincode, state: '', district: '' });
+    
+    if (pincode.length === 6) {
+      setLoadingPin(true);
+      try {
+        const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+        const data = await response.json();
+        if (data[0]?.Status === 'Success') {
+          const postOffice = data[0]?.PostOffice?.[0];
+          if (postOffice) {
+            setFormData(prev => ({
+              ...prev,
+              state: postOffice.State,
+              district: postOffice.District
+            }));
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching pincode data:', err);
+      } finally {
+        setLoadingPin(false);
+      }
+    }
+  };
 
   const handleNext = async (e) => {
     e.preventDefault();
@@ -192,23 +222,41 @@ export default function PartnerOnboarding() {
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 mb-2">Blood Group</label>
-                      <select
-                        name="bloodGroup"
-                        value={formData.bloodGroup}
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 mb-2">Pincode</label>
+                      <input
+                        name="pincode"
+                        type="text"
+                        required
+                        maxLength={6}
+                        value={formData.pincode}
+                        onChange={handlePincodeChange}
+                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-300"
+                        placeholder="110001"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 mb-2">State</label>
+                      <input
+                        name="state"
+                        type="text"
+                        required
+                        value={formData.state}
                         onChange={handleChange}
-                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                      >
-                        <option value="">Select Blood Group</option>
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
-                      </select>
+                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-300"
+                        placeholder="Delhi"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 mb-2">District</label>
+                      <input
+                        name="district"
+                        type="text"
+                        required
+                        value={formData.district}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-800 font-semibold text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder:text-slate-300"
+                        placeholder="Central Delhi"
+                      />
                     </div>
                   </div>
                   <div>

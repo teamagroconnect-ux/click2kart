@@ -382,19 +382,34 @@ export default function Home() {
           color: #1e1b2e; letter-spacing: 0.03em; line-height: 1.05; margin-bottom: 10px;
         }
         .hm-brands-sub { color: #6b7280; font-size: 14px; font-weight: 500; max-width: 480px; margin: 0 auto; line-height: 1.5; }
+        
+        .hm-brands-scroll-container {
+          overflow-x: auto;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .hm-brands-scroll-container::-webkit-scrollbar {
+          display: none;
+        }
+        
         .hm-brands-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
-          gap: 14px;
+          display: flex;
+          gap: 18px;
+          padding: 10px 0;
+          animation: hmScrollBrands 40s linear infinite;
         }
-        @media (min-width: 640px) {
-          .hm-brands-grid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 18px; }
+        .hm-brands-grid:hover {
+          animation-play-state: paused;
         }
-        @media (min-width: 1024px) {
-          .hm-brands-grid { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 22px; }
+        
+        @keyframes hmScrollBrands {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
         }
+        
         .hm-brand-logo-card {
-          position: relative;
+          flex-shrink: 0;
+          width: 140px;
           aspect-ratio: 1;
           border-radius: 28px;
           background: #ffffff;
@@ -840,20 +855,22 @@ export default function Home() {
                 <h2 className="hm-brands-title">Global Technology Partners</h2>
                 <p className="hm-brands-sub">Seamlessly procure inventory from world-renowned electronics manufacturers through our verified network.</p>
               </div>
-              <div className="hm-brands-grid">
-                {brands.map(b => (
-                  <Link
-                    key={b._id}
-                    to={`/brand/${b.slug}`}
-                    className="hm-brand-logo-card"
-                    aria-label={`Open ${b.name} catalogue`}
-                    title={b.name}
-                  >
-                    {b.logo
-                      ? <img src={getCloudinaryUrl(b.logo, 120)} alt={b.name} loading="lazy" decoding="async" width="120" height="60" />
-                      : <span className="hm-brand-logo-fallback" aria-hidden="true">✦</span>}
-                  </Link>
-                ))}
+              <div className="hm-brands-scroll-container">
+                <div className="hm-brands-grid">
+                  {[...brands, ...brands].map((b, i) => (
+                    <Link
+                      key={`${b._id}-${i}`}
+                      to={`/brand/${b.slug}`}
+                      className="hm-brand-logo-card"
+                      aria-label={`Open ${b.name} catalogue`}
+                      title={b.name}
+                    >
+                      {b.logo
+                        ? <img src={getCloudinaryUrl(b.logo, 120)} alt={b.name} loading="lazy" decoding="async" width="120" height="60" />
+                        : <span className="hm-brand-logo-fallback" aria-hidden="true">✦</span>}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           </section>

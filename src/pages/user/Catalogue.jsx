@@ -1213,6 +1213,23 @@ export default function Catalogue({ initialBrand, brandName }) {
                 <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 6h18M7 12h10M10 18h4" /></svg>
                 Filters
               </button>
+              <div className="ct-view-toggle">
+                  <button className={`ct-view-btn${displayMode === 'GRID' ? ' on' : ''}`} onClick={() => setDisplayMode('GRID')}>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <rect x="3" y="3" width="7" height="7" rx="2" />
+                      <rect x="14" y="3" width="7" height="7" rx="2" />
+                      <rect x="3" y="14" width="7" height="7" rx="2" />
+                      <rect x="14" y="14" width="7" height="7" rx="2" />
+                    </svg>
+                  </button>
+                  <button className={`ct-view-btn${displayMode === 'LIST' ? ' on' : ''}`} onClick={() => setDisplayMode('LIST')}>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <line x1="4" y1="6" x2="20" y2="6" />
+                      <line x1="4" y1="12" x2="20" y2="12" />
+                      <line x1="4" y1="18" x2="20" y2="18" />
+                    </svg>
+                  </button>
+                </div>
               <div className="ct-mob-sorts">
                 {sortOpts.map(o => (
                   <button key={o.v} className={`ct-mob-sort-chip${sort === o.v ? ' on' : ''}`} onClick={() => setSort(o.v)}>{o.ico} {o.l.split(':')[0]}</button>
