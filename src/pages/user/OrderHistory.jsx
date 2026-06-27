@@ -5,24 +5,6 @@ import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { useAuth } from '../../lib/AuthContext'
 import { useToast } from '../../components/Toast'
 
-const REVIEWED_PIDS_KEY = 'c2k_reviewed_product_ids'
-
-function loadReviewedProductIds() {
-  try {
-    const raw = sessionStorage.getItem(REVIEWED_PIDS_KEY)
-    const arr = raw ? JSON.parse(raw) : []
-    return new Set(Array.isArray(arr) ? arr.filter(Boolean) : [])
-  } catch {
-    return new Set()
-  }
-}
-
-function persistReviewedProductIds(set) {
-  try {
-    sessionStorage.setItem(REVIEWED_PIDS_KEY, JSON.stringify([...set]))
-  } catch {}
-}
-
 function orderLineProductId(item) {
   const x = item?.product
   if (typeof x === 'string' && /^[a-f\d]{24}$/i.test(x)) return x
@@ -65,7 +47,7 @@ export default function OrderHistory() {
   const [orders, setOrders]       = useState([])
   const [loading, setLoading]     = useState(true)
   const [expandedId, setExpandedId] = useState(null)
-  const [reviewedProductIds, setReviewedProductIds] = useState(loadReviewedProductIds)
+  const [reviewedProductIds, setReviewedProductIds] = useState(new Set())
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = useAuth()
@@ -75,16 +57,22 @@ export default function OrderHistory() {
     setReviewedProductIds((prev) => {
       const next = new Set(prev)
       next.add(pid)
-      persistReviewedProductIds(next)
       return next
     })
   }
 
   useEffect(() => {
     if (!token) { navigate('/login', { state: { from: location.pathname + location.search } }); return }
-    api.get('/api/orders/my')
-      .then(({ data }) => { setOrders(data); setLoading(false) })
-      .catch(() => setLoading(false))
+    
+    // Fetch orders and reviewed product IDs in parallel
+    Promise.all([
+      api.get('/api/orders/my'),
+      api.get('/api/user/reviews/products')
+    ]).then(([ordersRes, reviewsRes]) => {
+      setOrders(ordersRes.data);
+      setReviewedProductIds(new Set(reviewsRes.data.productIds));
+      setLoading(false);
+    }).catch(() => setLoading(false))
   }, [token, navigate])
 
   /* ── LOADING ── */
