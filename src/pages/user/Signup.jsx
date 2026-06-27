@@ -125,8 +125,8 @@ export default function Signup() {
           </h2>
           <p className="text-sm text-gray-500 font-medium">
             {step === 1 
-              ? 'Join 500+ businesses sourcing high-quality tech.' 
-              : `We've sent a 4-digit code to ${formData.email}`}
+                ? 'Join 500+ businesses sourcing electronics at wholesale prices.' 
+                : `We've sent a 4-digit code to ${formData.email}`}
           </p>
         </div>
 

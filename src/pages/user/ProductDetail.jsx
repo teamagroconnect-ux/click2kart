@@ -423,7 +423,6 @@ export default function ProductDetail() {
   /* SEO */
   useEffect(() => {
     if (!p) return
-    setSEO(`${p.name} Wholesale Price | Click2Kart`, `Buy ${p.name} at wholesale B2B rates with GST invoice and fast delivery.`)
     const cleanup = injectJsonLd({
       "@context": "https://schema.org/", "@type": "Product", "name": p.name,
       "brand": { "@type": "Brand", "name": p.brand?.name || p.brand || "Click2Kart" },

@@ -203,10 +203,10 @@ export default function AdminLayout() {
                   Inventory
                 </>
               ), 'inventory')}
-              {link('/admin/customers', (
+              {link('/admin/retailers', (
                 <>
                   <Icon name="cust" />
-                  Customers
+                  Retailers
                 </>
               ), 'customers')}
               {link('/admin/partners', (
@@ -227,10 +227,10 @@ export default function AdminLayout() {
                   Orders
                 </>
               ), 'orders')}
-              {link('/admin/offline-customers', (
+              {link('/admin/offline-retailers', (
                 <>
                   <Icon name="cust" />
-                  Offline Customers
+                  Offline Retailers
                 </>
               ), 'offline-customers')}
               {link('/admin/offers', (

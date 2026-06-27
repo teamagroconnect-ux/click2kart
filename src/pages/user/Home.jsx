@@ -788,7 +788,7 @@ export default function Home() {
         <section className="hm-hero">
           <div className="hm-eyebrow hm-float whitespace-nowrap">
             <span className="hm-eyebrow-dot" />
-            India's Trusted B2B Tech Hub
+            India's Trusted B2B Wholesale Platform
           </div>
 
           <h1 className="hm-title hm-float" style={{ animationDelay: '0.2s' }}>

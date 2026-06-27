@@ -133,10 +133,10 @@ export default function PartnerLayout() {
                   Dashboard
                 </>
               ), true)}
-              {link('/partner/my-businesses', (
+              {link('/partner/my-retailers', (
                 <>
                   <Icon name="business" />
-                  My Businesses
+                  My Retailers
                 </>
               ))}
               {link('/partner/my-coupons', (

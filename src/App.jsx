@@ -11,15 +11,15 @@ import PaymentVerification from './pages/admin/PaymentVerification.jsx'
 import Coupons from './pages/admin/Coupons.jsx'
 import Partners from './pages/admin/Partners.jsx'
 import Settings from './pages/admin/Settings.jsx'
-import Customers from './pages/admin/Customers.jsx'
-import CustomerDetail from './pages/admin/CustomerDetail.jsx'
+import Retailers from './pages/admin/Retailers.jsx'
+import RetailerDetail from './pages/admin/RetailerDetail.jsx'
 import AdminLayout from './components/AdminLayout.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import InventoryPage from './pages/admin/InventoryPage.jsx'
 import StaffManagement from './pages/admin/StaffManagement.jsx'
 import Stores from './pages/admin/Stores.jsx'
 import Offers from './pages/admin/Offers.jsx'
-import OfflineCustomers from './pages/admin/OfflineCustomers.jsx'
+import OfflineRetailers from './pages/admin/OfflineRetailers.jsx'
 import SupportTickets from './pages/admin/SupportTickets.jsx'
 import Home from './pages/user/Home.jsx'
 import Catalogue from './pages/user/Catalogue.jsx'
@@ -47,7 +47,7 @@ import PartnerLanding from './pages/partner/Landing.jsx'
 import PartnerOnboarding from './pages/partner/Onboarding.jsx'
 import PartnerProfile from './pages/partner/Profile.jsx'
 import MyCoupons from './pages/partner/MyCoupons.jsx'
-import MyBusinesses from './pages/partner/MyBusinesses.jsx'
+import MyRetailers from './pages/partner/MyBusinesses.jsx'
 import Earnings from './pages/partner/Earnings.jsx'
 import ReferredOrders from './pages/partner/ReferredOrders.jsx'
 import PartnerVerify from './pages/partner/Verify.jsx'
@@ -74,14 +74,14 @@ export default function App() {
         <Route path="payment-verification" element={<PaymentVerification />} />
         <Route path="coupons" element={<Coupons />} />
         <Route path="partners" element={<Partners />} />
-        <Route path="customers" element={<Customers />} />
-        <Route path="customers/:id" element={<CustomerDetail />} />
+        <Route path="retailers" element={<Retailers />} />
+        <Route path="retailers/:id" element={<RetailerDetail />} />
         <Route path="settings" element={<Settings />} />
         <Route path="inventory" element={<InventoryPage />} />
         <Route path="staff" element={<StaffManagement />} />
         <Route path="stores" element={<Stores />} />
         <Route path="offers" element={<Offers />} />
-        <Route path="offline-customers" element={<OfflineCustomers />} />
+        <Route path="offline-retailers" element={<OfflineRetailers />} />
         <Route path="support-tickets" element={<SupportTickets />} />
       </Route>
 
@@ -120,7 +120,7 @@ export default function App() {
         <Route index element={<PartnerDashboard />} />
         <Route path="dashboard" element={<PartnerDashboard />} />
         <Route path="my-coupons" element={<MyCoupons />} />
-        <Route path="my-businesses" element={<MyBusinesses />} />
+        <Route path="my-retailers" element={<MyRetailers />} />
         <Route path="earnings" element={<Earnings />} />
         <Route path="orders" element={<ReferredOrders />} />
         <Route path="add-business" element={<UserSignup />} />
