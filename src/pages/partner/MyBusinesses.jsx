@@ -8,6 +8,23 @@ export default function MyRetailers() {
   const [loading, setLoading] = useState(true)
   const [retailers, setRetailers] = useState([])
 
+  // Mask email: first 2 chars, then ****, then @ and domain
+  const maskEmail = (email) => {
+    if (!email) return ''
+    const [local, domain] = email.split('@')
+    if (!local || !domain) return email
+    const visible = local.substring(0, 2)
+    return `${visible}****@${domain}`
+  }
+
+  // Mask phone number: first 2, then ******, then last 2
+  const maskPhone = (phone) => {
+    if (!phone) return ''
+    const digits = phone.replace(/\D/g, '')
+    if (digits.length < 10) return phone
+    return `${digits.substring(0, 2)}******${digits.substring(digits.length - 2)}`
+  }
+
   useEffect(() => {
     loadRetailers()
   }, [])
@@ -47,10 +64,10 @@ export default function MyRetailers() {
                   <h3 className="text-lg font-black text-gray-900">{retailer.name}</h3>
                   <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500 mt-1">
                     {retailer.email && (
-                      <span>{retailer.email}</span>
+                      <span>{maskEmail(retailer.email)}</span>
                     )}
                     {retailer.phone && (
-                      <span>{retailer.phone}</span>
+                      <span>{maskPhone(retailer.phone)}</span>
                     )}
                     {retailer.kyc?.city && (
                       <span>{retailer.kyc.city}</span>
