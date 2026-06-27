@@ -1352,13 +1352,13 @@ export default function Catalogue({ initialBrand, brandName }) {
                         <div 
                           key={p._id} 
                           className="ct-list-card" 
-                          onClick={() => navigate(`/product/${p._id}`)}
+                          onClick={() => navigate(`/products/${p.slug || p._id}`)}
                           style={{ animationDelay: `${idx * 40}ms` }}
                         >
                           <div className="ct-list-img-wrap">
-                            {p.images && p.images[0] ? (
+                            {p.images && p.images[0]?.url ? (
                               <img
-                                src={getCloudinaryUrl(p.images[0])}
+                                src={getCloudinaryUrl(p.images[0].url)}
                                 alt={p.name}
                                 className="ct-list-img"
                                 loading="lazy"

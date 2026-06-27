@@ -1,17 +1,19 @@
 /**
  * Cloudinary URL formatter for image optimization.
  * 
- * @param {string} url - Original Cloudinary image URL.
+ * @param {string|any} url - Original Cloudinary image URL (or object).
  * @param {number|string} width - Desired width transformation (optional).
  * @param {boolean} blur - Whether to return a low-quality blurred placeholder (optional).
- * @returns {string} - Optimized image URL with q_auto, f_auto, and optional width.
+ * @returns {string} - Optimized image URL or original value.
  */
 export const getCloudinaryUrl = (url, width, blur = false) => {
-  if (!url || !url.includes('cloudinary.com')) return url;
+  // Handle objects that might have a .url property
+  const actualUrl = typeof url === 'object' && url?.url ? url.url : url;
+  if (typeof actualUrl !== 'string' || !actualUrl || !actualUrl.includes('cloudinary.com')) return actualUrl;
   
   // Split at '/upload/' to insert transformations
-  const parts = url.split('/upload/');
-  if (parts.length !== 2) return url;
+  const parts = actualUrl.split('/upload/');
+  if (parts.length !== 2) return actualUrl;
   
   // Standard optimizations: quality=auto, fetch_format=auto
   let transformations = 'q_auto,f_auto';
