@@ -185,9 +185,9 @@ export default function Home() {
           gap: 14px;
           padding: 12px 28px;
           border-radius: 120px;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 245, 255, 0.98));
+          background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,245,255,0.98));
           backdrop-filter: blur(30px) saturate(150%);
-          border: 1px solid rgba(124, 58, 237, 0.5);
+          border: 1px solid rgba(124,58,237,0.5);
           color: #7c3aed;
           font-size: clamp(7px, 2vw, 10px);
           font-weight: 900;
@@ -196,9 +196,9 @@ export default function Home() {
           margin-bottom: 52px;
           animation: hmFadeUp 0.9s ease both;
           box-shadow:
-            0 30px 80px -20px rgba(124, 58, 237, 0.35),
-            0 0 40px -10px rgba(124, 58, 237, 0.25) inset,
-            0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+            0 30px 80px -20px rgba(124,58,237,0.35),
+            0 0 40px -10px rgba(124,58,237,0.25) inset,
+            0 0 0 1px rgba(255,255,255,0.6) inset;
         }
         .hm-eyebrow-dot {
           width: 10px; height: 10px; border-radius: 50%;
@@ -445,7 +445,7 @@ export default function Home() {
           display: flex;
           gap: 24px;
           padding: 16px 0;
-          animation: hmScrollBrands 60s linear infinite;
+          animation: hmScrollBrands 25s linear infinite;
         }
         .hm-brands-grid:hover {
           animation-play-state: paused;
