@@ -93,10 +93,10 @@ export default function PartnerVerify() {
                 </div>
                 
                 {/* Verification Badge */}
-                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 ${partner.kycVerified ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
-                  <span className="text-xl">{partner.kycVerified ? '✅' : '⏳'}</span>
+                <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-6 ${(partner.isActive && partner.isVerified) ? 'bg-gradient-to-r from-emerald-500 to-green-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                  <span className="text-xl">{(partner.isActive && partner.isVerified) ? '✅' : '⏳'}</span>
                   <span className="text-base font-black uppercase tracking-widest">
-                    {partner.kycVerified ? 'Verified Partner' : 'Pending Verification'}
+                    {(partner.isActive && partner.isVerified) ? 'Verified Partner' : 'Pending Verification'}
                   </span>
                 </div>
                 
