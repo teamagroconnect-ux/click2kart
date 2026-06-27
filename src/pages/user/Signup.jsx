@@ -210,7 +210,7 @@ export default function Signup() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (validInviteCode === false)}
               className="w-full bg-gradient-to-br from-violet-600 to-purple-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-violet-200 hover:from-violet-700 hover:to-purple-700 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
             >
               {loading ? 'Sending OTP...' : 'Send Verification Code'}
