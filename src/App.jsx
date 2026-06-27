@@ -110,7 +110,7 @@ export default function App() {
       <Route path="/partner/onboarding" element={<PartnerOnboarding />} />
       <Route path="/partner/verify/:id" element={<PartnerVerify />} />
       <Route
-        path="/partner"
+        path="/partner/dashboard"
         element={
           <PartnerProtectedRoute>
             <PartnerLayout />
@@ -118,7 +118,6 @@ export default function App() {
         }
       >
         <Route index element={<PartnerDashboard />} />
-        <Route path="dashboard" element={<PartnerDashboard />} />
         <Route path="my-coupons" element={<MyCoupons />} />
         <Route path="my-retailers" element={<MyRetailers />} />
         <Route path="earnings" element={<Earnings />} />

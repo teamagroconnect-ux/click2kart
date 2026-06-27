@@ -377,16 +377,16 @@ export default function Home() {
 
         .hm-scroll-hint {
           position: absolute;
-          bottom: 40px;
+          bottom: 50px;
           left: 50%;
           transform: translateX(-50%);
           display: flex;
           flex-direction: column;
           align-items: center;
           gap: 10px;
-          opacity: 0.35;
+          opacity: 0.5;
           animation: hmFadeUp 0.9s 1.2s ease both;
-          z-index: 10;
+          z-index: 20;
         }
         .hm-scroll-hint span { font-size: 9px; letter-spacing: 0.26em; text-transform: uppercase; color: #9ca3af; font-weight: 800; }
         .hm-scroll-line {
