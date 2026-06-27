@@ -4,7 +4,7 @@ import ImageUpload from '../../components/ImageUpload'
 
 export default function Brands() {
   const [items, setItems] = useState([])
-  const [form, setForm] = useState({ name: '', slug: '', logo: '' })
+  const [form, setForm] = useState({ name: '', slug: '', logo: '', isFeatured: false })
   const [editing, setEditing] = useState(null)
 
   const load = async () => {
@@ -17,19 +17,30 @@ export default function Brands() {
   const create = async (e) => {
     e.preventDefault()
     await api.post('/api/brands', form)
-    setForm({ name: '', slug: '', logo: '' })
+    setForm({ name: '', slug: '', logo: '', isFeatured: false })
     load()
   }
 
-  const toggle = async (b) => {
+  const toggleActive = async (b) => {
     await api.put(`/api/brands/${b._id}`, { isActive: !b.isActive })
+    load()
+  }
+
+  const toggleFeatured = async (b) => {
+    await api.put(`/api/brands/${b._id}`, { isFeatured: !b.isFeatured })
     load()
   }
 
   const update = async (e) => {
     e.preventDefault()
     if (!editing) return
-    await api.put(`/api/brands/${editing._id}`, { name: editing.name, slug: editing.slug, logo: editing.logo, isActive: editing.isActive })
+    await api.put(`/api/brands/${editing._id}`, { 
+      name: editing.name, 
+      slug: editing.slug, 
+      logo: editing.logo, 
+      isActive: editing.isActive,
+      isFeatured: editing.isFeatured
+    })
     setEditing(null)
     load()
   }
@@ -63,6 +74,10 @@ export default function Brands() {
                   <ImageUpload onUploaded={(url) => setForm(f => ({ ...f, logo: url }))} />
                 </div>
               </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="isFeatured" checked={form.isFeatured} onChange={e => setForm({ ...form, isFeatured: e.target.checked })} className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
+                <label htmlFor="isFeatured" className="text-xs font-bold text-gray-600">Show on Home Page (Featured)</label>
+              </div>
               <button className="w-full bg-gray-900 text-white py-4 rounded-2xl text-sm font-black shadow-lg hover:bg-gray-800 transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-widest">Create Brand</button>
             </form>
           </div>
@@ -83,9 +98,14 @@ export default function Brands() {
                       <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Slug: {b.slug}</div>
                     </div>
                   </div>
-                  <button onClick={(e) => { e.stopPropagation(); toggle(b); }} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${b.isActive ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-gray-50 text-gray-400 border border-gray-100'}`}>
-                    {b.isActive ? 'Active' : 'Hidden'}
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button onClick={(e) => { e.stopPropagation(); toggleFeatured(b); }} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${b.isFeatured ? 'bg-blue-50 text-blue-600 border border-blue-100' : 'bg-gray-50 text-gray-400 border border-gray-100'}`}>
+                      {b.isFeatured ? 'Featured' : 'Not Featured'}
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); toggleActive(b); }} className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${b.isActive ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 'bg-gray-50 text-gray-400 border border-gray-100'}`}>
+                      {b.isActive ? 'Active' : 'Hidden'}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -112,6 +132,10 @@ export default function Brands() {
                   <input className="flex-1 bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-medium outline-none" value={editing.logo} onChange={e => setEditing({ ...editing, logo: e.target.value })} />
                   <ImageUpload onUploaded={(url) => setEditing(f => ({ ...f, logo: url }))} />
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="isFeaturedEdit" checked={editing.isFeatured} onChange={e => setEditing({ ...editing, isFeatured: e.target.checked })} className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" />
+                <label htmlFor="isFeaturedEdit" className="text-xs font-bold text-gray-600">Show on Home Page (Featured)</label>
               </div>
             </div>
             <div className="flex gap-3">

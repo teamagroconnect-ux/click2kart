@@ -61,7 +61,7 @@ export default function Home() {
 
   useEffect(() => {
     api.get('/api/public/categories').then(({ data }) => setCats(data || [])).catch(() => setCats([]))
-    api.get('/api/brands', { params: { active: true } }).then(({ data }) => setBrands(data || [])).catch(() => setBrands([]))
+    api.get('/api/brands/featured').then(({ data }) => setBrands(data || [])).catch(() => setBrands([]))
     api.get('/api/recommendations/trending').then(({ data }) => setRecs(data || [])).catch(() => setRecs([]))
     api.get('/api/offers?activeOnly=true').then(({ data }) => setOffers(data || [])).catch(() => setOffers([]))
   }, [])
@@ -92,71 +92,78 @@ export default function Home() {
         url="/"
       />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300;1,9..40,400&display=swap');
 
-        /* ── same variables as Partner.jsx ── */
         .hm-root {
-          font-family: 'DM Sans', system-ui, sans-serif;
-          background: linear-gradient(180deg, #fdfcff 0%, #faf8ff 100%);
+          font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+          background: radial-gradient(circle at 0% 0%, rgba(255,255,255,1) 0%, rgba(248,245,255,1) 25%, radial-gradient(circle at 100% 100%, rgba(245,243,255,1) 0%, rgba(240,245,255,1) 40%, rgba(255,255,255,1) 100%) 100%);
           color: #1e1b2e;
           overflow-x: hidden;
           padding-bottom: env(safe-area-inset-bottom, 0px);
         }
 
-        /* same subtle grid as Partner */
         .hm-root::before {
           content: '';
           position: fixed; inset: 0;
-          background-image:
-            radial-gradient(rgba(139,92,246,0.08) 1px, transparent 1px);
-          background-size: 30px 30px;
+          background-image: 
+            radial-gradient(rgba(124,58,237,0.08) 1px, transparent 1px),
+            radial-gradient(rgba(59,130,246,0.06) 1px, transparent 1px);
+          background-size: 40px 40px, 60px 60px;
+          background-position: 0 0, 30px 30px;
           pointer-events: none; z-index: 0;
         }
 
         @keyframes hmFloat {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-25px); }
+          0%, 100% { transform: translateY(0) rotate(0.25deg); }
+          25% { transform: translateY(-12px) rotate(-0.25deg); }
+          50% { transform: translateY(-8px) rotate(0.15deg); }
+          75% { transform: translateY(-16px) rotate(-0.15deg); }
         }
         .hm-float {
-          animation: hmFloat 7s ease-in-out infinite;
+          animation: hmFloat 8s ease-in-out infinite;
         }
 
-        /* enhanced violet glow blobs */
+        /* Enhanced glow blobs */
         .hm-blob1 {
-          position: fixed; top: -500px; left: 50%; transform: translateX(-50%);
-          width: 2000px; height: 1200px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(139,92,246,0.2), transparent 70%);
+          position: fixed; 
+          top: -600px; left: 50%; transform: translateX(-50%);
+          width: 2200px; height: 1400px; border-radius: 50%;
+          background: radial-gradient(ellipse at 30% 30%, rgba(124,58,237,0.25) 0%, rgba(59,130,246,0.18) 30%, transparent 70%);
           pointer-events: none; z-index: 0;
-          filter: blur(100px);
-          animation: blobFloat1 12s ease-in-out infinite;
+          filter: blur(120px);
+          animation: blobFloat1 16s ease-in-out infinite;
         }
         @keyframes blobFloat1 {
           0%, 100% { transform: translateX(-50%) scale(1); }
-          50% { transform: translateX(-48%) scale(1.05); }
+          33% { transform: translateX(-45%) scale(1.1); }
+          66% { transform: translateX(-55%) scale(0.95); }
         }
         .hm-blob2 {
-          position: fixed; bottom: -400px; right: -300px;
-          width: 1000px; height: 1000px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(109,40,217,0.25), transparent 65%);
+          position: fixed; 
+          bottom: -500px; right: -400px;
+          width: 1200px; height: 1200px; border-radius: 50%;
+          background: radial-gradient(ellipse at 70% 70%, rgba(236,72,153,0.22) 0%, rgba(124,58,237,0.16) 40%, transparent 70%);
           pointer-events: none; z-index: 0;
-          filter: blur(80px);
-          animation: blobFloat2 10s ease-in-out infinite;
+          filter: blur(100px);
+          animation: blobFloat2 18s ease-in-out infinite;
         }
         @keyframes blobFloat2 {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.1); }
+          0%, 100% { transform: scale(1) rotate(0deg); }
+          50% { transform: scale(1.15) rotate(15deg); }
         }
         .hm-blob3 {
-          position: fixed; top: 20%; left: -250px;
-          width: 700px; height: 700px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(236,72,153,0.12), transparent 60%);
+          position: fixed; 
+          top: 30%; left: -300px;
+          width: 900px; height: 900px; border-radius: 50%;
+          background: radial-gradient(ellipse at 50% 50%, rgba(16,185,129,0.14) 0%, rgba(59,130,246,0.08) 35%, transparent 65%);
           pointer-events: none; z-index: 0;
-          filter: blur(60px);
-          animation: blobFloat3 15s ease-in-out infinite;
+          filter: blur(80px);
+          animation: blobFloat3 22s ease-in-out infinite;
         }
         @keyframes blobFloat3 {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-20px) scale(1.08); }
+          0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
+          25% { transform: translateY(-30px) scale(1.05) rotate(5deg); }
+          75% { transform: translateY(15px) scale(0.98) rotate(-3deg); }
         }
 
         /* ────────────── HERO ────────────── */
@@ -165,204 +172,249 @@ export default function Home() {
           min-height: 100svh;
           display: flex; flex-direction: column;
           align-items: center; justify-content: center;
-          padding: 160px 24px 120px;
+          padding: 180px 24px 140px;
           overflow: hidden; z-index: 1;
         }
 
-        /* enhanced eyebrow pill */
         .hm-eyebrow {
-          display: inline-flex; align-items: center; gap: 12px;
-          padding: 12px 32px; border-radius: 100px;
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(139,92,246,0.4);
+          display: inline-flex; align-items: center; gap: 14px;
+          padding: 16px 40px; border-radius: 120px;
+          background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(248,245,255,0.98));
+          backdrop-filter: blur(30px) saturate(150%);
+          border: 1px solid rgba(124,58,237,0.5);
           color: #7c3aed;
-          font-size: 10px; font-weight: 900; letter-spacing: 0.35em; text-transform: uppercase;
-          margin-bottom: 40px;
-          animation: hmFadeUp 0.8s ease both;
-          box-shadow: 0 15px 50px rgba(124,58,237,0.25), 0 0 40px rgba(124,58,237,0.1) inset;
+          font-size: 10px; font-weight: 900; letter-spacing: 0.32em; text-transform: uppercase;
+          margin-bottom: 52px;
+          animation: hmFadeUp 0.9s ease both;
+          box-shadow: 
+            0 30px 80px -20px rgba(124,58,237,0.35),
+            0 0 40px -10px rgba(124,58,237,0.25) inset,
+            0 0 0 1px rgba(255,255,255,0.6) inset;
         }
         .hm-eyebrow-dot {
-          width: 8px; height: 8px; border-radius: 50%;
-          background: linear-gradient(135deg, #7c3aed, #ec4899);
-          box-shadow: 0 0 15px rgba(124,58,237,0.7);
-          animation: hmPulse 2s ease infinite;
+          width: 10px; height: 10px; border-radius: 50%;
+          background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 50%, #ec4899 100%);
+          box-shadow: 
+            0 0 20px rgba(124,58,237,0.8),
+            0 0 40px rgba(59,130,246,0.6);
+          animation: hmPulse 2.5s ease infinite;
         }
-        @keyframes hmPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
+        @keyframes hmPulse { 
+          0%,100%{opacity:1;transform:scale(1);box-shadow: 0 0 20px rgba(124,58,237,0.8), 0 0 40px rgba(59,130,246,0.6)} 
+          50%{opacity:0.35;transform:scale(0.65);box-shadow: 0 0 10px rgba(124,58,237,0.4), 0 0 20px rgba(59,130,246,0.3)} 
+        }
 
-        /* Bebas Neue title with gradient */
         .hm-title {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(80px, 15vw, 200px);
-          line-height: 0.82; text-align: center;
-          letter-spacing: -0.03em;
-          margin-bottom: 32px;
-          animation: hmFadeUp 0.8s 0.1s ease both;
-          filter: drop-shadow(0 30px 60px rgba(0,0,0,0.15));
+          font-size: clamp(80px, 16vw, 220px);
+          line-height: 0.80; text-align: center;
+          letter-spacing: -0.04em;
+          margin-bottom: 40px;
+          animation: hmFadeUp 0.9s 0.15s ease both;
+          filter: drop-shadow(0 40px 80px rgba(0,0,0,0.18));
         }
         .hm-title .accent {
-          background: linear-gradient(135deg, #7c3aed 0%, #6366f1 30%, #3b82f6 60%, #ec4899 100%);
+          background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 30%, #10b981 65%, #ec4899 100%);
+          background-size: 300% 300%;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
           position: relative;
+          animation: gradientShift 12s ease infinite;
+        }
+        @keyframes gradientShift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
         }
         .hm-title .accent::after {
           content: '';
           position: absolute;
-          bottom: 10px; left: 0; width: 100%; height: 10px;
-          background: linear-gradient(90deg, rgba(124,58,237,0.2), rgba(236,72,153,0.2));
+          bottom: 8px; left: 0; width: 100%; height: 12px;
+          background: linear-gradient(90deg, 
+            rgba(124,58,237,0.25), 
+            rgba(59,130,246,0.2), 
+            rgba(16,185,129,0.25), 
+            rgba(236,72,153,0.2), 
+            rgba(124,58,237,0.25)
+          );
           z-index: -1;
-          border-radius: 10px;
-          filter: blur(2px);
+          border-radius: 12px;
+          filter: blur(4px);
         }
 
         .hm-sub {
-          font-size: clamp(18px, 2.5vw, 24px);
-          color: #6b7280; font-weight: 400;
-          max-width: 750px; text-align: center; line-height: 1.7;
-          margin-bottom: 60px;
-          animation: hmFadeUp 0.8s 0.25s ease both;
+          font-size: clamp(17px, 2.6vw, 22px);
+          color: #4b5563; font-weight: 450;
+          max-width: 720px; text-align: center; line-height: 1.75;
+          margin-bottom: 72px;
+          animation: hmFadeUp 0.9s 0.3s ease both;
         }
 
         .hm-ctas {
-          display: flex; flex-direction: column; gap: 16px; align-items: center;
-          animation: hmFadeUp 0.7s 0.4s ease both;
+          display: flex; flex-direction: column; gap: 20px; align-items: center;
+          animation: hmFadeUp 0.8s 0.45s ease both;
         }
-        @media(min-width:480px) { .hm-ctas { flex-direction: row; gap: 20px; } }
+        @media(min-width:480px) { .hm-ctas { flex-direction: row; gap: 24px; } }
 
-        /* Enhanced Primary btn */
         .hm-btn-primary {
-          display: inline-flex; align-items: center; gap: 16px;
+          display: inline-flex; align-items: center; gap: 18px;
           background: linear-gradient(135deg, #7c3aed, #6366f1, #3b82f6, #ec4899);
-          background-size: 300% auto;
+          background-size: 400% 400%;
           color: white;
-          padding: 22px 56px; border-radius: 24px;
+          padding: 26px 64px; border-radius: 32px;
           font-size: 11px; font-weight: 900;
-          text-transform: uppercase; letter-spacing: 0.3em;
-          text-decoration: none; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-          box-shadow: 0 20px 60px rgba(124,58,237,0.5), 0 0 40px rgba(124,58,237,0.2) inset;
+          text-transform: uppercase; letter-spacing: 0.32em;
+          text-decoration: none; transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+          box-shadow: 
+            0 30px 100px -20px rgba(124,58,237,0.65),
+            0 0 60px -15px rgba(124,58,237,0.4) inset,
+            0 0 0 1px rgba(255,255,255,0.4) inset;
           position: relative; overflow: hidden;
+          animation: bgShift 10s ease infinite;
+        }
+        @keyframes bgShift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
         }
         .hm-btn-primary::before {
           content: '';
           position: absolute;
-          top: 0; left: -100%;
-          width: 100%; height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-          transition: left 0.6s;
+          top: 0; left: -120%;
+          width: 120%; height: 100%;
+          background: linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent);
+          transition: left 0.7s cubic-bezier(0.23,1,0.32,1);
         }
         .hm-btn-primary:hover { 
-          transform: translateY(-10px) scale(1.05); 
-          box-shadow: 0 30px 80px rgba(124,58,237,0.6), 0 0 60px rgba(124,58,237,0.3) inset; 
-          background-position: right center;
+          transform: translateY(-16px) scale(1.06); 
+          box-shadow: 
+            0 45px 120px -25px rgba(124,58,237,0.8),
+            0 0 80px -20px rgba(124,58,237,0.5) inset,
+            0 0 0 1px rgba(255,255,255,0.6) inset;
         }
-        .hm-btn-primary:hover::before { left: 100%; }
-        .hm-btn-primary:active { transform: translateY(-3px) scale(0.97); }
+        .hm-btn-primary:hover::before { left: 120%; }
+        .hm-btn-primary:active { transform: translateY(-8px) scale(0.98); }
 
-        /* Enhanced Secondary btn */
         .hm-btn-secondary {
-          display: inline-flex; align-items: center; gap: 16px;
-          border: 2px solid rgba(124,58,237,0.5);
-          background: rgba(255, 255, 255, 0.8);
-          backdrop-filter: blur(20px);
+          display: inline-flex; align-items: center; gap: 18px;
+          border: 2px solid rgba(124,58,237,0.4);
+          background: rgba(255, 255, 255, 0.92);
+          backdrop-filter: blur(30px) saturate(160%);
           color: #7c3aed;
-          padding: 22px 56px; border-radius: 24px;
+          padding: 26px 64px; border-radius: 32px;
           font-size: 11px; font-weight: 900;
-          text-transform: uppercase; letter-spacing: 0.3em;
-          text-decoration: none; transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-          box-shadow: 0 5px 30px rgba(124,58,237,0.1);
+          text-transform: uppercase; letter-spacing: 0.32em;
+          text-decoration: none; transition: all 0.6s cubic-bezier(0.23,1,0.32,1);
+          box-shadow: 
+            0 10px 60px -20px rgba(124,58,237,0.25),
+            0 0 0 1px rgba(255,255,255,0.9) inset;
         }
         .hm-btn-secondary:hover {
-          background: #ffffff;
+          background: linear-gradient(135deg, rgba(255,255,255,1), rgba(248,245,255,1));
           border-color: #7c3aed;
-          transform: translateY(-8px);
-          box-shadow: 0 20px 60px rgba(124,58,237,0.25);
+          transform: translateY(-12px);
+          box-shadow: 
+            0 35px 90px -25px rgba(124,58,237,0.35),
+            0 0 0 1px rgba(124,58,237,0.15) inset;
         }
-        .hm-btn-secondary:active { transform: translateY(-2px) scale(0.97); }
+        .hm-btn-secondary:active { transform: translateY(-4px) scale(0.98); }
 
-        /* Enhanced Trust badge grid */
         .hm-trust-grid {
           display: grid; grid-template-columns: repeat(2, 1fr);
-          gap: 24px; width: 100%; max-width: 1100px; margin-top: 100px;
-          animation: hmFadeUp 0.8s 0.55s ease both;
+          gap: 28px; width: 100%; max-width: 1200px; margin-top: 120px;
+          animation: hmFadeUp 0.9s 0.6s ease both;
         }
-        @media(min-width:640px) { .hm-trust-grid { grid-template-columns: repeat(4,1fr); gap: 28px; } }
+        @media(min-width:640px) { .hm-trust-grid { grid-template-columns: repeat(4,1fr); gap: 32px; } }
 
         .hm-trust-card {
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(139,92,246,0.25);
-          border-radius: 32px; padding: 36px 28px;
-          transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          background: linear-gradient(145deg, rgba(255,255,255,0.98), rgba(248,245,255,0.96));
+          backdrop-filter: blur(30px) saturate(180%);
+          border: 1px solid rgba(124,58,237,0.22);
+          border-radius: 40px; padding: 44px 32px;
+          transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
           position: relative; overflow: hidden;
-          box-shadow: 0 15px 50px rgba(139,92,246,0.1);
+          box-shadow: 
+            0 20px 80px -25px rgba(124,58,237,0.25),
+            0 0 0 1px rgba(255,255,255,0.9) inset;
           text-align: center;
           transform-style: preserve-3d;
-          perspective: 1000px;
+          perspective: 1200px;
         }
         .hm-trust-card::before {
           content: '';
           position: absolute;
           inset: 0;
-          background: radial-gradient(circle at 50% 0%, rgba(124,58,237,0.1), transparent 60%);
-          opacity: 0; transition: opacity 0.5s;
+          background: radial-gradient(circle at 50% -20%, rgba(124,58,237,0.18), transparent 60%);
+          opacity: 0; transition: opacity 0.6s;
         }
         .hm-trust-card:hover {
-          border-color: rgba(124,58,237,0.6);
-          transform: translateY(-16px) rotateX(3deg);
-          box-shadow: 0 40px 80px rgba(124,58,237,0.25), 0 0 60px rgba(124,58,237,0.15) inset;
-          background: #ffffff;
+          border-color: rgba(124,58,237,0.7);
+          transform: translateY(-22px) rotateX(6deg) scale(1.03);
+          box-shadow: 
+            0 60px 120px -30px rgba(124,58,237,0.35),
+            0 0 0 1px rgba(124,58,237,0.2) inset;
+          background: linear-gradient(145deg, rgba(255,255,255,1), rgba(250,245,255,1));
         }
         .hm-trust-card:hover::before { opacity: 1; }
         .hm-trust-icon { 
-          font-size: 48px; margin-bottom: 20px; display: block;
-          filter: drop-shadow(0 15px 25px rgba(0,0,0,0.15));
-          transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+          font-size: 56px; margin-bottom: 24px; display: block;
+          filter: drop-shadow(0 25px 35px rgba(0,0,0,0.22));
+          transition: transform 0.6s cubic-bezier(0.23,1,0.32,1);
         }
         .hm-trust-card:hover .hm-trust-icon {
-          transform: scale(1.25) rotate(8deg) translateZ(20px);
+          transform: scale(1.35) rotate(10deg) translateZ(30px);
         }
-        .hm-trust-title { font-size: 16px; font-weight: 900; color: #1e1b2e; margin-bottom: 10px; letter-spacing: -0.02em; }
-        .hm-trust-desc { font-size: 14px; color: #6b7280; line-height: 1.6; font-weight: 500; }
+        .hm-trust-title { font-size: 16px; font-weight: 800; color: #111827; margin-bottom: 10px; letter-spacing: -0.02em; }
+        .hm-trust-desc { font-size: 14px; color: #6b7280; line-height: 1.75; font-weight: 450; }
 
-        /* scroll hint */
         .hm-scroll-hint {
-          position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-          display: flex; flex-direction: column; align-items: center; gap: 10px;
-          opacity: 0.4;
-          animation: hmFadeUp 0.8s 1s ease both;
+          position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%);
+          display: flex; flex-direction: column; align-items: center; gap: 14px;
+          opacity: 0.35;
+          animation: hmFadeUp 0.9s 1.2s ease both;
         }
-        .hm-scroll-hint span { font-size: 9px; letter-spacing: 0.25em; text-transform: uppercase; color: #9ca3af; font-weight: 800; }
+        .hm-scroll-hint span { font-size: 9px; letter-spacing: 0.26em; text-transform: uppercase; color: #9ca3af; font-weight: 800; }
         .hm-scroll-line {
-          width: 2px; height: 48px;
-          background: linear-gradient(to bottom, #7c3aed, #ec4899, transparent);
-          animation: hmScrollLine 2s ease infinite;
+          width: 2px; height: 60px;
+          background: linear-gradient(to bottom, 
+            transparent,
+            #7c3aed,
+            #3b82f6,
+            #10b981,
+            #ec4899,
+            transparent
+          );
+          animation: hmScrollLine 3s ease infinite;
         }
         @keyframes hmScrollLine {
           0%{transform:scaleY(0);transform-origin:top}
-          40%{transform:scaleY(1);transform-origin:top}
-          60%{transform:scaleY(1);transform-origin:bottom}
+          25%{transform:scaleY(0.6);transform-origin:top}
+          50%{transform:scaleY(1);transform-origin:top}
+          51%{transform-origin:bottom}
           100%{transform:scaleY(0);transform-origin:bottom}
         }
 
         /* ────────────── BRANDS (logo-only) ────────────── */
-        .hm-brands-inner { max-width: 1180px; margin: 0 auto; }
-        .hm-brands-head { text-align: center; margin-bottom: 40px; }
+        .hm-brands-section {
+          padding: 160px 24px 140px; 
+          background: linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,245,255,0.85) 50%, rgba(255,255,255,1) 100%);
+          position: relative; zIndex: 1;
+        }
+        .hm-brands-inner { max-width: 1280px; margin: 0 auto; }
+        .hm-brands-head { text-align: center; margin-bottom: 64px; }
         .hm-brands-kicker {
-          display: inline-flex; align-items: center; gap: 10px;
-          font-size: 10px; font-weight: 800; letter-spacing: 0.28em;
-          text-transform: uppercase; color: #7c3aed; margin-bottom: 12px;
+          display: inline-flex; align-items: center; gap: 12px;
+          font-size: 10px; font-weight: 800; letter-spacing: 0.3em;
+          text-transform: uppercase; color: #7c3aed; margin-bottom: 18px;
         }
         .hm-brands-kicker::before, .hm-brands-kicker::after {
-          content: ''; width: 24px; height: 1px; background: linear-gradient(90deg, transparent, rgba(124,58,237,0.5));
+          content: ''; width: 32px; height: 2px; background: linear-gradient(90deg, transparent, rgba(124,58,237,0.7));
         }
-        .hm-brands-kicker::after { background: linear-gradient(90deg, rgba(124,58,237,0.5), transparent); }
+        .hm-brands-kicker::after { background: linear-gradient(90deg, rgba(124,58,237,0.7), transparent); }
         .hm-brands-title {
-          font-family: 'Bebas Neue', sans-serif; font-size: clamp(36px, 6vw, 52px);
-          color: #1e1b2e; letter-spacing: 0.03em; line-height: 1.05; margin-bottom: 10px;
+          font-family: 'Bebas Neue', sans-serif; font-size: clamp(40px, 6.5vw, 72px);
+          color: #111827; letter-spacing: 0.025em; line-height: 1.05; margin-bottom: 16px;
         }
-        .hm-brands-sub { color: #6b7280; font-size: 14px; font-weight: 500; max-width: 480px; margin: 0 auto; line-height: 1.5; }
+        .hm-brands-sub { color: #6b7280; font-size: 16px; font-weight: 450; max-width: 580px; margin: 0 auto; line-height: 1.7; }
         
         .hm-brands-scroll-container {
           overflow-x: auto;
@@ -375,9 +427,9 @@ export default function Home() {
         
         .hm-brands-grid {
           display: flex;
-          gap: 18px;
-          padding: 10px 0;
-          animation: hmScrollBrands 40s linear infinite;
+          gap: 24px;
+          padding: 16px 0;
+          animation: hmScrollBrands 60s linear infinite;
         }
         .hm-brands-grid:hover {
           animation-play-state: paused;
@@ -390,36 +442,45 @@ export default function Home() {
         
         .hm-brand-logo-card {
           flex-shrink: 0;
-          width: 140px;
+          width: 160px;
           aspect-ratio: 1;
-          border-radius: 28px;
-          background: #ffffff;
-          border: 1px solid rgba(139, 92, 246, 0.1);
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+          border-radius: 36px;
+          background: linear-gradient(145deg, rgba(255,255,255,1), rgba(248,245,255,1));
+          border: 1px solid rgba(124,58,237,0.18);
+          box-shadow: 
+            0 10px 40px -15px rgba(0,0,0,0.08),
+            0 0 0 1px rgba(255,255,255,0.9) inset;
           display: flex; align-items: center; justify-content: center;
-          padding: 24px;
+          padding: 32px;
           text-decoration: none;
           overflow: hidden;
-          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          transition: all 0.5s cubic-bezier(0.23,1,0.32,1);
         }
         .hm-brand-logo-card::before {
           content: '';
           position: absolute;
           inset: 0;
-          border-radius: 28px;
-          padding: 2px;
-          background: linear-gradient(135deg, #7c3aed, #ec4899);
+          border-radius: 36px;
+          padding: 2.5px;
+          background: linear-gradient(135deg, #7c3aed, #3b82f6, #10b981, #ec4899, #7c3aed);
+          background-size: 300% 300%;
           -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
           mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
           -webkit-mask-composite: xor;
           mask-composite: exclude;
           opacity: 0;
-          transition: opacity 0.4s;
+          transition: opacity 0.5s;
+          animation: borderGradient 8s linear infinite;
+        }
+        @keyframes borderGradient {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 100% 50%; }
         }
         .hm-brand-logo-card:hover {
-          transform: translateY(-10px) scale(1.05);
-          box-shadow: 0 25px 50px -12px rgba(124, 58, 237, 0.15);
-          border-color: transparent;
+          transform: translateY(-16px) scale(1.06);
+          box-shadow: 
+            0 40px 90px -25px rgba(124,58,237,0.35),
+            0 0 0 1px rgba(255,255,255,0.8) inset;
         }
         .hm-brand-logo-card:hover::before {
           opacity: 1;
@@ -427,354 +488,425 @@ export default function Home() {
         .hm-brand-logo-card img {
           max-width: 100%; max-height: 100%; width: auto; height: auto;
           object-fit: contain;
-          transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          transition: transform 0.5s cubic-bezier(0.23,1,0.32,1);
+          filter: drop-shadow(0 8px 16px rgba(0,0,0,0.1));
         }
         .hm-brand-logo-card:hover img {
-          transform: scale(1.1);
+          transform: scale(1.18);
         }
         .hm-brand-logo-fallback {
-          font-size: 36px; line-height: 1; opacity: 0.35;
+          font-size: 44px; line-height: 1; opacity: 0.3;
         }
 
         /* ────────────── STATS BAND ────────────── */
         .hm-stats-section {
           position: relative; z-index: 1;
-          background: linear-gradient(135deg, #1e1b2e 0%, #312e81 100%);
-          padding: 80px 24px;
+          background: linear-gradient(135deg, #1e1b2e 0%, #312e81 45%, #1f2937 100%);
+          padding: 100px 24px;
           overflow: hidden;
         }
         .hm-stats-section::before {
           content: ''; position: absolute; inset: 0;
-          background-image: radial-gradient(circle at 50% 50%, rgba(124,58,237,0.15) 0%, transparent 70%);
+          background-image: 
+            radial-gradient(circle at 20% 50%, rgba(124,58,237,0.22) 0%, transparent 55%),
+            radial-gradient(circle at 80% 50%, rgba(59,130,246,0.18) 0%, transparent 55%);
+        }
+        .hm-stats-section::after {
+          content: ''; position: absolute; inset: 0;
+          background-image: 
+            radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+          background-size: 30px 30px;
+          opacity: 0.3;
         }
 
         /* ── TICKER ── */
         .hm-ticker-section {
-          background: #7c3aed;
-          padding: 14px 0;
+          background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
+          padding: 18px 0;
           overflow: hidden;
           position: relative;
           z-index: 10;
-          border-bottom: 1px solid rgba(255,255,255,0.1);
+          border-bottom: 1px solid rgba(255,255,255,0.18);
+          box-shadow: 0 10px 60px -20px rgba(124,58,237,0.45);
         }
         .hm-ticker-inner {
           display: flex;
           width: fit-content;
-          animation: hmTicker 30s linear infinite;
+          animation: hmTicker 40s linear infinite;
         }
         .hm-ticker-item {
           display: flex;
           align-items: center;
-          gap: 16px;
-          padding: 0 40px;
+          gap: 20px;
+          padding: 0 56px;
           color: white;
           font-weight: 800;
           font-size: 11px;
           text-transform: uppercase;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.18em;
           white-space: nowrap;
         }
         .hm-ticker-item span.highlight {
           background: white;
           color: #7c3aed;
-          padding: 3px 10px;
-          border-radius: 6px;
+          padding: 5px 14px;
+          border-radius: 12px;
           font-size: 10px;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          box-shadow: 0 10px 30px -10px rgba(0,0,0,0.3);
         }
-        .hm-ticker-item .fire { font-size: 16px; }
+        .hm-ticker-item .fire { font-size: 18px; }
 
         @keyframes hmTicker {
           0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
         .hm-stats-inner {
-          max-width: 880px; margin: 0 auto;
+          max-width: 920px; margin: 0 auto;
           display: grid; grid-template-columns: repeat(2, 1fr);
-          gap: 36px 20px;
+          gap: 48px 32px;
+          position: relative; z-index: 1;
         }
         @media(min-width:640px) { .hm-stats-inner { grid-template-columns: repeat(4,1fr); } }
 
-        .hm-stat { text-align: center; opacity: 0; animation: hmFadeUp 0.6s ease both; }
+        .hm-stat { text-align: center; opacity: 0; animation: hmFadeUp 0.8s ease both; }
         .hm-stat-num {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(50px, 7vw, 84px);
-          background: linear-gradient(to bottom, #ffffff, #94a3b8);
+          font-size: clamp(56px, 8vw, 96px);
+          background: linear-gradient(to bottom right, #ffffff, #93c5fd, #a5b4fc, #f9a8d4);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
-          line-height: 1; letter-spacing: 0.02em;
-          filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+          line-height: 1; letter-spacing: 0.03em;
+          filter: drop-shadow(0 20px 40px rgba(0,0,0,0.35));
         }
         .hm-stat-label {
-          font-size: 10px; font-weight: 700; text-transform: uppercase;
-          letter-spacing: 0.2em; color: rgba(255,255,255,0.7); margin-top: 6px;
+          font-size: 11px; font-weight: 700; text-transform: uppercase;
+          letter-spacing: 0.24em; color: rgba(255,255,255,0.8); margin-top: 10px;
         }
 
-        /* divider */
         .hm-divider {
           width: 100%; height: 1px; position: relative; z-index: 1;
-          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.2), transparent);
+          background: linear-gradient(90deg, transparent, rgba(124,58,237,0.28), rgba(59,130,246,0.25), rgba(16,185,129,0.28), transparent);
         }
 
         /* ────────────── FEATURES ────────────── */
         .hm-features-section {
-          max-width: 1200px; margin: 0 auto;
-          padding: 88px 24px; position: relative; z-index: 1;
+          max-width: 1280px; margin: 0 auto;
+          padding: 120px 24px; position: relative; z-index: 1;
         }
 
         .hm-section-label {
-          display: inline-flex; align-items: center; gap: 10px;
-          font-size: 10px; font-weight: 700; letter-spacing: 0.25em;
-          text-transform: uppercase; color: #7c3aed; margin-bottom: 16px;
+          display: inline-flex; align-items: center; gap: 14px;
+          font-size: 10px; font-weight: 800; letter-spacing: 0.28em;
+          text-transform: uppercase; color: #7c3aed; margin-bottom: 20px;
         }
-        .hm-section-label::before { content: ''; width: 28px; height: 1.5px; background: #7c3aed; border-radius: 2px; }
+        .hm-section-label::before { content: ''; width: 36px; height: 2px; background: linear-gradient(90deg, #7c3aed, transparent); border-radius: 4px; }
 
         .hm-section-heading {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(36px, 5.5vw, 68px);
-          line-height: 1; letter-spacing: 0.02em; color: #1e1b2e;
-          margin-bottom: 14px;
+          font-size: clamp(44px, 6vw, 80px);
+          line-height: 1; letter-spacing: 0.02em; color: #111827;
+          margin-bottom: 20px;
         }
-        .hm-section-heading em { color: #7c3aed; font-style: normal; }
+        .hm-section-heading em { 
+          background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 50%, #10b981 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          font-style: normal; 
+        }
 
         .hm-section-sub {
-          font-size: 15px; color: #6b7280; font-weight: 300;
-          max-width: 460px; line-height: 1.7; margin-bottom: 56px;
+          font-size: 16px; color: #6b7280; font-weight: 400;
+          max-width: 580px; line-height: 1.8; margin-bottom: 72px;
         }
 
-        /* features grid — white cards */
         .hm-features-grid {
           display: grid; grid-template-columns: 1fr;
           gap: 2px;
-          background: rgba(139,92,246,0.06);
-          border: 1px solid rgba(139,92,246,0.1);
-          border-radius: 20px; overflow: hidden;
+          background: linear-gradient(135deg, rgba(124,58,237,0.1), rgba(59,130,246,0.08));
+          border: 1px solid rgba(124,58,237,0.18);
+          border-radius: 28px; overflow: hidden;
+          position: relative;
+        }
+        .hm-features-grid::before {
+          content: '';
+          position: absolute; inset: 0;
+          background: radial-gradient(circle at 50% 0%, rgba(124,58,237,0.15), transparent 65%);
+          opacity: 0.8;
+          pointer-events: none;
         }
         @media(min-width:540px) { .hm-features-grid { grid-template-columns: repeat(2,1fr); } }
         @media(min-width:900px) { .hm-features-grid { grid-template-columns: repeat(3,1fr); } }
 
         .hm-feature-item {
-          background: white; padding: 36px 32px;
-          transition: background 0.25s, box-shadow 0.25s;
-          position: relative;
+          background: rgba(255,255,255,0.98); 
+          backdrop-filter: blur(20px);
+          padding: 44px 36px;
+          transition: all 0.5s cubic-bezier(0.23,1,0.32,1);
+          position: relative; z-index: 1;
         }
-        .hm-feature-item:hover { background: #faf8ff; box-shadow: inset 0 0 0 1px rgba(139,92,246,0.15); }
+        .hm-feature-item:hover { 
+          background: linear-gradient(145deg, #ffffff, #faf8ff); 
+          box-shadow: 
+            inset 0 0 0 1px rgba(124,58,237,0.22),
+            0 20px 60px -20px rgba(124,58,237,0.2);
+          transform: translateY(-4px);
+        }
         .hm-feature-item:hover .hm-feature-num { color: #7c3aed; }
 
         .hm-feature-num {
-          font-family: 'Bebas Neue', sans-serif; font-size: 13px;
-          letter-spacing: 0.1em; color: #d1d5db; margin-bottom: 18px;
-          transition: color 0.25s;
+          font-family: 'Bebas Neue', sans-serif; font-size: 14px;
+          letter-spacing: 0.15em; color: #d1d5db; margin-bottom: 22px;
+          transition: color 0.5s;
         }
         .hm-feature-icon {
-          width: 46px; height: 46px; border-radius: 12px;
-          background: rgba(139,92,246,0.08);
-          border: 1px solid rgba(139,92,246,0.15);
+          width: 56px; height: 56px; border-radius: 20px;
+          background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(59,130,246,0.1));
+          border: 1px solid rgba(124,58,237,0.2);
           display: flex; align-items: center; justify-content: center;
-          font-size: 20px; margin-bottom: 16px;
+          font-size: 24px; margin-bottom: 20px;
+          box-shadow: 0 6px 24px -12px rgba(124,58,237,0.25);
         }
-        .hm-feature-title { font-size: 15px; font-weight: 700; color: #1e1b2e; margin-bottom: 8px; letter-spacing: -0.01em; }
-        .hm-feature-desc { font-size: 13px; color: #6b7280; line-height: 1.65; font-weight: 400; }
+        .hm-feature-title { font-size: 17px; font-weight: 800; color: #111827; margin-bottom: 12px; letter-spacing: -0.02em; }
+        .hm-feature-desc { font-size: 14px; color: #6b7280; line-height: 1.8; font-weight: 420; }
 
         /* ────────────── CTA ────────────── */
         .hm-cta-section {
-          max-width: 1200px; margin: 0 auto 88px;
+          max-width: 1280px; margin: 0 auto 120px;
           padding: 0 24px; position: relative; z-index: 1;
         }
 
         .hm-cta-inner {
-          background: white;
-          border: 1px solid rgba(139,92,246,0.15);
-          border-radius: 28px; padding: 64px 40px;
+          background: linear-gradient(145deg, rgba(255,255,255,1), rgba(248,245,255,0.98));
+          border: 1px solid rgba(124,58,237,0.22);
+          border-radius: 40px; padding: 88px 48px;
           text-align: center; position: relative; overflow: hidden;
-          box-shadow: 0 8px 50px rgba(139,92,246,0.08);
+          box-shadow: 
+            0 40px 120px -30px rgba(124,58,237,0.3),
+            0 0 0 1px rgba(255,255,255,0.9) inset;
         }
-        /* same top violet stripe */
         .hm-cta-inner::before {
-          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-          background: linear-gradient(90deg, transparent 10%, #7c3aed 50%, transparent 90%);
+          content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+          background: linear-gradient(90deg, transparent 10%, #7c3aed 33%, #3b82f6 50%, #10b981 67%, transparent 90%);
         }
         .hm-cta-inner::after {
           content: ''; position: absolute;
-          top: -80px; left: 50%; transform: translateX(-50%);
-          width: 500px; height: 280px; border-radius: 50%;
-          background: radial-gradient(ellipse, rgba(139,92,246,0.06), transparent 70%);
+          top: -100px; left: 50%; transform: translateX(-50%);
+          width: 700px; height: 320px; border-radius: 50%;
+          background: radial-gradient(ellipse, rgba(124,58,237,0.12), transparent 70%);
           pointer-events: none;
         }
 
-        /* same eyebrow pill */
         .hm-cta-badge {
-          display: inline-flex; align-items: center; gap: 8px;
-          background: rgba(139,92,246,0.08);
-          border: 1px solid rgba(139,92,246,0.2);
-          color: #7c3aed; font-size: 9px; font-weight: 700;
-          letter-spacing: 0.22em; text-transform: uppercase;
-          padding: 6px 18px; border-radius: 100px;
-          margin-bottom: 24px; position: relative; z-index: 1;
+          display: inline-flex; align-items: center; gap: 10px;
+          background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(59,130,246,0.1));
+          border: 1px solid rgba(124,58,237,0.25);
+          color: #7c3aed; font-size: 10px; font-weight: 800;
+          letter-spacing: 0.24em; text-transform: uppercase;
+          padding: 6px 20px; border-radius: 100px;
+          margin-bottom: 28px; position: relative; z-index: 1;
         }
 
         .hm-cta-title {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: clamp(36px, 6vw, 72px);
-          line-height: 1; letter-spacing: 0.02em; color: #1e1b2e;
-          margin-bottom: 16px; position: relative; z-index: 1;
+          font-size: clamp(40px, 7vw, 88px);
+          line-height: 1; letter-spacing: 0.02em; color: #111827;
+          margin-bottom: 24px; position: relative; z-index: 1;
         }
-        .hm-cta-title em { color: #7c3aed; font-style: normal; }
+        .hm-cta-title em { 
+          background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 50%, #ec4899 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          font-style: normal; 
+        }
 
         .hm-cta-sub {
-          font-size: 15px; color: #6b7280; font-weight: 300;
-          max-width: 500px; margin: 0 auto 44px; line-height: 1.7;
+          font-size: 17px; color: #6b7280; font-weight: 420;
+          max-width: 640px; margin: 0 auto 56px; line-height: 1.8;
           position: relative; z-index: 1;
         }
 
         .hm-cta-btns {
-          display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+          display: flex; gap: 18px; justify-content: center; flex-wrap: wrap;
           position: relative; z-index: 1;
         }
 
         /* ── HOW IT WORKS STEPS ── */
         .hm-steps-section {
-          max-width: 1200px; margin: 0 auto 88px;
+          max-width: 1280px; margin: 0 auto 120px;
           padding: 0 24px; position: relative; z-index: 1;
         }
 
-        .hm-steps-header { margin-bottom: 48px; }
+        .hm-steps-header { margin-bottom: 64px; }
 
-        /* 4-step grid */
         .hm-steps-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 16px;
+          gap: 24px;
           position: relative;
         }
         @media(min-width:540px) { .hm-steps-grid { grid-template-columns: repeat(2,1fr); } }
         @media(min-width:900px) { .hm-steps-grid { grid-template-columns: repeat(4,1fr); } }
 
-        /* connector line between cards — desktop only */
         @media(min-width:900px) {
           .hm-steps-grid::before {
             content: '';
             position: absolute;
-            top: 34px; left: calc(12.5% + 20px); right: calc(12.5% + 20px);
-            height: 2px;
+            top: 40px; left: calc(12.5% + 24px); right: calc(12.5% + 24px);
+            height: 3px;
             background: linear-gradient(90deg,
-              rgba(139,92,246,0.3),
-              rgba(139,92,246,0.15),
-              rgba(5,150,105,0.3)
+              rgba(124,58,237,0.4),
+              rgba(59,130,246,0.3),
+              rgba(16,185,129,0.4)
             );
             z-index: 0;
+            border-radius: 10px;
           }
         }
 
         .hm-step-card {
-          background: white;
-          border: 1px solid rgba(139,92,246,0.12);
-          border-radius: 20px;
-          padding: 28px 24px;
+          background: linear-gradient(145deg, #ffffff, #faf8ff);
+          border: 1px solid rgba(124,58,237,0.18);
+          border-radius: 28px;
+          padding: 36px 32px;
           position: relative; z-index: 1;
-          transition: all 0.3s;
-          box-shadow: 0 2px 16px rgba(139,92,246,0.05);
+          transition: all 0.6s cubic-bezier(0.23,1,0.32,1);
+          box-shadow: 
+            0 8px 40px -16px rgba(124,58,237,0.15),
+            0 0 0 1px rgba(255,255,255,0.9) inset;
         }
         .hm-step-card::before {
           content: '';
-          position: absolute; top: 0; left: 0; right: 0; height: 3px;
-          border-radius: 20px 20px 0 0;
-          background: linear-gradient(90deg, transparent, rgba(139,92,246,0.35), transparent);
-          opacity: 0; transition: opacity 0.3s;
+          position: absolute; top: 0; left: 0; right: 0; height: 4px;
+          border-radius: 28px 28px 0 0;
+          background: linear-gradient(90deg, transparent, rgba(124,58,237,0.45), transparent);
+          opacity: 0; transition: opacity 0.6s;
         }
-        .hm-step-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(124,58,237,0.12); border-color: rgba(124,58,237,0.25); }
+        .hm-step-card:hover { transform: translateY(-10px); box-shadow: 0 24px 80px -25px rgba(124,58,237,0.3), 0 0 0 1px rgba(124,58,237,0.25) inset; }
         .hm-step-card:hover::before { opacity: 1; }
 
         .hm-step-card.s-active {
-          border-color: rgba(124,58,237,0.28);
-          background: linear-gradient(160deg, white 50%, #faf8ff);
-          box-shadow: 0 4px 24px rgba(124,58,237,0.1);
+          border-color: rgba(124,58,237,0.35);
+          background: linear-gradient(145deg, #ffffff, #f8f5ff);
+          box-shadow: 0 12px 56px -20px rgba(124,58,237,0.25);
         }
         .hm-step-card.s-active::before { opacity: 1; background: linear-gradient(90deg, transparent, #7c3aed, transparent); }
 
         .hm-step-card.s-done {
-          border-color: rgba(5,150,105,0.22);
-          background: linear-gradient(160deg, white 50%, #f0fdf4);
+          border-color: rgba(16,185,129,0.3);
+          background: linear-gradient(145deg, #ffffff, #f0fdf4);
         }
-        .hm-step-card.s-done::before { opacity: 1; background: linear-gradient(90deg, transparent, #059669, transparent); }
+        .hm-step-card.s-done::before { opacity: 1; background: linear-gradient(90deg, transparent, #10b981, transparent); }
 
         .hm-step-num {
-          width: 44px; height: 44px; border-radius: 50%;
+          width: 52px; height: 52px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 18px; letter-spacing: 0.05em;
-          margin-bottom: 20px;
-          background: #f5f3ff; border: 2px solid rgba(139,92,246,0.18);
+          font-size: 18px; letter-spacing: 0.06em;
+          margin-bottom: 24px;
+          background: linear-gradient(145deg, #f5f3ff, #f1f5f9);
+          border: 2px solid rgba(124,58,237,0.22);
           color: #9ca3af;
-          transition: all 0.3s;
+          transition: all 0.6s cubic-bezier(0.23,1,0.32,1);
+          box-shadow: 0 8px 24px -12px rgba(124,58,237,0.2);
         }
-        .hm-step-card:hover .hm-step-num { border-color: rgba(124,58,237,0.4); color: #7c3aed; }
-        .hm-step-card.s-active .hm-step-num { background: #7c3aed; border-color: #7c3aed; color: white; box-shadow: 0 6px 20px rgba(124,58,237,0.3); }
-        .hm-step-card.s-done .hm-step-num { background: #059669; border-color: #059669; color: white; box-shadow: 0 6px 20px rgba(5,150,105,0.25); font-size: 16px; }
+        .hm-step-card:hover .hm-step-num { border-color: rgba(124,58,237,0.5); color: #7c3aed; }
+        .hm-step-card.s-active .hm-step-num { 
+          background: linear-gradient(135deg, #7c3aed, #6366f1);
+          border-color: #7c3aed; color: white; 
+          box-shadow: 0 12px 40px -15px rgba(124,58,237,0.45);
+        }
+        .hm-step-card.s-done .hm-step-num { 
+          background: linear-gradient(135deg, #10b981, #34d399);
+          border-color: #10b981; color: white; 
+          box-shadow: 0 12px 40px -15px rgba(16,185,129,0.45);
+          font-size: 16px; 
+        }
 
         .hm-step-tag-pill {
           display: inline-block;
-          font-size: 9px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
-          color: #7c3aed; background: rgba(139,92,246,0.08);
-          border: 1px solid rgba(139,92,246,0.18);
-          padding: 3px 10px; border-radius: 100px;
-          margin-bottom: 10px;
+          font-size: 9px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase;
+          color: #7c3aed; background: linear-gradient(135deg, rgba(124,58,237,0.12), rgba(59,130,246,0.08));
+          border: 1px solid rgba(124,58,237,0.22);
+          padding: 4px 14px; border-radius: 100px;
+          margin-bottom: 14px;
         }
-        .hm-step-tag-pill.green { color: #059669; background: rgba(5,150,105,0.08); border-color: rgba(5,150,105,0.18); }
+        .hm-step-tag-pill.green { 
+          color: #10b981; 
+          background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(59,130,246,0.06));
+          border-color: rgba(16,185,129,0.22);
+        }
 
         .hm-step-h {
           font-family: 'Bebas Neue', sans-serif;
-          font-size: 20px; color: #1e1b2e; letter-spacing: 0.03em; line-height: 1;
-          margin-bottom: 10px;
+          font-size: 22px; color: #111827; letter-spacing: 0.03em; line-height: 1.05;
+          margin-bottom: 12px;
         }
         .hm-step-p {
-          font-size: 13px; color: #6b7280; font-weight: 400; line-height: 1.7;
+          font-size: 14px; color: #6b7280; font-weight: 420; line-height: 1.8;
         }
-        .hm-step-p strong { color: #1e1b2e; font-weight: 700; }
 
         /* ────────────── OFFERS ────────────── */
-        .hm-offers-section { max-width: 1200px; margin: 0 auto; padding: 40px 24px 80px; position: relative; z-index: 1; }
-        .hm-offers-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+        .hm-offers-section { max-width: 1280px; margin: 0 auto; padding: 40px 24px 100px; position: relative; z-index: 1; }
+        .hm-offers-grid { display: grid; grid-template-columns: 1fr; gap: 28px; }
         @media(min-width:768px) { .hm-offers-grid { grid-template-columns: repeat(2, 1fr); } }
         .hm-offer-card { 
-          position: relative; border-radius: 24px; overflow: hidden; aspect-ratio: 16/9; 
-          background: #f5f3ff; border: 1px solid rgba(124,58,237,0.1); transition: all 0.4s;
+          position: relative; border-radius: 32px; overflow: hidden; aspect-ratio: 16/9; 
+          background: linear-gradient(135deg, #f5f3ff, #e0e7ff);
+          border: 1px solid rgba(124,58,237,0.2);
+          transition: all 0.6s cubic-bezier(0.23,1,0.32,1);
+          box-shadow: 0 20px 60px -25px rgba(124,58,237,0.3);
         }
-        .hm-offer-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px rgba(124,58,237,0.25); }
-        .hm-offer-img { width: 100%; height: 100%; object-fit: cover; }
+        .hm-offer-card:hover { 
+          transform: translateY(-14px) scale(1.02); 
+          box-shadow: 0 40px 100px -35px rgba(124,58,237,0.45);
+        }
+        .hm-offer-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.8s cubic-bezier(0.23,1,0.32,1); }
+        .hm-offer-card:hover .hm-offer-img { transform: scale(1.08); }
         .hm-offer-content { 
-          position: absolute; inset: 0; padding: 32px; 
-          background: linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+          position: absolute; inset: 0; padding: 40px; 
+          background: linear-gradient(to right, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.55) 45%, transparent 100%);
           display: flex; flex-direction: column; justify-content: center; color: white;
         }
         .hm-offer-tag { 
-          display: inline-block; width: fit-content; padding: 4px 12px; border-radius: 100px;
-          background: #7c3aed; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 12px;
+          display: inline-block; width: fit-content; padding: 6px 18px; border-radius: 100px;
+          background: linear-gradient(135deg, #7c3aed, #ec4899);
+          font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; 
+          margin-bottom: 16px;
+          box-shadow: 0 10px 30px -10px rgba(124,58,237,0.5);
         }
-        .hm-offer-title { font-family: 'Bebas Neue', sans-serif; font-size: 36px; line-height: 1; letter-spacing: 0.02em; margin-bottom: 8px; }
+        .hm-offer-title { font-family: 'Bebas Neue', sans-serif; font-size: 48px; line-height: 1; letter-spacing: 0.02em; margin-bottom: 16px; }
         .hm-offer-btn { 
-          width: fit-content; padding: 10px 24px; border-radius: 12px; background: white; color: #1e1b2e;
-          font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; transition: all 0.3s;
+          width: fit-content; padding: 14px 32px; border-radius: 20px; background: white; color: #111827;
+          font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.2em; 
+          transition: all 0.5s cubic-bezier(0.23,1,0.32,1);
+          box-shadow: 0 12px 30px -10px rgba(0,0,0,0.4);
         }
-        .hm-offer-card:hover .hm-offer-btn { background: #7c3aed; color: white; }
+        .hm-offer-card:hover .hm-offer-btn { 
+          background: linear-gradient(135deg, #7c3aed, #3b82f6);
+          color: white;
+          box-shadow: 0 20px 50px -15px rgba(124,58,237,0.6);
+        }
 
         @media(max-width:768px) {
-          .hm-steps-section { margin-bottom: 60px; }
-          .hm-cta-section { margin-bottom: 100px; }
-          .hm-cta-inner { padding: 40px 20px; }
-          .hm-cta-title { font-size: clamp(32px, 9vw, 52px); }
-          .hm-cta-sub { font-size: 14px; margin-bottom: 32px; }
-          .hm-features-section { padding: 56px 16px; }
-          .hm-hero { padding: 80px 16px 60px; }
-          .hm-trust-grid { margin-top: 48px; }
-          .hm-btn-primary, .hm-btn-secondary { width: 100%; justify-content: center; }
+          .hm-steps-section { margin-bottom: 80px; }
+          .hm-cta-section { margin-bottom: 120px; }
+          .hm-cta-inner { padding: 56px 24px; }
+          .hm-cta-title { font-size: clamp(36px, 10vw, 56px); }
+          .hm-cta-sub { font-size: 15px; margin-bottom: 40px; }
+          .hm-features-section { padding: 80px 16px; }
+          .hm-hero { padding: 100px 16px 80px; }
+          .hm-trust-grid { margin-top: 64px; }
+          .hm-btn-primary, .hm-btn-secondary { width: 100%; justify-content: center; padding-inline: 32px; }
           .hm-cta-btns { flex-direction: column; align-items: center; }
-          .hm-cta-btns a { width: 100%; max-width: 320px; }
+          .hm-cta-btns a { width: 100%; max-width: 360px; }
+          .hm-offer-title { font-size: 36px; }
         }
 
         @keyframes hmFadeUp {
-          from { opacity: 0; transform: translateY(20px); }
+          from { opacity: 0; transform: translateY(30px); }
           to   { opacity: 1; transform: translateY(0); }
         }
       `}</style>
@@ -801,12 +933,12 @@ export default function Home() {
           <div className="hm-ctas">
             <Link to="/products" className="hm-btn-primary">
               Wholesale Catalog
-              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
             </Link>
-            <Link to="/partner" className="hm-btn-secondary" style={{ whiteSpace: 'nowrap' }}>
-              Explore Partner Program
+            <Link to="/signup" className="hm-btn-secondary" style={{ whiteSpace: 'nowrap' }}>
+              Create Your Retailer Account
             </Link>
           </div>
 
@@ -824,12 +956,16 @@ export default function Home() {
               </div>
             ))}
           </div>
+
+          <div className="hm-scroll-hint">
+            <span>Scroll to explore</span>
+            <div className="hm-scroll-line" />
+          </div>
         </section>
 
         {/* ── BRANDS SECTION ── */}
         {brands.length > 0 && (
-          <section className="hm-brands-section" style={{ padding: '120px 20px', background: '#ffffff', position: 'relative', zIndex: 1 }}>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-[1px] bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+          <section className="hm-brands-section">
             <div className="hm-brands-inner">
               <div className="hm-brands-head">
                 <div className="hm-brands-kicker">Industry Leaders</div>
@@ -847,7 +983,7 @@ export default function Home() {
                       title={b.name}
                     >
                       {b.logo
-                        ? <img src={getCloudinaryUrl(b.logo, 120)} alt={b.name} loading="lazy" decoding="async" width="120" height="60" />
+                        ? <img src={getCloudinaryUrl(b.logo, 140)} alt={b.name} loading="lazy" decoding="async" width="140" height="70" />
                         : <span className="hm-brand-logo-fallback" aria-hidden="true">✦</span>}
                     </Link>
                   ))}
@@ -876,9 +1012,9 @@ export default function Home() {
           <div className="hm-stats-inner">
             {[
               { n: '500+', t: 'Active Partners',       delay: 0   },
-              { n: '10+',  t: 'Crore Sales Generated', delay: 100 },
-              { n: '50+',  t: 'Top Brands',        delay: 200 },
-              { n: '1000+', t: 'Products',        delay: 300 },
+              { n: '10+',  t: 'Crore Sales Generated', delay: 150 },
+              { n: '50+',  t: 'Top Brands',        delay: 300 },
+              { n: '1000+', t: 'Products',        delay: 450 },
             ].map((s, i) => (
               <StatItem key={i} n={s.n} t={s.t} delay={s.delay} />
             ))}
@@ -893,7 +1029,7 @@ export default function Home() {
             <div className="hm-offers-grid">
               {offers.map(off => (
                 <div key={off._id} className="hm-offer-card">
-                  <img src={getCloudinaryUrl(off.bannerImage, 800)} alt={off.title} className="hm-offer-img" loading="lazy" width="800" height="400" />
+                  <img src={getCloudinaryUrl(off.bannerImage, 900)} alt={off.title} className="hm-offer-img" loading="lazy" width="900" height="450" />
                   <div className="hm-offer-content">
                     <div className="hm-offer-tag">{off.discountPercent}% OFF</div>
                     <h3 className="hm-offer-title">{off.title}</h3>
@@ -942,114 +1078,28 @@ export default function Home() {
         <section className="hm-cta-section">
           <div className="hm-cta-inner">
             <div className="hm-cta-badge">
-              <span className="hm-eyebrow-dot" style={{ background: '#7c3aed', boxShadow: '0 0 6px rgba(124,58,237,0.5)' }} />
-              Limited Onboarding Slots
+              <span className="hm-eyebrow-dot" style={{ width: '8px', height: '8px' }} />
+              Get Started Today
             </div>
             <h2 className="hm-cta-title">
-              Ready to <em>Transform</em><br />Your Inventory?
+              Ready to <em>Grow</em> Your Business?
             </h2>
             <p className="hm-cta-sub">
-              Join 500+ businesses sourcing directly from Click2Kart. Get access to credit lines,
-              dedicated account managers, and exclusive factory-direct stock.
+              Join thousands of verified retailers across India who trust Click2Kart for their bulk procurement needs.
             </p>
             <div className="hm-cta-btns">
-              <Link to="/signup" className="hm-btn-primary whitespace-nowrap">
-                Create B2B Account
+              <Link to="/signup" className="hm-btn-primary">
+                Sign Up Now
                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </Link>
-              <Link to="/products" className="hm-btn-secondary whitespace-nowrap">
+              <Link to="/products" className="hm-btn-secondary">
                 Browse Catalog
               </Link>
             </div>
           </div>
         </section>
-
-        <div className="hm-divider" />
-
-        {/* ── HOW IT WORKS ── */}
-        <section className="hm-steps-section">
-          <div className="hm-steps-header">
-            <div className="hm-section-label">Simple Process</div>
-            <h2 className="hm-section-heading">
-              From Sign-Up to<br /><em>First Order</em> in 3 Steps
-            </h2>
-            <p className="hm-section-sub">
-              No complicated paperwork. No long waiting periods. Just a straightforward path to India's best wholesale pricing.
-            </p>
-          </div>
-
-          <div className="hm-steps-grid">
-
-            {/* Step 1 */}
-            <div className="hm-step-card s-active">
-              <div className="hm-step-num">1</div>
-              <div className="hm-step-tag-pill">Get Started</div>
-              <div className="hm-step-h">Create Your B2B Account</div>
-              <p className="hm-step-p">
-                Sign up at Click2Kart in under 2 minutes. Enter your business details — <strong>no documents needed</strong> at this stage.
-              </p>
-            </div>
-
-            {/* Step 2 */}
-            <div className="hm-step-card">
-              <div className="hm-step-num">2</div>
-              <div className="hm-step-tag-pill">Activation</div>
-              <div className="hm-step-h">Email Us for Activation</div>
-              <p className="hm-step-p">
-                Drop us an email from your registered address. Our team personally reviews and <strong>activates your account within 24 hours.</strong>
-              </p>
-            </div>
-
-            {/* Step 3 */}
-            <div className="hm-step-card">
-              <div className="hm-step-num">3</div>
-              <div className="hm-step-tag-pill">Verification</div>
-              <div className="hm-step-h">Complete Quick KYC</div>
-              <p className="hm-step-p">
-                Submit your <strong>GST number, business PAN & address proof.</strong> Verification is guided, hassle-free, and typically done in 1–2 days.
-              </p>
-            </div>
-
-            {/* Step 4 — done */}
-            <div className="hm-step-card s-done">
-              <div className="hm-step-num">✓</div>
-              <div className="hm-step-tag-pill green">You're Live!</div>
-              <div className="hm-step-h">Order at Wholesale Prices</div>
-              <p className="hm-step-p">
-                Access <strong>500+ products</strong> at exclusive partner pricing. Earn commissions, track referrals, and scale your business — all from one dashboard.
-              </p>
-            </div>
-
-          </div>
-        </section>
-
-        {/* Partner Program CTA */}
-        <section className="py-12 sm:py-16 md:py-20 relative z-1" style={{ background: 'linear-gradient(135deg, #f3f0ff 0%, #ffffff 100%)' }}>
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-violet-300 bg-white shadow-sm mb-6">
-              <span className="h-1.5 w-1.5 rounded-full bg-violet-600 animate-pulse"></span>
-              <span className="text-[11px] font-black uppercase tracking-[0.25em] text-violet-700">Top Partner Program</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 mb-3 tracking-tight">
-              Grow Your Business as a Click2Kart Partner
-            </h2>
-            <p className="text-base sm:text-lg text-gray-600 max-w-2xl mx-auto mb-8">
-              Join India's leading B2B tech platform. Access exclusive tools, dedicated support, and advanced features to scale your operations exponentially.
-            </p>
-            <Link
-              to="/partner"
-              className="inline-flex items-center justify-center gap-3 px-10 py-4 rounded-2xl bg-gradient-to-r from-violet-600 to-purple-600 text-white text-[12px] font-black uppercase tracking-[0.25em] shadow-xl shadow-violet-300 hover:shadow-2xl hover:scale-[1.03] transition-all duration-300"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-2m4 0h-2m-6 0H5a2 2 0 01-2-2v-3m10-7h4m-4 0h-4m4 0h-4M9 13h6" />
-              </svg>
-              <span className="whitespace-nowrap">Explore Partner Program</span>
-            </Link>
-          </div>
-        </section>
-
       </div>
     </>
   )
