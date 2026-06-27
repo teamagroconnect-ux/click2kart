@@ -20,7 +20,8 @@ export default function Partners() {
   const [newPartner, setNewPartner] = useState({ name:'', email:'', phone:'', password:'' })
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [partnerToDelete, setPartnerToDelete] = useState(null)
-  const [stats, setStats] = useState({ totalPartners: 0, totalSales: 0, totalCommission: 0, pendingPayouts: 0 })
+  const [addPartnerModalOpen, setAddPartnerModalOpen] = useState(false)
+  const [stats, setStats] = useState({ totalPartners: 0, totalSales: 0, totalCommission: 0, pendingPayouts: 0, pendingPartners: 0 })
 
   const load = async () => {
     setLoading(true)
@@ -32,21 +33,22 @@ export default function Partners() {
       const totalSales = data.reduce((sum, item) => sum + item.totalSales, 0)
       const totalCommission = data.reduce((sum, item) => sum + item.totalCommission, 0)
       const pendingPayouts = data.reduce((sum, item) => sum + Math.max(0, item.balance), 0)
-      setStats({ totalPartners: data.length, totalSales, totalCommission, pendingPayouts })
+      setStats({ totalPartners: data.length, totalSales, totalCommission, pendingPayouts, pendingPartners: 0 })
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { load() }, [])
-
   const loadPartners = async () => {
     try {
       const { data } = await api.get('/api/partner-accounts')
       setPartners(data)
+      const pending = data.filter(p => !p.isActive || !p.isVerified).length
+      setStats(prev => ({ ...prev, pendingPartners: pending }))
     } catch {}
   }
-  useEffect(() => { loadPartners() }, [])
+
+  useEffect(() => { load(); loadPartners(); }, [])
 
   const createPartner = async (e) => {
     e.preventDefault()
@@ -54,6 +56,7 @@ export default function Partners() {
     try {
       await api.post('/api/partner-accounts', newPartner)
       setNewPartner({ name:'', email:'', phone:'', password:'' })
+      setAddPartnerModalOpen(false)
       loadPartners()
       notify('Partner added','success')
     } catch {
@@ -64,7 +67,7 @@ export default function Partners() {
   const handleDeleteConfirm = async (password) => {
     try {
       await api.post('/api/admin/verify-deletion-password', { password })
-      await api.put(`/api/partner-accounts/${partnerToDelete}`, { isActive: false })
+      await api.delete(`/api/partner-accounts/${partnerToDelete}`)
       setDeleteModalOpen(false)
       setPartnerToDelete(null)
       loadPartners()
@@ -72,6 +75,16 @@ export default function Partners() {
     } catch (err) {
       console.error(err)
       notify('Invalid password or failed to remove partner', 'error')
+    }
+  }
+
+  const approvePartner = async (id) => {
+    try {
+      await api.put(`/api/partner-accounts/${id}/approve`)
+      loadPartners()
+      notify('Partner approved','success')
+    } catch {
+      notify('Failed to approve partner','error')
     }
   }
 
@@ -112,6 +125,9 @@ export default function Partners() {
     }
   }
 
+  const pendingPartners = partners.filter(p => !p.isActive || !p.isVerified)
+  const activePartners = partners.filter(p => p.isActive && p.isVerified)
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -119,14 +135,28 @@ export default function Partners() {
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Channel Partners</h1>
           <p className="text-sm text-gray-500 font-medium mt-1">Track sales performance and manage commission payouts</p>
         </div>
+        <div className="flex gap-3">
+          <button 
+            onClick={() => setAddPartnerModalOpen(true)} 
+            className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" /></svg>
+            Add Partner
+          </button>
+        </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
           <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/30">
             <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Total Partners</div>
-            <div className="text-3xl font-black text-gray-900 mt-1">{stats.totalPartners}</div>
+            <div className="text-3xl font-black text-gray-900 mt-1">{partners.length}</div>
+          </div>
+        </div>
+        <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/30">
+            <div className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-500">Pending Approval</div>
+            <div className="text-3xl font-black text-amber-600 mt-1">{stats.pendingPartners}</div>
           </div>
         </div>
         <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
@@ -149,36 +179,88 @@ export default function Partners() {
         </div>
       </div>
 
+      {/* Pending Partners Section */}
+      {pendingPartners.length > 0 && (
+        <div className="bg-white border border-amber-100 rounded-3xl p-6 shadow-sm space-y-4">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-amber-600 flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            Pending Approvals ({pendingPartners.length})
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {pendingPartners.map(p => (
+              <div key={p._id} className="p-4 rounded-2xl bg-amber-50/50 border border-amber-100 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3">
+                    {p.profilePicture ? (
+                      <img src={getImageUrl(p.profilePicture) || p.profilePicture} alt={p.name} className="h-10 w-10 rounded-xl object-cover" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center text-white font-black">
+                        {p.name?.charAt(0) || 'P'}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="font-black text-gray-900 truncate">{p.name}</div>
+                      {p.email && <div className="text-[10px] text-gray-500 font-bold truncate">{p.email}</div>}
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-[10px] font-black uppercase tracking-widest border border-amber-200">Pending</span>
+                </div>
+                <div className="text-xs text-gray-600 space-y-1">
+                  {p.phone && <div className="flex items-center gap-2"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493-1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg> {p.phone}</div>}
+                  {p.businessName && <div className="flex items-center gap-2"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg> {p.businessName}</div>}
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button 
+                    onClick={() => approvePartner(p._id)} 
+                    className="flex-1 bg-gradient-to-r from-emerald-500 to-green-600 text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:from-emerald-600 hover:to-green-700 transition-all">
+                    Approve
+                  </button>
+                  <button 
+                    onClick={() => viewFullPartnerProfile(p._id)} 
+                    className="px-3 py-2 bg-white border border-gray-200 text-gray-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 transition-all">
+                    View
+                  </button>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setPartnerToDelete(p._id); setDeleteModalOpen(true); }} 
+                    className="px-3 py-2 bg-white border border-rose-200 text-rose-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-rose-50 transition-all">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="space-y-6">
           <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Add Partner</h3>
-            <form onSubmit={createPartner} className="space-y-3">
-              <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Partner Name" value={newPartner.name} onChange={e=>setNewPartner({...newPartner, name:e.target.value})} />
-              <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Email (Primary Key)" value={newPartner.email} onChange={e=>setNewPartner({...newPartner, email:e.target.value})} />
-              <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Phone" value={newPartner.phone} onChange={e=>setNewPartner({...newPartner, phone:e.target.value})} />
-              <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Password" type="password" value={newPartner.password} onChange={e=>setNewPartner({...newPartner, password:e.target.value})} />
-              <button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg">Save Partner</button>
-            </form>
-          </div>
-          <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm space-y-4">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Partner Accounts</h3>
-            <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-1">
-              {partners.length === 0 ? (
-                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center py-4 italic">No partners</div>
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Partner Accounts ({activePartners.length})</h3>
+            <div className="space-y-3 max-h-[450px] overflow-y-auto custom-scrollbar pr-1">
+              {activePartners.length === 0 ? (
+                <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center py-4 italic">No active partners</div>
               ) : (
-                partners.map(p => (
-                  <div key={p._id} onClick={() => viewFullPartnerProfile(p._id)} className="flex items-center justify-between p-3 rounded-2xl bg-white border border-gray-100 group hover:border-gray-200 transition-all cursor-pointer">
-                    <div className="min-w-0">
-                      <div className="text-xs font-black text-gray-900 truncate">{p.name}</div>
-                      <div className="text-[10px] text-gray-500 font-bold truncate">{p.phone || 'No Phone'}</div>
+                activePartners.map(p => (
+                  <div key={p._id} onClick={() => viewFullPartnerProfile(p._id)} className="flex items-center justify-between p-4 rounded-2xl bg-white border border-gray-100 group hover:border-indigo-200 hover:bg-indigo-50/30 transition-all cursor-pointer">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {p.profilePicture ? (
+                        <img src={getImageUrl(p.profilePicture) || p.profilePicture} alt={p.name} className="h-10 w-10 rounded-xl object-cover" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-black">
+                          {p.name?.charAt(0) || 'P'}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="text-sm font-black text-gray-900 truncate">{p.name}</div>
+                        <div className="text-[10px] text-gray-500 font-bold truncate flex items-center gap-2">
+                          {p.email && <span>{p.email}</span>}
+                          {p.phone && <span>• {p.phone}</span>}
+                        </div>
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={(e) => { 
-                        e.stopPropagation() 
-                        setPartnerToDelete(p._id) 
-                        setDeleteModalOpen(true) 
-                      }} className="p-2 text-gray-400 hover:text-rose-500 transition-colors">
+                      <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest border border-emerald-200">Active</span>
+                      <button onClick={(e) => { e.stopPropagation(); setPartnerToDelete(p._id); setDeleteModalOpen(true); }} className="p-2 text-gray-400 hover:text-rose-500 transition-colors">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                     </div>
@@ -515,7 +597,7 @@ export default function Partners() {
               {viewingFullPartner.coupons?.length > 0 ? (
                 <div className="space-y-3">
                   {viewingFullPartner.coupons.map((coupon, idx) => (
-                  <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-100 gap-3">
+                <div key={idx} className="flex flex-col md:flex-row md:items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-100 gap-3">
                     <div className="flex items-center gap-3">
                       <div className="font-black text-xl text-violet-700 font-mono">{coupon.code}</div>
                       {coupon.isActive ? (
@@ -542,7 +624,7 @@ export default function Partners() {
               {viewingFullPartner.referredBusinesses?.length > 0 ? (
                 <div className="space-y-3">
                   {viewingFullPartner.referredBusinesses.map((business, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 border border-gray-100">
                     <div>
                       <div className="text-sm font-bold text-gray-900">{business.name}</div>
                       <div className="flex items-center gap-2 mt-1">
@@ -564,7 +646,7 @@ export default function Partners() {
               {viewingFullPartner.payouts?.length > 0 ? (
                 <div className="space-y-3">
                   {viewingFullPartner.payouts.map((payout, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                <div key={idx} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50 border border-gray-100">
                     <div>
                       <div className="text-sm font-bold text-gray-900">₹{payout.amount?.toLocaleString()}</div>
                       <div className="text-xs text-gray-500">
@@ -620,6 +702,44 @@ export default function Partners() {
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={()=>setSelectedCode(null)} className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-2xl text-sm font-black hover:bg-gray-200 transition-all uppercase tracking-widest">Cancel</button>
                 <button className="flex-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-8 rounded-2xl text-sm font-black shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all uppercase tracking-widest">Confirm Payout</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {addPartnerModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl p-8 w-full max-w-md space-y-6 animate-in zoom-in-95">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h2 className="text-xl font-black text-gray-900 tracking-tight">Add New Partner</h2>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Create a new partner account</p>
+              </div>
+              <button onClick={() => setAddPartnerModalOpen(false)} className="p-3 hover:bg-gray-50 rounded-2xl transition-colors text-gray-400">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <form onSubmit={createPartner} className="space-y-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Partner Name</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Partner Name" value={newPartner.name} onChange={e=>setNewPartner({...newPartner, name:e.target.value})} required />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Email</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Email (Primary Key)" value={newPartner.email} onChange={e=>setNewPartner({...newPartner, email:e.target.value})} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Phone</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Phone" value={newPartner.phone} onChange={e=>setNewPartner({...newPartner, phone:e.target.value})} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-gray-500 uppercase ml-1">Password</label>
+                <input className="w-full bg-gray-50 border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Password" type="password" value={newPartner.password} onChange={e=>setNewPartner({...newPartner, password:e.target.value})} />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={()=>setAddPartnerModalOpen(false)} className="flex-1 bg-gray-100 text-gray-600 py-3 rounded-2xl text-sm font-black hover:bg-gray-200 transition-all uppercase tracking-widest">Cancel</button>
+                <button type="submit" className="flex-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-8 rounded-2xl text-sm font-black shadow-xl hover:from-indigo-700 hover:to-purple-700 transition-all uppercase tracking-widest">Save Partner</button>
               </div>
             </form>
           </div>
