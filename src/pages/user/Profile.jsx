@@ -199,8 +199,25 @@ export default function Profile() {
   };
 
   const loadAddresses = async () => {
-    try { const { data } = await api.get('/api/user/addresses'); setSavedAddresses(data); }
-    catch (e) { console.error(e); }
+    try { 
+      const { data } = await api.get('/api/user/addresses'); 
+      setSavedAddresses(data);
+      
+      // Auto-select default address
+      if (data && data.length > 0) {
+        const defaultAddr = data.find(a => a.isDefault) || data[0];
+        setSelectedBusinessAddress(defaultAddr);
+        setFormData(p => ({
+          ...p,
+          addressLine1: defaultAddr.addressLine1,
+          addressLine2: defaultAddr.addressLine2 || '',
+          city: defaultAddr.city,
+          district: defaultAddr.district,
+          state: defaultAddr.state,
+          pincode: defaultAddr.pincode
+        }));
+      }
+    } catch (e) { console.error(e); }
   };
 
   const handleFileUpload = async (e, fieldName) => {
@@ -813,9 +830,17 @@ export default function Profile() {
                     </Field>
                   </div>
 
-                  <button type="submit" disabled={saving} className={btnPrimary}>
-                    {saving ? 'Saving…' : 'Save Changes'}
-                  </button>
+                  {/* Check if all restricted fields are filled */}
+                  {(originalKyc.businessName && originalKyc.gstin && originalKyc.pan) ? (
+                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center">
+                      <div className="text-slate-700 font-bold text-sm mb-1">Business details are verified</div>
+                      <div className="text-slate-500 text-xs">These details can't be edited. Please contact support if you need to change them.</div>
+                    </div>
+                  ) : (
+                    <button type="submit" disabled={saving} className={btnPrimary}>
+                      {saving ? 'Saving…' : 'Save Changes'}
+                    </button>
+                  )}
                 </form>
               </div>
             )}
