@@ -84,13 +84,19 @@ export default function PartnerOnboarding() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 py-12 px-4">
+    <div className="min-h-screen bg-white py-8 md:py-12 px-4 relative overflow-hidden">
+      {/* Background Decorations - matching Home/Landing */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-80 left-1/2 -translate-x-1/2 w-[1400px] h-[900px] rounded-full bg-gradient-to-br from-purple-500/20 to-transparent blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 w-full h-[400px] bg-gradient-to-t from-indigo-900/5 to-transparent"></div>
+      </div>
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap');
       `}</style>
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto relative z-10">
         {/* Header */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-8 md:mb-10">
           <Link to="/partner" className="inline-flex items-center gap-2 mb-6 text-slate-600 hover:text-indigo-700 font-bold transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
@@ -98,24 +104,24 @@ export default function PartnerOnboarding() {
             Back to Partner Program
           </Link>
           <div className="flex justify-center mb-4">
-            <div className="h-16 w-16 rounded-3xl bg-white flex items-center justify-center shadow-xl border border-slate-100 p-2 overflow-hidden">
+            <div className="h-14 w-14 md:h-16 md:w-16 rounded-2xl md:rounded-3xl bg-white flex items-center justify-center shadow-xl border border-slate-100 p-2 overflow-hidden">
               <img src={logoImg} alt={CONFIG.BRAND_NAME} className="h-full w-auto object-contain" />
             </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-slate-900 mb-4" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
             Join Our Partner Program
           </h1>
-          <p className="text-lg text-slate-600 font-medium">Complete these steps to start earning</p>
+          <p className="text-base md:text-lg text-slate-600 font-medium">Complete these steps to start earning</p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-6 md:gap-8">
           {/* Left Column - How to Become Steps */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm sticky top-6">
+            <div className="bg-white rounded-2xl md:rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm sticky top-4 md:top-6">
               <h3 className="text-xl font-black text-slate-900 mb-6" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>How to Become a Partner</h3>
               <div className="space-y-6">
                 <div className={`flex gap-4 ${step === 1 ? 'opacity-100' : step > 1 ? 'opacity-100' : 'opacity-50'}`}>
-                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center text-white text-lg font-black flex-shrink-0 transition-all ${
+                  <div className={`h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl flex items-center justify-center text-white text-lg font-black flex-shrink-0 transition-all ${
                     step === 1
                       ? 'bg-gradient-to-br from-indigo-600 to-purple-600 shadow-lg shadow-indigo-200'
                       : step > 1
@@ -130,7 +136,7 @@ export default function PartnerOnboarding() {
                   </div>
                 </div>
                 <div className={`flex gap-4 ${step === 2 ? 'opacity-100' : step > 2 ? 'opacity-100' : 'opacity-50'}`}>
-                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center text-lg font-black flex-shrink-0 transition-all ${
+                  <div className={`h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl flex items-center justify-center text-lg font-black flex-shrink-0 transition-all ${
                     step === 2
                       ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-200'
                       : step > 2
@@ -145,7 +151,7 @@ export default function PartnerOnboarding() {
                   </div>
                 </div>
                 <div className={`flex gap-4 ${step === 3 ? 'opacity-100' : 'opacity-50'}`}>
-                  <div className={`h-12 w-12 rounded-2xl flex items-center justify-center text-lg font-black flex-shrink-0 transition-all ${
+                  <div className={`h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl flex items-center justify-center text-lg font-black flex-shrink-0 transition-all ${
                     step === 3
                       ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white shadow-lg shadow-indigo-200'
                       : 'bg-slate-200 text-slate-500'
@@ -178,10 +184,10 @@ export default function PartnerOnboarding() {
 
           {/* Right Column - Form */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-100 p-8 md:p-12">
+            <div className="bg-white rounded-2xl md:rounded-3xl shadow-lg shadow-slate-200/50 border border-slate-100 p-6 md:p-8 lg:p-12">
               {step === 1 ? (
                 <form onSubmit={handleNext} className="space-y-6">
-                  <h2 className="text-2xl font-black text-slate-900 mb-6" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
+                  <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-6" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
                     Step 1: Your Details
                   </h2>
                   <div className="grid md:grid-cols-2 gap-6">
@@ -275,7 +281,7 @@ export default function PartnerOnboarding() {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-4 rounded-xl font-black text-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-4 rounded-xl font-black text-sm text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 active:scale-[0.98] transition-all shadow-xl shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? 'Sending OTP…' : 'Continue to Verify'}
                   </button>
@@ -283,7 +289,7 @@ export default function PartnerOnboarding() {
               ) : step === 2 ? (
                 <form onSubmit={handleNext} className="space-y-8">
                   <div className="text-center">
-                    <h2 className="text-2xl font-black text-slate-900 mb-2" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
+                    <h2 className="text-xl md:text-2xl font-black text-slate-900 mb-2" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
                       Step 2: Verify Your Email
                     </h2>
                     <p className="text-slate-600 font-medium">
@@ -310,7 +316,7 @@ export default function PartnerOnboarding() {
                     <button
                       type="submit"
                       disabled={loading || otp.length < 4}
-                      className="w-full py-4 rounded-xl font-black text-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full py-4 rounded-xl font-black text-sm text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 active:scale-[0.98] transition-all shadow-xl shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? 'Verifying…' : 'Complete Application'}
                     </button>
@@ -325,12 +331,12 @@ export default function PartnerOnboarding() {
                 </form>
               ) : (
                 <div className="text-center py-10">
-                  <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
+                    <svg className="w-8 h-8 md:w-10 md:h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <h2 className="text-3xl font-black text-slate-900 mb-4" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
+                  <h2 className="text-2xl md:text-3xl font-black text-slate-900 mb-4" style={{ fontFamily: 'Sora, system-ui, sans-serif' }}>
                     Welcome to the Team! 🎉
                   </h2>
                   <p className="text-slate-600 font-medium mb-8 max-w-md mx-auto">
@@ -338,7 +344,7 @@ export default function PartnerOnboarding() {
                   </p>
                   <Link
                     to="/partner/login"
-                    className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-black text-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 active:scale-[0.98] transition-all shadow-lg shadow-indigo-200"
+                    className="inline-flex items-center gap-2 px-8 py-4 rounded-xl font-black text-sm text-white bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-700 hover:via-purple-700 hover:to-pink-700 active:scale-[0.98] transition-all shadow-xl shadow-indigo-200"
                   >
                     Go to Login
                   </Link>

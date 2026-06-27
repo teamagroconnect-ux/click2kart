@@ -116,6 +116,7 @@ export default function Profile() {
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editValue, setEditValue] = useState('');
   const [recentOrders, setRecentOrders] = useState([]);
+  const [selectedBusinessAddress, setSelectedBusinessAddress] = useState(null);
 
   const adminIcon = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" // Female executive icon
 
@@ -176,6 +177,23 @@ export default function Profile() {
         state: data.kyc?.state || '',
         pincode: data.kyc?.pincode || ''
       });
+      
+      // If there's an existing KYC address, set it as the selected one
+      if (data.kyc?.addressLine1) {
+        const existingAddr = {
+          _id: 'kyc',
+          fullName: data.name,
+          phone: data.phone,
+          addressLine1: data.kyc.addressLine1,
+          addressLine2: data.kyc.addressLine2 || '',
+          city: data.kyc.city,
+          district: data.kyc.district,
+          state: data.kyc.state,
+          pincode: data.kyc.pincode,
+          isDefault: true
+        };
+        setSelectedBusinessAddress(existingAddr);
+      }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   };
@@ -322,16 +340,49 @@ export default function Profile() {
     if (addressForm.phone.length !== 10) { notify('Phone must be 10 digits', 'error'); return; }
     if (addressForm.pincode.length !== 6) { notify('Pincode must be 6 digits', 'error'); return; }
     try {
-      if (editingAddress) { await api.put(`/api/user/addresses/${editingAddress._id}`, addressForm); notify('Address updated!', 'success'); }
-      else { await api.post('/api/user/addresses', addressForm); notify('Address added!', 'success'); }
-      await loadAddresses(); await refreshProfile(); setShowAddressModal(false);
+      let newAddr;
+      if (editingAddress) { 
+        const { data } = await api.put(`/api/user/addresses/${editingAddress._id}`, addressForm);
+        newAddr = data;
+        notify('Address updated!', 'success'); 
+      } else { 
+        const { data } = await api.post('/api/user/addresses', addressForm); 
+        newAddr = data;
+        notify('Address added!', 'success'); 
+      }
+      await loadAddresses(); 
+      await refreshProfile(); 
+      
+      // Auto-select the new/edited address for business info
+      setSelectedBusinessAddress(newAddr);
+      setFormData(p => ({
+        ...p,
+        addressLine1: newAddr.addressLine1,
+        addressLine2: newAddr.addressLine2 || '',
+        city: newAddr.city,
+        district: newAddr.district,
+        state: newAddr.state,
+        pincode: newAddr.pincode
+      }));
+      
+      setShowAddressModal(false);
     } catch (e) { notify(e?.response?.data?.error || 'Failed', 'error'); }
   };
 
   const handleDeleteAddress = async (id) => {
     if (!window.confirm('Delete this address?')) return;
-    try { await api.delete(`/api/user/addresses/${id}`); await loadAddresses(); await refreshProfile(); notify('Address deleted', 'success'); }
-    catch (e) { notify(e?.response?.data?.error || 'Failed', 'error'); }
+    try { 
+      await api.delete(`/api/user/addresses/${id}`); 
+      await loadAddresses(); 
+      await refreshProfile(); 
+      
+      // If we deleted the selected business address, clear the selection
+      if (selectedBusinessAddress?._id === id) {
+        setSelectedBusinessAddress(null);
+      }
+      
+      notify('Address deleted', 'success'); 
+    } catch (e) { notify(e?.response?.data?.error || 'Failed', 'error'); }
   };
 
   const handleSetDefault = async (id) => {
@@ -401,6 +452,19 @@ export default function Profile() {
 
   const handleLogout = () => {
     localStorage.removeItem('token'); localStorage.removeItem('user'); navigate('/');
+  };
+
+  const handleSelectBusinessAddress = (addr) => {
+    setSelectedBusinessAddress(addr);
+    setFormData(p => ({
+      ...p,
+      addressLine1: addr.addressLine1,
+      addressLine2: addr.addressLine2 || '',
+      city: addr.city,
+      district: addr.district,
+      state: addr.state,
+      pincode: addr.pincode
+    }));
   };
 
   /* Nav config */
@@ -732,65 +796,70 @@ export default function Profile() {
                     </Field>
                   </div>
 
-                  {/* Address fields for KYC */}
-                  <div className="grid md:grid-cols-2 gap-5">
-                    <Field label="Address Line 1">
-                      <input 
-                        type="text" 
-                        value={formData.addressLine1}
-                        onChange={e => setFormData(p => ({ ...p, addressLine1: e.target.value }))}
-                        className={inputCls} 
-                        placeholder="Your address line 1"
-                      />
-                    </Field>
-                    <Field label="Address Line 2">
-                      <input 
-                        type="text" 
-                        value={formData.addressLine2}
-                        onChange={e => setFormData(p => ({ ...p, addressLine2: e.target.value }))}
-                        className={inputCls} 
-                        placeholder="Your address line 2 (optional)"
-                      />
-                    </Field>
-                    <Field label="City">
-                      <input 
-                        type="text" 
-                        value={formData.city}
-                        onChange={e => setFormData(p => ({ ...p, city: e.target.value }))}
-                        className={inputCls} 
-                        placeholder="Your city"
-                      />
-                    </Field>
-                    <Field label="District">
-                      <input 
-                        type="text" 
-                        value={formData.district}
-                        onChange={e => setFormData(p => ({ ...p, district: e.target.value }))}
-                        className={inputCls} 
-                        placeholder="Your district"
-                      />
-                    </Field>
-                    <Field label="State">
-                      <select 
-                        value={formData.state}
-                        onChange={e => setFormData(p => ({ ...p, state: e.target.value }))}
-                        className={inputCls} 
-                      >
-                        <option value="">Select state</option>
-                        {INDIAN_STATES.map(state => (
-                          <option key={state} value={state}>{state}</option>
+                  {/* Address Section for Business Info */}
+                  <div className="space-y-4 mt-6">
+                    <h3 className="text-sm font-black text-slate-800">Business Address</h3>
+                    
+                    {savedAddresses.length === 0 ? (
+                      <div className="bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-6 text-center">
+                        <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-3 text-slate-400">
+                          <Ico n="map" cls="w-6 h-6" />
+                        </div>
+                        <h4 className="font-bold text-slate-700 mb-1">No saved addresses yet</h4>
+                        <p className="text-slate-500 text-sm mb-4">Add an address to use for your business</p>
+                        <button onClick={handleAddAddress} className="px-4 py-2 bg-violet-600 text-white rounded-xl font-bold text-sm hover:bg-violet-700 transition-all">
+                          Add Address
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {[selectedBusinessAddress ? selectedBusinessAddress : null, ...savedAddresses.filter(a => a._id !== selectedBusinessAddress?._id)].filter(Boolean).map(addr => (
+                          <div 
+                            key={addr._id} 
+                            onClick={() => handleSelectBusinessAddress(addr)}
+                            className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
+                              selectedBusinessAddress?._id === addr._id 
+                                ? 'border-violet-500 bg-violet-50 shadow-sm' 
+                                : 'border-slate-100 bg-white hover:border-violet-200 hover:shadow-sm'
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                                selectedBusinessAddress?._id === addr._id ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-400'
+                              }`}>
+                                <Ico n="map" cls="w-4 h-4" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                  <span className="font-black text-slate-800 text-sm">{addr.fullName}</span>
+                                  <span className="text-slate-300 text-xs">·</span>
+                                  <span className="text-slate-500 text-xs font-semibold">{addr.phone}</span>
+                                  {addr.isDefault && (
+                                    <span className="px-2 py-0.5 bg-violet-50 text-violet-600 text-[10px] font-black rounded-full border border-violet-100">Default</span>
+                                  )}
+                                </div>
+                                <p className="text-slate-500 text-xs leading-relaxed">
+                                  {addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ''}<br />
+                                  {addr.city}, {addr.district}, {addr.state} – {addr.pincode}
+                                </p>
+                              </div>
+                              {selectedBusinessAddress?._id === addr._id && (
+                                <div className="w-5 h-5 rounded-full bg-violet-600 flex items-center justify-center flex-shrink-0 text-white">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                    <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round"/>
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         ))}
-                      </select>
-                    </Field>
-                    <Field label="Pincode">
-                      <input 
-                        type="text" 
-                        value={formData.pincode}
-                        onChange={e => setFormData(p => ({ ...p, pincode: e.target.value.replace(/\D/g,'').slice(0,6) }))}
-                        className={inputCls} 
-                        placeholder="Your pincode"
-                      />
-                    </Field>
+                        
+                        <button onClick={handleAddAddress} className="w-full py-3 rounded-xl border-2 border-dashed border-slate-200 text-slate-600 text-sm font-bold hover:border-violet-300 hover:text-violet-600 transition-all flex items-center justify-center gap-2">
+                          <Ico n="plus" cls="w-4 h-4" />
+                          Add New Address
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <button type="submit" disabled={saving} className={btnPrimary}>

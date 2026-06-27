@@ -972,11 +972,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-
-          <div className="hm-scroll-hint">
-            <span>Scroll to explore</span>
-            <div className="hm-scroll-line" />
-          </div>
         </section>
 
         {/* ── BRANDS SECTION ── */}

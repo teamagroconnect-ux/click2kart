@@ -278,7 +278,7 @@ export default function UserLayout() {
                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">© {new Date().getFullYear()} Click2Kart. All rights reserved.</span>
                   <div className="flex gap-4 items-center">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
-                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Store Status: Online</span>
+                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">System Status: Online</span>
                   </div>
                 </div>
               </div>
