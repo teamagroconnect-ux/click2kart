@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { CONFIG } from '../../shared/lib/config.js'
-import { SEO } from '../../shared/lib/seo.js'
+import { SEO } from '../../shared/lib/seo.jsx'
 import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
 

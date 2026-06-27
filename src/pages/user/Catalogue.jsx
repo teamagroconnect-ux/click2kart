@@ -5,7 +5,7 @@ import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { useCart, getStockStatus } from '../../lib/CartContext'
 import { useAuth } from '../../lib/AuthContext'
-import { SEO } from '../../shared/lib/seo.js'
+import { SEO } from '../../shared/lib/seo.jsx'
 import RecommendationModal from '../../components/RecommendationModal'
 import ProductCard from '../../components/ProductCard'
 

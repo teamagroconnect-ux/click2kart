@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { useCart, getStockStatus } from '../../lib/CartContext'
-import { setSEO, injectJsonLd } from '../../shared/lib/seo.js'
+import { SEO, injectJsonLd } from '../../shared/lib/seo.jsx'
 import { useToast } from '../../components/Toast'
 import RecommendationModal from '../../components/RecommendationModal'
 import ProductCard from '../../components/ProductCard'
@@ -644,6 +644,33 @@ export default function ProductDetail() {
   /* ── RENDER ── */
   return (
     <>
+      {p && (
+        <>
+          <SEO 
+            title={`${p.name} Wholesale Price`}
+            description={`Buy ${p.name} at wholesale B2B rates with GST invoice and fast delivery.`}
+            image={(p.images || [])[0]?.url}
+            url={`/products/${p.slug || p._id}`}
+            type="Product"
+          />
+          {(() => {
+            const script = document.createElement('script');
+            script.type = 'application/ld+json';
+            script.text = JSON.stringify({
+              "@context": "https://schema.org/", "@type": "Product", "name": p.name,
+              "brand": { "@type": "Brand", "name": p.brand?.name || p.brand || "Click2Kart" },
+              "image": (p.images || []).map(i => i.url).filter(Boolean), "category": p.category?.name || p.category || "General",
+              "offers": {
+                "@type": "Offer", "priceCurrency": "INR", "price": String(p.price || 0),
+                "availability": p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock", "url": `${window.location.origin}/products/${p.slug || p._id}`
+              },
+              "aggregateRating": { "@type": "AggregateRating", "ratingValue": String(p.ratingAvg || 0), "reviewCount": String(p.ratingCount || 0) }
+            });
+            document.head.appendChild(script);
+            return null;
+          })()}
+        </>
+      )}
       <style>{`
       @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800&family=Outfit:wght@400;500;600;700&display=swap');
       *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

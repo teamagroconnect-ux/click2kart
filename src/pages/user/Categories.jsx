@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
-import { SEO } from '../../shared/lib/seo'
+import { SEO } from '../../shared/lib/seo.jsx'
 
 export default function Categories() {
   const { data: categories = [] } = useQuery({
