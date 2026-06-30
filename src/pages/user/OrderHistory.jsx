@@ -915,12 +915,6 @@ export default function OrderHistory() {
                                     <div className="oh-shipment-detail-label">AWB Number</div>
                                     <div className="oh-shipment-detail-value">{order.shipping.waybill}</div>
                                   </div>
-                                  {order.pickupLocationName && (
-                                    <div className="oh-shipment-detail">
-                                      <div className="oh-shipment-detail-label">Pickup Location</div>
-                                      <div className="oh-shipment-detail-value">{order.pickupLocationName}</div>
-                                    </div>
-                                  )}
                                 </div>
                                 <div className="oh-shipment-actions">
                                   <button className="oh-btn blue" onClick={() => {
