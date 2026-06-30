@@ -295,6 +295,134 @@ export default function Settings() {
             </div>
           </div>
 
+          {/* Pickup Location Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-violet-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-4">
+              <h2 className="text-lg font-bold text-white">Pickup Location</h2>
+              <p className="text-violet-100 text-sm">Shipment pickup details</p>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-violet-800 mb-2">Facility Name</label>
+                <input
+                  type="text"
+                  value={settings.pickupName || ''}
+                  onChange={(e) => setSettings({ ...settings, pickupName: e.target.value })}
+                  onBlur={(e) => updateSettings('pickupName', e.target.value)}
+                  className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-violet-800 mb-2">Address Line 1</label>
+                <input
+                  type="text"
+                  value={settings.pickupLine1 || ''}
+                  onChange={(e) => setSettings({ ...settings, pickupLine1: e.target.value })}
+                  onBlur={(e) => updateSettings('pickupLine1', e.target.value)}
+                  className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-violet-800 mb-2">Address Line 2</label>
+                <input
+                  type="text"
+                  value={settings.pickupLine2 || ''}
+                  onChange={(e) => setSettings({ ...settings, pickupLine2: e.target.value })}
+                  onBlur={(e) => updateSettings('pickupLine2', e.target.value)}
+                  className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">City</label>
+                  <input
+                    type="text"
+                    value={settings.pickupCity || ''}
+                    onChange={(e) => setSettings({ ...settings, pickupCity: e.target.value })}
+                    onBlur={(e) => updateSettings('pickupCity', e.target.value)}
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">State</label>
+                  <input
+                    type="text"
+                    value={settings.pickupState || ''}
+                    onChange={(e) => setSettings({ ...settings, pickupState: e.target.value })}
+                    onBlur={(e) => updateSettings('pickupState', e.target.value)}
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">Pincode</label>
+                  <input
+                    type="text"
+                    value={settings.pickupPincode || ''}
+                    onChange={(e) => setSettings({ ...settings, pickupPincode: e.target.value })}
+                    onBlur={(e) => updateSettings('pickupPincode', e.target.value)}
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">Country</label>
+                  <input
+                    type="text"
+                    value={settings.pickupCountry || ''}
+                    onChange={(e) => setSettings({ ...settings, pickupCountry: e.target.value })}
+                    onBlur={(e) => updateSettings('pickupCountry', e.target.value)}
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">Contact Person</label>
+                  <input
+                    type="text"
+                    value={settings.pickupContactPerson || ''}
+                    onChange={(e) => setSettings({ ...settings, pickupContactPerson: e.target.value })}
+                    onBlur={(e) => updateSettings('pickupContactPerson', e.target.value)}
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">Phone</label>
+                  <input
+                    type="text"
+                    value={settings.pickupPhone || ''}
+                    onChange={(e) => setSettings({ ...settings, pickupPhone: e.target.value })}
+                    onBlur={(e) => updateSettings('pickupPhone', e.target.value)}
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">Email</label>
+                  <input
+                    type="email"
+                    value={settings.pickupEmail || ''}
+                    onChange={(e) => setSettings({ ...settings, pickupEmail: e.target.value })}
+                    onBlur={(e) => updateSettings('pickupEmail', e.target.value)}
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-violet-800 mb-2">Default Pickup Slot</label>
+                  <input
+                    type="text"
+                    value={settings.pickupDefaultSlot || ''}
+                    onChange={(e) => setSettings({ ...settings, pickupDefaultSlot: e.target.value })}
+                    onBlur={(e) => updateSettings('pickupDefaultSlot', e.target.value)}
+                    className="w-full bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-violet-900 font-medium focus:ring-2 focus:ring-violet-500 focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Support Information Card */}
           <div className="bg-white rounded-2xl shadow-sm border border-violet-100 overflow-hidden">
             <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-4">
