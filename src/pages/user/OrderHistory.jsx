@@ -24,17 +24,37 @@ const STATUS_STEPS = ['Placed', 'Processing', 'Packed', 'Shipped', 'Delivered']
 
 function getStatusIndex(order) {
   if (order.status === 'FULFILLED' || order.status === 'DELIVERED') return 4
-  if (order.shipping?.waybill) return 3
-  if (order.status === 'CONFIRMED') return 2
-  if (order.status === 'NEW' || order.status === 'PENDING_CASH_APPROVAL') return 1
+  if (order.status === 'SHIPPED' || order.shipping?.waybill) return 3
+  if (order.status === 'PACKED') return 2
+  if (order.status === 'PROCESSING' || order.status === 'CONFIRMED') return 1
   return 0
 }
 
 function getStatusColor(status) {
-  const s = status === 'PENDING_CASH_APPROVAL' ? 'NEW' : status
-  if (s === 'FULFILLED' || s === 'DELIVERED') return { bg: 'rgba(5,150,105,0.1)', border: 'rgba(5,150,105,0.2)', color: '#059669' }
-  if (s === 'CANCELLED') return { bg: 'rgba(220,38,38,0.1)', border: 'rgba(220,38,38,0.2)', color: '#dc2626' }
+  if (status === 'FULFILLED' || status === 'DELIVERED') return { bg: 'rgba(5,150,105,0.1)', border: 'rgba(5,150,105,0.2)', color: '#059669' }
+  if (status === 'CANCELLED') return { bg: 'rgba(220,38,38,0.1)', border: 'rgba(220,38,38,0.2)', color: '#dc2626' }
+  if (status === 'SHIPPED') return { bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)', color: '#d97706' }
+  if (status === 'PACKED') return { bg: 'rgba(37,99,235,0.1)', border: 'rgba(37,99,235,0.2)', color: '#2563eb' }
   return { bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.2)', color: '#7c3aed' }
+}
+
+function getDisplayStatus(status) {
+  const statusMap = {
+    'NEW': 'Placed',
+    'PENDING_PAYMENT': 'Pending Payment',
+    'PENDING_CASH_APPROVAL': 'Pending Approval',
+    'PENDING_ADMIN_APPROVAL': 'Pending Approval',
+    'CONFIRMED': 'Processing',
+    'PROCESSING': 'Processing',
+    'PACKED': 'Packed',
+    'SHIPPED': 'Shipped',
+    'OUT_FOR_DELIVERY': 'Out for Delivery',
+    'DELIVERED': 'Delivered',
+    'FULFILLED': 'Delivered',
+    'CANCELLED': 'Cancelled',
+    'RETURNED': 'Returned'
+  }
+  return statusMap[status] || status
 }
 
 function getETA(createdAt) {
@@ -402,6 +422,99 @@ export default function OrderHistory() {
         }
         .oh-action-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
 
+        /* premium shipment card */
+        .oh-shipment-card{
+          background:linear-gradient(135deg,#fff7ed 0%,#fdfcff 100%);
+          border:1px solid rgba(245,158,11,0.15);
+          border-radius:16px;
+          padding:18px;
+          position:relative;
+          overflow:hidden;
+        }
+        .oh-shipment-card::before{
+          content:'';
+          position:absolute;
+          top:0;
+          left:0;
+          right:0;
+          height:3px;
+          background:linear-gradient(90deg,#f59e0b,#d97706,#f59e0b);
+        }
+        .oh-shipment-header{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          margin-bottom:14px;
+        }
+        .oh-shipment-title{
+          display:flex;
+          align-items:center;
+          gap:10px;
+        }
+        .oh-shipment-icon{
+          width:40px;
+          height:40px;
+          border-radius:12px;
+          background:linear-gradient(135deg,#f59e0b,#d97706);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          box-shadow:0 4px 14px rgba(245,158,11,0.25);
+        }
+        .oh-shipment-icon svg{color:white;}
+        .oh-shipment-info{
+          display:flex;
+          flex-direction:column;
+          gap:2px;
+        }
+        .oh-shipment-label{
+          font-size:10px;
+          font-weight:700;
+          text-transform:uppercase;
+          letter-spacing:.15em;
+          color:#92400e;
+        }
+        .oh-shipment-status{
+          font-size:12px;
+          font-weight:700;
+          color:#78350f;
+        }
+        .oh-shipment-details{
+          display:grid;
+          grid-template-columns:1fr;
+          gap:10px;
+          margin-bottom:14px;
+        }
+        @media(min-width:540px){
+          .oh-shipment-details{
+            grid-template-columns:1fr 1fr;
+          }
+        }
+        .oh-shipment-detail{
+          background:white;
+          border:1px solid rgba(245,158,11,0.12);
+          border-radius:12px;
+          padding:10px 12px;
+        }
+        .oh-shipment-detail-label{
+          font-size:9px;
+          font-weight:700;
+          text-transform:uppercase;
+          letter-spacing:.12em;
+          color:#d97706;
+          margin-bottom:4px;
+        }
+        .oh-shipment-detail-value{
+          font-size:12px;
+          font-weight:700;
+          color:#78350f;
+          font-family:'DM Sans',sans-serif;
+        }
+        .oh-shipment-actions{
+          display:flex;
+          gap:10px;
+        }
+
         /* tracking pill */
         .oh-track-pill{
           display:inline-flex; align-items:center; gap:8px;
@@ -493,7 +606,7 @@ export default function OrderHistory() {
               {orders.map((order, idx) => {
                 const isExpanded  = expandedId === order._id
                 const statusIdx   = getStatusIndex(order)
-                const displayStatus = order.status === 'PENDING_CASH_APPROVAL' ? 'NEW' : order.status
+                const displayStatus = getDisplayStatus(order.status)
                 const sc          = getStatusColor(order.status)
                 const eta         = getETA(order.createdAt)
 
@@ -779,18 +892,47 @@ export default function OrderHistory() {
                             <div className="oh-divider" />
                             <div>
                               <div className="oh-section-label">Shipment</div>
-                              <div className="oh-action-row">
-                                <div className="oh-track-pill">
-                                  <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                                  {order.shipping.provider} · {order.shipping.status} · {order.shipping.waybill}
+                              <div className="oh-shipment-card">
+                                <div className="oh-shipment-header">
+                                  <div className="oh-shipment-title">
+                                    <div className="oh-shipment-icon">
+                                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                                      </svg>
+                                    </div>
+                                    <div className="oh-shipment-info">
+                                      <div className="oh-shipment-label">Shipped via</div>
+                                      <div className="oh-shipment-status">{order.shipping.provider || 'Delhivery'}</div>
+                                    </div>
+                                  </div>
+                                  <div style={{ textAlign: 'right' }}>
+                                    <div className="oh-shipment-label">Status</div>
+                                    <div className="oh-shipment-status">{order.shipping.status || 'Created'}</div>
+                                  </div>
                                 </div>
-                                <button className="oh-btn blue" onClick={() => {
-                                  const url = order.shipping.trackingUrl || `${api.defaults.baseURL}/api/shipping/delhivery/track/${order.shipping.waybill}`
-                                  window.open(url, '_blank')
-                                }}>
-                                  <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-                                  Track Order
-                                </button>
+                                <div className="oh-shipment-details">
+                                  <div className="oh-shipment-detail">
+                                    <div className="oh-shipment-detail-label">AWB Number</div>
+                                    <div className="oh-shipment-detail-value">{order.shipping.waybill}</div>
+                                  </div>
+                                  {order.pickupLocationName && (
+                                    <div className="oh-shipment-detail">
+                                      <div className="oh-shipment-detail-label">Pickup Location</div>
+                                      <div className="oh-shipment-detail-value">{order.pickupLocationName}</div>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="oh-shipment-actions">
+                                  <button className="oh-btn blue" onClick={() => {
+                                    const url = order.shipping.trackingUrl || `${api.defaults.baseURL}/api/shipping/delhivery/track/${order.shipping.waybill}`
+                                    window.open(url, '_blank')
+                                  }}>
+                                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                    </svg>
+                                    Track Order
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           </>
