@@ -24,7 +24,10 @@ function isCredentialAuthRequest(config) {
     '/api/auth/customer/verify-otp',
     '/api/auth/customer/forgot-password',
     '/api/auth/customer/reset-password',
-    '/api/public/partner/login'
+    '/api/public/partner/login',
+    '/api/public/partner/change-password',
+    '/api/public/partner/forgot-password',
+    '/api/public/partner/reset-password'
   ]
   return suffixes.some((s) => p === s || p.endsWith(s))
 }

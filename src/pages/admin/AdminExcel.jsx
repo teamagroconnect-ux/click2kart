@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Spreadsheet from 'react-spreadsheet'
 import * as XLSX from 'xlsx'
 import api from '../../lib/api'
@@ -29,7 +29,7 @@ export default function AdminExcel() {
   }, [])
 
   // Save data to server
-  const saveData = async (newData, newFileName) => {
+  const saveData = useCallback(async (newData, newFileName) => {
     setSaving(true)
     try {
       await api.put('/api/admin/excel', {
@@ -41,7 +41,7 @@ export default function AdminExcel() {
     } finally {
       setSaving(false)
     }
-  }
+  }, [])
 
   const handleDataChange = (newData) => {
     setData(newData)
@@ -54,6 +54,50 @@ export default function AdminExcel() {
     saveData(data, newName)
   }
 
+  // Add new row
+  const addRow = () => {
+    const newRow = new Array(data[0]?.length || 4).fill('')
+    const newData = [...data, newRow]
+    setData(newData)
+    saveData(newData, fileName)
+  }
+
+  // Delete last row
+  const deleteRow = () => {
+    if (data.length <= 1) return
+    const newData = data.slice(0, -1)
+    setData(newData)
+    saveData(newData, fileName)
+  }
+
+  // Add new column
+  const addColumn = () => {
+    const newData = data.map(row => [...row, ''])
+    setData(newData)
+    saveData(newData, fileName)
+  }
+
+  // Delete last column
+  const deleteColumn = () => {
+    if (data[0]?.length <= 1) return
+    const newData = data.map(row => row.slice(0, -1))
+    setData(newData)
+    saveData(newData, fileName)
+  }
+
+  // Clear all data
+  const handleClear = () => {
+    if (confirm('Are you sure you want to clear all data?')) {
+      const newData = [
+        ['Item', 'Quantity', 'Price', 'Total'],
+        ['', '', '', '']
+      ]
+      setData(newData)
+      saveData(newData, fileName)
+    }
+  }
+
+  // Export to Excel
   const handleExport = () => {
     const worksheet = XLSX.utils.aoa_to_sheet(data)
     const workbook = XLSX.utils.book_new()
@@ -61,6 +105,7 @@ export default function AdminExcel() {
     XLSX.writeFile(workbook, `${fileName}.xlsx`)
   }
 
+  // Import Excel file
   const handleImport = (e) => {
     const file = e.target.files[0]
     if (!file) return
@@ -76,17 +121,6 @@ export default function AdminExcel() {
       saveData(jsonData, fileName)
     }
     reader.readAsBinaryString(file)
-  }
-
-  const handleClear = () => {
-    if (confirm('Are you sure you want to clear all data?')) {
-      const newData = [
-        ['Item', 'Quantity', 'Price', 'Total'],
-        ['', '', '', '']
-      ]
-      setData(newData)
-      saveData(newData, fileName)
-    }
   }
 
   if (loading) {
@@ -143,6 +177,47 @@ export default function AdminExcel() {
             <span className="text-sm text-gray-500">Saving...</span>
           )}
         </div>
+      </div>
+
+      {/* Row/Column Controls */}
+      <div className="bg-white border border-gray-100 rounded-[2rem] p-4 shadow-md flex flex-wrap items-center gap-3">
+        <button
+          onClick={addRow}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Row
+        </button>
+        <button
+          onClick={deleteRow}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-amber-100 text-amber-700 hover:bg-amber-200 transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20 12H4" />
+          </svg>
+          Delete Row
+        </button>
+        <div className="w-px h-8 bg-gray-200 mx-2" />
+        <button
+          onClick={addColumn}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+          </svg>
+          Add Column
+        </button>
+        <button
+          onClick={deleteColumn}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-orange-100 text-orange-700 hover:bg-orange-200 transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Delete Column
+        </button>
       </div>
 
       <div className="bg-white border border-gray-100 rounded-[2.5rem] p-6 shadow-lg">
