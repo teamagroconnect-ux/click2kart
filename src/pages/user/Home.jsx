@@ -44,17 +44,10 @@ function StatItem({ n, t, delay }) {
 }
 
 export default function Home() {
-  const [scrollY, setScrollY] = useState(0)
   const [cats, setCats] = useState([])
   const [brands, setBrands] = useState([])
   const [recs, setRecs] = useState([])
   const [offers, setOffers] = useState([])
-  
-  useEffect(() => {
-    const fn = () => setScrollY(window.scrollY)
-    window.addEventListener('scroll', fn, { passive: true })
-    return () => window.removeEventListener('scroll', fn)
-  }, [])
 
   const line1 = CONFIG.HERO_TITLE_LINE1 || 'India\'s Premier'
   const line2 = CONFIG.HERO_TITLE_LINE2 || 'B2B Marketplace'

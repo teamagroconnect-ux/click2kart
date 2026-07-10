@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Spreadsheet from 'react-spreadsheet'
 import * as XLSX from 'xlsx'
 import api from '../../lib/api'
@@ -11,6 +11,7 @@ export default function AdminExcel() {
   const [fileName, setFileName] = useState('admin-data')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const debounceRef = useRef(null)
 
   // Load data from server on mount
   useEffect(() => {
@@ -28,19 +29,27 @@ export default function AdminExcel() {
     loadData()
   }, [])
 
-  // Save data to server
+  // Save data to server with debounce
   const saveData = useCallback(async (newData, newFileName) => {
-    setSaving(true)
-    try {
-      await api.put('/api/admin/excel', {
-        data: newData,
-        fileName: newFileName
-      })
-    } catch (err) {
-      console.error('Failed to save Excel data:', err)
-    } finally {
-      setSaving(false)
+    // Clear previous debounce
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current)
     }
+    
+    // Set new debounce
+    debounceRef.current = setTimeout(async () => {
+      setSaving(true)
+      try {
+        await api.put('/api/admin/excel', {
+          data: newData,
+          fileName: newFileName
+        })
+      } catch (err) {
+        console.error('Failed to save Excel data:', err)
+      } finally {
+        setSaving(false)
+      }
+    }, 500)
   }, [])
 
   const handleDataChange = (newData) => {
