@@ -159,9 +159,14 @@ export default function AdminExcel() {
   }, [])
 
   const handleDataChange = (newData) => {
-    setData(newData)
-    saveToHistory(newData)
-    saveData(newData, fileName)
+    // Convert to 2D array of strings for consistency
+    const normalizedData = newData.map(row => row.map(cell => {
+      if (cell === null || cell === undefined) return ''
+      return String(cell)
+    }))
+    setData(normalizedData)
+    saveToHistory(normalizedData)
+    saveData(normalizedData, fileName)
   }
 
   const handleFileNameChange = (e) => {
@@ -237,19 +242,20 @@ export default function AdminExcel() {
       const wb = XLSX.read(bstr, { type: 'binary' })
       const wsname = wb.SheetNames[0]
       const ws = wb.Sheets[wsname]
-      const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1 })
+      const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' })
       
-      // Ensure data is a 2D array
-      const formattedData = jsonData.length > 0 ? jsonData : [['', '', '', '']]
+      // Convert all cells to strings/numbers for react-spreadsheet
+      const formattedData = jsonData.length > 0 
+        ? jsonData.map(row => row.map(cell => cell !== null && cell !== undefined ? String(cell) : ''))
+        : [['Item', 'Quantity', 'Price', 'Total'], ['', '', '', '']]
+      
       setData(formattedData)
       saveToHistory(formattedData)
       saveData(formattedData, fileName)
       
-      // Update file name if not set
-      if (fileName === 'admin-data') {
-        const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
-        setFileName(nameWithoutExt)
-      }
+      // Update file name
+      const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
+      setFileName(nameWithoutExt)
     }
     reader.readAsBinaryString(file)
     
@@ -385,6 +391,30 @@ export default function AdminExcel() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
                 Export
+              </button>
+              <button
+                onClick={async () => {
+                  if (debounceRef.current) clearTimeout(debounceRef.current)
+                  setSaving(true)
+                  try {
+                    await api.put('/api/admin/excel', {
+                      data: data,
+                      fileName: fileName
+                    })
+                    setLastSaved(new Date())
+                  } catch (err) {
+                    console.error('Failed to save Excel data:', err)
+                    alert('Failed to save! Please try again.')
+                  } finally {
+                    setSaving(false)
+                  }
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-md hover:shadow-lg"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Save Now
               </button>
             </div>
 
