@@ -134,11 +134,11 @@ export default function Login() {
                     type="text"
                     inputMode="numeric"
                     pattern="[0-9]*"
-                    maxLength="6"
+                    maxLength="4"
                     className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder={otpSent ? "123456" : "Will be sent to email"}
+                    placeholder={otpSent ? "1234" : "Will be sent to email"}
                     value={otp}
-                    onChange={(e)=>setOtp(e.target.value)}
+                    onChange={(e)=>setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     disabled={!otpSent}
                     required
                   />

@@ -14,6 +14,7 @@ export default function RetailerDetail() {
   const [editMode, setEditMode] = useState(false)
   const [formData, setFormData] = useState(null)
   const [partnerForm, setPartnerForm] = useState(null)
+  const [partnerError, setPartnerError] = useState('')
   const [saving, setSaving] = useState(false)
   const load = async () => {
     setLoading(true)
@@ -101,15 +102,53 @@ export default function RetailerDetail() {
     }
   }
 
+  useEffect(() => {
+    if (!editMode || !formData) return
+    const code = String(formData.kyc?.partnerInviteCode || '').trim()
+    if (!/^\d{4}$/.test(code)) {
+      setPartnerForm(null)
+      if (!code) {
+        setPartnerError('')
+      } else {
+        setPartnerError('Enter a valid 4-digit partner invite code')
+      }
+      return
+    }
+
+    let cancelled = false
+    const fetchPartner = async () => {
+      setPartnerError('')
+      try {
+        const { data } = await api.get(`/api/admin/partners/invite/${code}`)
+        if (cancelled) return
+        setPartnerForm({
+          name: data.name || '',
+          email: data.email || '',
+          phone: data.phone || '',
+          businessName: data.businessName || '',
+          gstNumber: data.gstNumber || '',
+          panNumber: data.panNumber || '',
+          address: data.address || '',
+          city: data.city || '',
+          district: data.district || '',
+          state: data.state || '',
+          pincode: data.pincode || '',
+          inviteCode: data.inviteCode || ''
+        })
+      } catch (err) {
+        if (cancelled) return
+        setPartnerForm(null)
+        setPartnerError(err?.response?.status === 404 ? 'No partner found with this invite code' : 'Failed to load partner details')
+      }
+    }
+
+    fetchPartner()
+    return () => { cancelled = true }
+  }, [editMode, formData])
+
   const approve = async () => {
     await api.post(`/api/admin/customers/${id}/approve`)
     notify('Retailer approved', 'success')
-    load()
-  }
-
-  const skip = async () => {
-    await api.post(`/api/admin/customers/${id}/skip`)
-    notify('Retailer skipped', 'success')
     load()
   }
 
@@ -210,12 +249,16 @@ export default function RetailerDetail() {
                 value={formData.email}
                 onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
               />
-              <FormField
-                label="Partner Invite Code"
-                value={formData.kyc.partnerInviteCode}
-                onChange={(value) => setFormData(prev => ({ ...prev, kyc: { ...prev.kyc, partnerInviteCode: value } }))}
-                placeholder="4-digit code"
-              />
+              <div>
+                <FormField
+                  label="Partner Invite Code"
+                  value={formData.kyc.partnerInviteCode}
+                  onChange={(value) => setFormData(prev => ({ ...prev, kyc: { ...prev.kyc, partnerInviteCode: value } }))}
+                  placeholder="4-digit code"
+                />
+                <p className="text-[11px] text-gray-500 mt-2">Enter a 4-digit partner invite code to auto-fill partner details.</p>
+                {partnerError && <p className="text-[11px] text-rose-600 mt-2">{partnerError}</p>}
+              </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               <FormField

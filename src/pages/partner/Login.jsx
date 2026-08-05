@@ -13,7 +13,6 @@ export default function PartnerLogin() {
   const [otpSent, setOtpSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [mode, setMode] = useState('login')
 
   useEffect(() => {
     const token = localStorage.getItem('partnerToken')
@@ -49,27 +48,25 @@ export default function PartnerLogin() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (mode === 'login') {
-      if (!validateEmail(email)) {
-        setError('Please enter a valid email address')
-        return
+    if (!validateEmail(email)) {
+      setError('Please enter a valid email address')
+      return
+    }
+    if (!password && !otp) return
+    setLoading(true)
+    setError(null)
+    try {
+      const payload = useOtp ? { otp, email } : { password, email }
+      const { data } = await api.post(`/api/public/partner/login`, payload)
+      if (data.token) {
+        localStorage.setItem('partnerToken', data.token)
+        localStorage.setItem('partnerData', JSON.stringify(data))
       }
-      if (!password && !otp) return
-      setLoading(true)
-      setError(null)
-      try {
-        const payload = useOtp ? { otp, email } : { password, email }
-        const { data } = await api.post(`/api/public/partner/login`, payload)
-        if (data.token) {
-          localStorage.setItem('partnerToken', data.token)
-          localStorage.setItem('partnerData', JSON.stringify(data))
-        }
-        navigate('/partner/dashboard')
-      } catch (err) {
-        setError(err?.response?.data?.error || 'Authentication failed. Please check your credentials.')
-      } finally {
-        setLoading(false)
-      }
+      navigate('/partner/dashboard')
+    } catch (err) {
+      setError(err?.response?.data?.error || 'Authentication failed. Please check your credentials.')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -97,97 +94,93 @@ export default function PartnerLogin() {
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <div className="space-y-4">
-            {mode === 'login' && (
-              <>
-                <div className="group">
-                  <label className="text-[11px] font-black uppercase tracking-widest text-gray-500 ml-1 mb-2 block">Email Address</label>
+            <div className="group">
+              <label className="text-[11px] font-black uppercase tracking-widest text-gray-500 ml-1 mb-2 block">Email Address</label>
+              <input
+                name="email"
+                type="email"
+                required
+                className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                placeholder="partner@example.com"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value.toLowerCase()); setError(null) }}
+              />
+            </div>
+
+            <div className="flex gap-2 p-1 bg-gray-100 rounded-2xl">
+              <button
+                type="button"
+                onClick={() => { setUseOtp(false); setOtpSent(false) }}
+                className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${!useOtp ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500'}`}
+              >
+                Password
+              </button>
+              <button
+                type="button"
+                onClick={() => setUseOtp(true)}
+                className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${useOtp ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500'}`}
+              >
+                OTP
+              </button>
+            </div>
+
+            {useOtp ? (
+              <div className="space-y-3">
+                <div className="flex gap-2">
                   <input
-                    name="email"
-                    type="email"
-                    required
-                    className="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                    placeholder="partner@example.com"
-                    value={email}
-                    onChange={(e) => { setEmail(e.target.value.toLowerCase()); setError(null) }}
+                    className="flex-1 bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                    placeholder="Enter 4-digit OTP"
+                    value={otp}
+                    maxLength={4}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
                   />
+                  {!otpSent ? (
+                    <button
+                      type="button"
+                      onClick={sendOtp}
+                      className="px-5 bg-indigo-50 text-indigo-600 rounded-2xl text-[11px] font-black uppercase tracking-widest border border-indigo-100 hover:bg-indigo-100 transition-all disabled:opacity-50"
+                      disabled={loading || !email}
+                    >
+                      Send
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { setOtpSent(false); setOtp('') }}
+                      className="px-4 text-[11px] font-black uppercase text-gray-500 hover:text-indigo-600 transition-all"
+                    >
+                      Resend
+                    </button>
+                  )}
                 </div>
-
-                <div className="flex gap-2 p-1 bg-gray-100 rounded-2xl">
-                  <button
-                    type="button"
-                    onClick={() => { setUseOtp(false); setOtpSent(false) }}
-                    className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${!useOtp ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500'}`}
-                  >
-                    Password
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUseOtp(true)}
-                    className={`flex-1 py-3 text-[11px] font-black uppercase tracking-widest rounded-xl transition-all ${useOtp ? 'bg-white shadow-sm text-indigo-600' : 'text-gray-500'}`}
-                  >
-                    OTP
-                  </button>
-                </div>
-
-                {useOtp ? (
-                  <div className="space-y-3">
-                    <div className="flex gap-2">
-                      <input
-                        className="flex-1 bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                        placeholder="Enter 4-digit OTP"
-                        value={otp}
-                        maxLength={4}
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                      />
-                      {!otpSent ? (
-                        <button
-                          type="button"
-                          onClick={sendOtp}
-                          className="px-5 bg-indigo-50 text-indigo-600 rounded-2xl text-[11px] font-black uppercase tracking-widest border border-indigo-100 hover:bg-indigo-100 transition-all disabled:opacity-50"
-                          disabled={loading || !email}
-                        >
-                          Send
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => { setOtpSent(false); setOtp('') }}
-                          className="px-4 text-[11px] font-black uppercase text-gray-500 hover:text-indigo-600 transition-all"
-                        >
-                          Resend
-                        </button>
-                      )}
-                    </div>
-                    {otpSent && (
-                      <div className="text-[11px] text-emerald-600 font-bold ml-1 flex items-center gap-1">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M20 6L9 17l-5-5" />
-                        </svg>
-                        OTP sent to your email!
-                      </div>
-                    )}
+                {otpSent && (
+                  <div className="text-[11px] text-emerald-600 font-bold ml-1 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M20 6L9 17l-5-5" />
+                    </svg>
+                    OTP sent to your email!
                   </div>
-                ) : (
-                  <PasswordInput
-                    name="password"
-                    required
-                    autoComplete="current-password"
-                    inputClassName="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => { setPassword(e.target.value); setError(null) }}
-                  />
                 )}
-              </>
+              </div>
+            ) : (
+              <PasswordInput
+                name="password"
+                required
+                autoComplete="current-password"
+                inputClassName="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setError(null) }}
+              />
             )}
           </div>
 
           <button
             type="submit"
-            disabled={loading || (mode === 'login' && (useOtp ? !otp : !password))}
+            disabled={loading || (useOtp ? !otp : !password)}
             className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-xl shadow-indigo-200 hover:shadow-indigo-300 hover:-translate-y-1 transition-all disabled:opacity-50"
           >
-            {loading ? 'Processing...' : (mode === 'login' ? 'Access Dashboard →' : 'Set Password & Continue →')}
+            {loading ? 'Processing...' : 'Access Dashboard →'}
           </button>
 
           <div className="text-center mt-4">

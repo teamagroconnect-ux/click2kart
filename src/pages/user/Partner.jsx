@@ -663,7 +663,8 @@ export default function Partner() {
                       className="pr-input" 
                       placeholder="Enter 4-digit OTP…" 
                       value={otp} 
-                      onChange={e => setOtp(e.target.value)} 
+                      maxLength={4}
+                      onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 4))} 
                     />
                     {!otpSent ? (
                       <button 
