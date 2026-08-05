@@ -99,7 +99,7 @@ export default function Products() {
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [q, setQ] = useState('')
-  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', volumetricWeight: { length: '', width: '', height: '' }, hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '', partnerBenefit: { discountType: 'PERCENT', value: '' }, userDiscount: { discountType: 'PERCENT', value: '' }, isLive: false })
+  const [form, setForm] = useState({ name:'', price:'', mrp:'', brandId: '', categoryId:'', subCategoryId:'', stock:'', weight:'', volumetricWeight: { length: '', width: '', height: '' }, hsnCode:'', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '', partnerBenefit: { discountType: 'PERCENT', value: '' }, userDiscount: { discountType: 'PERCENT', value: '' }, isLive: false, isActive: true })
   const [editing, setEditing] = useState(null)
   const [viewing, setViewing] = useState(null)
   const [toDelete, setToDelete] = useState(null)
@@ -192,9 +192,10 @@ export default function Products() {
       variants: [],
       partnerBenefit: form.partnerBenefit,
       userDiscount: form.userDiscount,
-      isLive: form.isLive
+      isLive: form.isLive,
+      isActive: form.isActive
     })
-    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', volumetricWeight: { length: '', width: '', height: '' }, hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '', partnerBenefit: { discountType: 'PERCENT', value: '' }, userDiscount: { discountType: 'PERCENT', value: '' }, isLive: false }); setShowAddProduct(false); load(page); notify('Product added','success')
+    setForm({ name:'', price:'', mrp:'', brandId:'', categoryId:'', subCategoryId:'', stock:'', weight: '', volumetricWeight: { length: '', width: '', height: '' }, hsnCode: '', gst:'', images: '', description:'', highlights: [], highlightInput:'', specifications: [], specKey:'', specValue:'', minOrderQty:'', bulkDiscountQuantity: '', bulkDiscountPriceReduction: '', bulkTiers: [], store:'', section:'', variantDisplayType: 'selector', packSize: '', partnerBenefit: { discountType: 'PERCENT', value: '' }, userDiscount: { discountType: 'PERCENT', value: '' }, isLive: false, isActive: true }); setShowAddProduct(false); load(page); notify('Product added','success')
   }
 
   const reduceStock = async (id) => {
@@ -215,6 +216,7 @@ export default function Products() {
       subCategoryId: p.subCategory?._id || p.subCategory || '',
       weight: p.weight || '',
       volumetricWeight: p.volumetricWeight || { length: '', width: '', height: '' },
+      isActive: p.isActive !== false,
       hsnCode: p.hsnCode || '',
       images: (p.images||[]).map(i=>i.url||i).join(', '),
       attributes: Array.isArray(p.attributes) ? p.attributes : [],
@@ -285,7 +287,8 @@ export default function Products() {
       })),
       partnerBenefit: editing.partnerBenefit,
       userDiscount: editing.userDiscount,
-      isLive: editing.isLive
+      isLive: editing.isLive,
+      isActive: editing.isActive
     }
     // Remove stock from payload to prevent accidental reset to 0
     delete payload.stock;
