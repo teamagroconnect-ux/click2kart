@@ -13,10 +13,7 @@ export default function PartnerLogin() {
   const [otpSent, setOtpSent] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [mode, setMode] = useState('login') // 'login' | 'setPassword'
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmNewPassword, setConfirmNewPassword] = useState('')
-  const [otpLoginData, setOtpLoginData] = useState(null)
+  const [mode, setMode] = useState('login')
 
   useEffect(() => {
     const token = localStorage.getItem('partnerToken')
@@ -63,47 +60,13 @@ export default function PartnerLogin() {
       try {
         const payload = useOtp ? { otp, email } : { password, email }
         const { data } = await api.post(`/api/public/partner/login`, payload)
-        if (useOtp) {
-          // Instead of logging in directly, show password set prompt
-          setOtpLoginData(data)
-          setMode('setPassword')
-        } else {
-          if (data.token) {
-            localStorage.setItem('partnerToken', data.token)
-            localStorage.setItem('partnerData', JSON.stringify(data))
-          }
-          navigate('/partner/dashboard')
+        if (data.token) {
+          localStorage.setItem('partnerToken', data.token)
+          localStorage.setItem('partnerData', JSON.stringify(data))
         }
-      } catch (err) {
-        setError(err?.response?.data?.error || 'Authentication failed. Please check your credentials.')
-      } finally {
-        setLoading(false)
-      }
-    } else if (mode === 'setPassword') {
-      if (newPassword !== confirmNewPassword) {
-        setError('Passwords do not match')
-        return
-      }
-      if (newPassword.length < 6) {
-        setError('Password must be at least 6 characters')
-        return
-      }
-      setLoading(true)
-      setError(null)
-      try {
-        // First log in with the OTP data
-        if (otpLoginData.token) {
-          localStorage.setItem('partnerToken', otpLoginData.token)
-          localStorage.setItem('partnerData', JSON.stringify(otpLoginData))
-        }
-        // Then change the password
-        await api.put('/api/public/partner/change-password', {
-          currentPassword: '',
-          newPassword: newPassword
-        })
         navigate('/partner/dashboard')
       } catch (err) {
-        setError(err?.response?.data?.error || 'Failed to set password')
+        setError(err?.response?.data?.error || 'Authentication failed. Please check your credentials.')
       } finally {
         setLoading(false)
       }
@@ -215,44 +178,6 @@ export default function PartnerLogin() {
                     onChange={(e) => { setPassword(e.target.value); setError(null) }}
                   />
                 )}
-              </>
-            )}
-            {mode === 'setPassword' && (
-              <>
-                <div className="group">
-                  <label className="text-[11px] font-black uppercase tracking-widest text-gray-500 ml-1 mb-2 block">New Password</label>
-                  <PasswordInput
-                    name="newPassword"
-                    required
-                    autoComplete="new-password"
-                    inputClassName="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                    placeholder="••••••••"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                  />
-                </div>
-                <div className="group">
-                  <label className="text-[11px] font-black uppercase tracking-widest text-gray-500 ml-1 mb-2 block">Confirm New Password</label>
-                  <PasswordInput
-                    name="confirmNewPassword"
-                    required
-                    autoComplete="new-password"
-                    inputClassName="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                    placeholder="••••••••"
-                    value={confirmNewPassword}
-                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode('login')
-                    setOtpLoginData(null)
-                  }}
-                  className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-700"
-                >
-                  ← Back to Login
-                </button>
               </>
             )}
           </div>

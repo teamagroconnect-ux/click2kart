@@ -22,16 +22,13 @@ export default function Login() {
   })
 
   const [loading, setLoading] = useState(false)
-  const [mode, setMode] = useState('password') // 'password' | 'otp' | 'setPassword'
+  const [mode, setMode] = useState('password') // 'password' | 'otp'
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
   const [otpSent, setOtpSent] = useState(false)
   const [otp, setOtp] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmNewPassword, setConfirmNewPassword] = useState('')
-  const [otpLoginToken, setOtpLoginToken] = useState(null)
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -54,60 +51,20 @@ export default function Login() {
         setLoading(false)
       }
     } else if (mode === 'otp') {
-      if (!otpSent) {
-        setLoading(true)
-        try {
-          await api.post('/api/auth/customer/login-otp/send', { email: formData.email })
-          setOtpSent(true)
-          notify('OTP sent to your email', 'success')
-        } catch (err) {
-          notify(err?.response?.data?.error || 'Failed to send OTP', 'error')
-        } finally {
-          setLoading(false)
-        }
-      } else {
-        setLoading(true)
-        try {
-          const { data } = await api.post('/api/auth/customer/login-otp/verify', { email: formData.email, otp })
-          // Instead of logging in directly, show password set prompt
-          setOtpLoginToken(data)
-          setMode('setPassword')
-          notify('OTP verified! Please set a new password.', 'success')
-        } catch (err) {
-          const code = err?.response?.data?.error
-          const msg = code === 'account_pending_approval'
-            ? 'Your account is pending approval by admin'
-            : (code === 'user_not_found' ? 'No account found for this email' : (err?.response?.data?.error || 'Invalid OTP'))
-          notify(msg, 'error')
-        } finally {
-          setLoading(false)
-        }
-      }
-    } else if (mode === 'setPassword') {
-      if (newPassword !== confirmNewPassword) {
-        notify('Passwords do not match', 'error')
-        return
-      }
-      if (newPassword.length < 6) {
-        notify('Password must be at least 6 characters', 'error')
-        return
-      }
       setLoading(true)
       try {
-        // First log in with the OTP token
-        setAuth(otpLoginToken.token, { ...otpLoginToken.user, role: 'customer' })
-        // Then change the password (currentPassword can be empty since we just logged in via OTP)
-        await api.put('/api/user/change-password', {
-          currentPassword: '',
-          newPassword: newPassword,
-          confirmPassword: confirmNewPassword
-        })
+        const { data } = await api.post('/api/auth/customer/login-otp/verify', { email: formData.email, otp })
+        setAuth(data.token, { ...data.user, role: 'customer' })
         try { await refreshProfile() } catch {}
         sessionStorage.removeItem('login_redirect')
-        notify('Password set successfully! Welcome back!', 'success')
+        notify('Welcome back!', 'success')
         navigate(from)
       } catch (err) {
-        notify(err?.response?.data?.error || 'Failed to set password', 'error')
+        const code = err?.response?.data?.error
+        const msg = code === 'account_pending_approval'
+          ? 'Your account is pending approval by admin'
+          : (code === 'user_not_found' ? 'No account found for this email' : (err?.response?.data?.error || 'Invalid OTP'))
+        notify(msg, 'error')
       } finally {
         setLoading(false)
       }
@@ -148,7 +105,6 @@ export default function Login() {
                   placeholder="john.doe@example.com"
                   value={formData.email}
                   onChange={handleChange}
-                  disabled={mode === 'setPassword'}
                 />
               </div>
             )}
@@ -207,52 +163,15 @@ export default function Login() {
                   {otpSent ? 'Resend OTP' : 'Send OTP'}
                 </button>
               </div>
-            ) : (
-              <>
-                <div className="group">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">New Password</label>
-                  <PasswordInput
-                    name="newPassword"
-                    required
-                    autoComplete="new-password"
-                    inputClassName="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="••••••••"
-                    value={newPassword}
-                    onChange={(e)=>setNewPassword(e.target.value)}
-                  />
-                </div>
-                <div className="group">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-1 mb-1 block">Confirm New Password</label>
-                  <PasswordInput
-                    name="confirmNewPassword"
-                    required
-                    autoComplete="new-password"
-                    inputClassName="w-full bg-gray-50 border-none rounded-2xl px-5 py-4 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                    placeholder="••••••••"
-                    value={confirmNewPassword}
-                    onChange={(e)=>setConfirmNewPassword(e.target.value)}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMode('otp')
-                    setOtpLoginToken(null)
-                  }}
-                  className="text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-gray-700"
-                >
-                  ← Back to OTP
-                </button>
-              </>
-            )}
+            ) : null}
           </div>
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (mode === 'otp' && (!otpSent || !otp))}
             className="w-full bg-blue-600 text-white py-5 rounded-3xl text-sm font-black uppercase tracking-widest shadow-2xl shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-1 active:scale-95 disabled:opacity-50"
           >
-            {loading ? 'Processing...' : (mode==='password' ? 'Sign In' : (mode==='otp' ? (otpSent ? 'Verify & Set Password' : 'Send OTP') : 'Set Password & Sign In'))}
+            {loading ? 'Processing...' : (mode==='password' ? 'Sign In' : 'Verify & Login')}
           </button>
 
           <p className="text-center text-xs text-gray-400 font-bold mt-6 uppercase tracking-widest">

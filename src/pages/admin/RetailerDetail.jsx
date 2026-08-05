@@ -11,11 +11,45 @@ export default function RetailerDetail() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [editMode, setEditMode] = useState(false)
+  const [formData, setFormData] = useState(null)
+  const [partnerForm, setPartnerForm] = useState(null)
+  const [saving, setSaving] = useState(false)
   const load = async () => {
     setLoading(true)
     try {
       const { data } = await api.get(`/api/admin/customers/${id}`)
       setData(data)
+      setFormData({
+        name: data.user.name || '',
+        phone: data.user.phone || '',
+        email: data.user.email || '',
+        kyc: {
+          businessName: data.user.kyc?.businessName || '',
+          gstin: data.user.kyc?.gstin || '',
+          pan: data.user.kyc?.pan || '',
+          pincode: data.user.kyc?.pincode || '',
+          state: data.user.kyc?.state || '',
+          city: data.user.kyc?.city || '',
+          addressLine1: data.user.kyc?.addressLine1 || '',
+          addressLine2: data.user.kyc?.addressLine2 || '',
+          partnerInviteCode: data.user.kyc?.partnerInviteCode || ''
+        }
+      })
+      setPartnerForm(data.partner ? {
+        name: data.partner.name || '',
+        email: data.partner.email || '',
+        phone: data.partner.phone || '',
+        businessName: data.partner.businessName || '',
+        gstNumber: data.partner.gstNumber || '',
+        panNumber: data.partner.panNumber || '',
+        address: data.partner.address || '',
+        city: data.partner.city || '',
+        district: data.partner.district || '',
+        state: data.partner.state || '',
+        pincode: data.partner.pincode || '',
+        inviteCode: data.partner.inviteCode || ''
+      } : null)
     } finally {
       setLoading(false)
     }
@@ -35,6 +69,36 @@ export default function RetailerDetail() {
 
   const remove = async () => {
     setDeleteModalOpen(true)
+  }
+
+  const handleSave = async () => {
+    if (!formData) return
+    if (formData.kyc?.partnerInviteCode && !/^\d{4}$/.test(formData.kyc.partnerInviteCode)) {
+      notify('Partner invite code must be a 4-digit number', 'error')
+      return
+    }
+
+    setSaving(true)
+    try {
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        kyc: formData.kyc,
+        partnerInviteCode: formData.kyc?.partnerInviteCode || ''
+      }
+      if (partnerForm) {
+        payload.partnerUpdate = partnerForm
+      }
+      await api.put(`/api/admin/customers/${id}`, payload)
+      notify('Retailer updated successfully', 'success')
+      setEditMode(false)
+      await load()
+    } catch (err) {
+      notify(err?.response?.data?.error || 'Failed to update retailer', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const approve = async () => {
@@ -92,7 +156,7 @@ export default function RetailerDetail() {
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {(user.approvalStatus !== 'approved' && !user.isActive) && (
               <>
                 <button onClick={approve} className="px-5 py-2.5 rounded-2xl bg-gray-900 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-gray-900/10 hover:bg-gray-800 transition-all">
@@ -105,11 +169,115 @@ export default function RetailerDetail() {
                 )}
               </>
             )}
+            <button onClick={() => setEditMode((prev) => !prev)} className="px-5 py-2.5 rounded-2xl bg-blue-600 text-white text-xs font-black uppercase tracking-widest shadow-lg shadow-blue-200/30 hover:bg-blue-500 transition-all">
+              {editMode ? 'Cancel Edit' : 'Edit Details'}
+            </button>
             <button onClick={remove} className="px-5 py-2.5 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 text-xs font-black uppercase tracking-widest hover:bg-rose-100 transition-all">
               Delete
             </button>
           </div>
         </div>
+
+        {editMode && formData && (
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <div>
+                <h3 className="text-lg font-black text-gray-900">Edit Retailer & Partner Details</h3>
+                <p className="text-sm text-gray-500">Update retailer details, KYC fields, and partner assignment.</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="px-5 py-3 rounded-2xl bg-emerald-600 text-white text-xs font-black uppercase tracking-widest hover:bg-emerald-500 transition-all disabled:opacity-50"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                label="Retailer Name"
+                value={formData.name}
+                onChange={(value) => setFormData(prev => ({ ...prev, name: value }))}
+              />
+              <FormField
+                label="Retailer Phone"
+                value={formData.phone}
+                onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
+              />
+              <FormField
+                label="Retailer Email"
+                value={formData.email}
+                onChange={(value) => setFormData(prev => ({ ...prev, email: value }))}
+              />
+              <FormField
+                label="Partner Invite Code"
+                value={formData.kyc.partnerInviteCode}
+                onChange={(value) => setFormData(prev => ({ ...prev, kyc: { ...prev.kyc, partnerInviteCode: value } }))}
+                placeholder="4-digit code"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+              <FormField
+                label="Business Name"
+                value={formData.kyc.businessName}
+                onChange={(value) => setFormData(prev => ({ ...prev, kyc: { ...prev.kyc, businessName: value } }))}
+              />
+              <FormField
+                label="GSTIN"
+                value={formData.kyc.gstin}
+                onChange={(value) => setFormData(prev => ({ ...prev, kyc: { ...prev.kyc, gstin: value } }))}
+              />
+              <FormField
+                label="PAN"
+                value={formData.kyc.pan}
+                onChange={(value) => setFormData(prev => ({ ...prev, kyc: { ...prev.kyc, pan: value } }))}
+              />
+              <FormField
+                label="Pincode"
+                value={formData.kyc.pincode}
+                onChange={(value) => setFormData(prev => ({ ...prev, kyc: { ...prev.kyc, pincode: value } }))}
+              />
+              <FormField
+                label="State"
+                value={formData.kyc.state}
+                onChange={(value) => setFormData(prev => ({ ...prev, kyc: { ...prev.kyc, state: value } }))}
+              />
+              <FormField
+                label="City"
+                value={formData.kyc.city}
+                onChange={(value) => setFormData(prev => ({ ...prev, kyc: { ...prev.kyc, city: value } }))}
+              />
+              <FormField
+                label="Address Line 1"
+                value={formData.kyc.addressLine1}
+                onChange={(value) => setFormData(prev => ({ ...prev, kyc: { ...prev.kyc, addressLine1: value } }))}
+              />
+              <FormField
+                label="Address Line 2"
+                value={formData.kyc.addressLine2}
+                onChange={(value) => setFormData(prev => ({ ...prev, kyc: { ...prev.kyc, addressLine2: value } }))}
+              />
+            </div>
+            {partnerForm ? (
+              <div className="mt-8">
+                <h4 className="text-base font-black text-gray-900 mb-4">Partner Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Partner Name" value={partnerForm.name} onChange={(value) => setPartnerForm(prev => ({ ...prev, name: value }))} />
+                  <FormField label="Partner Email" value={partnerForm.email} onChange={(value) => setPartnerForm(prev => ({ ...prev, email: value }))} />
+                  <FormField label="Partner Phone" value={partnerForm.phone} onChange={(value) => setPartnerForm(prev => ({ ...prev, phone: value }))} />
+                  <FormField label="Partner Business Name" value={partnerForm.businessName} onChange={(value) => setPartnerForm(prev => ({ ...prev, businessName: value }))} />
+                  <FormField label="Partner GST Number" value={partnerForm.gstNumber} onChange={(value) => setPartnerForm(prev => ({ ...prev, gstNumber: value }))} />
+                  <FormField label="Partner PAN Number" value={partnerForm.panNumber} onChange={(value) => setPartnerForm(prev => ({ ...prev, panNumber: value }))} />
+                  <FormField label="Partner Address" value={partnerForm.address} onChange={(value) => setPartnerForm(prev => ({ ...prev, address: value }))} />
+                  <FormField label="Partner City" value={partnerForm.city} onChange={(value) => setPartnerForm(prev => ({ ...prev, city: value }))} />
+                  <FormField label="Partner State" value={partnerForm.state} onChange={(value) => setPartnerForm(prev => ({ ...prev, state: value }))} />
+                  <FormField label="Partner Pincode" value={partnerForm.pincode} onChange={(value) => setPartnerForm(prev => ({ ...prev, pincode: value }))} />
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">
@@ -226,6 +394,21 @@ function KycItem({ label, value, className = '' }) {
       }`}>
         {value || '—'}
       </div>
+    </div>
+  )
+}
+
+function FormField({ label, value, onChange, placeholder = '' }) {
+  return (
+    <div>
+      <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1.5 block">{label}</label>
+      <input
+        type="text"
+        value={value || ''}
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+      />
     </div>
   )
 }
