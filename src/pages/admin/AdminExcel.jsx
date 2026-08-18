@@ -69,12 +69,31 @@ const spreadsheetStyles = `
   }
 `
 
+// Normalize raw database/import arrays into cell objects expected by react-spreadsheet
+const normalizeData = (raw) => {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return [
+      [{ value: 'Item' }, { value: 'Quantity' }, { value: 'Price' }, { value: 'Total' }],
+      [{ value: '' }, { value: '' }, { value: '' }, { value: '' }]
+    ];
+  }
+  return raw.map(row => {
+    if (!Array.isArray(row)) return [];
+    return row.map(cell => {
+      if (cell && typeof cell === 'object' && 'value' in cell) {
+        return { value: cell.value !== null && cell.value !== undefined ? String(cell.value) : '' };
+      }
+      return { value: cell !== null && cell !== undefined ? String(cell) : '' };
+    });
+  });
+};
+
 export default function AdminExcel() {
   const [sheets, setSheets] = useState([])
   const [currentId, setCurrentId] = useState(null)
   const [data, setData] = useState([
-    ['Item', 'Quantity', 'Price', 'Total'],
-    ['', '', '', '']
+    [{ value: 'Item' }, { value: 'Quantity' }, { value: 'Price' }, { value: 'Total' }],
+    [{ value: '' }, { value: '' }, { value: '' }, { value: '' }]
   ])
   const [fileName, setFileName] = useState('admin-data')
   const [loading, setLoading] = useState(true)
@@ -116,9 +135,10 @@ export default function AdminExcel() {
         
         if (initialSheet) {
           setCurrentId(initialSheet._id)
-          setData(initialSheet.data)
+          const normalized = normalizeData(initialSheet.data)
+          setData(normalized)
           setFileName(initialSheet.fileName)
-          setHistory([initialSheet.data])
+          setHistory([normalized])
           setHistoryIndex(0)
         }
       } catch (err) {
@@ -189,11 +209,7 @@ export default function AdminExcel() {
   }, [loadSheetList])
 
   const handleDataChange = (newData) => {
-    // Convert to 2D array of strings for consistency
-    const normalizedData = newData.map(row => row.map(cell => {
-      if (cell === null || cell === undefined) return ''
-      return String(cell)
-    }))
+    const normalizedData = normalizeData(newData)
     setData(normalizedData)
     saveToHistory(normalizedData)
     saveData(normalizedData, fileName, currentId)
@@ -216,9 +232,10 @@ export default function AdminExcel() {
       await loadSheetList()
       // Load the new sheet
       setCurrentId(newSheet._id)
-      setData(newSheet.data)
+      const normalized = normalizeData(newSheet.data)
+      setData(normalized)
       setFileName(newSheet.fileName)
-      setHistory([newSheet.data])
+      setHistory([normalized])
       setHistoryIndex(0)
     } catch (err) {
       console.error('Failed to create sheet:', err)
@@ -234,9 +251,10 @@ export default function AdminExcel() {
       const res = await api.get(`/api/admin/excel/${id}`)
       const sheet = res.data
       setCurrentId(sheet._id)
-      setData(sheet.data)
+      const normalized = normalizeData(sheet.data)
+      setData(normalized)
       setFileName(sheet.fileName)
-      setHistory([sheet.data])
+      setHistory([normalized])
       setHistoryIndex(0)
     } catch (err) {
       console.error('Failed to load sheet:', err)
@@ -248,14 +266,10 @@ export default function AdminExcel() {
   // Delete sheet
   const handleDeleteSheet = async (e, id, name) => {
     e.stopPropagation()
-    const password = prompt(`To delete spreadsheet "${name}", enter your deletion password:`)
-    if (password === null) return // cancel
-    if (!password) {
-      alert('Password is required!')
-      return
-    }
+    if (!confirm(`Are you sure you want to delete spreadsheet "${name}"?`)) return
+    
     try {
-      await api.delete(`/api/admin/excel/${id}`, { data: { password } })
+      await api.delete(`/api/admin/excel/${id}`)
       
       const list = await loadSheetList()
       // If we deleted the currently open sheet, load the next available or create default
@@ -268,9 +282,10 @@ export default function AdminExcel() {
           const defaultSheet = res.data
           await loadSheetList()
           setCurrentId(defaultSheet._id)
-          setData(defaultSheet.data)
+          const normalized = normalizeData(defaultSheet.data)
+          setData(normalized)
           setFileName(defaultSheet.fileName)
-          setHistory([defaultSheet.data])
+          setHistory([normalized])
           setHistoryIndex(0)
         }
       }
@@ -282,7 +297,7 @@ export default function AdminExcel() {
 
   // Add new row
   const addRow = () => {
-    const newRow = new Array(data[0]?.length || 4).fill('')
+    const newRow = new Array(data[0]?.length || 4).fill(null).map(() => ({ value: '' }))
     const newData = [...data, newRow]
     setData(newData)
     saveToHistory(newData)
@@ -300,7 +315,7 @@ export default function AdminExcel() {
 
   // Add new column
   const addColumn = () => {
-    const newData = data.map(row => [...row, ''])
+    const newData = data.map(row => [...row, { value: '' }])
     setData(newData)
     saveToHistory(newData)
     saveData(newData, fileName, currentId)
@@ -319,8 +334,8 @@ export default function AdminExcel() {
   const handleClear = () => {
     if (confirm('Are you sure you want to clear all data?')) {
       const newData = [
-        ['Item', 'Quantity', 'Price', 'Total'],
-        ['', '', '', '']
+        [{ value: 'Item' }, { value: 'Quantity' }, { value: 'Price' }, { value: 'Total' }],
+        [{ value: '' }, { value: '' }, { value: '' }, { value: '' }]
       ]
       setData(newData)
       saveToHistory(newData)
@@ -330,7 +345,8 @@ export default function AdminExcel() {
 
   // Export to Excel
   const handleExport = () => {
-    const worksheet = XLSX.utils.aoa_to_sheet(data)
+    const rawRows = data.map(row => row.map(cell => cell?.value || ''))
+    const worksheet = XLSX.utils.aoa_to_sheet(rawRows)
     const workbook = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1')
     XLSX.writeFile(workbook, `${fileName}.xlsx`)
@@ -349,18 +365,15 @@ export default function AdminExcel() {
       const ws = wb.Sheets[wsname]
       const jsonData = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' })
       
-      // Convert all cells to strings/numbers for react-spreadsheet
-      const formattedData = jsonData.length > 0 
-        ? jsonData.map(row => row.map(cell => cell !== null && cell !== undefined ? String(cell) : ''))
-        : [['Item', 'Quantity', 'Price', 'Total'], ['', '', '', '']]
+      const normalizedData = normalizeData(jsonData)
       
-      setData(formattedData)
-      saveToHistory(formattedData)
+      setData(normalizedData)
+      saveToHistory(normalizedData)
       
       // Update file name
       const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
       setFileName(nameWithoutExt)
-      saveData(formattedData, nameWithoutExt, currentId)
+      saveData(normalizedData, nameWithoutExt, currentId)
     }
     reader.readAsBinaryString(file)
     
@@ -662,7 +675,7 @@ export default function AdminExcel() {
                   <ul className="text-xs text-blue-700 space-y-0.5">
                     <li>• Changes auto-save back to the server.</li>
                     <li>• Use the Left Sidebar to switch between spreadsheets, or create new ones.</li>
-                    <li>• Deleting spreadsheets requires your B2B deletion password.</li>
+                    <li>• Deleting spreadsheets only requires confirmation (no password needed).</li>
                   </ul>
                 </div>
               </div>
