@@ -70,6 +70,8 @@ const spreadsheetStyles = `
 `
 
 export default function AdminExcel() {
+  const [sheets, setSheets] = useState([])
+  const [currentId, setCurrentId] = useState(null)
   const [data, setData] = useState([
     ['Item', 'Quantity', 'Price', 'Total'],
     ['', '', '', '']
@@ -83,25 +85,50 @@ export default function AdminExcel() {
   const [history, setHistory] = useState([])
   const [historyIndex, setHistoryIndex] = useState(-1)
 
+  // Load sheet list
+  const loadSheetList = useCallback(async () => {
+    try {
+      const res = await api.get('/api/admin/excel/list')
+      setSheets(res.data || [])
+      return res.data || []
+    } catch (err) {
+      console.error('Failed to load Excel list:', err)
+      return []
+    }
+  }, [])
+
   // Load data from server on mount
   useEffect(() => {
-    const loadData = async () => {
+    const init = async () => {
+      setLoading(true)
       try {
-        const res = await api.get('/api/admin/excel')
-        if (res.data.data) {
-          setData(res.data.data)
-          setHistory([res.data.data])
+        const list = await loadSheetList()
+        let initialSheet = null
+        if (list.length > 0) {
+          const res = await api.get(`/api/admin/excel/${list[0]._id}`)
+          initialSheet = res.data
+        } else {
+          // Create default sheet if list is empty
+          const res = await api.post('/api/admin/excel', { fileName: 'admin-data' })
+          initialSheet = res.data
+          await loadSheetList()
+        }
+        
+        if (initialSheet) {
+          setCurrentId(initialSheet._id)
+          setData(initialSheet.data)
+          setFileName(initialSheet.fileName)
+          setHistory([initialSheet.data])
           setHistoryIndex(0)
         }
-        if (res.data.fileName) setFileName(res.data.fileName)
       } catch (err) {
-        console.error('Failed to load Excel data:', err)
+        console.error('Init failed:', err)
       } finally {
         setLoading(false)
       }
     }
-    loadData()
-  }, [])
+    init()
+  }, [loadSheetList])
 
   // Save data to history for undo/redo
   const saveToHistory = useCallback((newData) => {
@@ -119,9 +146,9 @@ export default function AdminExcel() {
       setHistoryIndex(newIndex)
       const prevData = history[newIndex]
       setData(prevData)
-      saveData(prevData, fileName)
+      saveData(prevData, fileName, currentId)
     }
-  }, [historyIndex, history, fileName])
+  }, [historyIndex, history, fileName, currentId])
 
   // Redo
   const handleRedo = useCallback(() => {
@@ -130,12 +157,12 @@ export default function AdminExcel() {
       setHistoryIndex(newIndex)
       const nextData = history[newIndex]
       setData(nextData)
-      saveData(nextData, fileName)
+      saveData(nextData, fileName, currentId)
     }
-  }, [historyIndex, history, fileName])
+  }, [historyIndex, history, fileName, currentId])
 
   // Save data to server with debounce
-  const saveData = useCallback(async (newData, newFileName) => {
+  const saveData = useCallback(async (newData, newFileName, id) => {
     // Clear previous debounce
     if (debounceRef.current) {
       clearTimeout(debounceRef.current)
@@ -145,18 +172,21 @@ export default function AdminExcel() {
     debounceRef.current = setTimeout(async () => {
       setSaving(true)
       try {
-        await api.put('/api/admin/excel', {
+        const url = id ? `/api/admin/excel/${id}` : '/api/admin/excel'
+        await api.put(url, {
           data: newData,
           fileName: newFileName
         })
         setLastSaved(new Date())
+        // Refresh sheet list in background
+        loadSheetList()
       } catch (err) {
         console.error('Failed to save Excel data:', err)
       } finally {
         setSaving(false)
       }
     }, 800)
-  }, [])
+  }, [loadSheetList])
 
   const handleDataChange = (newData) => {
     // Convert to 2D array of strings for consistency
@@ -166,13 +196,88 @@ export default function AdminExcel() {
     }))
     setData(normalizedData)
     saveToHistory(normalizedData)
-    saveData(normalizedData, fileName)
+    saveData(normalizedData, fileName, currentId)
   }
 
   const handleFileNameChange = (e) => {
     const newName = e.target.value
     setFileName(newName)
-    saveData(data, newName)
+    saveData(data, newName, currentId)
+  }
+
+  // Create new sheet
+  const handleCreateNew = async () => {
+    const name = prompt('Enter new spreadsheet name:') || 'New Spreadsheet'
+    if (!name.trim()) return
+    setSaving(true)
+    try {
+      const res = await api.post('/api/admin/excel', { fileName: name.trim() })
+      const newSheet = res.data
+      await loadSheetList()
+      // Load the new sheet
+      setCurrentId(newSheet._id)
+      setData(newSheet.data)
+      setFileName(newSheet.fileName)
+      setHistory([newSheet.data])
+      setHistoryIndex(0)
+    } catch (err) {
+      console.error('Failed to create sheet:', err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Load specific sheet
+  const handleLoadSheet = async (id) => {
+    setLoading(true)
+    try {
+      const res = await api.get(`/api/admin/excel/${id}`)
+      const sheet = res.data
+      setCurrentId(sheet._id)
+      setData(sheet.data)
+      setFileName(sheet.fileName)
+      setHistory([sheet.data])
+      setHistoryIndex(0)
+    } catch (err) {
+      console.error('Failed to load sheet:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Delete sheet
+  const handleDeleteSheet = async (e, id, name) => {
+    e.stopPropagation()
+    const password = prompt(`To delete spreadsheet "${name}", enter your deletion password:`)
+    if (password === null) return // cancel
+    if (!password) {
+      alert('Password is required!')
+      return
+    }
+    try {
+      await api.delete(`/api/admin/excel/${id}`, { data: { password } })
+      
+      const list = await loadSheetList()
+      // If we deleted the currently open sheet, load the next available or create default
+      if (id === currentId) {
+        if (list.length > 0) {
+          handleLoadSheet(list[0]._id)
+        } else {
+          // If no sheets remain, create a default one
+          const res = await api.post('/api/admin/excel', { fileName: 'admin-data' })
+          const defaultSheet = res.data
+          await loadSheetList()
+          setCurrentId(defaultSheet._id)
+          setData(defaultSheet.data)
+          setFileName(defaultSheet.fileName)
+          setHistory([defaultSheet.data])
+          setHistoryIndex(0)
+        }
+      }
+    } catch (err) {
+      console.error(err)
+      alert(err.response?.data?.error || 'Failed to delete sheet')
+    }
   }
 
   // Add new row
@@ -181,7 +286,7 @@ export default function AdminExcel() {
     const newData = [...data, newRow]
     setData(newData)
     saveToHistory(newData)
-    saveData(newData, fileName)
+    saveData(newData, fileName, currentId)
   }
 
   // Delete last row
@@ -190,7 +295,7 @@ export default function AdminExcel() {
     const newData = data.slice(0, -1)
     setData(newData)
     saveToHistory(newData)
-    saveData(newData, fileName)
+    saveData(newData, fileName, currentId)
   }
 
   // Add new column
@@ -198,7 +303,7 @@ export default function AdminExcel() {
     const newData = data.map(row => [...row, ''])
     setData(newData)
     saveToHistory(newData)
-    saveData(newData, fileName)
+    saveData(newData, fileName, currentId)
   }
 
   // Delete last column
@@ -207,7 +312,7 @@ export default function AdminExcel() {
     const newData = data.map(row => row.slice(0, -1))
     setData(newData)
     saveToHistory(newData)
-    saveData(newData, fileName)
+    saveData(newData, fileName, currentId)
   }
 
   // Clear all data
@@ -219,7 +324,7 @@ export default function AdminExcel() {
       ]
       setData(newData)
       saveToHistory(newData)
-      saveData(newData, fileName)
+      saveData(newData, fileName, currentId)
     }
   }
 
@@ -251,11 +356,11 @@ export default function AdminExcel() {
       
       setData(formattedData)
       saveToHistory(formattedData)
-      saveData(formattedData, fileName)
       
       // Update file name
       const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '')
       setFileName(nameWithoutExt)
+      saveData(formattedData, nameWithoutExt, currentId)
     }
     reader.readAsBinaryString(file)
     
@@ -277,11 +382,11 @@ export default function AdminExcel() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex flex-col overflow-hidden">
       <style>{spreadsheetStyles}</style>
       
       {/* Top Bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+      <div className="bg-white border-b border-gray-200 shadow-sm z-30 shrink-0">
         <div className="max-w-[1800px] mx-auto px-6 py-4">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -338,7 +443,7 @@ export default function AdminExcel() {
       </div>
 
       {/* Toolbar */}
-      <div className="bg-white border-b border-gray-200 sticky top-20 z-40">
+      <div className="bg-white border-b border-gray-200 z-20 shrink-0">
         <div className="max-w-[1800px] mx-auto px-6 py-3">
           <div className="flex flex-wrap items-center gap-2">
             {/* Undo/Redo */}
@@ -397,11 +502,13 @@ export default function AdminExcel() {
                   if (debounceRef.current) clearTimeout(debounceRef.current)
                   setSaving(true)
                   try {
-                    await api.put('/api/admin/excel', {
+                    const url = currentId ? `/api/admin/excel/${currentId}` : '/api/admin/excel'
+                    await api.put(url, {
                       data: data,
                       fileName: fileName
                     })
                     setLastSaved(new Date())
+                    loadSheetList()
                   } catch (err) {
                     console.error('Failed to save Excel data:', err)
                     alert('Failed to save! Please try again.')
@@ -479,34 +586,86 @@ export default function AdminExcel() {
         </div>
       </div>
 
-      {/* Spreadsheet Container */}
-      <div className="max-w-[1800px] mx-auto px-6 py-6">
-        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-          <div className="p-6 overflow-x-auto">
-            <Spreadsheet
-              data={data}
-              onChange={handleDataChange}
-              className="w-full"
-            />
+      {/* Main Workspace Layout (Sidebar + Editor) */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left Sidebar: Spreadsheets List */}
+        <div className="w-80 bg-white border-r border-gray-200 flex flex-col shrink-0 z-10 shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-gray-200 bg-gray-50/50 flex items-center justify-between">
+            <span className="font-black text-gray-500 uppercase tracking-widest text-[10px]">Saved Files ({sheets.length})</span>
+            <button
+              onClick={handleCreateNew}
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-bold text-[10px] uppercase tracking-wider flex items-center gap-1 shadow-sm"
+            >
+              + Create
+            </button>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-3 space-y-2 custom-scrollbar">
+            {sheets.map(sheet => (
+              <div
+                key={sheet._id}
+                onClick={() => handleLoadSheet(sheet._id)}
+                className={`p-3 rounded-xl border text-left cursor-pointer transition-all flex items-center justify-between gap-3 group ${
+                  sheet._id === currentId 
+                    ? 'bg-blue-50/50 border-blue-200 shadow-sm' 
+                    : 'border-gray-100 hover:bg-gray-50'
+                }`}
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-sm text-gray-800 truncate">{sheet.fileName}</div>
+                  <div className="text-[9px] text-gray-400 mt-1 font-medium">
+                    Updated: {new Date(sheet.updatedAt).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => handleDeleteSheet(e, sheet._id, sheet.fileName)}
+                  className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  title="Delete Spreadsheet"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            ))}
+            {sheets.length === 0 && (
+              <div className="text-[10px] text-gray-400 italic text-center py-6">No saved sheets</div>
+            )}
           </div>
         </div>
 
-        {/* Info Card */}
-        <div className="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-5">
-          <div className="flex items-start gap-3">
-            <div className="p-2 bg-blue-100 rounded-xl">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+        {/* Right Editor: react-spreadsheet */}
+        <div className="flex-1 flex flex-col overflow-hidden bg-gray-50">
+          <div className="flex-1 p-6 overflow-auto">
+            <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden min-w-[800px]">
+              <div className="p-6">
+                <Spreadsheet
+                  data={data}
+                  onChange={handleDataChange}
+                  className="w-full"
+                />
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-bold text-blue-900 mb-1">Tips & Tricks</h3>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Data is automatically saved to the server as you type</li>
-                <li>• Use Undo/Redo buttons to navigate changes</li>
-                <li>• Click Export to download your spreadsheet as Excel file</li>
-                <li>• Import existing Excel (.xlsx, .xls) or CSV files</li>
-              </ul>
+          </div>
+
+          {/* Bottom Info Card */}
+          <div className="p-6 border-t border-gray-200 bg-white shrink-0">
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-blue-100 rounded-xl">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xs font-black text-blue-900 uppercase tracking-wider mb-1">Spreadsheet Tips</h3>
+                  <ul className="text-xs text-blue-700 space-y-0.5">
+                    <li>• Changes auto-save back to the server.</li>
+                    <li>• Use the Left Sidebar to switch between spreadsheets, or create new ones.</li>
+                    <li>• Deleting spreadsheets requires your B2B deletion password.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>

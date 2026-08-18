@@ -71,6 +71,10 @@ export default function InventoryPage() {
   const [bulkSubmitting, setBulkSubmitting] = useState(false)
   const CATALOG_PAGE_SIZE = 12
 
+  const [filterCategory, setFilterCategory] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
+  const [categories, setCategories] = useState([])
+
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState({ kpis: { totalSkus:0, totalUnits:0, lowStockCount:0, totalAdded30d:0 }, daily: [], topProducts: [], lowStock: [] })
@@ -78,6 +82,10 @@ export default function InventoryPage() {
   const [showSkuModal, setShowSkuModal] = useState(false)
   const [selectedProductForSkuView, setSelectedProductForSkuView] = useState(null)
   const [topSkus, setTopSkus] = useState([])
+
+  useEffect(() => {
+    api.get('/api/categories', { params: { active: true } }).then(({ data }) => setCategories(data || [])).catch(() => {})
+  }, [])
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -120,7 +128,11 @@ export default function InventoryPage() {
     const run = async () => {
       setCatalogLoading(true)
       try {
-        const { data } = await api.get('/api/products', { params: { q: catalogSearch.trim(), limit: CATALOG_PAGE_SIZE, page: catalogPage }, signal: ctrl.signal })
+        const params = { q: catalogSearch.trim(), limit: CATALOG_PAGE_SIZE, page: catalogPage };
+        if (filterCategory) params.category = filterCategory;
+        if (filterStatus !== 'all') params.status = filterStatus;
+
+        const { data } = await api.get('/api/products', { params, signal: ctrl.signal })
         setCatalogProducts(data.items || [])
         setCatalogTotal(data.total || 0)
       } catch { /* ignore */ }
@@ -130,12 +142,12 @@ export default function InventoryPage() {
     }
     const id = setTimeout(run, 200)
     return () => { clearTimeout(id); ctrl.abort() }
-  }, [catalogSearch, catalogPage, CATALOG_PAGE_SIZE])
+  }, [catalogSearch, catalogPage, filterCategory, filterStatus, CATALOG_PAGE_SIZE])
 
-  // Reset page when search changes
+  // Reset page when search or filters change
   useEffect(() => {
     setCatalogPage(1)
-  }, [catalogSearch])
+  }, [catalogSearch, filterCategory, filterStatus])
 
   const submitBulk = async (e) => {
     e.preventDefault()
@@ -303,21 +315,42 @@ export default function InventoryPage() {
 
       {/* Catalog & Bulk Add Section */}
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm space-y-4">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
           <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">Catalog / Add Inventory</h2>
-          <div className="relative w-64 md:w-80">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            </span>
-            <input
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-9 py-2 text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-              placeholder="Search products..."
-              value={catalogSearch}
-              onChange={e => setCatalogSearch(e.target.value)}
-            />
-            {catalogLoading && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-violet-200 border-t-violet-600 rounded-full animate-spin" aria-hidden />
-            )}
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={filterCategory}
+              onChange={e => setFilterCategory(e.target.value)}
+              className="bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+            >
+              <option value="">All Categories</option>
+              {categories.map(c => (
+                <option key={c._id} value={c._id}>{c.name}</option>
+              ))}
+            </select>
+            <select
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+              className="bg-gray-50 border border-gray-200 text-gray-900 text-xs rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active Only</option>
+              <option value="inactive">Inactive Only</option>
+            </select>
+            <div className="relative w-64">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </span>
+              <input
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-9 py-2 text-xs font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                placeholder="Search products..."
+                value={catalogSearch}
+                onChange={e => setCatalogSearch(e.target.value)}
+              />
+              {catalogLoading && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-violet-200 border-t-violet-600 rounded-full animate-spin" aria-hidden />
+              )}
+            </div>
           </div>
         </div>
 

@@ -115,15 +115,21 @@ export default function Products() {
   const [preview, setPreview] = useState('')
   const [showAddProduct, setShowAddProduct] = useState(false)
 
+  const [filterCategory, setFilterCategory] = useState('')
+  const [filterStatus, setFilterStatus] = useState('all')
+
   const [loading, setLoading] = useState(false)
   const load = async (p=1) => {
     setLoading(true)
     try {
-      const { data } = await api.get('/api/products', { params: { page:p, limit, q } })
+      const params = { page: p, limit, q }
+      if (filterCategory) params.category = filterCategory
+      if (filterStatus !== 'all') params.status = filterStatus
+      const { data } = await api.get('/api/products', { params })
       setItems(data.items); setTotal(data.total); setPage(p)
     } finally { setLoading(false) }
   }
-  useEffect(()=>{ load(1) }, [q])
+  useEffect(()=>{ load(1) }, [q, filterCategory, filterStatus])
 
   useEffect(() => {
     api.get('/api/brands', { params: { active: true } }).then(({ data }) => setBrands(data || [])).catch(() => {})
@@ -339,6 +345,25 @@ export default function Products() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
               {showAddProduct ? 'Close add form' : 'Add New Product'}
             </button>
+            <select
+              value={filterCategory}
+              onChange={e => setFilterCategory(e.target.value)}
+              className="bg-white border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm font-semibold"
+            >
+              <option value="">All Categories</option>
+              {categories.map(c => (
+                <option key={c._id} value={c._id}>{c.name}</option>
+              ))}
+            </select>
+            <select
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+              className="bg-white border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm font-semibold"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active Only</option>
+              <option value="inactive">Inactive Only</option>
+            </select>
             <div className="relative flex-1 min-w-[200px] max-w-xs">
               <input
                 placeholder="Search products..."
