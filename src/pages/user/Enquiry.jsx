@@ -42,7 +42,8 @@ export default function Enquiry() {
     : (loc.state?.productId ? [{ productId: loc.state.productId, quantity: 1, name: loc.state.name, mrp: loc.state.mrp || loc.state.price, price: loc.state.price, gst: loc.state.gst || 0 }] : [])
 
   const [items,          setItems]          = useState(initialItems)
-  const [profile,        setProfile]        = useState({ name:'', phone:'', email:'', kyc:{} })
+  const [profile,        setProfile]        = useState({ name:'', phone:'', email:'', kyc:{}, isCreditEnabled:false, availableCredit:0, creditLimit:0, deliverySettings:{} })
+  const [deliveryChannel, setDeliveryChannel] = useState('DELHIVERY')
   const [svc,            setSvc]            = useState({ loading:true, available:null, cod:null, etaStart:null, etaEnd:null, error:'' })
   const [ship,           setShip]           = useState({ loading:false, amount:0, discount:0, final:0 })
   const [paymentMethod,  setPaymentMethod]  = useState('RAZORPAY')
@@ -98,8 +99,30 @@ export default function Enquiry() {
       try {
         const { data } = await api.get('/api/user/me')
         if (!data.isKycComplete) { notify('Complete your KYC to place orders','error'); nav('/profile'); return }
-        const prof = { name:data.name||'', phone:data.phone||'', email:data.email||'', kyc:data.kyc||{} }
+        const prof = {
+          name: data.name || '',
+          phone: data.phone || '',
+          email: data.email || '',
+          kyc: data.kyc || {},
+          isCreditEnabled: !!data.isCreditEnabled,
+          availableCredit: Number(data.availableCredit || 0),
+          creditLimit: Number(data.creditLimit || 0),
+          deliverySettings: data.deliverySettings || { delhiveryEnabled: true, localDeliveryEnabled: false }
+        }
         setProfile(prof)
+
+        // Resolve delivery channel
+        if (prof.deliverySettings?.localDeliveryEnabled && !prof.deliverySettings?.delhiveryEnabled) {
+          setDeliveryChannel('LOCAL_DELIVERY')
+        } else {
+          setDeliveryChannel('DELHIVERY')
+        }
+
+        // Set default payment method: if credit-enabled, default to CREDIT
+        if (prof.isCreditEnabled) {
+          setPaymentMethod('CREDIT')
+        }
+
         const pin = String(prof?.kyc?.pincode||'').trim()
         if (pin) loadServiceability(pin)
       } catch { nav('/login') }
@@ -175,7 +198,7 @@ export default function Enquiry() {
     setCouponError('')
   }
 
-  const handleRazorpay = async ({ items, paymentMethod, razorpayOrderId, amountPaise }) => {
+  const handleRazorpay = async ({ items, paymentMethod, deliveryChannel, razorpayOrderId, amountPaise }) => {
     try { await ensureRazorpayLoaded() } catch { notify('Unable to load payment gateway. Please try again.','error'); return }
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID||"rzp_test_placeholder",
@@ -183,7 +206,14 @@ export default function Enquiry() {
       image: logo, order_id: razorpayOrderId,
       handler: async (response) => {
         try {
-          await api.post('/api/orders/create-after-verify', { razorpay_order_id:response.razorpay_order_id, razorpay_payment_id:response.razorpay_payment_id, razorpay_signature:response.razorpay_signature, items, paymentMethod })
+          await api.post('/api/orders/create-after-verify', {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            items,
+            paymentMethod,
+            deliveryChannel
+          })
           notify('Payment Successful!','success'); clearCart(); nav('/orders')
         } catch { notify('Payment verification failed','error') }
       },
@@ -200,23 +230,107 @@ export default function Enquiry() {
     try {
       const pin = String(profile?.kyc?.pincode||'').trim()
       if (!pin) { notify('Please add delivery pincode in KYC','error'); nav('/profile'); return }
-      const { data:sv } = await api.get('/api/shipping/check-pincode',{ params:{ pincode:pin } })
-      if (!sv?.delivery_available) { notify('Delivery not available for your pincode','error'); return }
-      if (paymentMethod==='COD'&&!sv?.cod_available) { notify('COD not available for your pincode','error'); return }
-    } catch { notify('Unable to verify serviceability right now','error'); return }
+      if (deliveryChannel === 'DELHIVERY') {
+        const { data:sv } = await api.get('/api/shipping/check-pincode',{ params:{ pincode:pin } })
+        if (!sv?.delivery_available) { notify('Delivery not available for your pincode','error'); return }
+        if (paymentMethod==='COD'&&!sv?.cod_available) { notify('COD not available for your pincode','error'); return }
+      }
+    } catch { 
+      if (deliveryChannel === 'DELHIVERY') {
+        notify('Unable to verify serviceability right now','error'); return 
+      }
+    }
     setLoading(true)
     try {
       const cleanItems = items.filter(it=>typeof it.productId==='string'&&it.productId.length>=12).map(it=>({ productId:it.productId, variantSku:it.variantSku, quantity:Math.max(1,Number(it.quantity||1)) }))
       const visibleTotal = computedVisibleTotal(items)
       if (visibleTotal < minAmount) { notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`,'error'); setLoading(false); return }
-      if (paymentMethod==='MANUAL') { setLoading(false); nav('/manual-payment',{ state:{ items:cleanItems, amount:totalPayable, couponCode:appliedCoupon?.code || '' } }); return }
+
+      // ── RETAILER CREDIT PAYMENT ──
+      if (paymentMethod === 'CREDIT') {
+        if (!profile?.isCreditEnabled) {
+          notify('Credit facility is not enabled for your account', 'error')
+          setLoading(false)
+          return
+        }
+        if (profile.availableCredit < totalPayable) {
+          notify(`Insufficient credit balance. Available: ₹${profile.availableCredit.toLocaleString('en-IN')}`, 'error')
+          setLoading(false)
+          return
+        }
+        try {
+          await api.post('/api/orders', {
+            items: cleanItems,
+            paymentMethod: 'CREDIT',
+            deliveryChannel,
+            couponCode: appliedCoupon?.code || ''
+          })
+          clearCart()
+          notify('Order placed successfully with Retailer Credit!', 'success')
+          nav('/orders')
+          return
+        } catch (err) {
+          const errMsg = err?.response?.data?.message || err?.response?.data?.error || 'Failed to place order with credit'
+          notify(errMsg, 'error')
+          setLoading(false)
+          return
+        }
+      }
+
+      if (paymentMethod==='MANUAL') {
+        setLoading(false);
+        nav('/manual-payment',{ state:{ items:cleanItems, amount:totalPayable, deliveryChannel, couponCode:appliedCoupon?.code || '' } });
+        return
+      }
+
       if (paymentMethod==='RAZORPAY') {
-        try { const { data } = await api.post('/api/orders/prepare-payment',{ items:cleanItems, paymentMethod:'RAZORPAY', couponCode:appliedCoupon?.code || '' }); await handleRazorpay({ items:cleanItems, paymentMethod:'RAZORPAY', razorpayOrderId:data.razorpayOrderId, amountPaise:data.amountPaise }) }
-        catch { notify('Payment initialization failed. Please retry.','error') }
+        try {
+          const { data } = await api.post('/api/orders', {
+            items: cleanItems,
+            paymentMethod: 'RAZORPAY',
+            deliveryChannel,
+            couponCode: appliedCoupon?.code || ''
+          });
+          await handleRazorpay({
+            items: cleanItems,
+            paymentMethod: 'RAZORPAY',
+            deliveryChannel,
+            razorpayOrderId: data.razorpayOrderId,
+            amountPaise: Math.round(totalPayable * 100)
+          })
+        }
+        catch (err) {
+          notify(err?.response?.data?.message || err?.response?.data?.error || 'Payment initialization failed. Please retry.','error')
+        }
       } else if (paymentMethod==='COD') {
-        if (codAdvMethod==='MANUAL') { setLoading(false); nav('/manual-payment',{ state:{ items:cleanItems, amount:Math.round(totalPayable*0.2), cod20:true, couponCode:appliedCoupon?.code || '' } }); return }
-        try { const { data } = await api.post('/api/orders/prepare-payment',{ items:cleanItems, paymentMethod:'COD_20', couponCode:appliedCoupon?.code || '' }); await handleRazorpay({ items:cleanItems, paymentMethod:'COD_20', razorpayOrderId:data.razorpayOrderId, amountPaise:data.amountPaise }) }
-        catch { notify('Payment initialization failed. Please retry.','error') }
+        if (profile?.isCreditEnabled) {
+          notify('Cash on Delivery (COD) is strictly forbidden for credit-enabled accounts', 'error')
+          setLoading(false)
+          return
+        }
+        if (codAdvMethod==='MANUAL') {
+          setLoading(false);
+          nav('/manual-payment',{ state:{ items:cleanItems, amount:Math.round(totalPayable*0.2), cod20:true, deliveryChannel, couponCode:appliedCoupon?.code || '' } });
+          return
+        }
+        try {
+          const { data } = await api.post('/api/orders', {
+            items: cleanItems,
+            paymentMethod: 'COD_20',
+            deliveryChannel,
+            couponCode: appliedCoupon?.code || ''
+          });
+          await handleRazorpay({
+            items: cleanItems,
+            paymentMethod: 'COD_20',
+            deliveryChannel,
+            razorpayOrderId: data.razorpayOrderId,
+            amountPaise: Math.round(totalPayable * 0.2 * 100)
+          })
+        }
+        catch (err) {
+          notify(err?.response?.data?.message || err?.response?.data?.error || 'Payment initialization failed. Please retry.','error')
+        }
       }
     } catch (err) {
       const code = err?.response?.data?.error
@@ -394,7 +508,9 @@ export default function Enquiry() {
   )
 
   /* ── MAIN ── */
-  const payIsReady = !loading && visibleTotal >= minAmount && svc.available
+  const isDeliveryReady = deliveryChannel === 'LOCAL_DELIVERY' || svc.available
+  const hasEnoughCredit = !profile?.isCreditEnabled || paymentMethod !== 'CREDIT' || (profile.availableCredit >= totalPayable)
+  const payIsReady = !loading && visibleTotal >= minAmount && isDeliveryReady && hasEnoughCredit
 
   return (
     <>
@@ -1864,6 +1980,78 @@ export default function Enquiry() {
                     </div>
                   </div>
 
+                  {/* Delivery Channel Selection */}
+                  {profile.deliverySettings?.delhiveryEnabled && profile.deliverySettings?.localDeliveryEnabled && (
+                    <div style={{ marginTop: 14 }}>
+                      <div className="eq-info-label" style={{ marginBottom: 8 }}>Select Delivery Channel</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
+                        <button
+                          type="button"
+                          onClick={() => setDeliveryChannel('DELHIVERY')}
+                          style={{
+                            padding: '12px 14px',
+                            borderRadius: 14,
+                            border: `1.5px solid ${deliveryChannel === 'DELHIVERY' ? '#7c3aed' : '#e2e8f0'}`,
+                            background: deliveryChannel === 'DELHIVERY' ? '#faf5ff' : '#fff',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 800, color: '#1e1b2e' }}>🚀 Delhivery Express</div>
+                            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>National Express Courier & Tracking</div>
+                          </div>
+                          <div style={{
+                            width: 16, height: 16, borderRadius: '50%',
+                            border: `2px solid ${deliveryChannel === 'DELHIVERY' ? '#7c3aed' : '#cbd5e1'}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}>
+                            {deliveryChannel === 'DELHIVERY' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#7c3aed' }} />}
+                          </div>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setDeliveryChannel('LOCAL_DELIVERY')}
+                          style={{
+                            padding: '12px 14px',
+                            borderRadius: 14,
+                            border: `1.5px solid ${deliveryChannel === 'LOCAL_DELIVERY' ? '#d97706' : '#e2e8f0'}`,
+                            background: deliveryChannel === 'LOCAL_DELIVERY' ? '#fffbeb' : '#fff',
+                            textAlign: 'left',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 800, color: '#1e1b2e' }}>🚚 Local Delivery</div>
+                            <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>Direct Dispatch / Truck Transport</div>
+                          </div>
+                          <div style={{
+                            width: 16, height: 16, borderRadius: '50%',
+                            border: `2px solid ${deliveryChannel === 'LOCAL_DELIVERY' ? '#d97706' : '#cbd5e1'}`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                          }}>
+                            {deliveryChannel === 'LOCAL_DELIVERY' && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#d97706' }} />}
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.deliverySettings?.localDeliveryEnabled && !profile.deliverySettings?.delhiveryEnabled && (
+                    <div style={{ marginTop: 12, padding: '10px 14px', background: '#fffbeb', borderRadius: 12, border: '1px solid #fde68a', fontSize: 12, color: '#92400e' }}>
+                      🚚 <strong>Local Delivery:</strong> Your account is configured for Direct Local Fulfillment.
+                    </div>
+                  )}
+
                   <div className="eq-section-div" />
 
                   {/* STEP 2: Payment */}
@@ -1873,10 +2061,49 @@ export default function Enquiry() {
                   </div>
 
                   <div className="eq-pay-options">
+                    {/* Retailer Credit Line */}
+                    {profile?.isCreditEnabled && (
+                      <button
+                        type="button"
+                        disabled={profile.availableCredit < totalPayable}
+                        className={`eq-pay-opt ${paymentMethod === 'CREDIT' ? 'active-violet' : ''} ${profile.availableCredit < totalPayable ? 'disabled-opt' : ''}`}
+                        onClick={() => {
+                          if (profile.availableCredit >= totalPayable) setPaymentMethod('CREDIT')
+                        }}
+                      >
+                        <div className="eq-pay-ico violet">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <rect x="2" y="5" width="20" height="14" rx="2" />
+                            <line x1="2" y1="10" x2="22" y2="10" />
+                          </svg>
+                        </div>
+                        <div className="eq-pay-info">
+                          <div className="eq-pay-name" style={{ color: profile.availableCredit < totalPayable ? '#9ca3af' : '#1e1b2e' }}>
+                            Retailer Credit Line
+                          </div>
+                          <div className={`eq-pay-desc ${profile.availableCredit >= totalPayable ? 'violet' : 'gray'}`}>
+                            Available Credit: ₹{Number(profile.availableCredit || 0).toLocaleString('en-IN')}
+                            {profile.availableCredit < totalPayable && (
+                              <span style={{ color: '#e11d48', fontWeight: 700, marginLeft: 6 }}>
+                                · Insufficient (Order: ₹{totalPayable.toLocaleString('en-IN')})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {profile.availableCredit >= totalPayable ? (
+                          <div className="eq-pay-radio">
+                            <div className="eq-pay-radio-dot" />
+                          </div>
+                        ) : (
+                          <div className="eq-pay-lock">🔒</div>
+                        )}
+                      </button>
+                    )}
+
                     {/* Razorpay */}
                     <button
                       type="button"
-                      disabled={!svc.available}
+                      disabled={!isDeliveryReady}
                       className={`eq-pay-opt ${paymentMethod === 'RAZORPAY' ? 'active-violet' : ''}`}
                       onClick={() => setPaymentMethod('RAZORPAY')}
                     >
@@ -1898,7 +2125,7 @@ export default function Enquiry() {
                     {/* Manual */}
                     <button
                       type="button"
-                      disabled={!svc.available}
+                      disabled={!isDeliveryReady}
                       className={`eq-pay-opt ${paymentMethod === 'MANUAL' ? 'active-green' : ''}`}
                       onClick={() => setPaymentMethod('MANUAL')}
                     >
@@ -1916,39 +2143,41 @@ export default function Enquiry() {
                       </div>
                     </button>
 
-                    {/* COD */}
-                    <button
-                      type="button"
-                      disabled={!svc.available || !svc.cod}
-                      className={`eq-pay-opt ${paymentMethod === 'COD' ? 'active-blue' : ''} ${(!svc.available || !svc.cod) ? 'disabled-opt' : ''}`}
-                      onClick={() => setPaymentMethod('COD')}
-                    >
-                      <div className="eq-pay-ico blue">
-                        {svc.cod ? (
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-                            <path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 011-1h2.39a1 1 0 01.81.42l3.39 4.9a1 1 0 01.19.54V15a1 1 0 01-1 1h-3m-4 0h-1" />
-                          </svg>
-                        ) : '🚫'}
-                      </div>
-                      <div className="eq-pay-info">
-                        <div className="eq-pay-name" style={{ color: (!svc.available || !svc.cod) ? '#9ca3af' : '#1e1b2e' }}>
-                          Partial COD (20% Advance)
+                    {/* COD - strictly forbidden if credit is enabled */}
+                    {!profile?.isCreditEnabled && (
+                      <button
+                        type="button"
+                        disabled={!svc.available || !svc.cod}
+                        className={`eq-pay-opt ${paymentMethod === 'COD' ? 'active-blue' : ''} ${(!svc.available || !svc.cod) ? 'disabled-opt' : ''}`}
+                        onClick={() => setPaymentMethod('COD')}
+                      >
+                        <div className="eq-pay-ico blue">
+                          {svc.cod ? (
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                              <path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 011-1h2.39a1 1 0 01.81.42l3.39 4.9a1 1 0 01.19.54V15a1 1 0 01-1 1h-3m-4 0h-1" />
+                            </svg>
+                          ) : '🚫'}
                         </div>
-                        <div className={`eq-pay-desc ${svc.cod ? 'blue' : 'gray'}`}>
-                          {svc.cod ? 'Secure delivery with 20% commitment' : 'Not available for this location'}
+                        <div className="eq-pay-info">
+                          <div className="eq-pay-name" style={{ color: (!svc.available || !svc.cod) ? '#9ca3af' : '#1e1b2e' }}>
+                            Partial COD (20% Advance)
+                          </div>
+                          <div className={`eq-pay-desc ${svc.cod ? 'blue' : 'gray'}`}>
+                            {svc.cod ? 'Secure delivery with 20% commitment' : 'Not available for this location'}
+                          </div>
                         </div>
-                      </div>
-                      {svc.available && svc.cod ? (
-                        <div className="eq-pay-radio">
-                          <div className="eq-pay-radio-dot" />
-                        </div>
-                      ) : (
-                        <div className="eq-pay-lock">🔒</div>
-                      )}
-                    </button>
+                        {svc.available && svc.cod ? (
+                          <div className="eq-pay-radio">
+                            <div className="eq-pay-radio-dot" />
+                          </div>
+                        ) : (
+                          <div className="eq-pay-lock">🔒</div>
+                        )}
+                      </button>
+                    )}
 
-                    {paymentMethod === 'COD' && (
+                    {!profile?.isCreditEnabled && paymentMethod === 'COD' && (
                       <div className="eq-cod-sub">
                         <button
                           type="button"
@@ -1979,10 +2208,21 @@ export default function Enquiry() {
                         <div className="eq-spin" />
                         Processing Order...
                       </>
-                    ) : !svc.available ? (
+                    ) : !isDeliveryReady ? (
                       'Delivery Not Available'
                     ) : visibleTotal < minAmount ? (
                       `Add ₹${minLeft.toLocaleString()} more`
+                    ) : paymentMethod === 'CREDIT' ? (
+                      profile.availableCredit < totalPayable ? (
+                        'Insufficient Credit Balance'
+                      ) : (
+                        <>
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M5 13l4 4L19 7" />
+                          </svg>
+                          Pay with Credit & Confirm Order
+                        </>
+                      )
                     ) : paymentMethod === 'RAZORPAY' ? (
                       <>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

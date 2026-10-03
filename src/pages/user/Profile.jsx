@@ -39,6 +39,7 @@ const Ico = ({ n, cls = 'w-5 h-5' }) => {
     close:    'M6 18L18 6M6 6l12 12',
     send:     'M12 19l9 2-9-18-9 18 9-2zm0 0v-8',
     check:    'M5 13l4 4L19 7',
+    credit:   'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
   };
   return (
     <svg className={cls} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2">
@@ -47,6 +48,25 @@ const Ico = ({ n, cls = 'w-5 h-5' }) => {
       ))}
     </svg>
   );
+};
+
+/* ── Razorpay Script Loader ── */
+const ensureRazorpayLoaded = async () => {
+  if (window.Razorpay) return true;
+  return new Promise((res, rej) => {
+    const ex = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]');
+    if (ex) {
+      ex.addEventListener('load', () => res(true), { once: true });
+      ex.addEventListener('error', () => rej(new Error('razorpay_load_failed')), { once: true });
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    s.async = true;
+    s.onload = () => res(true);
+    s.onerror = () => rej(new Error('razorpay_load_failed'));
+    document.body.appendChild(s);
+  });
 };
 
 /* ── Avatar ── */
@@ -74,6 +94,39 @@ const inputCls = 'w-full px-4 py-3 rounded-xl border border-slate-200 bg-white t
 const disabledCls = 'w-full px-4 py-3 rounded-xl border border-slate-100 bg-slate-50 text-slate-400 font-semibold text-sm cursor-not-allowed';
 const btnPrimary = 'w-full py-3.5 rounded-xl font-black text-sm text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 active:scale-[0.98] transition-all shadow-lg shadow-violet-200 disabled:opacity-50 disabled:cursor-not-allowed';
 const btnOutline = 'flex-1 py-3.5 rounded-xl font-bold text-sm border border-slate-200 text-slate-600 hover:bg-slate-50 active:scale-[0.98] transition-all';
+
+const txnTypeBadge = (type) => {
+  const map = {
+    CREDIT_GRANTED: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', label: 'Credit Granted' },
+    CREDIT_ADDED: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'Credit Added' },
+    CREDIT_USED: { bg: 'bg-violet-50', text: 'text-violet-700', border: 'border-violet-200', label: 'Credit Used' },
+    CREDIT_REPAID: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200', label: 'Credit Repaid' },
+    CREDIT_ADJUSTMENT: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'Adjustment' },
+    REFUND_CREDIT: { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200', label: 'Refund' },
+    REVERSAL: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', label: 'Reversal' }
+  };
+  const t = map[type] || { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200', label: type };
+  return (
+    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${t.bg} ${t.text} ${t.border}`}>
+      {t.label}
+    </span>
+  );
+};
+
+const repayStatusBadge = (status) => {
+  const map = {
+    PAYMENT_PENDING: { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200', label: 'Payment Pending' },
+    PENDING_VERIFICATION: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'Verification Pending' },
+    SUCCESS: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'Completed' },
+    REJECTED: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', label: 'Rejected' }
+  };
+  const s = map[status] || { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200', label: status };
+  return (
+    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${s.bg} ${s.text} ${s.border}`}>
+      {s.label}
+    </span>
+  );
+};
 
 /* ════════════════════════════════════════ MAIN COMPONENT ════════════════════════════════════════ */
 export default function Profile() {
@@ -118,6 +171,146 @@ export default function Profile() {
   const [recentOrders, setRecentOrders] = useState([]);
   const [selectedBusinessAddress, setSelectedBusinessAddress] = useState(null);
 
+  // Retailer Credit State
+  const [creditData, setCreditData] = useState(null);
+  const [creditLoading, setCreditLoading] = useState(false);
+  const [creditTransactions, setCreditTransactions] = useState([]);
+  const [creditRepayments, setCreditRepayments] = useState([]);
+  const [creditTab, setCreditTab] = useState('ledger'); // 'ledger' | 'repayments'
+  const [showRepayModal, setShowRepayModal] = useState(false);
+  const [repayMethod, setRepayMethod] = useState('RAZORPAY'); // 'RAZORPAY' | 'BANK_TRANSFER'
+  const [repayAmount, setRepayAmount] = useState('');
+  const [repaySubmitting, setRepaySubmitting] = useState(false);
+  const [bankForm, setBankForm] = useState({ utr: '', paymentSlip: '', note: '' });
+  const [uploadingSlip, setUploadingSlip] = useState(false);
+
+  const loadCredit = async () => {
+    if (!user?.isCreditEnabled) return;
+    setCreditLoading(true);
+    try {
+      const [resCredit, resTxns] = await Promise.all([
+        api.get('/api/credit/me'),
+        api.get('/api/credit/me/transactions')
+      ]);
+      setCreditData(resCredit.data);
+      setCreditTransactions(resTxns.data?.transactions || []);
+      setCreditRepayments(resTxns.data?.repayments || []);
+    } catch (err) {
+      console.error('Failed to load credit details:', err);
+    } finally {
+      setCreditLoading(false);
+    }
+  };
+
+  const handleRazorpayRepayment = async () => {
+    const amt = Number(repayAmount);
+    if (!amt || amt <= 0) return notify('Please enter a valid repayment amount', 'error');
+    if (creditData && amt > creditData.outstandingBalance) {
+      return notify(`Repayment cannot exceed outstanding balance of ₹${creditData.outstandingBalance.toLocaleString('en-IN')}`, 'error');
+    }
+
+    try {
+      await ensureRazorpayLoaded();
+    } catch {
+      return notify('Unable to load payment gateway', 'error');
+    }
+
+    try {
+      setRepaySubmitting(true);
+      const { data } = await api.post('/api/credit/me/repay/razorpay-init', { amount: amt });
+
+      const options = {
+        key: data.keyId,
+        amount: data.amountPaise,
+        currency: 'INR',
+        name: 'Click2Kart',
+        description: 'Retailer Credit Repayment',
+        order_id: data.razorpayOrderId,
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+          contact: user?.phone
+        },
+        theme: { color: '#7c3aed' },
+        handler: async (response) => {
+          try {
+            notify('Verifying payment with server...', 'info');
+            const verifyRes = await api.post('/api/credit/me/repay/razorpay-verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            });
+            if (verifyRes.data.success) {
+              notify('Repayment successful! Outstanding balance reduced.', 'success');
+              setShowRepayModal(false);
+              setRepayAmount('');
+              await loadCredit();
+              await refreshProfile();
+            }
+          } catch (verErr) {
+            notify(verErr?.response?.data?.message || 'Repayment verification pending. Check transactions.', 'warning');
+            loadCredit();
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setRepaySubmitting(false);
+          }
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to initiate repayment', 'error');
+    } finally {
+      setRepaySubmitting(false);
+    }
+  };
+
+  const handleBankTransferRepayment = async (e) => {
+    e.preventDefault();
+    const amt = Number(repayAmount);
+    if (!amt || amt <= 0) return notify('Please enter a valid repayment amount', 'error');
+    if (!bankForm.utr.trim()) return notify('UTR / Reference number is required', 'error');
+
+    try {
+      setRepaySubmitting(true);
+      await api.post('/api/credit/me/repay/bank-transfer', {
+        amount: amt,
+        utr: bankForm.utr.trim(),
+        paymentSlip: bankForm.paymentSlip,
+        note: bankForm.note.trim()
+      });
+      notify('Bank transfer submitted successfully! Pending admin verification.', 'success');
+      setShowRepayModal(false);
+      setRepayAmount('');
+      setBankForm({ utr: '', paymentSlip: '', note: '' });
+      await loadCredit();
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to submit bank transfer', 'error');
+    } finally {
+      setRepaySubmitting(false);
+    }
+  };
+
+  const handleSlipUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      setUploadingSlip(true);
+      const fd = new FormData();
+      fd.append('file', file);
+      const response = await api.post('/api/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+      setBankForm(p => ({ ...p, paymentSlip: response.data.url }));
+      notify('Payment receipt uploaded successfully', 'success');
+    } catch {
+      notify('Failed to upload receipt', 'error');
+    } finally {
+      setUploadingSlip(false);
+    }
+  };
+
   const adminIcon = "https://cdn-icons-png.flaticon.com/512/4140/4140047.png" // Female executive icon
 
   useEffect(() => {
@@ -130,6 +323,12 @@ export default function Profile() {
   useEffect(() => {
     if (activeSection === 'support' && tickets.length === 0) loadTickets();
   }, [activeSection]);
+
+  useEffect(() => {
+    if (user?.isCreditEnabled && (activeSection === 'credit' || activeSection === 'overview')) {
+      loadCredit();
+    }
+  }, [user?.isCreditEnabled, activeSection]);
 
   useEffect(() => {
     let socket;
@@ -487,6 +686,7 @@ export default function Profile() {
   /* Nav config */
   const navItems = [
     { id: 'overview',   label: 'Overview',   icon: 'home'  },
+    ...(user?.isCreditEnabled ? [{ id: 'credit', label: 'Credit Account', icon: 'credit' }] : []),
     { id: 'personal',   label: 'Profile',    icon: 'user'  },
     { id: 'business',   label: 'Business',   icon: 'pkg'   },
     { id: 'addresses',  label: 'Business Address',  icon: 'map'   },
@@ -615,8 +815,15 @@ export default function Profile() {
                 </div>
 
                 {/* Quick action grid */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className={`grid ${user?.isCreditEnabled ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'} gap-3`}>
                   {[
+                    ...(user?.isCreditEnabled ? [{
+                      label: 'Credit Facility',
+                      sub: `₹${Number(creditData?.availableCredit || user?.availableCredit || 0).toLocaleString('en-IN')} available`,
+                      icon: 'credit',
+                      color: 'bg-emerald-50 text-emerald-600',
+                      action: () => setActiveSection('credit')
+                    }] : []),
                     { label: 'My Orders', sub: 'Track & manage', icon: 'pkg', color: 'bg-blue-50 text-blue-600', action: () => navigate('/orders') },
                     { label: 'Wishlist', sub: 'Saved items', icon: 'heart', color: 'bg-rose-50 text-rose-600', action: () => navigate('/wishlist') },
                     { label: 'Addresses', sub: `${savedAddresses.length} saved`, icon: 'map', color: 'bg-emerald-50 text-emerald-600', action: () => setActiveSection('addresses') },
@@ -663,6 +870,261 @@ export default function Profile() {
                     className="w-full bg-white rounded-2xl p-4 border border-red-100 shadow-sm text-red-500 font-bold text-sm flex items-center justify-center gap-2 hover:bg-red-50 active:scale-[0.98] transition-all">
                     <Ico n="logout" cls="w-4 h-4" /> Sign Out
                   </button>
+                </div>
+              </div>
+            )}
+
+            {/* ──── CREDIT ACCOUNT ──── */}
+            {activeSection === 'credit' && user?.isCreditEnabled && (
+              <div className="pf-panel space-y-5">
+                {/* Header card */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="pf-display font-black text-xl text-slate-800">Retailer Credit Facility</h2>
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Active Account
+                      </span>
+                    </div>
+                    <p className="text-slate-400 text-xs mt-1">
+                      Revolving B2B credit limit for seamless purchasing and flexible repayments
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRepayAmount(String(creditData?.outstandingBalance || ''));
+                      setShowRepayModal(true);
+                    }}
+                    disabled={!creditData || (creditData.outstandingBalance || 0) <= 0}
+                    className="px-5 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-lg shadow-violet-200 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    Repay Outstanding Dues
+                  </button>
+                </div>
+
+                {/* 4 Cards Grid */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Available Credit</div>
+                    <div className="pf-display font-black text-2xl text-emerald-600">
+                      ₹{Number(creditData?.availableCredit || 0).toLocaleString('en-IN')}
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-1">Spendable at checkout</div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Approved Credit Limit</div>
+                    <div className="pf-display font-black text-2xl text-slate-800">
+                      ₹{Number(creditData?.creditLimit || 0).toLocaleString('en-IN')}
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-1">Total sanctioned limit</div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Used Credit</div>
+                    <div className="pf-display font-black text-2xl text-slate-700">
+                      ₹{Number(creditData?.usedCredit || 0).toLocaleString('en-IN')}
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-1">Drawn against orders</div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Outstanding Balance</div>
+                    <div className="pf-display font-black text-2xl text-rose-600">
+                      ₹{Number(creditData?.outstandingBalance || 0).toLocaleString('en-IN')}
+                    </div>
+                    <div className="text-[11px] text-slate-400 mt-1">
+                      {Number(creditData?.outstandingBalance || 0) > 0 ? 'Pending repayment' : 'No dues pending'}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Utilization Progress Bar */}
+                <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-bold text-slate-700">Credit Limit Utilization</span>
+                    <span className="font-black text-violet-700">{creditData?.utilization || 0}%</span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500 transition-all duration-500 rounded-full"
+                      style={{ width: `${Math.min(100, Math.max(0, creditData?.utilization || 0))}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-[10px] text-slate-400">
+                    <span>₹0 used</span>
+                    <span>₹{Number(creditData?.creditLimit || 0).toLocaleString('en-IN')} limit</span>
+                  </div>
+                </div>
+
+                {/* Ledger & Repayment History Tabs */}
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setCreditTab('ledger')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                          creditTab === 'ledger'
+                            ? 'bg-white text-violet-700 shadow-sm border border-slate-200'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        Credit Ledger ({creditTransactions.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setCreditTab('repayments')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                          creditTab === 'repayments'
+                            ? 'bg-white text-violet-700 shadow-sm border border-slate-200'
+                            : 'text-slate-500 hover:text-slate-700'
+                        }`}
+                      >
+                        Repayment Requests ({creditRepayments.length})
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={loadCredit}
+                      disabled={creditLoading}
+                      className="text-xs font-semibold text-violet-600 hover:text-violet-800 disabled:opacity-50"
+                    >
+                      {creditLoading ? 'Refreshing...' : '↻ Refresh'}
+                    </button>
+                  </div>
+
+                  {creditTab === 'ledger' ? (
+                    <div className="overflow-x-auto">
+                      {creditTransactions.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400 text-xs">
+                          No credit transactions recorded yet.
+                        </div>
+                      ) : (
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50 text-[10px] uppercase font-black tracking-wider text-slate-400 border-b border-slate-100">
+                            <tr>
+                              <th className="px-4 py-3">Date</th>
+                              <th className="px-4 py-3">Type</th>
+                              <th className="px-4 py-3">Amount</th>
+                              <th className="px-4 py-3">Available Balance</th>
+                              <th className="px-4 py-3">Outstanding</th>
+                              <th className="px-4 py-3">Reference / Order</th>
+                              <th className="px-4 py-3">Reason / Details</th>
+                              <th className="px-4 py-3">Initiated By</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {creditTransactions.map((tx) => (
+                              <tr key={tx._id} className="hover:bg-slate-50/60 transition-colors">
+                                <td className="px-4 py-3 whitespace-nowrap text-slate-500 font-medium">
+                                  {new Date(tx.createdAt).toLocaleDateString('en-IN', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  {txnTypeBadge(tx.type)}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap font-black">
+                                  <span className={['CREDIT_USED', 'REVERSAL'].includes(tx.type) ? 'text-rose-600' : 'text-emerald-600'}>
+                                    {['CREDIT_USED', 'REVERSAL'].includes(tx.type) ? '-' : '+'}₹{Number(tx.amount || 0).toLocaleString('en-IN')}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap text-slate-600 font-semibold">
+                                  ₹{Number(tx.balanceBefore || 0).toLocaleString('en-IN')} → <span className="text-slate-900 font-bold">₹{Number(tx.balanceAfter || 0).toLocaleString('en-IN')}</span>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap text-slate-600 font-semibold">
+                                  ₹{Number(tx.outstandingBefore || 0).toLocaleString('en-IN')} → <span className="text-slate-900 font-bold">₹{Number(tx.outstandingAfter || 0).toLocaleString('en-IN')}</span>
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap font-mono text-[11px] text-slate-500">
+                                  {tx.referenceId ? `#${tx.referenceId.slice(-8)}` : '—'}
+                                </td>
+                                <td className="px-4 py-3 max-w-xs truncate text-slate-600" title={tx.reason}>
+                                  {tx.reason || '—'}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap text-[11px] text-slate-500 font-medium">
+                                  {tx.createdByName || tx.createdBy || 'System'}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      {creditRepayments.length === 0 ? (
+                        <div className="p-8 text-center text-slate-400 text-xs">
+                          No repayment requests submitted yet.
+                        </div>
+                      ) : (
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-slate-50 text-[10px] uppercase font-black tracking-wider text-slate-400 border-b border-slate-100">
+                            <tr>
+                              <th className="px-4 py-3">Date</th>
+                              <th className="px-4 py-3">Amount</th>
+                              <th className="px-4 py-3">Method</th>
+                              <th className="px-4 py-3">Status</th>
+                              <th className="px-4 py-3">UTR / Payment ID</th>
+                              <th className="px-4 py-3">Notes & Verification</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100">
+                            {creditRepayments.map((rp) => (
+                              <tr key={rp._id} className="hover:bg-slate-50/60 transition-colors">
+                                <td className="px-4 py-3 whitespace-nowrap text-slate-500 font-medium">
+                                  {new Date(rp.createdAt).toLocaleDateString('en-IN', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap font-black text-slate-900">
+                                  ₹{Number(rp.amount || 0).toLocaleString('en-IN')}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap font-semibold text-slate-600">
+                                  {rp.method === 'RAZORPAY' ? 'Razorpay (Online)' : 'Bank Transfer'}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  {repayStatusBadge(rp.status)}
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap font-mono text-[11px] text-slate-600">
+                                  {rp.bankTransferDetails?.utr || rp.razorpayPaymentId || rp.razorpayOrderId || '—'}
+                                </td>
+                                <td className="px-4 py-3 text-slate-600 max-w-xs">
+                                  {rp.status === 'REJECTED' && (
+                                    <div className="text-rose-600 font-bold">
+                                      Rejected: {rp.rejectionReason || 'Receipt invalid'}
+                                    </div>
+                                  )}
+                                  {rp.bankTransferDetails?.note && (
+                                    <div className="text-[11px] text-slate-500">{rp.bankTransferDetails.note}</div>
+                                  )}
+                                  {rp.bankTransferDetails?.paymentSlip && (
+                                    <a
+                                      href={rp.bankTransferDetails.paymentSlip}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-[10px] text-violet-600 font-bold hover:underline block"
+                                    >
+                                      View Uploaded Slip ↗
+                                    </a>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1417,6 +1879,187 @@ export default function Profile() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ════ CREDIT REPAYMENT MODAL ════ */}
+      {showRepayModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
+          <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
+            <div className="sticky top-0 bg-white px-5 py-4 border-b border-slate-100 flex items-center justify-between z-10">
+              <div>
+                <h2 className="pf-display font-black text-slate-800">Repay Credit Facility</h2>
+                <p className="text-slate-400 text-xs">
+                  Outstanding Due: <span className="font-bold text-rose-600">₹{Number(creditData?.outstandingBalance || 0).toLocaleString('en-IN')}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowRepayModal(false)}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"
+              >
+                <Ico n="close" cls="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-5 space-y-4">
+              {/* Payment Method Selector */}
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Payment Option</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setRepayMethod('RAZORPAY')}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      repayMethod === 'RAZORPAY'
+                        ? 'border-violet-600 bg-violet-50/60 ring-2 ring-violet-500/20'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="text-xs font-bold text-slate-800">Razorpay</div>
+                    <div className="text-[10px] text-slate-400">Instant Online</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRepayMethod('BANK_TRANSFER')}
+                    className={`p-3 rounded-xl border text-left transition-all ${
+                      repayMethod === 'BANK_TRANSFER'
+                        ? 'border-violet-600 bg-violet-50/60 ring-2 ring-violet-500/20'
+                        : 'border-slate-200 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="text-xs font-bold text-slate-800">Bank Transfer</div>
+                    <div className="text-[10px] text-slate-400">NEFT / RTGS / IMPS</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Amount Chips */}
+              <div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Quick Select Amount</label>
+                <div className="flex flex-wrap gap-2">
+                  {[2000, 5000, 10000]
+                    .filter(val => val <= Number(creditData?.outstandingBalance || 0))
+                    .map(val => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setRepayAmount(String(val))}
+                        className="px-3 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition"
+                      >
+                        ₹{val.toLocaleString('en-IN')}
+                      </button>
+                    ))}
+                  {Number(creditData?.outstandingBalance || 0) > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setRepayAmount(String(creditData?.outstandingBalance || 0))}
+                      className="px-3 py-1 rounded-lg text-xs font-bold border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 transition"
+                    >
+                      Full Due (₹{Number(creditData?.outstandingBalance || 0).toLocaleString('en-IN')})
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Amount Input */}
+              <Field label="Repayment Amount (₹)">
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">₹</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={creditData?.outstandingBalance || undefined}
+                    value={repayAmount}
+                    onChange={(e) => setRepayAmount(e.target.value)}
+                    placeholder="Enter amount to repay"
+                    className={`${inputCls} pl-8`}
+                    required
+                  />
+                </div>
+              </Field>
+
+              {repayMethod === 'BANK_TRANSFER' && (
+                <div className="space-y-3 pt-2 border-t border-slate-100">
+                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/60 text-amber-800 text-xs space-y-1">
+                    <div className="font-bold">Company Bank Account for Transfer:</div>
+                    <div className="text-[11px] text-amber-900">A/C: Click2Kart Pvt Ltd | A/C No: 123456789012 | IFSC: HDFC0001234</div>
+                    <div className="text-[10px] text-amber-700 italic">Balance will be updated after verification by administrator.</div>
+                  </div>
+
+                  <Field label="UTR / Transaction Reference (Required)">
+                    <input
+                      type="text"
+                      value={bankForm.utr}
+                      onChange={(e) => setBankForm({ ...bankForm, utr: e.target.value })}
+                      placeholder="e.g., UTR1234567890"
+                      className={inputCls}
+                      required
+                    />
+                  </Field>
+
+                  <Field label="Upload Payment Receipt / Slip">
+                    <div className="space-y-2">
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={handleSlipUpload}
+                        disabled={uploadingSlip}
+                        className="text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+                      />
+                      {uploadingSlip && <p className="text-[10px] text-violet-600 font-bold">Uploading receipt...</p>}
+                      {bankForm.paymentSlip && (
+                        <p className="text-[10px] text-emerald-600 font-bold">✓ Receipt attached</p>
+                      )}
+                    </div>
+                  </Field>
+
+                  <Field label="Notes / Remarks">
+                    <input
+                      type="text"
+                      value={bankForm.note}
+                      onChange={(e) => setBankForm({ ...bankForm, note: e.target.value })}
+                      placeholder="Optional notes for accountant"
+                      className={inputCls}
+                    />
+                  </Field>
+                </div>
+              )}
+
+              <div className="p-2.5 bg-slate-50 rounded-xl text-[10px] text-slate-500">
+                ⚠️ Cash on Delivery (COD) is strictly forbidden for credit repayment.
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRepayModal(false)}
+                  className={btnOutline}
+                >
+                  Cancel
+                </button>
+                {repayMethod === 'RAZORPAY' ? (
+                  <button
+                    type="button"
+                    onClick={handleRazorpayRepayment}
+                    disabled={repaySubmitting || !repayAmount || Number(repayAmount) <= 0}
+                    className={btnPrimary}
+                  >
+                    {repaySubmitting ? 'Processing...' : `Pay ₹${Number(repayAmount || 0).toLocaleString('en-IN')} Online`}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleBankTransferRepayment}
+                    disabled={repaySubmitting || !repayAmount || Number(repayAmount) <= 0 || !bankForm.utr.trim()}
+                    className={btnPrimary}
+                  >
+                    {repaySubmitting ? 'Submitting...' : 'Submit Transfer for Verification'}
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

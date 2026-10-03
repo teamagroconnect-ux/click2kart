@@ -35,6 +35,10 @@ export default function RetailerDetail() {
           addressLine1: data.user.kyc?.addressLine1 || '',
           addressLine2: data.user.kyc?.addressLine2 || '',
           partnerInviteCode: data.user.kyc?.partnerInviteCode || ''
+        },
+        deliverySettings: {
+          delhiveryEnabled: data.user.deliverySettings?.delhiveryEnabled ?? true,
+          localDeliveryEnabled: data.user.deliverySettings?.localDeliveryEnabled ?? false
         }
       })
       setPartnerForm(data.partner ? {
@@ -86,7 +90,8 @@ export default function RetailerDetail() {
         email: formData.email,
         phone: formData.phone,
         kyc: formData.kyc,
-        partnerInviteCode: formData.kyc?.partnerInviteCode || ''
+        partnerInviteCode: formData.kyc?.partnerInviteCode || '',
+        deliverySettings: formData.deliverySettings
       }
       if (partnerForm) {
         payload.partnerUpdate = partnerForm
@@ -301,6 +306,37 @@ export default function RetailerDetail() {
                 value={formData.kyc.addressLine2}
                 onChange={(value) => setFormData(prev => ({ ...prev, kyc: { ...prev.kyc, addressLine2: value } }))}
               />
+              <div className="md:col-span-2 bg-gray-50 p-4 rounded-2xl border border-gray-200 mt-2">
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                  Delivery Channels Configuration
+                </label>
+                <div className="flex flex-wrap gap-6 text-sm">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.deliverySettings?.delhiveryEnabled ?? true}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        deliverySettings: { ...prev.deliverySettings, delhiveryEnabled: e.target.checked }
+                      }))}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="font-bold text-gray-800">Delhivery Express Enabled</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.deliverySettings?.localDeliveryEnabled ?? false}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        deliverySettings: { ...prev.deliverySettings, localDeliveryEnabled: e.target.checked }
+                      }))}
+                      className="w-4 h-4 rounded text-purple-600 focus:ring-purple-500"
+                    />
+                    <span className="font-bold text-gray-800">Local Delivery Enabled</span>
+                  </label>
+                </div>
+              </div>
             </div>
             {partnerForm ? (
               <div className="mt-8">
@@ -321,6 +357,73 @@ export default function RetailerDetail() {
             ) : null}
           </div>
         )}
+
+        {/* Credit & Delivery Settings overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-black text-gray-900 italic">Credit Account</h3>
+              <button
+                onClick={() => nav('/admin/credit-management')}
+                className="text-xs font-bold text-blue-600 hover:underline"
+              >
+                Open Credit Management →
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gray-50 p-3 rounded-2xl">
+                <div className="text-[10px] font-bold text-gray-400 uppercase">Status</div>
+                <div className="mt-1">
+                  <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-black uppercase ${
+                    user.isCreditEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {user.isCreditEnabled ? 'Enabled' : 'Disabled'}
+                  </span>
+                </div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-2xl">
+                <div className="text-[10px] font-bold text-gray-400 uppercase">Credit Limit</div>
+                <div className="text-base font-black text-gray-900 mt-1">₹{(user.creditLimit || 0).toLocaleString('en-IN')}</div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-2xl">
+                <div className="text-[10px] font-bold text-gray-400 uppercase">Available Credit</div>
+                <div className="text-base font-black text-emerald-600 mt-1">₹{(user.availableCredit || 0).toLocaleString('en-IN')}</div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-2xl">
+                <div className="text-[10px] font-bold text-gray-400 uppercase">Outstanding Balance</div>
+                <div className="text-base font-black text-rose-600 mt-1">₹{(user.outstandingBalance || 0).toLocaleString('en-IN')}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
+            <h3 className="text-lg font-black text-gray-900 italic mb-4">Delivery Channels</h3>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-gray-50">
+                <div>
+                  <div className="text-xs font-black text-gray-900">Delhivery Express</div>
+                  <div className="text-[11px] text-gray-500">Automated B2B courier fulfillment</div>
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                  (user.deliverySettings?.delhiveryEnabled ?? true) ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {(user.deliverySettings?.delhiveryEnabled ?? true) ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between p-3 rounded-2xl bg-gray-50">
+                <div>
+                  <div className="text-xs font-black text-gray-900">Local Delivery</div>
+                  <div className="text-[11px] text-gray-500">Self-managed warehouse/driver dispatch</div>
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                  (user.deliverySettings?.localDeliveryEnabled ?? false) ? 'bg-purple-100 text-purple-800' : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {(user.deliverySettings?.localDeliveryEnabled ?? false) ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white border border-gray-100 rounded-3xl overflow-hidden shadow-sm">

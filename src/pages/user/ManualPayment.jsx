@@ -41,6 +41,7 @@ export default function ManualPayment() {
         utr: utr.trim(),
         note: note.trim(),
         codAdvance20: cod20,
+        deliveryChannel: loc.state?.deliveryChannel,
         couponCode: loc.state?.couponCode || ''
       })
       notify('Payment details submitted. Verification in progress.', 'success')

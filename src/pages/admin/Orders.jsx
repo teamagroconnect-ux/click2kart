@@ -16,6 +16,51 @@ export default function Orders(){
   const [sendingId, setSendingId] = useState('')
   const [actionLoading, setActionLoading] = useState(null)
 
+  // Delivery Channel Switch & Local Fulfillment State
+  const [channelModalOpen, setChannelModalOpen] = useState(false)
+  const [selectedOrderForChannel, setSelectedOrderForChannel] = useState(null)
+  const [targetChannel, setTargetChannel] = useState('DELHIVERY')
+  const [channelSwitchReason, setChannelSwitchReason] = useState('')
+
+  const [localModalOpen, setLocalModalOpen] = useState(false)
+  const [selectedOrderForLocal, setSelectedOrderForLocal] = useState(null)
+  const [localForm, setLocalForm] = useState({
+    status: 'PENDING',
+    assignedPerson: '',
+    contactPhone: '',
+    trackingNumber: '',
+    notes: ''
+  })
+
+  const handleSwitchChannel = async (e) => {
+    e.preventDefault()
+    if (!channelSwitchReason.trim()) return notify('Audit reason is required to change delivery channel', 'error')
+    try {
+      await api.patch(`/api/orders/${selectedOrderForChannel._id}/delivery-channel`, {
+        deliveryChannel: targetChannel,
+        reason: channelSwitchReason.trim()
+      })
+      notify(`Delivery channel switched to ${targetChannel}`, 'success')
+      setChannelModalOpen(false)
+      setChannelSwitchReason('')
+      load(page)
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to switch channel', 'error')
+    }
+  }
+
+  const handleUpdateLocalDelivery = async (e) => {
+    e.preventDefault()
+    try {
+      await api.patch(`/api/orders/${selectedOrderForLocal._id}/local-delivery`, localForm)
+      notify('Local delivery fulfillment updated', 'success')
+      setLocalModalOpen(false)
+      load(page)
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to update local delivery', 'error')
+    }
+  }
+
   const load = async (p = 1) => {
     setLoading(true)
     try {
@@ -241,9 +286,16 @@ export default function Orders(){
                           <div className="text-[11px] text-gray-400 font-medium tracking-tight">{o.customer.phone}</div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${statusColors[o.status] || 'bg-gray-50 text-gray-600'}`}>
-                            {o.status}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${statusColors[o.status] || 'bg-gray-50 text-gray-600'}`}>
+                              {o.status}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                              o.deliveryChannel === 'LOCAL_DELIVERY' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                            }`}>
+                              {o.deliveryChannel === 'LOCAL_DELIVERY' ? 'Local' : 'Delhivery'}
+                            </span>
+                          </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="font-black text-gray-900">₹{o.totalEstimate.toLocaleString()}</div>
@@ -332,9 +384,11 @@ export default function Orders(){
                                     <div className="space-y-1">
                                       <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Method</div>
                                       <div className="flex items-center gap-2">
-                                        <span className="text-lg">{o.paymentMethod === 'CASH' ? '💼' : '💳'}</span>
+                                        <span className="text-lg">{o.paymentMethod === 'CREDIT' ? '🏦' : o.paymentMethod === 'CASH' ? '💼' : '💳'}</span>
                                         <span className="text-xs font-black text-gray-900">
-                                          {o.paymentMethod === 'CASH' ? 'Offline Payment' : 'Online Payment'}
+                                          {o.paymentMethod === 'CREDIT' ? (
+                                            <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-[11px]">Retailer Credit</span>
+                                          ) : o.paymentMethod === 'CASH' ? 'Offline Payment' : o.paymentMethod === 'COD_20' ? 'COD (20% Advance)' : 'Online (Razorpay)'}
                                         </span>
                                       </div>
                                     </div>
@@ -411,39 +465,99 @@ export default function Orders(){
                                     </div>
                                   </div>
 
-                                  {/* Shipping Integrated Actions */}
+                                   {/* Shipping Integrated Actions */}
                                   <div className="space-y-3 pt-4 border-t border-gray-100">
                                     <div className="flex items-center justify-between">
-                                      <div className="text-[10px] font-black text-blue-600 uppercase tracking-widest flex items-center gap-2">
+                                      <div className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
                                         <span className="w-4 h-px bg-blue-200" />
-                                        Delhivery Express
+                                        Delivery Channel: <span className={o.deliveryChannel === 'LOCAL_DELIVERY' ? 'text-amber-600' : 'text-blue-600'}>{o.deliveryChannel === 'LOCAL_DELIVERY' ? 'Local Delivery' : 'Delhivery Express'}</span>
                                       </div>
-                                      {o.shipping?.provider === 'DELHIVERY' && o.shipping?.waybill && (
-                                        <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase border border-emerald-100">Active</span>
-                                      )}
+                                      <div className="flex items-center gap-2">
+                                        {!['DELIVERED', 'CANCELLED', 'RETURNED'].includes(o.status) && (
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setSelectedOrderForChannel(o);
+                                              setTargetChannel(o.deliveryChannel === 'LOCAL_DELIVERY' ? 'DELHIVERY' : 'LOCAL_DELIVERY');
+                                              setChannelSwitchReason('');
+                                              setChannelModalOpen(true);
+                                            }}
+                                            className="px-2.5 py-1 text-[9px] font-bold rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-700 transition"
+                                          >
+                                            Switch to {o.deliveryChannel === 'LOCAL_DELIVERY' ? 'Delhivery' : 'Local Delivery'}
+                                          </button>
+                                        )}
+                                        {o.deliveryChannel === 'LOCAL_DELIVERY' ? (
+                                          <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[8px] font-black uppercase border border-amber-200">
+                                            {o.localDelivery?.status || 'PENDING'}
+                                          </span>
+                                        ) : (
+                                          o.shipping?.provider === 'DELHIVERY' && o.shipping?.waybill && (
+                                            <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase border border-emerald-100">Active</span>
+                                          )
+                                        )}
+                                      </div>
                                     </div>
                                     
-                                    <div className="grid grid-cols-1 gap-2">
-                                      {!o.shipping?.waybill ? (
-                                        <button
-                                          onClick={(e)=>{ e.stopPropagation(); setActionLoading(`${o._id}-SHIP`); createStandardShipment(o._id).finally(()=>setActionLoading(null)) }}
-                                          disabled={!['CONFIRMED', 'PACKED', 'SHIPPED'].includes(o.status) || actionLoading === `${o._id}-SHIP`}
-                                          className="w-full bg-blue-600 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-0.5 disabled:opacity-40 disabled:transform-none"
-                                        >
-                                          {actionLoading === `${o._id}-SHIP` ? '🚀 Creating Shipment...' : '🚀 Create Express Shipment'}
-                                        </button>
-                                      ) : (
-                                        <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-between">
-                                          <div>
-                                            <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Waybill</div>
-                                            <div className="text-sm font-black text-blue-700">{o.shipping.waybill}</div>
-                                          </div>
-                                          {o.shipping.trackingUrl && (
-                                            <a href={o.shipping.trackingUrl} target="_blank" rel="noreferrer" className="px-5 py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-xl shadow-md hover:bg-blue-500 transition-all">Track Order</a>
-                                          )}
+                                    {o.deliveryChannel === 'LOCAL_DELIVERY' ? (
+                                      <div className="p-4 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-2">
+                                        <div className="flex items-center justify-between text-xs">
+                                          <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider">Local Fulfillment Details</span>
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setSelectedOrderForLocal(o);
+                                              setLocalForm({
+                                                status: o.localDelivery?.status || 'PENDING',
+                                                assignedPerson: o.localDelivery?.assignedPerson || '',
+                                                contactPhone: o.localDelivery?.contactPhone || '',
+                                                trackingNumber: o.localDelivery?.trackingNumber || '',
+                                                notes: o.localDelivery?.notes || ''
+                                              });
+                                              setLocalModalOpen(true);
+                                            }}
+                                            className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-[10px] font-bold shadow-sm transition"
+                                          >
+                                            Manage Fulfillment
+                                          </button>
                                         </div>
-                                      )}
-                                    </div>
+                                        <div className="grid grid-cols-2 gap-2 text-[11px] text-gray-700">
+                                          <div><span className="text-gray-400">Assigned Person:</span> <span className="font-semibold">{o.localDelivery?.assignedPerson || 'Not assigned'}</span></div>
+                                          <div><span className="text-gray-400">Contact:</span> <span className="font-semibold">{o.localDelivery?.contactPhone || '—'}</span></div>
+                                          <div><span className="text-gray-400">Tracking/Ref:</span> <span className="font-semibold">{o.localDelivery?.trackingNumber || '—'}</span></div>
+                                          <div><span className="text-gray-400">Dispatched:</span> <span className="font-semibold">{o.localDelivery?.dispatchedAt ? new Date(o.localDelivery.dispatchedAt).toLocaleDateString() : '—'}</span></div>
+                                        </div>
+                                        {o.localDelivery?.notes && (
+                                          <div className="text-[10px] text-gray-500 italic border-t border-amber-100 pt-1">
+                                            Note: {o.localDelivery.notes}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <div className="grid grid-cols-1 gap-2">
+                                        {!o.shipping?.waybill ? (
+                                          <button
+                                            onClick={(e)=>{ e.stopPropagation(); setActionLoading(`${o._id}-SHIP`); createStandardShipment(o._id).finally(()=>setActionLoading(null)) }}
+                                            disabled={!['CONFIRMED', 'PACKED', 'SHIPPED'].includes(o.status) || actionLoading === `${o._id}-SHIP`}
+                                            className="w-full bg-blue-600 text-white py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-100 hover:bg-blue-500 transition-all transform hover:-translate-y-0.5 disabled:opacity-40 disabled:transform-none"
+                                          >
+                                            {actionLoading === `${o._id}-SHIP` ? '🚀 Creating Shipment...' : '🚀 Create Express Shipment'}
+                                          </button>
+                                        ) : (
+                                          <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex items-center justify-between">
+                                            <div>
+                                              <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Waybill</div>
+                                              <div className="text-sm font-black text-blue-700">{o.shipping.waybill}</div>
+                                            </div>
+                                            {o.shipping.trackingUrl && (
+                                              <a href={o.shipping.trackingUrl} target="_blank" rel="noreferrer" className="px-5 py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-xl shadow-md hover:bg-blue-500 transition-all">Track Order</a>
+                                            )}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
 
                                   <div className="pt-4 border-t border-gray-100">
@@ -464,6 +578,151 @@ export default function Orders(){
         </div>
       </div>
     </div>
+
+    {/* Delivery Channel Switch Modal */}
+    {channelModalOpen && selectedOrderForChannel && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-gray-900 text-base">Switch Delivery Channel</h3>
+            <button onClick={() => setChannelModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-lg font-bold">&times;</button>
+          </div>
+          <p className="text-xs text-gray-500">
+            Order #{selectedOrderForChannel._id.slice(-6).toUpperCase()} is currently set to{' '}
+            <span className="font-bold text-gray-800">{selectedOrderForChannel.deliveryChannel || 'DELHIVERY'}</span>.
+          </p>
+          <form onSubmit={handleSwitchChannel} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Target Channel</label>
+              <select
+                value={targetChannel}
+                onChange={(e) => setTargetChannel(e.target.value)}
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              >
+                <option value="DELHIVERY">Delhivery Express</option>
+                <option value="LOCAL_DELIVERY">Local Delivery</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Audit Reason (Required)</label>
+              <textarea
+                required
+                rows={3}
+                value={channelSwitchReason}
+                onChange={(e) => setChannelSwitchReason(e.target.value)}
+                placeholder="e.g., Retailer requested local truck pickup, or Delhivery serviceable area change"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setChannelModalOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 rounded-xl shadow"
+              >
+                Confirm Switch
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+
+    {/* Local Delivery Fulfillment Modal */}
+    {localModalOpen && selectedOrderForLocal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-gray-900 text-base">Manage Local Delivery Fulfillment</h3>
+            <button onClick={() => setLocalModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-lg font-bold">&times;</button>
+          </div>
+          <p className="text-xs text-gray-500">
+            Order #{selectedOrderForLocal._id.slice(-6).toUpperCase()} — Manage assignment, driver, tracking, and delivery status.
+          </p>
+          <form onSubmit={handleUpdateLocalDelivery} className="space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Delivery Status</label>
+              <select
+                value={localForm.status}
+                onChange={(e) => setLocalForm({ ...localForm, status: e.target.value })}
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              >
+                <option value="PENDING">Pending Assignment</option>
+                <option value="ASSIGNED">Assigned to Driver/Staff</option>
+                <option value="OUT_FOR_DELIVERY">Out for Delivery</option>
+                <option value="DELIVERED">Delivered</option>
+                <option value="FAILED">Delivery Failed</option>
+                <option value="CANCELLED">Cancelled</option>
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Assigned Person / Driver</label>
+                <input
+                  type="text"
+                  value={localForm.assignedPerson}
+                  onChange={(e) => setLocalForm({ ...localForm, assignedPerson: e.target.value })}
+                  placeholder="e.g., Ramesh Kumar"
+                  className="w-full px-3 py-2 border rounded-xl text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Contact Phone</label>
+                <input
+                  type="text"
+                  value={localForm.contactPhone}
+                  onChange={(e) => setLocalForm({ ...localForm, contactPhone: e.target.value })}
+                  placeholder="e.g., 9876543210"
+                  className="w-full px-3 py-2 border rounded-xl text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Internal Tracking / Vehicle / Ref Number</label>
+              <input
+                type="text"
+                value={localForm.trackingNumber}
+                onChange={(e) => setLocalForm({ ...localForm, trackingNumber: e.target.value })}
+                placeholder="e.g., LOC-TRUCK-42 or DL01AB1234"
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 mb-1">Delivery Notes</label>
+              <textarea
+                rows={2}
+                value={localForm.notes}
+                onChange={(e) => setLocalForm({ ...localForm, notes: e.target.value })}
+                placeholder="Any special handling or delivery notes..."
+                className="w-full px-3 py-2 border rounded-xl text-sm"
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setLocalModalOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 text-xs font-semibold bg-amber-600 text-white hover:bg-amber-700 rounded-xl shadow"
+              >
+                Save Fulfillment
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
     </>
   )
 }
+

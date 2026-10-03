@@ -13,6 +13,7 @@ import Partners from './pages/admin/Partners.jsx'
 import Settings from './pages/admin/Settings.jsx'
 import Retailers from './pages/admin/Retailers.jsx'
 import RetailerDetail from './pages/admin/RetailerDetail.jsx'
+import CreditManagement from './pages/admin/CreditManagement.jsx'
 import Customers from './pages/admin/Customers.jsx'
 import CustomerDetail from './pages/admin/CustomerDetail.jsx'
 import AdminLayout from './components/AdminLayout.jsx'
@@ -79,8 +80,9 @@ export default function App() {
         <Route path="coupons" element={<Coupons />} />
         <Route path="partners" element={<Partners />} />
         <Route path="retailers" element={<Retailers />} />
-              <Route path="retailers/:id" element={<RetailerDetail />} />
-              <Route path="customers" element={<Customers />} />
+        <Route path="retailers/:id" element={<RetailerDetail />} />
+        <Route path="credit-management" element={<CreditManagement />} />
+        <Route path="customers" element={<Customers />} />
               <Route path="customers/:id" element={<CustomerDetail />} />
               <Route path="offline-customers" element={<OfflineCustomers />} />
               <Route path="settings" element={<Settings />} />
