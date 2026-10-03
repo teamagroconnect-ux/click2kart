@@ -272,6 +272,49 @@ export default function Profile() {
     }
   };
 
+  const handleRetryRepayment = async (rp) => {
+    try {
+      notify('Initiating payment gateway...', 'info');
+      const { data } = await api.post(`/api/credit/me/repay/retry/${rp._id}`);
+      const options = {
+        key: data.keyId,
+        amount: data.amountPaise,
+        currency: 'INR',
+        name: 'Click2Kart',
+        description: `Retailer Credit Repayment ₹${rp.amount}`,
+        order_id: data.razorpayOrderId,
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+          contact: user?.phone
+        },
+        theme: { color: '#7c3aed' },
+        handler: async (response) => {
+          try {
+            notify('Verifying payment with server...', 'info');
+            const verifyRes = await api.post('/api/credit/me/repay/razorpay-verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            });
+            if (verifyRes.data.success) {
+              notify('Repayment successful! Outstanding balance reduced.', 'success');
+              await loadCredit();
+              await refreshProfile();
+            }
+          } catch (verErr) {
+            notify(verErr?.response?.data?.message || 'Repayment verification pending.', 'warning');
+            loadCredit();
+          }
+        }
+      };
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Failed to retry repayment', 'error');
+    }
+  };
+
   const handleBankTransferRepayment = async (e) => {
     e.preventDefault();
     const amt = Number(repayAmount);
@@ -969,7 +1012,7 @@ export default function Profile() {
                     />
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-400">
-                    <span>₹0 used</span>
+                    <span>₹{Number(creditData?.usedCredit || 0).toLocaleString('en-IN')} used</span>
                     <span>₹{Number(creditData?.creditLimit || 0).toLocaleString('en-IN')} limit</span>
                   </div>
                 </div>
@@ -1109,7 +1152,19 @@ export default function Profile() {
                                   {rp.method === 'RAZORPAY' ? 'Razorpay (Online)' : 'Bank Transfer'}
                                 </td>
                                 <td className="px-4 py-3 whitespace-nowrap">
-                                  {repayStatusBadge(rp.status)}
+                                  <div className="flex items-center gap-2">
+                                    {repayStatusBadge(rp.status)}
+                                    {rp.status === 'PAYMENT_PENDING' && rp.method === 'RAZORPAY' && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleRetryRepayment(rp)}
+                                        className="px-2.5 py-1 rounded-lg bg-violet-600 hover:bg-violet-700 text-white font-bold text-[10px] shadow-sm transition-all flex items-center gap-1"
+                                        title="Complete payment for this repayment request"
+                                      >
+                                        <span>⚡ Pay Now</span>
+                                      </button>
+                                    )}
+                                  </div>
                                 </td>
                                 <td className="px-4 py-3 whitespace-nowrap font-mono text-[11px] text-slate-600">
                                   {rp.bankTransferDetails?.utr || rp.razorpayPaymentId || rp.razorpayOrderId || '—'}
@@ -2072,10 +2127,6 @@ export default function Profile() {
                   </Field>
                 </div>
               )}
-
-              <div className="p-2.5 bg-slate-50 rounded-xl text-[10px] text-slate-500">
-                ⚠️ Cash on Delivery (COD) is strictly forbidden for credit repayment.
-              </div>
 
               <div className="flex gap-2 pt-2">
                 <button

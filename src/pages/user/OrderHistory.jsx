@@ -91,11 +91,79 @@ export default function OrderHistory() {
   const [cancelCustomReason, setCancelCustomReason] = useState('')
   const [cancellingLoading, setCancellingLoading] = useState(false)
   const [copiedWaybill, setCopiedWaybill] = useState(null)
+  const [retryingPaymentId, setRetryingPaymentId] = useState(null)
 
   const navigate = useNavigate()
   const location = useLocation()
   const { token } = useAuth()
   const { notify } = useToast()
+
+  const isLocalDispatchedOrAssigned = (o) => {
+    if (!o) return false
+    const ld = o.localDelivery
+    if (ld?.dispatchedAt || ld?.deliveredAt) return true
+    if (ld?.status && ['ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(ld.status)) return true
+    if (ld?.assignedPerson || ld?.contactPhone || ld?.trackingNumber) return true
+    if (['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'FULFILLED'].includes(o.status)) return true
+    return false
+  }
+
+  const handleRetryOrderPayment = async (order) => {
+    try {
+      setRetryingPaymentId(order._id)
+      notify('Initiating payment gateway...', 'info')
+      const { data } = await api.post(`/api/orders/${order._id}/retry-payment`)
+
+      const options = {
+        key: data.keyId,
+        amount: data.amountPaise,
+        currency: 'INR',
+        name: 'Click2Kart',
+        description: `Order #${order._id.slice(-6).toUpperCase()} Payment`,
+        order_id: data.razorpayOrderId,
+        prefill: {
+          name: order.customer?.name,
+          email: order.customer?.email,
+          contact: order.customer?.phone
+        },
+        theme: { color: '#7c3aed' },
+        handler: async (response) => {
+          try {
+            notify('Verifying payment with server...', 'info')
+            const verifyRes = await api.post('/api/orders/verify-payment', {
+              orderId: order._id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            })
+            if (verifyRes.data.success) {
+              notify('Payment successful! Your order is confirmed.', 'success')
+              setOrders(prev => prev.map(o => o._id === order._id ? {
+                ...o,
+                paymentStatus: 'PAID',
+                status: 'CONFIRMED'
+              } : o))
+            }
+          } catch (verErr) {
+            notify(verErr?.response?.data?.message || 'Payment received. Server confirmation in progress.', 'warning')
+            api.get('/api/orders/my').then(res => setOrders(res.data)).catch(() => {})
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setRetryingPaymentId(null)
+          }
+        }
+      }
+
+      const rzp = new window.Razorpay(options)
+      rzp.open()
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to initiate payment', 'error')
+    } finally {
+      setRetryingPaymentId(null)
+    }
+  }
 
   const handleCopyWaybill = (waybill) => {
     if (!waybill) return
@@ -618,8 +686,37 @@ export default function OrderHistory() {
         .oh-btn.blue:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(37,99,235,.3);}
         .oh-btn.outline{background:white;color:#7c3aed;border:1px solid rgba(139,92,246,.25);}
         .oh-btn.outline:hover{background:#f5f3ff;border-color:rgba(124,58,237,.4);}
-        .oh-btn.red-outline{background:white;color:#dc2626;border:1px solid rgba(220,38,38,.3);}
-        .oh-btn.red-outline:hover{background:#fef2f2;border-color:#dc2626;}
+        .oh-btn.premium-cancel{
+          background: linear-gradient(135deg, #fff5f5 0%, #fff1f2 100%);
+          color: #e11d48;
+          border: 1px solid rgba(225, 29, 72, 0.28);
+          box-shadow: 0 2px 8px rgba(225, 29, 72, 0.08);
+          font-weight: 800;
+          letter-spacing: .08em;
+          transition: all 0.25s ease;
+        }
+        .oh-btn.premium-cancel:hover{
+          background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%);
+          border-color: rgba(225, 29, 72, 0.45);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 14px rgba(225, 29, 72, 0.16);
+        }
+        .oh-btn.pay-now{
+          background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+          color: white;
+          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+          font-weight: 800;
+          letter-spacing: .08em;
+          animation: ohPayGlow 2.5s ease-in-out infinite;
+        }
+        .oh-btn.pay-now:hover{
+          transform: translateY(-1px);
+          box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
+        }
+        @keyframes ohPayGlow {
+          0%, 100% { box-shadow: 0 4px 14px rgba(124, 58, 237, 0.28); }
+          50% { box-shadow: 0 4px 22px rgba(124, 58, 237, 0.55); }
+        }
 
         /* cancellation banner */
         .oh-cancel-banner{
@@ -1057,7 +1154,14 @@ export default function OrderHistory() {
                                 Payment Status: <b style={{ color: order.paymentStatus === 'PAID' ? '#059669' : '#d97706' }}>{order.paymentStatus || 'PENDING'}</b>
                               </div>
                               <div className="oh-info-row">
-                                Fulfillment: <b>{order.deliveryChannel === 'LOCAL_DELIVERY' ? 'Local Express Delivery' : 'Delhivery Logistics'}</b>
+                                Fulfillment: <b>
+                                  {order.deliveryChannel === 'LOCAL_DELIVERY'
+                                    ? (isLocalDispatchedOrAssigned(order)
+                                        ? `Local Delivery (${order.localDelivery?.status || 'In Transit'})`
+                                        : 'Local Delivery (Warehouse preparation / Not yet dispatched)')
+                                    : 'Delhivery Logistics'
+                                  }
+                                </b>
                               </div>
                             </div>
                             <div className="oh-info-card">
@@ -1235,10 +1339,24 @@ export default function OrderHistory() {
                               </>
                             )}
 
+                            {order.paymentStatus !== 'PAID' && order.status !== 'CANCELLED' && (
+                              <button
+                                type="button"
+                                className="oh-btn pay-now"
+                                disabled={retryingPaymentId === order._id}
+                                onClick={() => handleRetryOrderPayment(order)}
+                              >
+                                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                {retryingPaymentId === order._id ? 'Opening Gateway...' : `Complete Payment (₹${(order.paymentMethod === 'COD_20' ? order.totalEstimate * 0.2 : order.totalEstimate).toLocaleString()})`}
+                              </button>
+                            )}
+
                             {canCancelOrder(order) && (
                               <button
                                 type="button"
-                                className="oh-btn red-outline"
+                                className="oh-btn premium-cancel"
                                 onClick={() => {
                                   setCancellingOrder(order)
                                   setCancelReasonOption('Ordered by mistake')
@@ -1254,8 +1372,8 @@ export default function OrderHistory() {
                           </div>
                         </div>
 
-                        {/* LOCAL DELIVERY TRACKING */}
-                        {order.status !== 'CANCELLED' && (order.deliveryChannel === 'LOCAL_DELIVERY' || order.localDelivery) && (
+                        {/* LOCAL DELIVERY TRACKING - Displayed only when order is dispatched or partner assigned */}
+                        {order.status !== 'CANCELLED' && (order.deliveryChannel === 'LOCAL_DELIVERY' || order.localDelivery) && isLocalDispatchedOrAssigned(order) && (
                           <>
                             <div className="oh-divider" />
                             <div>
@@ -1266,26 +1384,26 @@ export default function OrderHistory() {
                                     <div className="oh-local-ico">🚚</div>
                                     <div>
                                       <div className="oh-local-title-text">Click2Kart Local Express Delivery</div>
-                                      <div className="oh-local-subtitle">Internal Fleet / Same-Day Courier</div>
+                                      <div className="oh-local-subtitle">Internal Fleet / Local Courier</div>
                                     </div>
                                   </div>
                                   <span className="oh-local-status-pill">
-                                    {order.localDelivery?.status || (order.status === 'DELIVERED' ? 'Delivered' : 'Scheduled for Dispatch')}
+                                    {order.localDelivery?.status || (order.status === 'DELIVERED' ? 'Delivered' : 'Dispatched')}
                                   </span>
                                 </div>
                                 <div className="oh-local-grid">
                                   <div className="oh-local-field">
                                     <div className="oh-local-lbl">Assigned Delivery Partner</div>
                                     <div className="oh-local-val">
-                                      {order.localDelivery?.driverName || 'Dispatch assignment in progress'}
+                                      {order.localDelivery?.assignedPerson || order.localDelivery?.driverName || 'Dispatch partner assigned'}
                                     </div>
                                   </div>
                                   <div className="oh-local-field">
                                     <div className="oh-local-lbl">Contact / Phone</div>
                                     <div className="oh-local-val">
-                                      {order.localDelivery?.driverPhone ? (
-                                        <a href={`tel:${order.localDelivery.driverPhone}`}>
-                                          📞 {order.localDelivery.driverPhone}
+                                      {(order.localDelivery?.contactPhone || order.localDelivery?.driverPhone) ? (
+                                        <a href={`tel:${order.localDelivery.contactPhone || order.localDelivery.driverPhone}`}>
+                                          📞 {order.localDelivery.contactPhone || order.localDelivery.driverPhone}
                                         </a>
                                       ) : 'Contact shared upon dispatch'}
                                     </div>
@@ -1293,13 +1411,13 @@ export default function OrderHistory() {
                                   <div className="oh-local-field">
                                     <div className="oh-local-lbl">Tracking / Vehicle Ref</div>
                                     <div className="oh-local-val">
-                                      {order.localDelivery?.trackingRef || 'Local Logistics Routing'}
+                                      {order.localDelivery?.trackingNumber || order.localDelivery?.trackingRef || 'Local Logistics Routing'}
                                     </div>
                                   </div>
                                   <div className="oh-local-field">
                                     <div className="oh-local-lbl">Dispatched On</div>
                                     <div className="oh-local-val">
-                                      {order.localDelivery?.dispatchedAt ? fmtIST(order.localDelivery.dispatchedAt) : 'Warehouse preparation'}
+                                      {order.localDelivery?.dispatchedAt ? fmtIST(order.localDelivery.dispatchedAt) : 'Dispatched from warehouse'}
                                     </div>
                                   </div>
                                   {order.localDelivery?.notes && (
@@ -1497,9 +1615,9 @@ export default function OrderHistory() {
                   disabled={cancellingLoading}
                   onClick={() => setCancellingOrder(null)}
                   style={{
-                    padding: '10px 18px', borderRadius: 10, border: '1px solid #d1d5db',
-                    background: 'white', color: '#374151', fontSize: 12, fontWeight: 700,
-                    cursor: 'pointer'
+                    padding: '10px 18px', borderRadius: 12, border: '1px solid #e2e8f0',
+                    background: '#f8fafc', color: '#475569', fontSize: 12, fontWeight: 700,
+                    cursor: 'pointer', transition: 'all .2s'
                   }}
                 >
                   Keep Order
@@ -1509,14 +1627,17 @@ export default function OrderHistory() {
                   disabled={cancellingLoading}
                   onClick={handleConfirmCancelOrder}
                   style={{
-                    padding: '10px 20px', borderRadius: 10, border: 'none',
-                    background: '#dc2626', color: 'white', fontSize: 12, fontWeight: 700,
+                    padding: '10px 22px', borderRadius: 12, border: 'none',
+                    background: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
+                    color: 'white', fontSize: 12, fontWeight: 800, letterSpacing: '.04em',
+                    boxShadow: '0 4px 14px rgba(225, 29, 72, 0.3)',
                     cursor: cancellingLoading ? 'not-allowed' : 'pointer',
                     opacity: cancellingLoading ? 0.7 : 1,
-                    display: 'inline-flex', alignItems: 'center', gap: 6
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    transition: 'all .2s'
                   }}
                 >
-                  {cancellingLoading ? 'Cancelling...' : 'Confirm Cancellation'}
+                  {cancellingLoading ? 'Processing...' : 'Confirm Cancellation'}
                 </button>
               </div>
             </div>

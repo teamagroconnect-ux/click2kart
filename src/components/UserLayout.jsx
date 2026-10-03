@@ -228,7 +228,7 @@ export default function UserLayout() {
         </div>
       </header>
 
-      <main className="flex-1 min-h-0 pb-32 lg:pb-0 animate-in fade-in duration-700">
+      <main className={`flex-1 min-h-0 ${location.pathname.startsWith('/profile') ? 'pb-6' : 'pb-32 lg:pb-0'} animate-in fade-in duration-700`}>
         {user && user.isKycComplete === false && (
           <div className="max-w-7xl mx-auto px-6 md:px-10 mt-4">
             <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3 text-[12px] font-bold flex items-center justify-between">
@@ -240,29 +240,31 @@ export default function UserLayout() {
         <Outlet />
       </main>
 
-      {/* Mobile bottom nav */}
-      <nav className="lg:hidden fixed bottom-6 inset-x-6 z-40">
-        <div className="max-w-md mx-auto h-16 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-violet-100 flex items-center justify-around px-4">
-          {bottomNavItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              state={item.state}
-              className={({ isActive }) =>
-                classNames(
-                  'flex flex-col items-center justify-center gap-1 transition-all',
-                  isActive ? 'text-violet-600 scale-110' : 'text-gray-600 hover:text-violet-600'
-                )
-              }
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                {item.i}
-              </svg>
-              <span className="text-[9px] font-black uppercase tracking-widest">{item.l}</span>
-            </NavLink>
-          ))}
-        </div>
-      </nav>
+      {/* Mobile bottom nav - hidden on /profile as requested */}
+      {!location.pathname.startsWith('/profile') && (
+        <nav className="lg:hidden fixed bottom-6 inset-x-6 z-40">
+          <div className="max-w-md mx-auto h-16 bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-violet-100 flex items-center justify-around px-4">
+            {bottomNavItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                state={item.state}
+                className={({ isActive }) =>
+                  classNames(
+                    'flex flex-col items-center justify-center gap-1 transition-all',
+                    isActive ? 'text-violet-600 scale-110' : 'text-gray-600 hover:text-violet-600'
+                  )
+                }
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  {item.i}
+                </svg>
+                <span className="text-[9px] font-black uppercase tracking-widest">{item.l}</span>
+              </NavLink>
+            ))}
+          </div>
+        </nav>
+      )}
 
       {location.pathname === '/' && (
         <footer className="border-t border-gray-100 bg-gradient-to-b from-white to-gray-50 py-12 pb-32 lg:pb-12 relative overflow-hidden">
