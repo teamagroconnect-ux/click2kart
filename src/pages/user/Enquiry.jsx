@@ -37,8 +37,17 @@ export default function Enquiry() {
     };
   };
 
+  const isAvailableCartItem = (item) => {
+    if (item.isActive === false || item.isRemoved) return false;
+    const itStock = item.variantSku
+      ? (item.productId?.variants?.find(v => v.sku === item.variantSku)?.stock ?? item.stock)
+      : (item.productId?.stock ?? item.stock);
+    if (typeof itStock === 'number' && itStock <= 0) return false;
+    return true;
+  };
+
   const initialItems = cart.length > 0
-    ? cart.map(mapCartItem)
+    ? cart.filter(isAvailableCartItem).map(mapCartItem)
     : (loc.state?.productId ? [{ productId: loc.state.productId, quantity: 1, name: loc.state.name, mrp: loc.state.mrp || loc.state.price, price: loc.state.price, gst: loc.state.gst || 0 }] : [])
 
   const [items,          setItems]          = useState(initialItems)
@@ -85,7 +94,7 @@ export default function Enquiry() {
   }
 
   useEffect(() => {
-    if (cart.length > 0) setItems(cart.map(mapCartItem))
+    if (cart.length > 0) setItems(cart.filter(isAvailableCartItem).map(mapCartItem))
   }, [cart])
 
   useEffect(() => {
@@ -1376,6 +1385,11 @@ export default function Enquiry() {
           color: var(--accent);
         }
 
+        .eq-pay-ico.credit {
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.08));
+          color: #059669;
+        }
+
         .eq-pay-info {
           flex: 1;
           position: relative;
@@ -1399,6 +1413,8 @@ export default function Enquiry() {
         .eq-pay-desc.violet { color: var(--primary); }
         .eq-pay-desc.green { color: var(--secondary); }
         .eq-pay-desc.blue { color: var(--accent); }
+        .eq-pay-desc.credit-ok { color: #059669; font-weight: 700; }
+        .eq-pay-desc.credit-err { color: #dc2626; font-weight: 700; }
 
         .eq-pay-radio {
           width: 22px;
@@ -1418,6 +1434,18 @@ export default function Enquiry() {
         .eq-pay-opt.active-green .eq-pay-radio,
         .eq-pay-opt.active-blue .eq-pay-radio {
           border-color: var(--primary);
+        }
+
+        .eq-pay-opt.active-credit {
+          border-color: #059669 !important;
+          background: rgba(16, 185, 129, 0.04) !important;
+        }
+        .eq-pay-opt.active-credit .eq-pay-radio {
+          border-color: #059669;
+        }
+        .eq-pay-opt.active-credit .eq-pay-radio-dot {
+          background: #059669;
+          transform: scale(1);
         }
 
         .eq-pay-radio-dot {
@@ -2061,41 +2089,50 @@ export default function Enquiry() {
                   </div>
 
                   <div className="eq-pay-options">
-                    {/* Retailer Credit Line */}
+                    {/* Retailer Credit Facility */}
                     {profile?.isCreditEnabled && (
                       <button
                         type="button"
                         disabled={profile.availableCredit < totalPayable}
-                        className={`eq-pay-opt ${paymentMethod === 'CREDIT' ? 'active-violet' : ''} ${profile.availableCredit < totalPayable ? 'disabled-opt' : ''}`}
+                        className={`eq-pay-opt ${paymentMethod === 'CREDIT' ? 'active-credit' : ''} ${profile.availableCredit < totalPayable ? 'disabled-opt' : ''}`}
                         onClick={() => {
                           if (profile.availableCredit >= totalPayable) setPaymentMethod('CREDIT')
                         }}
                       >
-                        <div className="eq-pay-ico violet">
+                        <div className="eq-pay-ico credit">
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <rect x="2" y="5" width="20" height="14" rx="2" />
                             <line x1="2" y1="10" x2="22" y2="10" />
                           </svg>
                         </div>
                         <div className="eq-pay-info">
-                          <div className="eq-pay-name" style={{ color: profile.availableCredit < totalPayable ? '#9ca3af' : '#1e1b2e' }}>
-                            Retailer Credit Line
+                          <div className="eq-pay-name" style={{ color: profile.availableCredit < totalPayable ? '#64748b' : '#0f172a' }}>
+                            Approved Credit Facility
                           </div>
-                          <div className={`eq-pay-desc ${profile.availableCredit >= totalPayable ? 'violet' : 'gray'}`}>
-                            Available Credit: ₹{Number(profile.availableCredit || 0).toLocaleString('en-IN')}
-                            {profile.availableCredit < totalPayable && (
-                              <span style={{ color: '#e11d48', fontWeight: 700, marginLeft: 6 }}>
-                                · Insufficient (Order: ₹{totalPayable.toLocaleString('en-IN')})
+                          {profile.availableCredit >= totalPayable ? (
+                            <div className="eq-pay-desc credit-ok">
+                              <span>Available Balance: ₹{Number(profile.availableCredit || 0).toLocaleString('en-IN')}</span>
+                              <span style={{ color: '#059669', fontWeight: 700, marginLeft: 8 }}>
+                                · ✓ Full order covered
                               </span>
-                            )}
-                          </div>
+                            </div>
+                          ) : (
+                            <div className="eq-pay-desc credit-err">
+                              <span style={{ color: '#dc2626', fontWeight: 800 }}>
+                                Available Balance: ₹{Number(profile.availableCredit || 0).toLocaleString('en-IN')}
+                              </span>
+                              <span style={{ color: '#e11d48', fontWeight: 700, marginLeft: 8 }}>
+                                · ⚠️ Insufficient (Short by ₹{(totalPayable - (profile.availableCredit || 0)).toLocaleString('en-IN')})
+                              </span>
+                            </div>
+                          )}
                         </div>
                         {profile.availableCredit >= totalPayable ? (
                           <div className="eq-pay-radio">
                             <div className="eq-pay-radio-dot" />
                           </div>
                         ) : (
-                          <div className="eq-pay-lock">🔒</div>
+                          <div className="eq-pay-lock" title="Insufficient credit balance">🔒</div>
                         )}
                       </button>
                     )}

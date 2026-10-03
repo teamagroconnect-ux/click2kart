@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart, getStockStatus } from '../../lib/CartContext'
+import { useToast } from '../../components/Toast'
 import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { getPackSize, getEffectiveMoq } from '../../lib/packSize.js'
 
 export default function Cart() {
   const { cart, removeFromCart, updateQuantity, cartTotal, addToCart } = useCart()
+  const { notify } = useToast()
   const navigate = useNavigate()
   const [suggestions, setSuggestions] = useState([])
   const [couponCode, setCouponCode] = useState('')
@@ -14,6 +16,20 @@ export default function Cart() {
   const [couponError, setCouponError] = useState('')
   const [isApplying, setIsApplying] = useState(false)
   const minAmount = Number(import.meta.env.VITE_MIN_ORDER_AMOUNT || 5000)
+
+  /* ── product availability check (Flipkart-style) ── */
+  const isItemAvailable = (it) => {
+    if (it.isActive === false || it.isRemoved || it.isAvailable === false) return false;
+    if (it.productId && typeof it.productId === 'object' && it.productId.isActive === false) return false;
+    const itemStock = it.variantSku 
+      ? (it.productId?.variants?.find(v => v.sku === it.variantSku)?.stock ?? it.stock)
+      : (it.productId?.stock ?? it.stock);
+    if (typeof itemStock === 'number' && itemStock <= 0) return false;
+    return true;
+  };
+
+  const availableItems = cart.filter(isItemAvailable);
+  const unavailableCount = cart.length - availableItems.length;
 
   /* ── price helpers ── */
   const getBulkTiers = (item) => {
@@ -36,14 +52,8 @@ export default function Cart() {
     return p
   }
   const lineTotal   = (it) => unitPrice(it) * Math.max(1, Number(it.quantity || 1))
-  const mrpTotal    = cart.reduce((s,it) => s + Number(it.mrp||it.price||0) * Math.max(1,Number(it.quantity||1)), 0)
-  const effTotal    = cart.reduce((s,it) => {
-    const itemStock = it.variantSku 
-      ? (it.productId?.variants?.find(v => v.sku === it.variantSku)?.stock ?? it.stock)
-      : (it.productId?.stock ?? it.stock);
-    if (itemStock <= 0) return s;
-    return s + lineTotal(it);
-  }, 0)
+  const mrpTotal    = availableItems.reduce((s,it) => s + Number(it.mrp||it.price||0) * Math.max(1,Number(it.quantity||1)), 0)
+  const effTotal    = availableItems.reduce((s,it) => s + lineTotal(it), 0)
   const bulkDiscount = Math.max(0, mrpTotal - effTotal)
   const totalPayable = effTotal
   const etaText = (() => {
@@ -51,6 +61,21 @@ export default function Cart() {
     return d.toLocaleDateString('en-IN', { day:'2-digit', month:'short' })
   })()
   const minLeft = Math.max(0, minAmount - totalPayable)
+
+  const handleProceedToCheckout = () => {
+    if (availableItems.length === 0) {
+      notify('All items in your cart are currently out of stock or unavailable', 'error');
+      return;
+    }
+    if (totalPayable < minAmount) {
+      notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`, 'error');
+      return;
+    }
+    if (unavailableCount > 0) {
+      notify(`Skipping ${unavailableCount} unavailable item(s) from checkout`, 'info');
+    }
+    navigate('/order', { state: { appliedCoupon } });
+  };
 
   const handleApplyCoupon = async (e) => {
     e?.preventDefault()
@@ -423,6 +448,28 @@ export default function Cart() {
             {/* LEFT — items */}
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
 
+              {unavailableCount > 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, #fff1f2, #ffe4e6)',
+                  border: '1px solid #fecdd3',
+                  borderRadius: '16px',
+                  padding: '14px 18px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  <span style={{ fontSize: '22px' }}>⚠️</span>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#9f1239' }}>
+                      {unavailableCount} item{unavailableCount > 1 ? 's are' : ' is'} currently unavailable or out of stock
+                    </div>
+                    <div style={{ fontSize: '11px', color: '#be123c', marginTop: '2px', fontWeight: 500 }}>
+                      These items are discoloured and will be automatically skipped at checkout so your order can proceed smoothly.
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {cart.map((item, idx) => {
                 const tiers   = getBulkTiers(item)
                 const next    = getNextTier(item.quantity, tiers)
@@ -432,7 +479,8 @@ export default function Cart() {
                   ? (item.productId?.variants?.find(v => v.sku === item.variantSku)?.stock ?? item.stock)
                   : (item.productId?.stock ?? item.stock);
                 const stockSt = getStockStatus(itemStock)
-                const isOutOfStock = itemStock <= 0
+                const isAvailable = isItemAvailable(item)
+                const isOutOfStock = !isAvailable
                 const imgSrc  = item.image || item.images?.[0]?.url
                 const itemId  = item.productId || item._id
                 const itemSku = item.variantSku || ''
@@ -457,21 +505,27 @@ export default function Cart() {
                 return (
                   <div key={`${itemId}-${itemSku}`} className={`ct-item ${isOutOfStock ? 'ct-oos' : ''}`} style={{ 
                     animationDelay:`${idx*50}ms`,
-                    opacity: isOutOfStock ? 0.6 : 1,
-                    filter: isOutOfStock ? 'grayscale(0.4)' : 'none'
+                    opacity: isOutOfStock ? 0.55 : 1,
+                    filter: isOutOfStock ? 'grayscale(1)' : 'none',
+                    background: isOutOfStock ? '#f8fafc' : 'white',
+                    borderColor: isOutOfStock ? '#e2e8f0' : undefined
                   }}>
                     {isOutOfStock && (
                       <div style={{
                         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                        background: 'rgba(255,255,255,0.4)', zIndex: 5,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        pointerEvents: 'none'
+                        background: 'rgba(248,250,252,0.65)', zIndex: 5,
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        pointerEvents: 'none', gap: '4px'
                       }}>
                         <div style={{
-                          background: '#ef4444', color: 'white', padding: '4px 12px',
-                          borderRadius: '8px', fontSize: '10px', fontWeight: 800,
-                          textTransform: 'uppercase', letterSpacing: '0.1em'
+                          background: '#e11d48', color: 'white', padding: '5px 14px',
+                          borderRadius: '8px', fontSize: '10px', fontWeight: 900,
+                          textTransform: 'uppercase', letterSpacing: '0.1em',
+                          boxShadow: '0 4px 12px rgba(225,29,72,0.25)'
                         }}>Currently Unavailable</div>
+                        <div style={{ fontSize: '10px', color: '#475569', fontWeight: 700, background: 'rgba(255,255,255,0.95)', padding: '2px 8px', borderRadius: '4px' }}>
+                          Skipped at checkout
+                        </div>
                       </div>
                     )}
 
@@ -748,9 +802,9 @@ export default function Cart() {
 
               {/* checkout button */}
               <button
-                className={`ct-checkout-btn ${totalPayable >= minAmount ? 'ready' : 'disabled'}`}
-                disabled={totalPayable < minAmount || cart.every(item => (item.variantSku ? (item.productId?.variants?.find(v => v.sku === item.variantSku)?.stock ?? item.stock) : (item.productId?.stock ?? item.stock)) <= 0)}
-                onClick={() => navigate('/order', { state: { appliedCoupon } })}
+                className={`ct-checkout-btn ${totalPayable >= minAmount && availableItems.length > 0 ? 'ready' : 'disabled'}`}
+                disabled={totalPayable < minAmount || availableItems.length === 0}
+                onClick={handleProceedToCheckout}
               >
                 {totalPayable < minAmount
                   ? `Need ₹${minLeft.toLocaleString()} more`
@@ -781,9 +835,9 @@ export default function Cart() {
             <div className="ct-mobile-total-val">₹{totalPayable.toLocaleString()}</div>
           </div>
           <button
-            className={`ct-mobile-btn ${totalPayable >= minAmount && !cart.every(item => (item.variantSku ? (item.productId?.variants?.find(v => v.sku === item.variantSku)?.stock ?? item.stock) : (item.productId?.stock ?? item.stock)) <= 0) ? '' : 'disabled'}`}
-            disabled={totalPayable < minAmount || cart.every(item => (item.variantSku ? (item.productId?.variants?.find(v => v.sku === item.variantSku)?.stock ?? item.stock) : (item.productId?.stock ?? item.stock)) <= 0)}
-            onClick={() => navigate('/order', { state: { appliedCoupon } })}
+            className={`ct-mobile-btn ${totalPayable >= minAmount && availableItems.length > 0 ? '' : 'disabled'}`}
+            disabled={totalPayable < minAmount || availableItems.length === 0}
+            onClick={handleProceedToCheckout}
           >
             {totalPayable < minAmount ? `₹${minLeft.toLocaleString()} more needed` : 'Place Order →'}
           </button>

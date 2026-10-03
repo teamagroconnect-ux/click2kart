@@ -92,7 +92,13 @@ export function AuthProvider({ children }) {
         defaultAddress: data.defaultAddress,
         isKycComplete: !!data.isKycComplete,
         role: data.role || (data.phone ? 'customer' : 'admin'),
-        kyc: data.kyc // Include kyc data (which has profilePicture!)
+        kyc: data.kyc, // Include kyc data (which has profilePicture!)
+        isCreditEnabled: !!data.isCreditEnabled,
+        creditLimit: data.creditLimit || 0,
+        availableCredit: data.availableCredit || 0,
+        usedCredit: data.usedCredit || 0,
+        outstandingBalance: data.outstandingBalance || 0,
+        deliverySettings: data.deliverySettings || { delhiveryEnabled: true, localDeliveryEnabled: false }
       }
       setUser(nextUser)
       localStorage.setItem('user', JSON.stringify(nextUser))

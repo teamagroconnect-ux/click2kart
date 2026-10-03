@@ -849,7 +849,7 @@ export default function CreditManagement() {
           <div className="bg-white rounded-3xl p-6 max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-gray-100 space-y-4">
             <div className="flex items-center justify-between border-b border-gray-100 pb-3">
               <div>
-                <h3 className="text-xl font-black text-gray-900">Immutable Credit Ledger</h3>
+                <h3 className="text-xl font-black text-gray-900">Credit Transaction Audit Ledger</h3>
                 <p className="text-xs text-gray-500">
                   Retailer: <span className="font-bold text-gray-800">{selectedRetailer.name}</span> • Limit: ₹{(selectedRetailer.creditLimit || 0).toLocaleString('en-IN')}
                 </p>

@@ -172,6 +172,7 @@ export default function Profile() {
   const [selectedBusinessAddress, setSelectedBusinessAddress] = useState(null);
 
   // Retailer Credit State
+  const [isCreditEnabled, setIsCreditEnabled] = useState(() => Boolean(user?.isCreditEnabled));
   const [creditData, setCreditData] = useState(null);
   const [creditLoading, setCreditLoading] = useState(false);
   const [creditTransactions, setCreditTransactions] = useState([]);
@@ -185,7 +186,7 @@ export default function Profile() {
   const [uploadingSlip, setUploadingSlip] = useState(false);
 
   const loadCredit = async () => {
-    if (!user?.isCreditEnabled) return;
+    if (!isCreditEnabled && !user?.isCreditEnabled) return;
     setCreditLoading(true);
     try {
       const [resCredit, resTxns] = await Promise.all([
@@ -193,6 +194,9 @@ export default function Profile() {
         api.get('/api/credit/me/transactions')
       ]);
       setCreditData(resCredit.data);
+      if (resCredit.data?.isCreditEnabled !== undefined) {
+        setIsCreditEnabled(Boolean(resCredit.data.isCreditEnabled));
+      }
       setCreditTransactions(resTxns.data?.transactions || []);
       setCreditRepayments(resTxns.data?.repayments || []);
     } catch (err) {
@@ -325,10 +329,10 @@ export default function Profile() {
   }, [activeSection]);
 
   useEffect(() => {
-    if (user?.isCreditEnabled && (activeSection === 'credit' || activeSection === 'overview')) {
+    if ((isCreditEnabled || user?.isCreditEnabled) && (activeSection === 'credit' || activeSection === 'overview')) {
       loadCredit();
     }
-  }, [user?.isCreditEnabled, activeSection]);
+  }, [isCreditEnabled, user?.isCreditEnabled, activeSection]);
 
   useEffect(() => {
     let socket;
@@ -360,6 +364,9 @@ export default function Profile() {
     try {
       const { data } = await api.get('/api/user/me');
       setOriginalKyc(data.kyc || {});
+      if (data.isCreditEnabled !== undefined) {
+        setIsCreditEnabled(Boolean(data.isCreditEnabled));
+      }
       setFormData({
         name: data.name || '',
         phone: data.phone || '',
@@ -395,6 +402,16 @@ export default function Profile() {
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
+  };
+
+  const handleRequestContactChange = () => {
+    setNewTicketForm({
+      subject: 'Request for Registered Mobile / Email Update',
+      category: 'Account',
+      description: `Hello Support Team,\n\nI would like to request an update to my registered contact details:\nCurrent Name: ${formData.name || user?.name || ''}\nCurrent Registered Phone: ${formData.phone || user?.phone || ''}\nCurrent Registered Email: ${user?.email || ''}\n\nRequested New Phone / Email & Reason for update:\n`,
+      relatedOrder: ''
+    });
+    setShowNewTicketModal(true);
   };
 
   const loadAddresses = async () => {
@@ -450,10 +467,9 @@ export default function Profile() {
   const handleSaveProfile = async (e) => {
     e.preventDefault(); setSaving(true);
     try {
-      // Only save personal info, not KYC
+      // Only save personal info (name); phone & email locked
       await api.put('/api/user/profile', {
-        name: formData.name,
-        phone: formData.phone
+        name: formData.name
       });
       await refreshProfile();
       notify('Profile updated!', 'success');
@@ -686,7 +702,7 @@ export default function Profile() {
   /* Nav config */
   const navItems = [
     { id: 'overview',   label: 'Overview',   icon: 'home'  },
-    ...(user?.isCreditEnabled ? [{ id: 'credit', label: 'Credit Account', icon: 'credit' }] : []),
+    ...((isCreditEnabled || user?.isCreditEnabled) ? [{ id: 'credit', label: 'Credit Account', icon: 'credit' }] : []),
     { id: 'personal',   label: 'Profile',    icon: 'user'  },
     { id: 'business',   label: 'Business',   icon: 'pkg'   },
     { id: 'addresses',  label: 'Business Address',  icon: 'map'   },
@@ -815,9 +831,9 @@ export default function Profile() {
                 </div>
 
                 {/* Quick action grid */}
-                <div className={`grid ${user?.isCreditEnabled ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'} gap-3`}>
+                <div className={`grid ${(isCreditEnabled || user?.isCreditEnabled) ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'} gap-3`}>
                   {[
-                    ...(user?.isCreditEnabled ? [{
+                    ...((isCreditEnabled || user?.isCreditEnabled) ? [{
                       label: 'Credit Facility',
                       sub: `₹${Number(creditData?.availableCredit || user?.availableCredit || 0).toLocaleString('en-IN')} available`,
                       icon: 'credit',
@@ -875,7 +891,7 @@ export default function Profile() {
             )}
 
             {/* ──── CREDIT ACCOUNT ──── */}
-            {activeSection === 'credit' && user?.isCreditEnabled && (
+            {activeSection === 'credit' && (isCreditEnabled || user?.isCreditEnabled) && (
               <div className="pf-panel space-y-5">
                 {/* Header card */}
                 <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -1159,13 +1175,43 @@ export default function Profile() {
                         className={inputCls} placeholder="Your full name" />
                     </Field>
                     <Field label="Email Address">
-                      <input type="email" value={user?.email || ''} disabled className={disabledCls} />
+                      <div className="relative">
+                        <input type="email" value={user?.email || formData.email || ''} disabled className={disabledCls + ' pl-10'} />
+                        <div className="absolute left-3.5 top-3.5 text-slate-400">
+                          <Ico n="lock" cls="w-4 h-4" />
+                        </div>
+                      </div>
                     </Field>
                     <Field label="Phone Number">
-                      <input type="tel" name="phone" value={formData.phone}
-                        onChange={e => setFormData(p => ({ ...p, phone: e.target.value.replace(/\D/g,'').slice(0,10) }))}
-                        className={inputCls} placeholder="10-digit mobile number" />
+                      <div className="relative">
+                        <input type="tel" value={formData.phone || user?.phone || ''} disabled className={disabledCls + ' pl-10'} />
+                        <div className="absolute left-3.5 top-3.5 text-slate-400">
+                          <Ico n="lock" cls="w-4 h-4" />
+                        </div>
+                      </div>
                     </Field>
+                  </div>
+
+                  {/* Informational card for locked contact info */}
+                  <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-xl bg-amber-100 text-amber-700 flex-shrink-0">
+                        <Ico n="lock" cls="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-black text-amber-900">Email & Mobile Number are Protected</div>
+                        <div className="text-[11px] text-amber-800/80 mt-0.5 leading-relaxed">
+                          For account security and GST verification, registered email and phone number cannot be edited directly. To request an update, please raise a support ticket.
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRequestContactChange}
+                      className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-black tracking-wide whitespace-nowrap active:scale-95 transition-all shadow-sm shadow-amber-200 flex-shrink-0"
+                    >
+                      Raise Ticket to Update
+                    </button>
                   </div>
 
                   <button type="submit" disabled={saving} className={btnPrimary}>

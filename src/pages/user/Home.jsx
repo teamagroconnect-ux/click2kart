@@ -106,15 +106,6 @@ export default function Home() {
           pointer-events: none; z-index: 0;
         }
 
-        @keyframes hmFloat {
-          0%, 100% { transform: translateY(0) rotate(0.25deg); }
-          25% { transform: translateY(-12px) rotate(-0.25deg); }
-          50% { transform: translateY(-8px) rotate(0.15deg); }
-          75% { transform: translateY(-16px) rotate(-0.15deg); }
-        }
-        .hm-float {
-          animation: hmFloat 8s ease-in-out infinite;
-        }
 
         /* Enhanced glow blobs */
         .hm-blob1 {
@@ -214,19 +205,18 @@ export default function Home() {
           margin-bottom: 40px;
           animation: hmFadeUp 0.9s 0.15s ease both;
           filter: drop-shadow(0 40px 80px rgba(0,0,0,0.18));
+          transform: translateZ(0);
+          -webkit-backface-visibility: hidden;
+          backface-visibility: hidden;
         }
         .hm-title .accent {
           background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 30%, #10b981 65%, #ec4899 100%);
-          background-size: 300% 300%;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
           position: relative;
-          animation: gradientShift 12s ease infinite;
-        }
-        @keyframes gradientShift {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
+          display: inline-block;
+          transform: translateZ(0);
         }
         .hm-title .accent::after {
           content: '';
@@ -250,6 +240,7 @@ export default function Home() {
           max-width: 720px; text-align: center; line-height: 1.75;
           margin-bottom: 72px;
           animation: hmFadeUp 0.9s 0.3s ease both;
+          transform: translateZ(0);
         }
 
         .hm-ctas {
@@ -927,12 +918,12 @@ export default function Home() {
 
         {/* ── HERO ── */}
         <section className="hm-hero">
-          <div className="hm-eyebrow hm-float whitespace-nowrap">
+          <div className="hm-eyebrow whitespace-nowrap">
             <span className="hm-eyebrow-dot" />
             India's Trusted B2B Wholesale Platform
           </div>
 
-          <h1 className="hm-title hm-float" style={{ animationDelay: '0.2s' }}>
+          <h1 className="hm-title">
             <span style={{ display: 'block' }}>{line1}</span>
             <span style={{ display: 'block' }} className="accent">{line2}</span>
           </h1>
