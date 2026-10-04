@@ -11,20 +11,31 @@ export default function Dashboard() {
   const [inv, setInv] = useState({ totalSkus: 0, totalUnits: 0, outOfStock: 0, lowStock: 0 })
   const [orders, setOrders] = useState({ total: 0, open: 0, today: 0, recent: [] })
   const [revenue, setRevenue] = useState({ totalRevenue: 0, thisMonthRevenue: 0, pendingOrders: 0, topProducts: [], topBuyers: [] })
+  const [creditStats, setCreditStats] = useState({
+    totalLimit: 0,
+    totalAvailable: 0,
+    totalUsed: 0,
+    totalOutstanding: 0,
+    enabledCount: 0
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
       setLoading(true)
       try {
-        const [statsRes, ordersRes, revenueRes] = await Promise.all([
+        const [statsRes, ordersRes, revenueRes, creditRes] = await Promise.all([
           api.get('/api/admin/stats'),
           api.get('/api/orders', { params: { page: 1, limit: 50 } }).catch(() => ({ data: { items: [] } })),
-          api.get('/api/admin/revenue/summary').catch(() => ({ data: { totalRevenue: 0, thisMonthRevenue: 0, pendingOrders: 0, topProducts: [], topBuyers: [] } }))
+          api.get('/api/admin/revenue/summary').catch(() => ({ data: { totalRevenue: 0, thisMonthRevenue: 0, pendingOrders: 0, topProducts: [], topBuyers: [] } })),
+          api.get('/api/credit/admin/retailers', { params: { limit: 1 } }).catch(() => ({ data: { stats: {} } }))
         ])
         const s = statsRes.data
         setStats(s)
         setRevenue(revenueRes.data)
+        if (creditRes?.data?.stats) {
+          setCreditStats(creditRes.data.stats)
+        }
         setInv({ 
           totalSkus: s.totalProducts, 
           totalUnits: s.totalUnits, 
@@ -94,7 +105,7 @@ export default function Dashboard() {
       </div>
 
       {/* Primary Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
         <StatCard 
           label="Total Revenue" 
           value={`₹${Math.round(revenue.totalRevenue).toLocaleString()}`} 
@@ -117,6 +128,14 @@ export default function Dashboard() {
           icon={<svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>}
           color="emerald"
           to="/admin/products"
+        />
+        <StatCard 
+          label="Credit Facility" 
+          value={`₹${Math.round(creditStats.totalOutstanding || 0).toLocaleString()}`} 
+          sub={`${creditStats.enabledCount || 0} active credit accounts`}
+          icon={<svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>}
+          color="violet"
+          to="/admin/credit"
         />
         <StatCard 
           label="Pending Approvals" 
@@ -330,6 +349,7 @@ function StatCard({ label, value, sub, icon, color, to }) {
     amber: 'bg-gradient-to-br from-amber-50 to-orange-50 text-amber-600 border-amber-100',
     emerald: 'bg-gradient-to-br from-emerald-50 to-green-50 text-emerald-600 border-emerald-100',
     rose: 'bg-gradient-to-br from-rose-50 to-pink-50 text-rose-600 border-rose-100',
+    violet: 'bg-gradient-to-br from-violet-50 to-purple-50 text-violet-600 border-violet-100',
   }
 
   const content = (

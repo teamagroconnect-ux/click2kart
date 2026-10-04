@@ -347,9 +347,9 @@ export default function Orders(){
                               {o.status}
                             </span>
                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                              o.deliveryChannel === 'LOCAL_DELIVERY' ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                              (o.deliveryChannel === 'LOCAL_DELIVERY' && !o.shipping?.waybill) ? 'bg-purple-100 text-purple-800 border border-purple-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
                             }`}>
-                              {o.deliveryChannel === 'LOCAL_DELIVERY' ? 'Local' : 'Delhivery'}
+                              {(o.deliveryChannel === 'LOCAL_DELIVERY' && !o.shipping?.waybill) ? 'Local' : 'Delhivery'}
                             </span>
                           </div>
                         </td>
@@ -559,7 +559,7 @@ export default function Orders(){
                                     <div className="flex items-center justify-between">
                                       <div className="text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
                                         <span className="w-4 h-px bg-blue-200" />
-                                        Delivery Channel: <span className={o.deliveryChannel === 'LOCAL_DELIVERY' ? 'text-amber-600' : 'text-blue-600'}>{o.deliveryChannel === 'LOCAL_DELIVERY' ? 'Local Delivery' : 'Delhivery Express'}</span>
+                                        Delivery Channel: <span className={(o.deliveryChannel === 'LOCAL_DELIVERY' && !o.shipping?.waybill) ? 'text-amber-600' : 'text-blue-600'}>{(o.deliveryChannel === 'LOCAL_DELIVERY' && !o.shipping?.waybill) ? 'Local Delivery' : 'Delhivery Express'}</span>
                                       </div>
                                       <div className="flex items-center gap-2">
                                         {!['DELIVERED', 'CANCELLED', 'RETURNED'].includes(o.status) && (
@@ -577,19 +577,19 @@ export default function Orders(){
                                             Switch to {o.deliveryChannel === 'LOCAL_DELIVERY' ? 'Delhivery' : 'Local Delivery'}
                                           </button>
                                         )}
-                                        {o.deliveryChannel === 'LOCAL_DELIVERY' ? (
+                                        {(o.deliveryChannel === 'LOCAL_DELIVERY' && !o.shipping?.waybill) ? (
                                           <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 text-[8px] font-black uppercase border border-amber-200">
                                             {o.localDelivery?.status || 'PENDING'}
                                           </span>
                                         ) : (
-                                          o.shipping?.provider === 'DELHIVERY' && o.shipping?.waybill && (
-                                            <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase border border-emerald-100">Active</span>
+                                          o.shipping?.waybill && (
+                                            <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 text-[8px] font-black uppercase border border-emerald-100">Delhivery Active</span>
                                           )
                                         )}
                                       </div>
                                     </div>
                                     
-                                    {o.deliveryChannel === 'LOCAL_DELIVERY' ? (
+                                    {(o.deliveryChannel === 'LOCAL_DELIVERY' && !o.shipping?.waybill) ? (
                                       <div className="p-4 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-2">
                                         <div className="flex items-center justify-between text-xs">
                                           <span className="text-[10px] font-bold text-amber-900 uppercase tracking-wider">Local Fulfillment Details</span>

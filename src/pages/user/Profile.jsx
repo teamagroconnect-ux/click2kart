@@ -793,8 +793,6 @@ export default function Profile() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap');
-
         .pf-root { font-family: 'DM Sans', system-ui, sans-serif; }
         .pf-display { font-family: 'Sora', system-ui, sans-serif; }
 
@@ -809,17 +807,16 @@ export default function Profile() {
         .pf-nav-strip { -ms-overflow-style:none; scrollbar-width:none; }
       `}</style>
 
-      <div className="pf-root min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pb-24 lg:pb-12">
+      <div className="pf-root min-h-screen bg-slate-50/70 pb-24 lg:pb-12">
 
-        {/* ── TOP EXECUTIVE HEADER ── */}
-        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white border-b border-slate-800 shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#818cf8_1px,transparent_1px)] [background-size:16px_16px]" />
+        {/* ── TOP EXECUTIVE HEADER (Clean, Light B2B Luxury) ── */}
+        <div className="bg-white border-b border-slate-200/80 shadow-xs relative">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 relative z-10">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center gap-3.5">
                 <button
                   onClick={() => navigate('/')}
-                  className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all flex-shrink-0 border border-white/10 active:scale-95"
+                  className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 transition-all flex-shrink-0 border border-slate-200 active:scale-95 shadow-xs"
                   title="Back to Home"
                 >
                   <Ico n="back" cls="w-4 h-4" />
@@ -827,22 +824,24 @@ export default function Profile() {
                 <Avatar user={user} size="md" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="pf-display font-black text-lg text-white leading-tight truncate">
+                    <h1 className="pf-display font-black text-lg text-slate-900 leading-tight truncate">
                       {formData.businessName || user?.name || 'Retailer Account'}
                     </h1>
-                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      ✓ Verified B2B
+                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      ✓ Verified B2B Wholesaler
                     </span>
                     {user?.kyc?.gstin && (
-                      <span className="hidden sm:inline-block px-2 py-0.5 rounded-md text-[9px] font-mono font-bold bg-white/10 text-slate-300 border border-white/10">
-                        GST: {user.kyc.gstin}
+                      <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                        GSTIN: {user.kyc.gstin}
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
-                    <span>{user?.name}</span>
+                  <div className="text-xs text-slate-500 mt-1 flex items-center gap-2 font-medium">
+                    <span className="text-slate-700 font-semibold">{user?.name}</span>
                     <span>•</span>
                     <span>{user?.phone}</span>
+                    <span>•</span>
+                    <span className="text-slate-400">{user?.email}</span>
                   </div>
                 </div>
               </div>
@@ -851,30 +850,30 @@ export default function Profile() {
               {(isCreditEnabled || user?.isCreditEnabled) && (
                 <button
                   onClick={() => setActiveSection('credit')}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 hover:border-emerald-500/50 text-white text-xs font-bold transition-all shadow-sm hover:scale-[1.02] active:scale-95 text-left"
+                  className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/90 hover:border-emerald-300 hover:bg-emerald-100/70 text-slate-800 text-xs font-bold transition-all shadow-xs hover:scale-[1.01] active:scale-95 text-left group"
                 >
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                   <div>
-                    <div className="text-[10px] text-emerald-300 uppercase tracking-widest font-black">Available Credit</div>
-                    <div className="text-sm font-black text-emerald-400">
+                    <div className="text-[10px] text-emerald-800 uppercase tracking-widest font-black">Available Credit</div>
+                    <div className="text-sm font-black text-emerald-700">
                       ₹{Number(creditData?.availableCredit ?? user?.availableCredit ?? 0).toLocaleString('en-IN')}
                     </div>
                   </div>
-                  <span className="text-xs text-emerald-300 font-bold ml-1">→</span>
+                  <span className="text-xs text-emerald-700 font-bold group-hover:translate-x-0.5 transition-transform">→</span>
                 </button>
               )}
             </div>
 
             {/* ── MOBILE: horizontal scrollable tab strip ── */}
-            <div className="lg:hidden pf-nav-strip flex overflow-x-auto pt-4 gap-1.5 border-t border-slate-800/80 mt-4">
+            <div className="lg:hidden pf-nav-strip flex overflow-x-auto pt-3.5 gap-1.5 border-t border-slate-100 mt-3.5">
               {navItems.map(({ id, label, icon }) => (
                 <button
                   key={id}
                   onClick={() => setActiveSection(id)}
                   className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition-all ${
                     activeSection === id
-                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-900/40'
-                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      ? 'bg-violet-600 text-white shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 border border-slate-200/60'
                   }`}
                 >
                   <Ico n={icon} cls="w-3.5 h-3.5" />
@@ -935,18 +934,17 @@ export default function Profile() {
             {/* ──── OVERVIEW ──── */}
             {activeSection === 'overview' && (
               <div className="pf-panel space-y-6">
-                {/* Executive Welcome Card */}
-                <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl border border-slate-800">
-                  <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+                {/* Executive Welcome Card (Light, Crisp B2B Wholesaler Banner) */}
+                <div className="bg-gradient-to-r from-violet-50/70 via-indigo-50/40 to-slate-50 rounded-3xl p-6 sm:p-8 text-slate-900 relative overflow-hidden border border-violet-100/80 shadow-xs">
                   <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase tracking-wider mb-2 border border-indigo-500/30">
-                        Wholesale Portal • Enterprise
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 text-violet-800 text-[10px] font-black uppercase tracking-wider mb-2.5 border border-violet-200">
+                        Wholesale Portal • Enterprise Wholesaler
                       </div>
-                      <h2 className="pf-display font-black text-2xl sm:text-3xl tracking-tight text-white">
+                      <h2 className="pf-display font-black text-2xl sm:text-3xl tracking-tight text-slate-900">
                         Welcome back, {user?.name?.split(' ')[0]}
                       </h2>
-                      <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-lg leading-relaxed">
+                      <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-lg leading-relaxed font-medium">
                         Manage your wholesale orders, trade verification, and revolving credit limit with Click2Kart.
                       </p>
                     </div>
@@ -954,13 +952,13 @@ export default function Profile() {
                     <div className="flex flex-wrap items-center gap-3">
                       <button
                         onClick={() => navigate('/products')}
-                        className="px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-indigo-900/40 active:scale-95 transition-all"
+                        className="px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-violet-200 active:scale-95 transition-all"
                       >
                         Wholesale Catalogue →
                       </button>
                       <button
                         onClick={() => navigate('/orders')}
-                        className="px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs active:scale-95 transition-all border border-white/10"
+                        className="px-5 py-3 rounded-2xl bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs active:scale-95 transition-all border border-slate-200 shadow-xs"
                       >
                         View Orders
                       </button>
@@ -968,23 +966,23 @@ export default function Profile() {
                   </div>
                 </div>
 
-                {/* Credit Facility Spotlight on Overview */}
+                {/* Credit Facility Spotlight on Overview (Bright, Clean B2B Luxury) */}
                 {(isCreditEnabled || user?.isCreditEnabled) && (
-                  <div className="bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-900 rounded-3xl p-6 border border-emerald-500/30 shadow-lg text-white space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+                  <div className="bg-white rounded-3xl p-6 border border-emerald-200/90 shadow-xs text-slate-900 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-base font-black tracking-tight text-white">Approved Credit Facility</span>
-                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                            Active
+                          <span className="text-base font-black tracking-tight text-slate-900">Approved Credit Facility</span>
+                          <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Active Revolving Line
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400 mt-0.5">Use your revolving balance at checkout without immediate cash outflow.</p>
+                        <p className="text-xs text-slate-500 mt-0.5">Use your revolving credit balance at checkout for instant order dispatch without cash outflow.</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => setActiveSection('credit')}
-                          className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
+                          className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all border border-slate-200"
                         >
                           View Ledger
                         </button>
@@ -994,7 +992,7 @@ export default function Profile() {
                             setShowRepayModal(true);
                           }}
                           disabled={!creditData || (creditData.outstandingBalance || 0) <= 0}
-                          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider transition-all disabled:opacity-40"
+                          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider transition-all disabled:opacity-40 shadow-sm shadow-emerald-200 active:scale-95"
                         >
                           Repay Dues
                         </button>
@@ -1002,28 +1000,34 @@ export default function Profile() {
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                      <div className="bg-white/5 p-3.5 rounded-2xl border border-white/5">
-                        <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">Available Credit</div>
-                        <div className="text-xl font-black text-emerald-300 mt-1">
+                      <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-100 shadow-xs">
+                        <div className="text-[10px] uppercase font-black tracking-wider text-emerald-800">Available Credit</div>
+                        <div className="text-2xl font-black text-emerald-600 mt-1">
                           ₹{Number(creditData?.availableCredit ?? user?.availableCredit ?? 0).toLocaleString('en-IN')}
                         </div>
+                        <div className="text-[10px] text-emerald-700/80 font-medium mt-0.5">Ready for checkout</div>
                       </div>
-                      <div className="bg-white/5 p-3.5 rounded-2xl border border-white/5">
-                        <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Approved Limit</div>
-                        <div className="text-xl font-black text-white mt-1">
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+                        <div className="text-[10px] uppercase font-black tracking-wider text-slate-500">Approved Limit</div>
+                        <div className="text-2xl font-black text-slate-900 mt-1">
                           ₹{Number(creditData?.creditLimit ?? user?.creditLimit ?? 0).toLocaleString('en-IN')}
                         </div>
+                        <div className="text-[10px] text-slate-400 font-medium mt-0.5">Sanctioned facility</div>
                       </div>
-                      <div className="bg-white/5 p-3.5 rounded-2xl border border-white/5">
-                        <div className="text-[10px] uppercase font-bold tracking-wider text-amber-400">Used Credit</div>
-                        <div className="text-xl font-black text-amber-300 mt-1">
+                      <div className="bg-amber-50/60 p-4 rounded-2xl border border-amber-200/80 shadow-xs">
+                        <div className="text-[10px] uppercase font-black tracking-wider text-amber-800">Used Credit</div>
+                        <div className="text-2xl font-black text-amber-600 mt-1">
                           ₹{Number(creditData?.usedCredit ?? Math.max(0, (creditData?.creditLimit || 0) - (creditData?.availableCredit || 0))).toLocaleString('en-IN')}
                         </div>
+                        <div className="text-[10px] text-amber-700/80 font-medium mt-0.5">Drawn balance</div>
                       </div>
-                      <div className="bg-white/5 p-3.5 rounded-2xl border border-white/5">
-                        <div className="text-[10px] uppercase font-bold tracking-wider text-rose-400">Outstanding Due</div>
-                        <div className="text-xl font-black text-rose-400 mt-1">
+                      <div className="bg-rose-50/60 p-4 rounded-2xl border border-rose-200/80 shadow-xs">
+                        <div className="text-[10px] uppercase font-black tracking-wider text-rose-800">Outstanding Due</div>
+                        <div className="text-2xl font-black text-rose-600 mt-1">
                           ₹{Number(creditData?.outstandingBalance || 0).toLocaleString('en-IN')}
+                        </div>
+                        <div className="text-[10px] text-rose-700/80 font-medium mt-0.5">
+                          {Number(creditData?.outstandingBalance || 0) > 0 ? 'Pending repayment' : 'All clear'}
                         </div>
                       </div>
                     </div>
@@ -2160,88 +2164,124 @@ export default function Profile() {
       {/* ════ CREDIT REPAYMENT MODAL ════ */}
       {showRepayModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
-          <div className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
-            <div className="sticky top-0 bg-white px-5 py-4 border-b border-slate-100 flex items-center justify-between z-10">
-              <div>
-                <h2 className="pf-display font-black text-slate-800">Repay Credit Facility</h2>
-                <p className="text-slate-400 text-xs">
-                  Outstanding Due: <span className="font-bold text-rose-600">₹{Number(creditData?.outstandingBalance || 0).toLocaleString('en-IN')}</span>
-                </p>
+          <div className="bg-white w-full sm:max-w-lg sm:rounded-3xl rounded-t-3xl max-h-[92vh] overflow-y-auto shadow-2xl border border-slate-100">
+            <div className="sticky top-0 bg-white/95 backdrop-blur-md px-6 py-4 border-b border-slate-100 flex items-center justify-between z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">
+                  <Ico n="credit" cls="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="pf-display font-black text-slate-900 text-base">Repay Credit Facility</h2>
+                  <p className="text-slate-400 text-xs">Clear your revolving balance to restore credit limit</p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowRepayModal(false)}
-                className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400"
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600"
               >
                 <Ico n="close" cls="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="p-6 space-y-5">
+              {/* Due Summary Card */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-rose-50/70 via-slate-50 to-indigo-50/40 border border-rose-100 flex items-center justify-between">
+                <div>
+                  <div className="text-[10px] font-black uppercase tracking-wider text-rose-800">Total Outstanding Due</div>
+                  <div className="text-2xl font-black text-rose-600 mt-0.5">
+                    ₹{Number(creditData?.outstandingBalance || 0).toLocaleString('en-IN')}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">Available Limit</div>
+                  <div className="text-sm font-bold text-slate-700 mt-0.5">
+                    ₹{Number(creditData?.availableCredit || 0).toLocaleString('en-IN')}
+                  </div>
+                </div>
+              </div>
+
               {/* Payment Method Selector */}
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Payment Method</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Select Payment Method</label>
                 {companyBankConfig?.enabled ? (
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2.5">
                     <button
                       type="button"
                       onClick={() => setRepayMethod('RAZORPAY')}
-                      className={`p-3 rounded-xl border text-left transition-all ${
+                      className={`p-3.5 rounded-2xl border text-left transition-all ${
                         repayMethod === 'RAZORPAY'
-                          ? 'border-violet-600 bg-violet-50/60 ring-2 ring-violet-500/20'
-                          : 'border-slate-200 hover:border-slate-300'
+                          ? 'border-violet-600 bg-violet-50/60 ring-2 ring-violet-500/20 shadow-xs'
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
                       }`}
                     >
-                      <div className="text-xs font-bold text-slate-800">Razorpay</div>
-                      <div className="text-[10px] text-slate-400">Instant Online (UPI / Card)</div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-900">Instant Online</span>
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">Instant</span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-1">UPI (GPay, PhonePe), Cards, Netbanking</div>
                     </button>
                     <button
                       type="button"
                       onClick={() => setRepayMethod('BANK_TRANSFER')}
-                      className={`p-3 rounded-xl border text-left transition-all ${
+                      className={`p-3.5 rounded-2xl border text-left transition-all ${
                         repayMethod === 'BANK_TRANSFER'
-                          ? 'border-violet-600 bg-violet-50/60 ring-2 ring-violet-500/20'
-                          : 'border-slate-200 hover:border-slate-300'
+                          ? 'border-violet-600 bg-violet-50/60 ring-2 ring-violet-500/20 shadow-xs'
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
                       }`}
                     >
-                      <div className="text-xs font-bold text-slate-800">Bank Transfer</div>
-                      <div className="text-[10px] text-slate-400">NEFT / RTGS / IMPS</div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-black text-slate-900">Direct Bank</span>
+                        <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">Manual</span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 mt-1">NEFT / RTGS / IMPS / QR</div>
                     </button>
                   </div>
                 ) : (
-                  <div className="p-3 rounded-xl border border-violet-200 bg-violet-50/50 flex items-center justify-between">
+                  <div className="p-3.5 rounded-2xl border border-violet-100 bg-violet-50/50 flex items-center justify-between">
                     <div>
-                      <div className="text-xs font-bold text-slate-800">Instant Online Payment (Razorpay)</div>
-                      <div className="text-[10px] text-slate-500">UPI, Netbanking, Credit & Debit Cards</div>
+                      <div className="text-xs font-bold text-slate-900">Instant Online Gateway (Razorpay)</div>
+                      <div className="text-[11px] text-slate-500">Supports UPI (GPay, PhonePe, Paytm), Netbanking, Debit & Credit Cards</div>
                     </div>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Secure Gateway</span>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full whitespace-nowrap">Instant Sync</span>
                   </div>
                 )}
               </div>
 
               {/* Quick Amount Chips */}
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Quick Select Amount</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Quick Select Repayment Amount</label>
                 <div className="flex flex-wrap gap-2">
-                  {[2000, 5000, 10000]
+                  {[2000, 5000, 10000, 25000]
                     .filter(val => val <= Number(creditData?.outstandingBalance || 0))
-                    .map(val => (
-                      <button
-                        key={val}
-                        type="button"
-                        onClick={() => setRepayAmount(String(val))}
-                        className="px-3 py-1 rounded-lg text-xs font-bold border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition"
-                      >
-                        ₹{val.toLocaleString('en-IN')}
-                      </button>
-                    ))}
+                    .map(val => {
+                      const isSelected = Number(repayAmount) === val;
+                      return (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => setRepayAmount(String(val))}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                            isSelected
+                              ? 'bg-violet-600 text-white shadow-sm shadow-violet-200 scale-105'
+                              : 'border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                          }`}
+                        >
+                          ₹{val.toLocaleString('en-IN')}
+                        </button>
+                      );
+                    })}
                   {Number(creditData?.outstandingBalance || 0) > 0 && (
                     <button
                       type="button"
                       onClick={() => setRepayAmount(String(creditData?.outstandingBalance || 0))}
-                      className="px-3 py-1 rounded-lg text-xs font-bold border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 transition"
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                        Number(repayAmount) === Number(creditData?.outstandingBalance || 0)
+                          ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-200 scale-105'
+                          : 'border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                      }`}
                     >
-                      Full Due (₹{Number(creditData?.outstandingBalance || 0).toLocaleString('en-IN')})
+                      Pay Full Due (₹{Number(creditData?.outstandingBalance || 0).toLocaleString('en-IN')})
                     </button>
                   )}
                 </div>
@@ -2250,7 +2290,7 @@ export default function Profile() {
               {/* Amount Input */}
               <Field label="Repayment Amount (₹)">
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">₹</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-base">₹</span>
                   <input
                     type="number"
                     min="1"
@@ -2258,10 +2298,18 @@ export default function Profile() {
                     value={repayAmount}
                     onChange={(e) => setRepayAmount(e.target.value)}
                     placeholder="Enter amount to repay"
-                    className={`${inputCls} pl-8`}
+                    className={`${inputCls} pl-9 text-base font-bold`}
                     required
                   />
                 </div>
+                {Number(repayAmount) > 0 && (
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 mt-1.5 px-1 font-medium">
+                    <span>Remaining Due after payment:</span>
+                    <strong className="text-slate-800">
+                      ₹{Math.max(0, (creditData?.outstandingBalance || 0) - Number(repayAmount)).toLocaleString('en-IN')}
+                    </strong>
+                  </div>
+                )}
               </Field>
 
               {repayMethod === 'BANK_TRANSFER' && companyBankConfig?.enabled && (
@@ -2348,7 +2396,7 @@ export default function Profile() {
                 </div>
               )}
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex gap-2.5 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowRepayModal(false)}
@@ -2363,7 +2411,7 @@ export default function Profile() {
                     disabled={repaySubmitting || !repayAmount || Number(repayAmount) <= 0}
                     className={btnPrimary}
                   >
-                    {repaySubmitting ? 'Processing...' : `Pay ₹${Number(repayAmount || 0).toLocaleString('en-IN')} Online`}
+                    {repaySubmitting ? 'Processing Gateway…' : `Pay ₹${Number(repayAmount || 0).toLocaleString('en-IN')} Online`}
                   </button>
                 ) : (
                   <button
@@ -2372,7 +2420,7 @@ export default function Profile() {
                     disabled={repaySubmitting || !repayAmount || Number(repayAmount) <= 0 || !bankForm.utr.trim()}
                     className={btnPrimary}
                   >
-                    {repaySubmitting ? 'Submitting...' : 'Submit Transfer for Verification'}
+                    {repaySubmitting ? 'Submitting…' : 'Submit Transfer for Verification'}
                   </button>
                 )}
               </div>

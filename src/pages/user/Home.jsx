@@ -53,10 +53,20 @@ export default function Home() {
   const line2 = CONFIG.HERO_TITLE_LINE2 || 'B2B Marketplace'
 
   useEffect(() => {
-    api.get('/api/public/categories').then(({ data }) => setCats(data || [])).catch(() => setCats([]))
-    api.get('/api/brands/featured').then(({ data }) => setBrands(data || [])).catch(() => setBrands([]))
-    api.get('/api/recommendations/trending').then(({ data }) => setRecs(data || [])).catch(() => setRecs([]))
-    api.get('/api/offers?activeOnly=true').then(({ data }) => setOffers(data || [])).catch(() => setOffers([]))
+    let active = true
+    Promise.all([
+      api.get('/api/public/categories').catch(() => ({ data: [] })),
+      api.get('/api/brands/featured').catch(() => ({ data: [] })),
+      api.get('/api/recommendations/trending').catch(() => ({ data: [] })),
+      api.get('/api/offers?activeOnly=true').catch(() => ({ data: [] }))
+    ]).then(([cRes, bRes, rRes, oRes]) => {
+      if (!active) return
+      setCats(cRes.data || [])
+      setBrands(bRes.data || [])
+      setRecs(rRes.data || [])
+      setOffers(oRes.data || [])
+    })
+    return () => { active = false }
   }, [])
 
   const tickerLoop = useMemo(() => {
@@ -85,11 +95,9 @@ export default function Home() {
         url="/"
       />
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,300;1,9..40,400&display=swap');
-
         .hm-root {
           font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
-          background: radial-gradient(circle at 0% 0%, rgba(255,255,255,1) 0%, rgba(248,245,255,1) 25%, radial-gradient(circle at 100% 100%, rgba(245,243,255,1) 0%, rgba(240,245,255,1) 40%, rgba(255,255,255,1) 100%) 100%);
+          background: #ffffff;
           color: #1e1b2e;
           overflow-x: hidden;
           padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -99,55 +107,34 @@ export default function Home() {
           content: '';
           position: fixed; inset: 0;
           background-image: 
-            radial-gradient(rgba(124,58,237,0.08) 1px, transparent 1px),
-            radial-gradient(rgba(59,130,246,0.06) 1px, transparent 1px);
+            radial-gradient(rgba(124,58,237,0.05) 1px, transparent 1px),
+            radial-gradient(rgba(59,130,246,0.04) 1px, transparent 1px);
           background-size: 40px 40px, 60px 60px;
           background-position: 0 0, 30px 30px;
           pointer-events: none; z-index: 0;
         }
 
-
-        /* Enhanced glow blobs */
+        /* Ambient Glow Accents (Static & Hardware Accelerated) */
         .hm-blob1 {
           position: fixed; 
-          top: -600px; left: 50%; transform: translateX(-50%);
-          width: 2200px; height: 1400px; border-radius: 50%;
-          background: radial-gradient(ellipse at 30% 30%, rgba(124,58,237,0.25) 0%, rgba(59,130,246,0.18) 30%, transparent 70%);
+          top: -300px; left: 50%; transform: translateX(-50%);
+          width: 1200px; height: 700px; border-radius: 50%;
+          background: radial-gradient(ellipse at center, rgba(124,58,237,0.12) 0%, rgba(59,130,246,0.06) 45%, transparent 70%);
           pointer-events: none; z-index: 0;
-          filter: blur(120px);
-          animation: blobFloat1 16s ease-in-out infinite;
-        }
-        @keyframes blobFloat1 {
-          0%, 100% { transform: translateX(-50%) scale(1); }
-          33% { transform: translateX(-45%) scale(1.1); }
-          66% { transform: translateX(-55%) scale(0.95); }
         }
         .hm-blob2 {
           position: fixed; 
-          bottom: -500px; right: -400px;
-          width: 1200px; height: 1200px; border-radius: 50%;
-          background: radial-gradient(ellipse at 70% 70%, rgba(236,72,153,0.22) 0%, rgba(124,58,237,0.16) 40%, transparent 70%);
+          bottom: -250px; right: -200px;
+          width: 800px; height: 800px; border-radius: 50%;
+          background: radial-gradient(ellipse at center, rgba(236,72,153,0.08) 0%, rgba(124,58,237,0.05) 45%, transparent 70%);
           pointer-events: none; z-index: 0;
-          filter: blur(100px);
-          animation: blobFloat2 18s ease-in-out infinite;
-        }
-        @keyframes blobFloat2 {
-          0%, 100% { transform: scale(1) rotate(0deg); }
-          50% { transform: scale(1.15) rotate(15deg); }
         }
         .hm-blob3 {
           position: fixed; 
-          top: 30%; left: -300px;
-          width: 900px; height: 900px; border-radius: 50%;
-          background: radial-gradient(ellipse at 50% 50%, rgba(16,185,129,0.14) 0%, rgba(59,130,246,0.08) 35%, transparent 65%);
+          top: 30%; left: -200px;
+          width: 600px; height: 600px; border-radius: 50%;
+          background: radial-gradient(ellipse at center, rgba(16,185,129,0.06) 0%, transparent 65%);
           pointer-events: none; z-index: 0;
-          filter: blur(80px);
-          animation: blobFloat3 22s ease-in-out infinite;
-        }
-        @keyframes blobFloat3 {
-          0%, 100% { transform: translateY(0) scale(1) rotate(0deg); }
-          25% { transform: translateY(-30px) scale(1.05) rotate(5deg); }
-          75% { transform: translateY(15px) scale(0.98) rotate(-3deg); }
         }
 
         /* ────────────── HERO ────────────── */
@@ -178,7 +165,6 @@ export default function Home() {
           letter-spacing: 0.32em;
           text-transform: uppercase;
           margin-bottom: 52px;
-          animation: hmFadeUp 0.9s ease both;
           box-shadow:
             0 30px 80px -20px rgba(124,58,237,0.35),
             0 0 40px -10px rgba(124,58,237,0.25) inset,
@@ -203,7 +189,6 @@ export default function Home() {
           line-height: 0.80; text-align: center;
           letter-spacing: -0.04em;
           margin-bottom: 40px;
-          animation: hmFadeUp 0.9s 0.15s ease both;
           filter: drop-shadow(0 40px 80px rgba(0,0,0,0.18));
           transform: translateZ(0);
           -webkit-backface-visibility: hidden;
@@ -239,13 +224,11 @@ export default function Home() {
           color: #4b5563; font-weight: 450;
           max-width: 720px; text-align: center; line-height: 1.75;
           margin-bottom: 72px;
-          animation: hmFadeUp 0.9s 0.3s ease both;
           transform: translateZ(0);
         }
 
         .hm-ctas {
           display: flex; flex-direction: column; gap: 20px; align-items: center;
-          animation: hmFadeUp 0.8s 0.45s ease both;
         }
         @media(min-width:480px) { .hm-ctas { flex-direction: row; gap: 24px; } }
 
@@ -314,7 +297,6 @@ export default function Home() {
         .hm-trust-grid {
           display: grid; grid-template-columns: repeat(2, 1fr);
           gap: 28px; width: 100%; max-width: 1200px; margin-top: 120px;
-          animation: hmFadeUp 0.9s 0.6s ease both;
         }
         @media(min-width:640px) { .hm-trust-grid { grid-template-columns: repeat(4,1fr); gap: 32px; } }
 
@@ -568,7 +550,7 @@ export default function Home() {
         }
         @media(min-width:640px) { .hm-stats-inner { grid-template-columns: repeat(4,1fr); } }
 
-        .hm-stat { text-align: center; opacity: 0; animation: hmFadeUp 0.8s ease both; }
+        .hm-stat { text-align: center; }
         .hm-stat-num {
           font-family: 'Bebas Neue', sans-serif;
           font-size: clamp(56px, 8vw, 96px);

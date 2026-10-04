@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import api from '../../lib/api'
 import { io } from 'socket.io-client'
 import { useToast } from '../../components/Toast'
+import ImageUpload from '../../components/ImageUpload'
 
 export default function PaymentVerification() {
   const { notify } = useToast()
@@ -9,8 +10,22 @@ export default function PaymentVerification() {
   const [history, setHistory] = useState([])
   const [loading, setLoading] = useState(false)
   const [processingId, setProcessingId] = useState(null)
-  const [tab, setTab] = useState('pending') // 'pending' | 'history'
+  const [tab, setTab] = useState('pending') // 'pending' | 'history' | 'bank_setup'
   const [expandedId, setExpandedId] = useState(null)
+
+  // Company Bank Details & UPI QR Configuration
+  const [bankConfig, setBankConfig] = useState({
+    enabled: false,
+    bankName: '',
+    accountHolder: '',
+    accountNumber: '',
+    ifscCode: '',
+    branch: '',
+    upiId: '',
+    qrCodeUrl: ''
+  })
+  const [loadingBankConfig, setLoadingBankConfig] = useState(false)
+  const [savingBankConfig, setSavingBankConfig] = useState(false)
 
   const toggleExpand = (id) => setExpandedId(expandedId === id ? null : id)
 
@@ -38,9 +53,46 @@ export default function PaymentVerification() {
     }
   }
 
+  const loadBankConfig = async () => {
+    setLoadingBankConfig(true)
+    try {
+      const { data } = await api.get('/api/admin/settings')
+      if (data?.bankDetails) {
+        setBankConfig({
+          enabled: Boolean(data.bankDetails.enabled),
+          bankName: data.bankDetails.bankName || '',
+          accountHolder: data.bankDetails.accountHolder || '',
+          accountNumber: data.bankDetails.accountNumber || '',
+          ifscCode: data.bankDetails.ifscCode || '',
+          branch: data.bankDetails.branch || '',
+          upiId: data.bankDetails.upiId || '',
+          qrCodeUrl: data.bankDetails.qrCodeUrl || ''
+        })
+      }
+    } catch (err) {
+      notify('Failed to load company bank configuration', 'error')
+    } finally {
+      setLoadingBankConfig(false)
+    }
+  }
+
+  const handleSaveBankConfig = async (e) => {
+    e.preventDefault()
+    setSavingBankConfig(true)
+    try {
+      await api.put('/api/admin/settings', { bankDetails: bankConfig })
+      notify('Company Bank & QR settings updated successfully!', 'success')
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to update bank configuration', 'error')
+    } finally {
+      setSavingBankConfig(false)
+    }
+  }
+
   useEffect(() => {
     if (tab === 'pending') loadPending()
-    else loadHistory()
+    else if (tab === 'history') loadHistory()
+    else if (tab === 'bank_setup') loadBankConfig()
   }, [tab])
 
   useEffect(() => {
@@ -116,10 +168,24 @@ export default function PaymentVerification() {
           >
             History
           </button>
+          <button
+            onClick={() => setTab('bank_setup')}
+            className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${tab === 'bank_setup' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Company Bank & QR Setup
+          </button>
         </div>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm">
+      {tab === 'bank_setup' ? (
+        <BankSetupPanel
+          bankConfig={bankConfig}
+          setBankConfig={setBankConfig}
+          handleSaveBankConfig={handleSaveBankConfig}
+          savingBankConfig={savingBankConfig}
+        />
+      ) : (
+        <div className="bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           {tab === 'pending' ? (
             <table className="w-full text-left text-sm border-collapse">
@@ -366,6 +432,182 @@ export default function PaymentVerification() {
           )}
         </div>
       </div>
+      )}
+    </div>
+  )
+}
+
+function BankSetupPanel({ bankConfig, setBankConfig, handleSaveBankConfig, savingBankConfig }) {
+  return (
+    <div className="bg-white border border-gray-100 rounded-[2.5rem] p-6 sm:p-8 shadow-sm space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-gray-100 gap-4">
+        <div>
+          <h2 className="text-lg font-black text-gray-900 tracking-tight">Official Company Bank & QR Setup</h2>
+          <p className="text-xs text-gray-500 mt-1 max-w-xl">
+            Configure your official company bank account and UPI QR code. When enabled, retailers can pay via NEFT/IMPS/UPI at Checkout, COD Advance, and Credit Repayment.
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="text-xs font-black uppercase tracking-wider text-gray-600 cursor-pointer">
+            Direct Bank Transfer
+          </label>
+          <button
+            type="button"
+            onClick={() => setBankConfig(prev => ({ ...prev, enabled: !prev.enabled }))}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+              bankConfig.enabled ? 'bg-emerald-600' : 'bg-gray-300'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                bankConfig.enabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+          <span className={`text-xs font-black uppercase ${bankConfig.enabled ? 'text-emerald-600' : 'text-gray-400'}`}>
+            {bankConfig.enabled ? 'Active' : 'Disabled'}
+          </span>
+        </div>
+      </div>
+
+      {!bankConfig.enabled && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
+          <span className="text-lg">⚠️</span>
+          <div className="text-xs text-amber-800 leading-relaxed">
+            <strong>Direct Bank Transfer is currently disabled.</strong> Retailers will not see the Direct Bank Transfer / UPI option at checkout, credit repayment, or COD 20% advance payment. Enable this switch and enter details below when you wish to accept manual transfers.
+          </div>
+        </div>
+      )}
+
+      <form onSubmit={handleSaveBankConfig} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              Bank Name
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. HDFC Bank, ICICI Bank, State Bank of India"
+              value={bankConfig.bankName}
+              onChange={(e) => setBankConfig(prev => ({ ...prev, bankName: e.target.value }))}
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              Account Holder Name
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. CLICK2KART PRIVATE LIMITED"
+              value={bankConfig.accountHolder}
+              onChange={(e) => setBankConfig(prev => ({ ...prev, accountHolder: e.target.value }))}
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              Account Number
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. 50200012345678"
+              value={bankConfig.accountNumber}
+              onChange={(e) => setBankConfig(prev => ({ ...prev, accountNumber: e.target.value }))}
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono font-bold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              IFSC Code
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. HDFC0001234"
+              value={bankConfig.ifscCode}
+              onChange={(e) => setBankConfig(prev => ({ ...prev, ifscCode: e.target.value.toUpperCase() }))}
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono font-bold text-gray-900 uppercase outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              Branch Name
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Main Branch, Commercial Complex"
+              value={bankConfig.branch}
+              onChange={(e) => setBankConfig(prev => ({ ...prev, branch: e.target.value }))}
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              Official UPI ID / VPA
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. click2kart@hdfcbank"
+              value={bankConfig.upiId}
+              onChange={(e) => setBankConfig(prev => ({ ...prev, upiId: e.target.value }))}
+              className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono font-bold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* QR Code Upload & Preview */}
+        <div className="pt-4 border-t border-gray-100">
+          <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+            Company UPI QR Code
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+            <div className="space-y-3">
+              <ImageUpload
+                value={bankConfig.qrCodeUrl}
+                onChange={(url) => setBankConfig(prev => ({ ...prev, qrCodeUrl: url }))}
+              />
+              <p className="text-[11px] text-gray-400">
+                Upload your high-resolution UPI QR code image (PNG, JPG, SVG).
+              </p>
+            </div>
+            {bankConfig.qrCodeUrl && (
+              <div className="bg-gray-50 border border-gray-200 rounded-3xl p-4 flex flex-col items-center justify-center text-center space-y-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Customer Display Preview</span>
+                <img
+                  src={bankConfig.qrCodeUrl}
+                  alt="UPI QR Code"
+                  className="w-48 h-48 object-contain rounded-2xl border border-gray-200 bg-white p-2 shadow-sm"
+                />
+                <div className="text-xs font-bold text-gray-800">{bankConfig.upiId || 'Scan to Pay'}</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+          <button
+            type="submit"
+            disabled={savingBankConfig}
+            className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+          >
+            {savingBankConfig ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Saving Settings...
+              </>
+            ) : (
+              'Save Bank & QR Settings'
+            )}
+          </button>
+        </div>
+      </form>
     </div>
   )
 }

@@ -98,13 +98,20 @@ export default function OrderHistory() {
   const { token } = useAuth()
   const { notify } = useToast()
 
-  const isLocalDispatchedOrAssigned = (o) => {
+  const isLocalDeliveryOrder = (o) => {
     if (!o) return false
+    // If order has a Delhivery waybill, it was routed via Delhivery
+    if (o.shipping?.waybill) return false
+    return o.deliveryChannel === 'LOCAL_DELIVERY'
+  }
+
+  const isLocalDispatchedOrAssigned = (o) => {
+    if (!isLocalDeliveryOrder(o)) return false
     const ld = o.localDelivery
-    if (ld?.dispatchedAt || ld?.deliveredAt) return true
-    if (ld?.status && ['ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(ld.status)) return true
-    if (ld?.assignedPerson || ld?.contactPhone || ld?.trackingNumber) return true
-    if (['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'FULFILLED'].includes(o.status)) return true
+    if (!ld) return false
+    if (ld.dispatchedAt || ld.deliveredAt) return true
+    if (ld.status && ['ASSIGNED', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(ld.status)) return true
+    if (ld.assignedPerson || ld.contactPhone || ld.trackingNumber) return true
     return false
   }
 
@@ -181,7 +188,7 @@ export default function OrderHistory() {
     const nonCancellable = ['SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'FULFILLED', 'RETURNED']
     if (nonCancellable.includes(order.status)) return false
     if (order.shipping?.waybill) return false
-    if (order.deliveryChannel === 'LOCAL_DELIVERY' && ['OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.localDelivery?.status)) return false
+    if (isLocalDeliveryOrder(order) && ['OUT_FOR_DELIVERY', 'DELIVERED'].includes(order.localDelivery?.status)) return false
     return true
   }
 
@@ -1155,7 +1162,7 @@ export default function OrderHistory() {
                               </div>
                               <div className="oh-info-row">
                                 Fulfillment: <b>
-                                  {order.deliveryChannel === 'LOCAL_DELIVERY'
+                                  {isLocalDeliveryOrder(order)
                                     ? (isLocalDispatchedOrAssigned(order)
                                         ? `Local Delivery (${order.localDelivery?.status || 'In Transit'})`
                                         : 'Local Delivery (Warehouse preparation / Not yet dispatched)')
@@ -1372,8 +1379,8 @@ export default function OrderHistory() {
                           </div>
                         </div>
 
-                        {/* LOCAL DELIVERY TRACKING - Displayed only when order is dispatched or partner assigned */}
-                        {order.status !== 'CANCELLED' && (order.deliveryChannel === 'LOCAL_DELIVERY' || order.localDelivery) && isLocalDispatchedOrAssigned(order) && (
+                        {/* LOCAL DELIVERY TRACKING - Displayed only when order is truly local delivery and not Delhivery */}
+                        {order.status !== 'CANCELLED' && isLocalDeliveryOrder(order) && isLocalDispatchedOrAssigned(order) && (
                           <>
                             <div className="oh-divider" />
                             <div>
@@ -1435,7 +1442,7 @@ export default function OrderHistory() {
                         )}
 
                         {/* DELHIVERY PREMIUM SHIPMENT CARD */}
-                        {order.status !== 'CANCELLED' && order.shipping?.waybill && (order.deliveryChannel !== 'LOCAL_DELIVERY') && (
+                        {order.status !== 'CANCELLED' && order.shipping?.waybill && (
                           <>
                             <div className="oh-divider" />
                             <div>

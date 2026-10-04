@@ -1,11 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
-import ImageUpload from '../../components/ImageUpload'
 
 export default function CreditManagement() {
   const { notify } = useToast()
-  const [activeTab, setActiveTab] = useState('retailers') // 'retailers' | 'bank_setup'
   const [stats, setStats] = useState({
     totalLimit: 0,
     totalAvailable: 0,
@@ -19,20 +17,6 @@ export default function CreditManagement() {
   const [loadingRetailers, setLoadingRetailers] = useState(true)
   const [searchQ, setSearchQ] = useState('')
   const [statusFilter, setStatusFilter] = useState('all') // 'all' | 'enabled' | 'disabled'
-
-  // Bank & QR Settings state
-  const [bankConfig, setBankConfig] = useState({
-    enabled: false,
-    bankName: '',
-    accountHolder: '',
-    accountNumber: '',
-    ifscCode: '',
-    branch: '',
-    upiId: '',
-    qrCodeUrl: ''
-  })
-  const [loadingBankConfig, setLoadingBankConfig] = useState(false)
-  const [savingBankConfig, setSavingBankConfig] = useState(false)
 
   // Retailer Quick Detail Modal state
   const [quickDetailRetailer, setQuickDetailRetailer] = useState(null)
@@ -125,45 +109,6 @@ export default function CreditManagement() {
     }
   }
 
-  // Load Bank Details & QR Settings
-  const loadBankConfig = async () => {
-    setLoadingBankConfig(true)
-    try {
-      const { data } = await api.get('/api/admin/settings')
-      if (data?.bankDetails) {
-        setBankConfig({
-          enabled: Boolean(data.bankDetails.enabled),
-          bankName: data.bankDetails.bankName || '',
-          accountHolder: data.bankDetails.accountHolder || '',
-          accountNumber: data.bankDetails.accountNumber || '',
-          ifscCode: data.bankDetails.ifscCode || '',
-          branch: data.bankDetails.branch || '',
-          upiId: data.bankDetails.upiId || '',
-          qrCodeUrl: data.bankDetails.qrCodeUrl || ''
-        })
-      }
-    } catch (err) {
-      console.error('Failed to load bank settings', err)
-    } finally {
-      setLoadingBankConfig(false)
-    }
-  }
-
-  const handleSaveBankConfig = async (e) => {
-    e.preventDefault()
-    setSavingBankConfig(true)
-    try {
-      await api.put('/api/admin/settings', {
-        bankDetails: bankConfig
-      })
-      notify('Bank & QR configuration saved successfully', 'success')
-    } catch (err) {
-      notify(err?.response?.data?.message || 'Failed to save bank configuration', 'error')
-    } finally {
-      setSavingBankConfig(false)
-    }
-  }
-
   // Open Retailer Quick Detail Modal
   const openRetailerQuickDetail = async (retailer) => {
     setQuickDetailOpen(true)
@@ -179,12 +124,8 @@ export default function CreditManagement() {
   }
 
   useEffect(() => {
-    if (activeTab === 'retailers') {
-      loadRetailers()
-    } else if (activeTab === 'bank_setup') {
-      loadBankConfig()
-    }
-  }, [activeTab, searchQ, statusFilter])
+    loadRetailers()
+  }, [searchQ, statusFilter])
 
   // Toggle credit modal submit
   const handleToggleCredit = async (e) => {
@@ -335,33 +276,8 @@ export default function CreditManagement() {
         </div>
       </div>
 
-      {/* Main Tabs */}
-      <div className="flex items-center gap-4 border-b border-gray-100 pb-2">
-        <button
-          onClick={() => setActiveTab('retailers')}
-          className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all ${
-            activeTab === 'retailers'
-              ? 'bg-gray-900 text-white shadow-md'
-              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-          }`}
-        >
-          Retailer Credit Directory
-        </button>
-        <button
-          onClick={() => setActiveTab('bank_setup')}
-          className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all ${
-            activeTab === 'bank_setup'
-              ? 'bg-gray-900 text-white shadow-md'
-              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
-          }`}
-        >
-          Company Bank & QR Setup
-        </button>
-      </div>
-
-      {/* Tab 1: Retailers Directory */}
-      {activeTab === 'retailers' && (
-        <div className="space-y-6">
+      {/* Retailers Directory */}
+      <div className="space-y-6">
           {/* Filters */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="relative w-full sm:w-80">
@@ -512,172 +428,6 @@ export default function CreditManagement() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Tab 2: Company Bank & QR Setup */}
-      {activeTab === 'bank_setup' && (
-        <div className="max-w-4xl bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-gray-100">
-            <div>
-              <h2 className="text-xl font-black text-gray-900">Direct Bank Transfer & UPI Settings</h2>
-              <p className="text-xs text-gray-500 mt-1">
-                Configure official company receiving accounts and payment QR code for wholesale payments.
-              </p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={bankConfig.enabled}
-                onChange={(e) => setBankConfig(prev => ({ ...prev, enabled: e.target.checked }))}
-                className="sr-only peer"
-              />
-              <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
-              <span className="ml-3 text-xs font-black uppercase tracking-wider text-gray-800">
-                {bankConfig.enabled ? 'Bank Transfer Active' : 'Bank Transfer Disabled'}
-              </span>
-            </label>
-          </div>
-
-          {!bankConfig.enabled && (
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
-              <span className="text-lg">⚠️</span>
-              <div className="text-xs text-amber-800 leading-relaxed">
-                <strong>Direct Bank Transfer is currently disabled.</strong> Retailers will not see the Direct Bank Transfer / UPI option at checkout, credit repayment, or COD 20% advance payment. Enable this switch and enter details below when you wish to accept manual transfers.
-              </div>
-            </div>
-          )}
-
-          <form onSubmit={handleSaveBankConfig} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                  Bank Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. HDFC Bank, ICICI Bank, State Bank of India"
-                  value={bankConfig.bankName}
-                  onChange={(e) => setBankConfig(prev => ({ ...prev, bankName: e.target.value }))}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                  Account Holder Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. CLICK2KART PRIVATE LIMITED"
-                  value={bankConfig.accountHolder}
-                  onChange={(e) => setBankConfig(prev => ({ ...prev, accountHolder: e.target.value }))}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                  Account Number
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. 50200012345678"
-                  value={bankConfig.accountNumber}
-                  onChange={(e) => setBankConfig(prev => ({ ...prev, accountNumber: e.target.value }))}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono font-bold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                  IFSC Code
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. HDFC0001234"
-                  value={bankConfig.ifscCode}
-                  onChange={(e) => setBankConfig(prev => ({ ...prev, ifscCode: e.target.value.toUpperCase() }))}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono font-bold text-gray-900 uppercase outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                  Branch Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Main Branch, Commercial Complex"
-                  value={bankConfig.branch}
-                  onChange={(e) => setBankConfig(prev => ({ ...prev, branch: e.target.value }))}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                  Official UPI ID / VPA
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. click2kart@hdfcbank"
-                  value={bankConfig.upiId}
-                  onChange={(e) => setBankConfig(prev => ({ ...prev, upiId: e.target.value }))}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono font-bold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-            </div>
-
-            {/* QR Code Upload & Preview */}
-            <div className="pt-4 border-t border-gray-100">
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                Company UPI QR Code
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
-                <div className="space-y-3">
-                  <ImageUpload
-                    value={bankConfig.qrCodeUrl}
-                    onChange={(url) => setBankConfig(prev => ({ ...prev, qrCodeUrl: url }))}
-                  />
-                  <p className="text-[11px] text-gray-400">
-                    Upload your high-resolution UPI QR code image (PNG, JPG, SVG).
-                  </p>
-                </div>
-                {bankConfig.qrCodeUrl && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-3xl p-4 flex flex-col items-center justify-center text-center space-y-2">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Customer Display Preview</span>
-                    <img
-                      src={bankConfig.qrCodeUrl}
-                      alt="UPI QR Code"
-                      className="w-48 h-48 object-contain rounded-2xl border border-gray-200 bg-white p-2 shadow-sm"
-                    />
-                    <div className="text-xs font-bold text-gray-800">{bankConfig.upiId || 'Scan to Pay'}</div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-              <button
-                type="submit"
-                disabled={savingBankConfig}
-                className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
-              >
-                {savingBankConfig ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Saving Changes...
-                  </>
-                ) : (
-                  'Save Bank & QR Configuration'
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
 
       {/* MODAL: Toggle Credit Status */}
       {toggleModalOpen && selectedRetailer && (
