@@ -43,6 +43,59 @@ export default function CreditManagement() {
   const [actionLoading, setActionLoading] = useState(false)
   const [ledgerHistory, setLedgerHistory] = useState([])
   const [reconciling, setReconciling] = useState(false)
+  const [notifyModalOpen, setNotifyModalOpen] = useState(false)
+  const [notifying, setNotifying] = useState(false)
+
+  // Reason presets
+  const ADJUST_PRESETS = {
+    INCREASE: [
+      'Credit limit enhancement based on consistent repayment history',
+      'Seasonal credit enhancement for festive/bulk wholesale demand',
+      'Approved higher credit facility per business verification',
+      'Operational limit increase per admin review'
+    ],
+    DECREASE: [
+      'Periodic risk management limit reduction',
+      'Limit reduction per merchant formal request',
+      'Overdue balance containment adjustment',
+      'Credit line reduction following account review'
+    ]
+  }
+
+  const TOGGLE_PRESETS = {
+    ENABLE: [
+      'Approved after verification of trade license and business volume',
+      'KYC verified and approved for B2B wholesale credit facility',
+      'Initial credit limit granted per onboarding criteria'
+    ],
+    DISABLE: [
+      'Temporarily deactivated per credit risk assessment',
+      'Credit facility paused per merchant request',
+      'Overdue outstanding dues hold pending clearance',
+      'Account deactivated following annual compliance review'
+    ]
+  }
+
+  const REJECT_PRESETS = [
+    'UTR transaction not found in company bank account statement',
+    'Amount mismatch between payment receipt and bank credit',
+    'Payment receipt image is illegible or missing UTR details',
+    'Duplicate payment claim already credited previously'
+  ]
+
+  // Notify All Outstanding Balance Holders
+  const handleNotifyOutstanding = async () => {
+    setNotifying(true)
+    try {
+      const { data } = await api.post('/api/credit/admin/notify-outstanding')
+      notify(data.message || `Sent reminders to ${data.sentCount || 0} retailers`, 'success')
+      setNotifyModalOpen(false)
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to send notifications', 'error')
+    } finally {
+      setNotifying(false)
+    }
+  }
 
   // Load retailers
   const loadRetailers = async () => {
@@ -238,7 +291,18 @@ export default function CreditManagement() {
             Retailer Credit Limits, Balance Ledgers & Repayment Verification
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => setNotifyModalOpen(true)}
+            disabled={notifying}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-black uppercase tracking-wider rounded-2xl transition-all shadow-md active:scale-95 disabled:opacity-50"
+            title="Dispatch payment reminders to all retailers with outstanding dues"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            Notify Outstanding ({stats.totalOutstanding > 0 ? `₹${(stats.totalOutstanding || 0).toLocaleString('en-IN')}` : 'All Clear'})
+          </button>
           <button
             onClick={handleReconcile}
             disabled={reconciling}
@@ -358,24 +422,21 @@ export default function CreditManagement() {
                     <th className="px-6 py-4">Limit (₹)</th>
                     <th className="px-6 py-4">Available (₹)</th>
                     <th className="px-6 py-4">Outstanding (₹)</th>
-                    <th className="px-6 py-4">Delivery Channel</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {loadingRetailers ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-12 text-gray-400">Loading retailers...</td>
+                      <td colSpan="6" className="text-center py-12 text-gray-400">Loading retailers...</td>
                     </tr>
                   ) : retailers.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-12 text-gray-400">No retailers found matching criteria</td>
+                      <td colSpan="6" className="text-center py-12 text-gray-400">No retailers found matching criteria</td>
                     </tr>
                   ) : (
                     retailers.map((r) => {
                       const isEn = Boolean(r.isCreditEnabled)
-                      const dDelhivery = r.deliverySettings?.delhiveryEnabled ?? true
-                      const dLocal = r.deliverySettings?.localDeliveryEnabled ?? false
                       return (
                         <tr key={r._id} className="hover:bg-gray-50/50 transition-colors">
                           <td className="px-6 py-4">
@@ -400,23 +461,6 @@ export default function CreditManagement() {
                           <td className="px-6 py-4 font-black text-rose-600">
                             ₹{(r.outstandingBalance || 0).toLocaleString('en-IN')}
                           </td>
-                          <td className="px-6 py-4">
-                            <div className="flex flex-wrap gap-1">
-                              {dDelhivery && (
-                                <span className="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-md">
-                                  Delhivery
-                                </span>
-                              )}
-                              {dLocal && (
-                                <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-md">
-                                  Local
-                                </span>
-                              )}
-                              {!dDelhivery && !dLocal && (
-                                <span className="text-[10px] text-gray-400">None</span>
-                              )}
-                            </div>
-                          </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button
@@ -431,17 +475,9 @@ export default function CreditManagement() {
                                   <button
                                     onClick={() => {
                                       setSelectedRetailer(r)
-                                      setFormLimit(String(r.creditLimit || 0))
-                                      setLimitModalOpen(true)
-                                    }}
-                                    className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold transition-all"
-                                  >
-                                    Set Limit
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setSelectedRetailer(r)
                                       setFormAdjustAmount('')
+                                      setFormAdjustType('INCREASE')
+                                      setFormReason('Credit limit enhancement based on consistent repayment history')
                                       setAdjustModalOpen(true)
                                     }}
                                     className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl text-xs font-bold transition-all"
@@ -451,6 +487,7 @@ export default function CreditManagement() {
                                   <button
                                     onClick={() => {
                                       setSelectedRetailer(r)
+                                      setFormReason('Temporarily deactivated per credit risk assessment')
                                       setToggleModalOpen(true)
                                     }}
                                     className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold transition-all"
@@ -463,6 +500,7 @@ export default function CreditManagement() {
                                   onClick={() => {
                                     setSelectedRetailer(r)
                                     setFormLimit('50000')
+                                    setFormReason('Approved after verification of trade license and business volume')
                                     setToggleModalOpen(true)
                                   }}
                                   className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
@@ -652,12 +690,31 @@ export default function CreditManagement() {
               )}
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Audit Reason (Required)
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Audit Reason (Required)
+                  </label>
+                  <span className="text-[10px] text-gray-400 font-medium">Quick Presets:</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {(selectedRetailer.isCreditEnabled ? TOGGLE_PRESETS.DISABLE : TOGGLE_PRESETS.ENABLE).map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setFormReason(preset)}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all text-left ${
+                        formReason === preset
+                          ? 'bg-blue-50 text-blue-700 border-blue-300'
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-transparent'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
                 <textarea
                   required
-                  rows="3"
+                  rows="2"
                   value={formReason}
                   onChange={(e) => setFormReason(e.target.value)}
                   placeholder="Explain why this retailer's credit status is being modified..."
@@ -769,7 +826,10 @@ export default function CreditManagement() {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setFormAdjustType('INCREASE')}
+                    onClick={() => {
+                      setFormAdjustType('INCREASE')
+                      setFormReason('Credit limit enhancement based on consistent repayment history')
+                    }}
                     className={`py-2 text-xs font-black rounded-xl border transition-all ${
                       formAdjustType === 'INCREASE'
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
@@ -780,7 +840,10 @@ export default function CreditManagement() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setFormAdjustType('DECREASE')}
+                    onClick={() => {
+                      setFormAdjustType('DECREASE')
+                      setFormReason('Periodic risk management limit reduction')
+                    }}
                     className={`py-2 text-xs font-black rounded-xl border transition-all ${
                       formAdjustType === 'DECREASE'
                         ? 'bg-rose-50 text-rose-700 border-rose-300'
@@ -809,12 +872,31 @@ export default function CreditManagement() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Audit Reason (Required)
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Audit Reason (Required)
+                  </label>
+                  <span className="text-[10px] text-gray-400 font-medium">Quick Presets:</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {(ADJUST_PRESETS[formAdjustType] || []).map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setFormReason(preset)}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all text-left ${
+                        formReason === preset
+                          ? 'bg-blue-50 text-blue-700 border-blue-300'
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-transparent'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
                 <textarea
                   required
-                  rows="3"
+                  rows="2"
                   value={formReason}
                   onChange={(e) => setFormReason(e.target.value)}
                   placeholder="Explain the reason for this manual adjustment..."
@@ -986,12 +1068,31 @@ export default function CreditManagement() {
 
             <form onSubmit={handleRejectRepayment} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Rejection Reason (Required)
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                    Rejection Reason (Required)
+                  </label>
+                  <span className="text-[10px] text-gray-400 font-medium">Quick Presets:</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {REJECT_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setFormReason(preset)}
+                      className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all text-left ${
+                        formReason === preset
+                          ? 'bg-rose-50 text-rose-700 border-rose-300'
+                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-transparent'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
                 <textarea
                   required
-                  rows="3"
+                  rows="2"
                   value={formReason}
                   onChange={(e) => setFormReason(e.target.value)}
                   placeholder="e.g. UTR not found on company bank statement"
@@ -1016,6 +1117,63 @@ export default function CreditManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Notify Outstanding Retailers */}
+      {notifyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-gray-900">Notify Outstanding Retailers</h3>
+                <p className="text-xs text-gray-500">Dispatch repayment notices via official email</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-2 text-xs text-amber-900">
+              <p className="font-semibold">
+                This action will immediately email all credit-enabled retailers who currently have an outstanding balance.
+              </p>
+              <div className="pt-1 text-[11px] text-amber-800 space-y-1">
+                <div>• Total Outstanding: <strong>₹{(stats.totalOutstanding || 0).toLocaleString('en-IN')}</strong></div>
+                <div>• Active Credit Retailers: <strong>{stats.enabledCount}</strong></div>
+                <div>• Notice includes: statement breakdown, outstanding balance, online Razorpay repayment link, and credit terms notice.</div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setNotifyModalOpen(false)}
+                className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleNotifyOutstanding}
+                disabled={notifying}
+                className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {notifying ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Sending Reminders...
+                  </>
+                ) : (
+                  'Send Notifications Now'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

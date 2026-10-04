@@ -223,12 +223,14 @@ export default function Profile() {
       setRepaySubmitting(true);
       const { data } = await api.post('/api/credit/me/repay/razorpay-init', { amount: amt });
 
+      const logo = typeof window !== 'undefined' ? `${window.location.origin}/layoutlogo.png` : '/layoutlogo.png';
       const options = {
         key: data.keyId,
         amount: data.amountPaise,
         currency: 'INR',
         name: 'Click2Kart',
         description: 'Retailer Credit Repayment',
+        image: logo,
         order_id: data.razorpayOrderId,
         prefill: {
           name: user?.name,
@@ -276,12 +278,14 @@ export default function Profile() {
     try {
       notify('Initiating payment gateway...', 'info');
       const { data } = await api.post(`/api/credit/me/repay/retry/${rp._id}`);
+      const logo = typeof window !== 'undefined' ? `${window.location.origin}/layoutlogo.png` : '/layoutlogo.png';
       const options = {
         key: data.keyId,
         amount: data.amountPaise,
         currency: 'INR',
         name: 'Click2Kart',
         description: `Retailer Credit Repayment ₹${rp.amount}`,
+        image: logo,
         order_id: data.razorpayOrderId,
         prefill: {
           name: user?.name,

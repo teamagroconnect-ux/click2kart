@@ -578,8 +578,15 @@ export default function Orders(){
                                               <div className="text-[8px] font-black text-blue-400 uppercase tracking-widest">Waybill</div>
                                               <div className="text-sm font-black text-blue-700">{o.shipping.waybill}</div>
                                             </div>
-                                            {o.shipping.trackingUrl && (
-                                              <a href={o.shipping.trackingUrl} target="_blank" rel="noreferrer" className="px-5 py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-xl shadow-md hover:bg-blue-500 transition-all">Track Order</a>
+                                            {(o.shipping.waybill || o.shipping.trackingUrl) && (
+                                              <a
+                                                href={o.shipping.waybill ? `https://www.delhivery.com/track/package/${encodeURIComponent(o.shipping.waybill)}` : (o.shipping.trackingUrl || '').replace('track.delhivery.com', 'www.delhivery.com')}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="px-5 py-2 bg-blue-600 text-white text-[10px] font-black uppercase rounded-xl shadow-md hover:bg-blue-500 transition-all"
+                                              >
+                                                Track Order
+                                              </a>
                                             )}
                                           </div>
                                         )}
