@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
+import ImageUpload from '../../components/ImageUpload'
 
 export default function CreditManagement() {
   const { notify } = useToast()
-  const [activeTab, setActiveTab] = useState('retailers') // 'retailers' | 'repayments'
+  const [activeTab, setActiveTab] = useState('retailers') // 'retailers' | 'bank_setup'
   const [stats, setStats] = useState({
     totalLimit: 0,
     totalAvailable: 0,
@@ -19,10 +20,24 @@ export default function CreditManagement() {
   const [searchQ, setSearchQ] = useState('')
   const [statusFilter, setStatusFilter] = useState('all') // 'all' | 'enabled' | 'disabled'
 
-  // Repayments state
-  const [repayments, setRepayments] = useState([])
-  const [loadingRepayments, setLoadingRepayments] = useState(false)
-  const [repaymentStatusFilter, setRepaymentStatusFilter] = useState('PENDING_VERIFICATION')
+  // Bank & QR Settings state
+  const [bankConfig, setBankConfig] = useState({
+    enabled: false,
+    bankName: '',
+    accountHolder: '',
+    accountNumber: '',
+    ifscCode: '',
+    branch: '',
+    upiId: '',
+    qrCodeUrl: ''
+  })
+  const [loadingBankConfig, setLoadingBankConfig] = useState(false)
+  const [savingBankConfig, setSavingBankConfig] = useState(false)
+
+  // Retailer Quick Detail Modal state
+  const [quickDetailRetailer, setQuickDetailRetailer] = useState(null)
+  const [quickDetailOpen, setQuickDetailOpen] = useState(false)
+  const [loadingQuickDetail, setLoadingQuickDetail] = useState(false)
 
   // Modals state
   const [selectedRetailer, setSelectedRetailer] = useState(null)
@@ -30,9 +45,6 @@ export default function CreditManagement() {
   const [limitModalOpen, setLimitModalOpen] = useState(false)
   const [adjustModalOpen, setAdjustModalOpen] = useState(false)
   const [ledgerModalOpen, setLedgerModalOpen] = useState(false)
-  const [verifyRepaymentModalOpen, setVerifyRepaymentModalOpen] = useState(false)
-  const [rejectRepaymentModalOpen, setRejectRepaymentModalOpen] = useState(false)
-  const [selectedRepayment, setSelectedRepayment] = useState(null)
 
   // Form states
   const [formReason, setFormReason] = useState('')
@@ -113,28 +125,66 @@ export default function CreditManagement() {
     }
   }
 
-  // Load repayments
-  const loadRepayments = async () => {
-    setLoadingRepayments(true)
+  // Load Bank Details & QR Settings
+  const loadBankConfig = async () => {
+    setLoadingBankConfig(true)
     try {
-      const { data } = await api.get('/api/credit/admin/repayments', {
-        params: { status: repaymentStatusFilter }
-      })
-      setRepayments(data.items || [])
+      const { data } = await api.get('/api/admin/settings')
+      if (data?.bankDetails) {
+        setBankConfig({
+          enabled: Boolean(data.bankDetails.enabled),
+          bankName: data.bankDetails.bankName || '',
+          accountHolder: data.bankDetails.accountHolder || '',
+          accountNumber: data.bankDetails.accountNumber || '',
+          ifscCode: data.bankDetails.ifscCode || '',
+          branch: data.bankDetails.branch || '',
+          upiId: data.bankDetails.upiId || '',
+          qrCodeUrl: data.bankDetails.qrCodeUrl || ''
+        })
+      }
     } catch (err) {
-      notify(err?.response?.data?.error || 'Failed to load repayments', 'error')
+      console.error('Failed to load bank settings', err)
     } finally {
-      setLoadingRepayments(false)
+      setLoadingBankConfig(false)
+    }
+  }
+
+  const handleSaveBankConfig = async (e) => {
+    e.preventDefault()
+    setSavingBankConfig(true)
+    try {
+      await api.put('/api/admin/settings', {
+        bankDetails: bankConfig
+      })
+      notify('Bank & QR configuration saved successfully', 'success')
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Failed to save bank configuration', 'error')
+    } finally {
+      setSavingBankConfig(false)
+    }
+  }
+
+  // Open Retailer Quick Detail Modal
+  const openRetailerQuickDetail = async (retailer) => {
+    setQuickDetailOpen(true)
+    setLoadingQuickDetail(true)
+    try {
+      const { data } = await api.get(`/api/admin/customers/${retailer._id}`)
+      setQuickDetailRetailer(data)
+    } catch (err) {
+      setQuickDetailRetailer({ user: retailer, orders: [] })
+    } finally {
+      setLoadingQuickDetail(false)
     }
   }
 
   useEffect(() => {
     if (activeTab === 'retailers') {
       loadRetailers()
-    } else {
-      loadRepayments()
+    } else if (activeTab === 'bank_setup') {
+      loadBankConfig()
     }
-  }, [activeTab, searchQ, statusFilter, repaymentStatusFilter])
+  }, [activeTab, searchQ, statusFilter])
 
   // Toggle credit modal submit
   const handleToggleCredit = async (e) => {
@@ -158,29 +208,6 @@ export default function CreditManagement() {
       loadRetailers()
     } catch (err) {
       notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to update credit', 'error')
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  // Set limit submit
-  const handleSetLimit = async (e) => {
-    e.preventDefault()
-    if (formLimit === '' || Number(formLimit) < 0) return notify('Valid credit limit is required', 'error')
-    if (!formReason.trim()) return notify('Reason is required for audit trail', 'error')
-    setActionLoading(true)
-    try {
-      await api.post(`/api/credit/admin/retailers/${selectedRetailer._id}/set-limit`, {
-        creditLimit: Number(formLimit),
-        reason: formReason.trim()
-      })
-      notify('Credit limit updated successfully', 'success')
-      setLimitModalOpen(false)
-      setFormReason('')
-      setFormLimit('')
-      loadRetailers()
-    } catch (err) {
-      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to set limit', 'error')
     } finally {
       setActionLoading(false)
     }
@@ -222,46 +249,6 @@ export default function CreditManagement() {
     }
   }
 
-  // Verify Bank Transfer Repayment
-  const handleVerifyRepayment = async (e) => {
-    e.preventDefault()
-    setActionLoading(true)
-    try {
-      await api.post(`/api/credit/admin/repayments/${selectedRepayment._id}/verify`, {
-        notes: formAdminNotes.trim()
-      })
-      notify('Bank transfer repayment verified and credited successfully', 'success')
-      setVerifyRepaymentModalOpen(false)
-      setFormAdminNotes('')
-      loadRepayments()
-      loadRetailers()
-    } catch (err) {
-      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to verify repayment', 'error')
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
-  // Reject Bank Transfer Repayment
-  const handleRejectRepayment = async (e) => {
-    e.preventDefault()
-    if (!formReason.trim()) return notify('Rejection reason is required', 'error')
-    setActionLoading(true)
-    try {
-      await api.post(`/api/credit/admin/repayments/${selectedRepayment._id}/reject`, {
-        reason: formReason.trim()
-      })
-      notify('Repayment marked as rejected', 'success')
-      setRejectRepaymentModalOpen(false)
-      setFormReason('')
-      loadRepayments()
-    } catch (err) {
-      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to reject repayment', 'error')
-    } finally {
-      setActionLoading(false)
-    }
-  }
-
   // Run Reconciliation
   const handleReconcile = async () => {
     setReconciling(true)
@@ -273,7 +260,6 @@ export default function CreditManagement() {
         'success'
       )
       loadRetailers()
-      loadRepayments()
     } catch (err) {
       notify(err?.response?.data?.message || 'Reconciliation failed', 'error')
     } finally {
@@ -362,14 +348,14 @@ export default function CreditManagement() {
           Retailer Credit Directory
         </button>
         <button
-          onClick={() => setActiveTab('repayments')}
+          onClick={() => setActiveTab('bank_setup')}
           className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all ${
-            activeTab === 'repayments'
+            activeTab === 'bank_setup'
               ? 'bg-gray-900 text-white shadow-md'
               : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
           }`}
         >
-          Bank Transfer Repayments
+          Company Bank & QR Setup
         </button>
       </div>
 
@@ -439,8 +425,15 @@ export default function CreditManagement() {
                       const isEn = Boolean(r.isCreditEnabled)
                       return (
                         <tr key={r._id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="font-bold text-gray-900">{r.name}</div>
+                          <td
+                            className="px-6 py-4 cursor-pointer hover:bg-blue-50/50 transition-colors"
+                            onClick={() => openRetailerQuickDetail(r)}
+                            title="Click to view full retailer KYC & trade details"
+                          >
+                            <div className="font-bold text-gray-900 group flex items-center gap-1.5">
+                              <span>{r.name}</span>
+                              <span className="text-[10px] text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity font-semibold">ℹ️ Details</span>
+                            </div>
                             <div className="text-xs text-gray-500">{r.kyc?.businessName || 'Individual'} • {r.phone}</div>
                           </td>
                           <td className="px-6 py-4">
@@ -521,141 +514,168 @@ export default function CreditManagement() {
         </div>
       )}
 
-      {/* Tab 2: Bank Transfer Repayments Verification */}
-      {activeTab === 'repayments' && (
-        <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            {[
-              { label: 'Pending Verification', value: 'PENDING_VERIFICATION' },
-              { label: 'Approved (Success)', value: 'SUCCESS' },
-              { label: 'Rejected', value: 'REJECTED' },
-              { label: 'All Submissions', value: 'ALL' }
-            ].map((f) => (
-              <button
-                key={f.value}
-                onClick={() => setRepaymentStatusFilter(f.value)}
-                className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
-                  repaymentStatusFilter === f.value
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+      {/* Tab 2: Company Bank & QR Setup */}
+      {activeTab === 'bank_setup' && (
+        <div className="max-w-4xl bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-gray-100">
+            <div>
+              <h2 className="text-xl font-black text-gray-900">Direct Bank Transfer & UPI Settings</h2>
+              <p className="text-xs text-gray-500 mt-1">
+                Configure official company receiving accounts and payment QR code for wholesale payments.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={bankConfig.enabled}
+                onChange={(e) => setBankConfig(prev => ({ ...prev, enabled: e.target.checked }))}
+                className="sr-only peer"
+              />
+              <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-600"></div>
+              <span className="ml-3 text-xs font-black uppercase tracking-wider text-gray-800">
+                {bankConfig.enabled ? 'Bank Transfer Active' : 'Bank Transfer Disabled'}
+              </span>
+            </label>
           </div>
 
-          <div className="bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm border-collapse">
-                <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">
-                  <tr>
-                    <th className="px-6 py-4">Retailer</th>
-                    <th className="px-6 py-4">Amount (₹)</th>
-                    <th className="px-6 py-4">Method / UTR</th>
-                    <th className="px-6 py-4">Date Submitted</th>
-                    <th className="px-6 py-4">Proof / Slip</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {loadingRepayments ? (
-                    <tr>
-                      <td colSpan="7" className="text-center py-12 text-gray-400">Loading repayment requests...</td>
-                    </tr>
-                  ) : repayments.length === 0 ? (
-                    <tr>
-                      <td colSpan="7" className="text-center py-12 text-gray-400">No repayment records in this filter</td>
-                    </tr>
-                  ) : (
-                    repayments.map((rep) => {
-                      const ret = rep.retailerId || {}
-                      return (
-                        <tr key={rep._id} className="hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="font-bold text-gray-900">{ret.name || 'Unknown Retailer'}</div>
-                            <div className="text-xs text-gray-500">{ret.phone} • {ret.kyc?.businessName || ''}</div>
-                          </td>
-                          <td className="px-6 py-4 font-black text-gray-900">
-                            ₹{Number(rep.amount).toLocaleString('en-IN')}
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="font-bold text-gray-800">{rep.method}</div>
-                            <div className="text-xs font-mono text-gray-500">
-                              UTR: {rep.bankTransferDetails?.utr || rep.razorpayPaymentId || 'N/A'}
-                            </div>
-                            {rep.bankTransferDetails?.note && (
-                              <div className="text-[11px] text-gray-400 italic mt-0.5">
-                                "{rep.bankTransferDetails.note}"
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-xs text-gray-500">
-                            {new Date(rep.createdAt).toLocaleString('en-IN')}
-                          </td>
-                          <td className="px-6 py-4">
-                            {rep.bankTransferDetails?.paymentSlip ? (
-                              <a
-                                href={rep.bankTransferDetails.paymentSlip}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
-                              >
-                                View Receipt
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                              </a>
-                            ) : (
-                              <span className="text-xs text-gray-400">—</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
-                                rep.status === 'SUCCESS'
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                  : rep.status === 'REJECTED'
-                                  ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                  : 'bg-amber-50 text-amber-700 border border-amber-200'
-                              }`}
-                            >
-                              {rep.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            {rep.status === 'PENDING_VERIFICATION' && (
-                              <div className="flex items-center justify-end gap-2">
-                                <button
-                                  onClick={() => {
-                                    setSelectedRepayment(rep)
-                                    setFormAdminNotes('')
-                                    setVerifyRepaymentModalOpen(true)
-                                  }}
-                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
-                                >
-                                  Verify & Approve
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setSelectedRepayment(rep)
-                                    setFormReason('')
-                                    setRejectRepaymentModalOpen(true)
-                                  }}
-                                  className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold transition-all"
-                                >
-                                  Reject
-                                </button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      )
-                    })
-                  )}
-                </tbody>
-              </table>
+          {!bankConfig.enabled && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3">
+              <span className="text-lg">⚠️</span>
+              <div className="text-xs text-amber-800 leading-relaxed">
+                <strong>Direct Bank Transfer is currently disabled.</strong> Retailers will not see the Direct Bank Transfer / UPI option at checkout, credit repayment, or COD 20% advance payment. Enable this switch and enter details below when you wish to accept manual transfers.
+              </div>
             </div>
-          </div>
+          )}
+
+          <form onSubmit={handleSaveBankConfig} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Bank Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. HDFC Bank, ICICI Bank, State Bank of India"
+                  value={bankConfig.bankName}
+                  onChange={(e) => setBankConfig(prev => ({ ...prev, bankName: e.target.value }))}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Account Holder Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. CLICK2KART PRIVATE LIMITED"
+                  value={bankConfig.accountHolder}
+                  onChange={(e) => setBankConfig(prev => ({ ...prev, accountHolder: e.target.value }))}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Account Number
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 50200012345678"
+                  value={bankConfig.accountNumber}
+                  onChange={(e) => setBankConfig(prev => ({ ...prev, accountNumber: e.target.value }))}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono font-bold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  IFSC Code
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. HDFC0001234"
+                  value={bankConfig.ifscCode}
+                  onChange={(e) => setBankConfig(prev => ({ ...prev, ifscCode: e.target.value.toUpperCase() }))}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono font-bold text-gray-900 uppercase outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Branch Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Main Branch, Commercial Complex"
+                  value={bankConfig.branch}
+                  onChange={(e) => setBankConfig(prev => ({ ...prev, branch: e.target.value }))}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Official UPI ID / VPA
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. click2kart@hdfcbank"
+                  value={bankConfig.upiId}
+                  onChange={(e) => setBankConfig(prev => ({ ...prev, upiId: e.target.value }))}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-2xl px-4 py-3 text-sm font-mono font-bold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
+
+            {/* QR Code Upload & Preview */}
+            <div className="pt-4 border-t border-gray-100">
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                Company UPI QR Code
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
+                <div className="space-y-3">
+                  <ImageUpload
+                    value={bankConfig.qrCodeUrl}
+                    onChange={(url) => setBankConfig(prev => ({ ...prev, qrCodeUrl: url }))}
+                  />
+                  <p className="text-[11px] text-gray-400">
+                    Upload your high-resolution UPI QR code image (PNG, JPG, SVG).
+                  </p>
+                </div>
+                {bankConfig.qrCodeUrl && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-3xl p-4 flex flex-col items-center justify-center text-center space-y-2">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-gray-400">Customer Display Preview</span>
+                    <img
+                      src={bankConfig.qrCodeUrl}
+                      alt="UPI QR Code"
+                      className="w-48 h-48 object-contain rounded-2xl border border-gray-200 bg-white p-2 shadow-sm"
+                    />
+                    <div className="text-xs font-bold text-gray-800">{bankConfig.upiId || 'Scan to Pay'}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+              <button
+                type="submit"
+                disabled={savingBankConfig}
+                className="px-8 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-blue-200 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-2"
+              >
+                {savingBankConfig ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Saving Changes...
+                  </>
+                ) : (
+                  'Save Bank & QR Configuration'
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       )}
 
@@ -1011,112 +1031,157 @@ export default function CreditManagement() {
         </div>
       )}
 
-      {/* MODAL: Verify Bank Repayment */}
-      {verifyRepaymentModalOpen && selectedRepayment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4">
-            <h3 className="text-xl font-black text-gray-900">Approve Bank Repayment</h3>
-            <div className="bg-gray-50 p-4 rounded-2xl space-y-2 text-xs text-gray-600">
-              <div>Retailer: <span className="font-bold text-gray-900">{selectedRepayment.retailerId?.name}</span></div>
-              <div>Amount to Credit: <span className="font-black text-emerald-600 text-base">₹{Number(selectedRepayment.amount).toLocaleString('en-IN')}</span></div>
-              <div>UTR Number: <span className="font-mono font-bold text-gray-900">{selectedRepayment.bankTransferDetails?.utr}</span></div>
+      {/* MODAL: Retailer Quick Detail */}
+      {quickDetailOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-gray-100 overflow-hidden">
+            <div className="px-6 py-5 bg-gradient-to-r from-gray-900 to-gray-800 text-white flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-black tracking-tight">Retailer Account Profile</h3>
+                <p className="text-xs text-gray-400">KYC Verification, Credit Limits & Trade Details</p>
+              </div>
+              <button
+                onClick={() => setQuickDetailOpen(false)}
+                className="p-2 text-gray-400 hover:text-white rounded-xl transition-colors"
+              >
+                ✕
+              </button>
             </div>
 
-            <form onSubmit={handleVerifyRepayment} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Verification Notes (Optional)
-                </label>
-                <input
-                  type="text"
-                  value={formAdminNotes}
-                  onChange={(e) => setFormAdminNotes(e.target.value)}
-                  placeholder="e.g. Bank statement verified with Ref #1234"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+            <div className="p-6 overflow-y-auto space-y-6">
+              {loadingQuickDetail ? (
+                <div className="py-12 text-center text-gray-400 text-xs">Loading retailer details...</div>
+              ) : quickDetailRetailer ? (
+                <>
+                  {/* Header identity */}
+                  {(() => {
+                    const u = quickDetailRetailer.user || quickDetailRetailer
+                    const kyc = u.kyc || {}
+                    return (
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-black text-gray-900">{u.name}</span>
+                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              u.isCreditEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-600'
+                            }`}>
+                              {u.isCreditEnabled ? 'Credit Active' : 'No Credit'}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              u.isKycComplete ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                            }`}>
+                              {u.isKycComplete ? 'KYC Verified' : 'KYC Pending'}
+                            </span>
+                          </div>
+                          <div className="text-xs font-semibold text-gray-600 mt-1">
+                            {kyc.businessName ? `🏢 ${kyc.businessName}` : 'Individual Trader'}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5">
+                            📞 {u.phone} {u.email ? `• ✉️ ${u.email}` : ''}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
 
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setVerifyRepaymentModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md transition-all"
-                >
-                  {actionLoading ? 'Verifying...' : 'Approve & Credit Balance'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                  {/* Credit Metrics */}
+                  {(() => {
+                    const u = quickDetailRetailer.user || quickDetailRetailer
+                    return (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div className="bg-blue-50/60 p-3 rounded-2xl border border-blue-100 text-center">
+                          <div className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Credit Limit</div>
+                          <div className="text-base font-black text-blue-700 mt-1">₹{(u.creditLimit || 0).toLocaleString('en-IN')}</div>
+                        </div>
+                        <div className="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-100 text-center">
+                          <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Available</div>
+                          <div className="text-base font-black text-emerald-700 mt-1">₹{(u.availableCredit || 0).toLocaleString('en-IN')}</div>
+                        </div>
+                        <div className="bg-amber-50/60 p-3 rounded-2xl border border-amber-100 text-center">
+                          <div className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Used Credit</div>
+                          <div className="text-base font-black text-amber-700 mt-1">₹{(u.usedCredit || 0).toLocaleString('en-IN')}</div>
+                        </div>
+                        <div className="bg-rose-50/60 p-3 rounded-2xl border border-rose-100 text-center">
+                          <div className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Outstanding</div>
+                          <div className="text-base font-black text-rose-700 mt-1">₹{(u.outstandingBalance || 0).toLocaleString('en-IN')}</div>
+                        </div>
+                      </div>
+                    )
+                  })()}
 
-      {/* MODAL: Reject Bank Repayment */}
-      {rejectRepaymentModalOpen && selectedRepayment && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4">
-            <h3 className="text-xl font-black text-rose-600">Reject Repayment</h3>
-            <p className="text-xs text-gray-500">
-              Rejecting submission for ₹{Number(selectedRepayment.amount).toLocaleString('en-IN')}. Outstanding balance will NOT be updated.
-            </p>
+                  {/* Trade & Tax Information */}
+                  {(() => {
+                    const u = quickDetailRetailer.user || quickDetailRetailer
+                    const kyc = u.kyc || {}
+                    return (
+                      <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-3">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-gray-400">Trade & Tax Registration</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <span className="text-gray-400 font-medium">Business / Trade Name:</span>
+                            <div className="font-bold text-gray-900">{kyc.businessName || '—'}</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 font-medium">GSTIN:</span>
+                            <div className="font-mono font-bold text-gray-900">{kyc.gstin || '—'}</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 font-medium">PAN Number:</span>
+                            <div className="font-mono font-bold text-gray-900">{kyc.pan || '—'}</div>
+                          </div>
+                          <div>
+                            <span className="text-gray-400 font-medium">Account Role:</span>
+                            <div className="font-bold text-gray-900 uppercase">{u.role || 'RETAILER'}</div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
 
-            <form onSubmit={handleRejectRepayment} className="space-y-4">
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Rejection Reason (Required)
-                  </label>
-                  <span className="text-[10px] text-gray-400 font-medium">Quick Presets:</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {REJECT_PRESETS.map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => setFormReason(preset)}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all text-left ${
-                        formReason === preset
-                          ? 'bg-rose-50 text-rose-700 border-rose-300'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-transparent'
-                      }`}
-                    >
-                      {preset}
-                    </button>
-                  ))}
-                </div>
-                <textarea
-                  required
-                  rows="2"
-                  value={formReason}
-                  onChange={(e) => setFormReason(e.target.value)}
-                  placeholder="e.g. UTR not found on company bank statement"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-rose-500"
-                />
-              </div>
+                  {/* Registered Business & Billing Address */}
+                  {(() => {
+                    const u = quickDetailRetailer.user || quickDetailRetailer
+                    const kyc = u.kyc || {}
+                    return (
+                      <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-2">
+                        <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                          <span>📍</span> Registered Business / KYC Address
+                        </h4>
+                        {kyc.addressLine1 || kyc.city || kyc.pincode ? (
+                          <div className="text-xs text-gray-700 leading-relaxed bg-gray-50/60 p-3 rounded-xl border border-gray-100">
+                            <div>{kyc.addressLine1}</div>
+                            {kyc.addressLine2 && <div>{kyc.addressLine2}</div>}
+                            <div className="font-semibold text-gray-900">
+                              {[kyc.city, kyc.district, kyc.state].filter(Boolean).join(', ')} — {kyc.pincode}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-xs text-gray-400 italic">No business address recorded in KYC profile.</div>
+                        )}
+                      </div>
+                    )
+                  })()}
+                </>
+              ) : null}
+            </div>
 
-              <div className="flex items-center justify-end gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setRejectRepaymentModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-md transition-all"
-                >
-                  {actionLoading ? 'Rejecting...' : 'Confirm Rejection'}
-                </button>
-              </div>
-            </form>
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+              <a
+                href={quickDetailRetailer?.user?._id ? `/admin/retailers/${quickDetailRetailer.user._id}` : '/admin/retailers'}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+              >
+                Open Full Retailer Profile ↗
+              </a>
+              <button
+                type="button"
+                onClick={() => setQuickDetailOpen(false)}
+                className="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold rounded-xl transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

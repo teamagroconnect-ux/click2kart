@@ -47,6 +47,25 @@ export default function Orders(){
     notes: ''
   })
 
+  // Customer Detail Modal state
+  const [customerModalOpen, setCustomerModalOpen] = useState(false)
+  const [customerData, setCustomerData] = useState(null)
+  const [loadingCustomer, setLoadingCustomer] = useState(false)
+
+  const openCustomerDetail = async (customer) => {
+    setCustomerModalOpen(true)
+    setLoadingCustomer(true)
+    try {
+      const lookupId = customer.id || customer._id || customer.phone
+      const { data } = await api.get(`/api/admin/customers/${lookupId}`)
+      setCustomerData(data)
+    } catch (err) {
+      setCustomerData({ user: customer, orders: [] })
+    } finally {
+      setLoadingCustomer(false)
+    }
+  }
+
   const handleSwitchChannel = async (e) => {
     e.preventDefault()
     if (!channelSwitchReason.trim()) return notify('Audit reason is required to change delivery channel', 'error')
@@ -308,8 +327,18 @@ export default function Orders(){
                         <td className="px-6 py-4">
                           <div className="font-mono font-bold text-gray-900 text-sm">#{o._id.slice(-8)}</div>
                         </td>
-                        <td className="px-6 py-4">
-                          <div className="font-bold text-gray-900">{o.customer.name}</div>
+                        <td
+                          className="px-6 py-4 cursor-pointer hover:bg-blue-50/50 rounded-xl transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openCustomerDetail(o.customer);
+                          }}
+                          title="Click to view retailer account & KYC details"
+                        >
+                          <div className="font-bold text-gray-900 group flex items-center gap-1.5">
+                            <span>{o.customer.name}</span>
+                            <span className="text-[10px] text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity font-semibold">ℹ️ Details</span>
+                          </div>
                           <div className="text-[11px] text-gray-400 font-medium tracking-tight">{o.customer.phone}</div>
                         </td>
                         <td className="px-6 py-4">
@@ -380,7 +409,7 @@ export default function Orders(){
                       </tr>
                       {isExpanded && (
                         <tr>
-                          <td colSpan="5" className="px-6 py-6 bg-gray-50/30">
+                          <td colSpan="6" className="px-6 py-6 bg-gray-50/30">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in slide-in-from-top-2 duration-300">
                               <div className="space-y-4">
                                 <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Order Items</h4>
@@ -402,6 +431,39 @@ export default function Orders(){
                                       <div className="text-xs font-black text-gray-900">₹{it.lineTotal || (it.price * it.quantity)}</div>
                                     </div>
                                   ))}
+                                </div>
+
+                                {/* Purchase & Delivery Destination Address Card */}
+                                <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-gray-400 flex items-center gap-1.5">
+                                      <svg className="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      </svg>
+                                      Purchase & Shipping Destination
+                                    </h4>
+                                    <span className="text-[9px] bg-blue-50 text-blue-700 font-black uppercase px-2 py-0.5 rounded-full border border-blue-100">
+                                      Delivery Address
+                                    </span>
+                                  </div>
+                                  {o.shippingAddress && (o.shippingAddress.line1 || o.shippingAddress.city || o.shippingAddress.pincode) ? (
+                                    <div className="text-xs text-gray-700 leading-relaxed bg-gray-50/70 p-3.5 rounded-2xl border border-gray-100 space-y-1">
+                                      <div className="font-bold text-gray-900 flex items-center gap-2">
+                                        <span>👤 {o.customer?.name}</span>
+                                        <span className="text-gray-400 font-normal">({o.customer?.phone})</span>
+                                      </div>
+                                      <div>{o.shippingAddress.line1}</div>
+                                      {o.shippingAddress.line2 && <div>{o.shippingAddress.line2}</div>}
+                                      <div className="font-semibold text-gray-800">
+                                        {[o.shippingAddress.city, o.shippingAddress.state, o.shippingAddress.pincode].filter(Boolean).join(', ')}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="text-xs text-gray-400 italic bg-gray-50/70 p-3 rounded-2xl">
+                                      No explicit shipping destination address recorded on this order.
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                               <div className="space-y-4">
@@ -753,6 +815,167 @@ export default function Orders(){
               </button>
             </div>
           </form>
+        </div>
+      </div>
+    )}
+
+    {/* Retailer / Customer Quick Detail Modal */}
+    {customerModalOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
+        <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-gray-100 overflow-hidden">
+          <div className="px-6 py-5 bg-gradient-to-r from-gray-900 to-gray-800 text-white flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-black tracking-tight">Retailer Account Profile</h3>
+              <p className="text-xs text-gray-400">KYC Status, Credit Facility & Account Details</p>
+            </div>
+            <button
+              onClick={() => setCustomerModalOpen(false)}
+              className="p-2 text-gray-400 hover:text-white rounded-xl transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div className="p-6 overflow-y-auto space-y-6">
+            {loadingCustomer ? (
+              <div className="py-12 text-center text-gray-400 text-xs">Loading retailer details...</div>
+            ) : customerData ? (
+              <>
+                {/* Header identity */}
+                {(() => {
+                  const u = customerData.user || customerData
+                  const kyc = u.kyc || {}
+                  return (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-black text-gray-900">{u.name}</span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            u.isCreditEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-600'
+                          }`}>
+                            {u.isCreditEnabled ? 'Credit Enabled' : 'No Credit'}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            u.isKycComplete ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {u.isKycComplete ? 'KYC Verified' : 'KYC Pending'}
+                          </span>
+                        </div>
+                        <div className="text-xs font-semibold text-gray-600 mt-1">
+                          {kyc.businessName ? `🏢 ${kyc.businessName}` : 'Individual Trader'}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          📞 {u.phone} {u.email ? `• ✉️ ${u.email}` : ''}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* Credit Facility Metrics */}
+                {(() => {
+                  const u = customerData.user || customerData
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="bg-blue-50/60 p-3 rounded-2xl border border-blue-100 text-center">
+                        <div className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Credit Limit</div>
+                        <div className="text-base font-black text-blue-700 mt-1">₹{(u.creditLimit || 0).toLocaleString('en-IN')}</div>
+                      </div>
+                      <div className="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-100 text-center">
+                        <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Available</div>
+                        <div className="text-base font-black text-emerald-700 mt-1">₹{(u.availableCredit || 0).toLocaleString('en-IN')}</div>
+                      </div>
+                      <div className="bg-amber-50/60 p-3 rounded-2xl border border-amber-100 text-center">
+                        <div className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Used Credit</div>
+                        <div className="text-base font-black text-amber-700 mt-1">₹{(u.usedCredit || 0).toLocaleString('en-IN')}</div>
+                      </div>
+                      <div className="bg-rose-50/60 p-3 rounded-2xl border border-rose-100 text-center">
+                        <div className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Outstanding</div>
+                        <div className="text-base font-black text-rose-700 mt-1">₹{(u.outstandingBalance || 0).toLocaleString('en-IN')}</div>
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* Trade & Tax Registration */}
+                {(() => {
+                  const u = customerData.user || customerData
+                  const kyc = u.kyc || {}
+                  return (
+                    <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-3">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-gray-400">Trade & Tax Registration</h4>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <span className="text-gray-400 font-medium">Business / Trade Name:</span>
+                          <div className="font-bold text-gray-900">{kyc.businessName || '—'}</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 font-medium">GSTIN:</span>
+                          <div className="font-mono font-bold text-gray-900">{kyc.gstin || '—'}</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 font-medium">PAN Number:</span>
+                          <div className="font-mono font-bold text-gray-900">{kyc.pan || '—'}</div>
+                        </div>
+                        <div>
+                          <span className="text-gray-400 font-medium">Delivery Channel Preference:</span>
+                          <div className="font-bold text-gray-900">
+                            {u.deliverySettings?.localDeliveryEnabled && !u.deliverySettings?.delhiveryEnabled
+                              ? 'Local Delivery Only'
+                              : u.deliverySettings?.localDeliveryEnabled && u.deliverySettings?.delhiveryEnabled
+                              ? 'Delhivery + Local Delivery'
+                              : 'Delhivery Express'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* Registered KYC Address */}
+                {(() => {
+                  const u = customerData.user || customerData
+                  const kyc = u.kyc || {}
+                  return (
+                    <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-2">
+                      <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
+                        <span>📍</span> Registered Business / KYC Address
+                      </h4>
+                      {kyc.addressLine1 || kyc.city || kyc.pincode ? (
+                        <div className="text-xs text-gray-700 leading-relaxed bg-gray-50/60 p-3 rounded-xl border border-gray-100">
+                          <div>{kyc.addressLine1}</div>
+                          {kyc.addressLine2 && <div>{kyc.addressLine2}</div>}
+                          <div className="font-semibold text-gray-900">
+                            {[kyc.city, kyc.district, kyc.state].filter(Boolean).join(', ')} — {kyc.pincode}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-gray-400 italic">No business address recorded in profile.</div>
+                      )}
+                    </div>
+                  )
+                })()}
+              </>
+            ) : null}
+          </div>
+
+          <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+            <a
+              href={customerData?.user?._id ? `/admin/retailers/${customerData.user._id}` : '/admin/retailers'}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
+            >
+              Open Full Retailer Account ↗
+            </a>
+            <button
+              type="button"
+              onClick={() => setCustomerModalOpen(false)}
+              className="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold rounded-xl transition"
+            >
+              Close
+            </button>
+          </div>
         </div>
       </div>
     )}

@@ -184,6 +184,21 @@ export default function Profile() {
   const [repaySubmitting, setRepaySubmitting] = useState(false);
   const [bankForm, setBankForm] = useState({ utr: '', paymentSlip: '', note: '' });
   const [uploadingSlip, setUploadingSlip] = useState(false);
+  const [companyBankConfig, setCompanyBankConfig] = useState({ enabled: false, bankDetails: null });
+
+  const loadBankDetails = async () => {
+    try {
+      const { data } = await api.get('/api/public/bank-details');
+      if (data) {
+        setCompanyBankConfig(data);
+        if (!data.enabled) {
+          setRepayMethod('RAZORPAY');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to load company bank details', e);
+    }
+  };
 
   const loadCredit = async () => {
     if (!isCreditEnabled && !user?.isCreditEnabled) return;
@@ -369,6 +384,7 @@ export default function Profile() {
     loadProfile();
     loadAddresses();
     loadTickets();
+    loadBankDetails();
   }, [token]);
 
   useEffect(() => {
@@ -793,70 +809,121 @@ export default function Profile() {
         .pf-nav-strip { -ms-overflow-style:none; scrollbar-width:none; }
       `}</style>
 
-      <div className="pf-root min-h-screen bg-slate-50 pb-24 lg:pb-8">
+      <div className="pf-root min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pb-24 lg:pb-12">
 
-        {/* ── TOP HEADER ── */}
-        <div className="bg-gradient-to-r from-violet-900 via-indigo-800 to-indigo-900 text-white">
-          <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-3">
-            <button onClick={() => navigate('/')} className="p-2 rounded-xl hover:bg-white/10 transition-colors flex-shrink-0">
-              <Ico n="back" cls="w-4 h-4" />
-            </button>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-widest text-violet-200">My Account</p>
-              <h1 className="pf-display font-black text-base leading-tight truncate">{user?.name || 'User'}</h1>
-            </div>
-            <Avatar user={user} size="sm" />
-          </div>
-
-          {/* ── MOBILE: horizontal scrollable tab strip ── */}
-          <div className="lg:hidden pf-nav-strip flex overflow-x-auto px-4 pb-0 gap-1">
-            {navItems.map(({ id, label, icon }) => (
-              <button key={id} onClick={() => setActiveSection(id)}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold rounded-t-xl transition-all
-                  ${activeSection === id
-                    ? 'bg-slate-50 text-violet-600'
-                    : 'text-violet-200 hover:text-white'}`}>
-                <Ico n={icon} cls="w-4 h-4" />
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="max-w-5xl mx-auto px-4 py-5 lg:py-8 lg:flex lg:gap-6">
-
-          {/* ── DESKTOP SIDEBAR ── */}
-          <aside className="hidden lg:flex flex-col gap-3 w-56 flex-shrink-0">
-            {/* User card */}
-            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center gap-3">
-              <Avatar user={user} size="md" />
-              <div className="min-w-0">
-                <div className="pf-display font-black text-slate-800 text-sm truncate">{user?.name}</div>
-                <div className="text-[11px] text-slate-400 truncate">{user?.email}</div>
+        {/* ── TOP EXECUTIVE HEADER ── */}
+        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white border-b border-slate-800 shadow-xl relative overflow-hidden">
+          <div className="absolute inset-0 opacity-15 pointer-events-none bg-[radial-gradient(#818cf8_1px,transparent_1px)] [background-size:16px_16px]" />
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-5 relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <button
+                  onClick={() => navigate('/')}
+                  className="p-2.5 rounded-2xl bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white transition-all flex-shrink-0 border border-white/10 active:scale-95"
+                  title="Back to Home"
+                >
+                  <Ico n="back" cls="w-4 h-4" />
+                </button>
+                <Avatar user={user} size="md" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="pf-display font-black text-lg text-white leading-tight truncate">
+                      {formData.businessName || user?.name || 'Retailer Account'}
+                    </h1>
+                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                      ✓ Verified B2B
+                    </span>
+                    {user?.kyc?.gstin && (
+                      <span className="hidden sm:inline-block px-2 py-0.5 rounded-md text-[9px] font-mono font-bold bg-white/10 text-slate-300 border border-white/10">
+                        GST: {user.kyc.gstin}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2">
+                    <span>{user?.name}</span>
+                    <span>•</span>
+                    <span>{user?.phone}</span>
+                  </div>
+                </div>
               </div>
+
+              {/* Quick Credit Pill in Header */}
+              {(isCreditEnabled || user?.isCreditEnabled) && (
+                <button
+                  onClick={() => setActiveSection('credit')}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 hover:border-emerald-500/50 text-white text-xs font-bold transition-all shadow-sm hover:scale-[1.02] active:scale-95 text-left"
+                >
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <div>
+                    <div className="text-[10px] text-emerald-300 uppercase tracking-widest font-black">Available Credit</div>
+                    <div className="text-sm font-black text-emerald-400">
+                      ₹{Number(creditData?.availableCredit ?? user?.availableCredit ?? 0).toLocaleString('en-IN')}
+                    </div>
+                  </div>
+                  <span className="text-xs text-emerald-300 font-bold ml-1">→</span>
+                </button>
+              )}
             </div>
 
-            {/* Nav */}
-            <nav className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            {/* ── MOBILE: horizontal scrollable tab strip ── */}
+            <div className="lg:hidden pf-nav-strip flex overflow-x-auto pt-4 gap-1.5 border-t border-slate-800/80 mt-4">
               {navItems.map(({ id, label, icon }) => (
-                <button key={id} onClick={() => setActiveSection(id)}
-                  className={`w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-left transition-all border-l-2
-                    ${activeSection === id
-                      ? 'border-violet-500 bg-violet-50 text-violet-700'
-                      : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-slate-800'}`}>
-                  <Ico n={icon} cls="w-4 h-4 flex-shrink-0" />
+                <button
+                  key={id}
+                  onClick={() => setActiveSection(id)}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition-all ${
+                    activeSection === id
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-900/40'
+                      : 'text-slate-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Ico n={icon} cls="w-3.5 h-3.5" />
                   {label}
                 </button>
               ))}
-              <div className="border-t border-slate-100">
-                <button onClick={() => navigate('/orders')} className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-left text-slate-600 hover:bg-slate-50 border-l-2 border-transparent transition-all">
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 lg:py-8 lg:flex lg:gap-8">
+
+          {/* ── DESKTOP SIDEBAR ── */}
+          <aside className="hidden lg:flex flex-col gap-4 w-64 flex-shrink-0">
+            {/* Account Card */}
+            <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
+              <Avatar user={user} size="md" />
+              <div className="min-w-0">
+                <div className="pf-display font-black text-slate-900 text-sm truncate">{user?.name}</div>
+                <div className="text-[11px] text-slate-500 font-medium truncate">{user?.email}</div>
+                <div className="text-[10px] text-emerald-600 font-bold mt-0.5">● Wholesaler Partner</div>
+              </div>
+            </div>
+
+            {/* Navigation Menu */}
+            <nav className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden p-2 space-y-1">
+              {navItems.map(({ id, label, icon }) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveSection(id)}
+                  className={`w-full flex items-center gap-3 px-3.5 py-3 text-xs font-bold rounded-2xl text-left transition-all ${
+                    activeSection === id
+                      ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-200'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                  }`}
+                >
+                  <Ico n={icon} cls="w-4 h-4 flex-shrink-0" />
+                  <span>{label}</span>
+                </button>
+              ))}
+              <div className="border-t border-slate-100 pt-1 mt-1 space-y-1">
+                <button onClick={() => navigate('/orders')} className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-left text-slate-600 hover:bg-slate-50 rounded-2xl transition-all">
                   <Ico n="pkg" cls="w-4 h-4 flex-shrink-0" /> My Orders
                 </button>
-                <button onClick={() => navigate('/wishlist')} className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-left text-slate-600 hover:bg-slate-50 border-l-2 border-transparent transition-all">
+                <button onClick={() => navigate('/wishlist')} className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-left text-slate-600 hover:bg-slate-50 rounded-2xl transition-all">
                   <Ico n="heart" cls="w-4 h-4 flex-shrink-0" /> Wishlist
                 </button>
-                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-semibold text-left text-red-500 hover:bg-red-50 border-l-2 border-transparent transition-all">
-                  <Ico n="logout" cls="w-4 h-4 flex-shrink-0" /> Logout
+                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3.5 py-2.5 text-xs font-bold text-left text-rose-600 hover:bg-rose-50 rounded-2xl transition-all">
+                  <Ico n="logout" cls="w-4 h-4 flex-shrink-0" /> Sign Out
                 </button>
               </div>
             </nav>
@@ -867,18 +934,104 @@ export default function Profile() {
 
             {/* ──── OVERVIEW ──── */}
             {activeSection === 'overview' && (
-              <div className="pf-panel space-y-4">
-                {/* Welcome card */}
-                <div className="bg-gradient-to-br from-violet-600 to-indigo-600 rounded-2xl p-5 text-white relative overflow-hidden">
-                  <div className="absolute right-0 top-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-                  <div className="absolute right-8 bottom-0 w-20 h-20 bg-white/5 rounded-full translate-y-1/2" />
-                  <p className="text-violet-200 text-xs font-bold uppercase tracking-widest mb-1">Welcome back</p>
-                  <h2 className="pf-display font-black text-2xl leading-tight mb-3">{user?.name?.split(' ')[0]} 👋</h2>
-                  <p className="text-violet-200 text-sm">{user?.email}</p>
+              <div className="pf-panel space-y-6">
+                {/* Executive Welcome Card */}
+                <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white relative overflow-hidden shadow-xl border border-slate-800">
+                  <div className="absolute right-0 top-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-black uppercase tracking-wider mb-2 border border-indigo-500/30">
+                        Wholesale Portal • Enterprise
+                      </div>
+                      <h2 className="pf-display font-black text-2xl sm:text-3xl tracking-tight text-white">
+                        Welcome back, {user?.name?.split(' ')[0]}
+                      </h2>
+                      <p className="text-slate-400 text-xs sm:text-sm mt-1 max-w-lg leading-relaxed">
+                        Manage your wholesale orders, trade verification, and revolving credit limit with Click2Kart.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        onClick={() => navigate('/products')}
+                        className="px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-indigo-900/40 active:scale-95 transition-all"
+                      >
+                        Wholesale Catalogue →
+                      </button>
+                      <button
+                        onClick={() => navigate('/orders')}
+                        className="px-5 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs active:scale-95 transition-all border border-white/10"
+                      >
+                        View Orders
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
+                {/* Credit Facility Spotlight on Overview */}
+                {(isCreditEnabled || user?.isCreditEnabled) && (
+                  <div className="bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-900 rounded-3xl p-6 border border-emerald-500/30 shadow-lg text-white space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-base font-black tracking-tight text-white">Approved Credit Facility</span>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                            Active
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400 mt-0.5">Use your revolving balance at checkout without immediate cash outflow.</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setActiveSection('credit')}
+                          className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition-all"
+                        >
+                          View Ledger
+                        </button>
+                        <button
+                          onClick={() => {
+                            setRepayAmount(String(creditData?.outstandingBalance || ''));
+                            setShowRepayModal(true);
+                          }}
+                          disabled={!creditData || (creditData.outstandingBalance || 0) <= 0}
+                          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider transition-all disabled:opacity-40"
+                        >
+                          Repay Dues
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="bg-white/5 p-3.5 rounded-2xl border border-white/5">
+                        <div className="text-[10px] uppercase font-bold tracking-wider text-emerald-400">Available Credit</div>
+                        <div className="text-xl font-black text-emerald-300 mt-1">
+                          ₹{Number(creditData?.availableCredit ?? user?.availableCredit ?? 0).toLocaleString('en-IN')}
+                        </div>
+                      </div>
+                      <div className="bg-white/5 p-3.5 rounded-2xl border border-white/5">
+                        <div className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Approved Limit</div>
+                        <div className="text-xl font-black text-white mt-1">
+                          ₹{Number(creditData?.creditLimit ?? user?.creditLimit ?? 0).toLocaleString('en-IN')}
+                        </div>
+                      </div>
+                      <div className="bg-white/5 p-3.5 rounded-2xl border border-white/5">
+                        <div className="text-[10px] uppercase font-bold tracking-wider text-amber-400">Used Credit</div>
+                        <div className="text-xl font-black text-amber-300 mt-1">
+                          ₹{Number(creditData?.usedCredit ?? Math.max(0, (creditData?.creditLimit || 0) - (creditData?.availableCredit || 0))).toLocaleString('en-IN')}
+                        </div>
+                      </div>
+                      <div className="bg-white/5 p-3.5 rounded-2xl border border-white/5">
+                        <div className="text-[10px] uppercase font-bold tracking-wider text-rose-400">Outstanding Due</div>
+                        <div className="text-xl font-black text-rose-400 mt-1">
+                          ₹{Number(creditData?.outstandingBalance || 0).toLocaleString('en-IN')}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Quick action grid */}
-                <div className={`grid ${(isCreditEnabled || user?.isCreditEnabled) ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'} gap-3`}>
+                <div className={`grid ${(isCreditEnabled || user?.isCreditEnabled) ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'} gap-4`}>
                   {[
                     ...((isCreditEnabled || user?.isCreditEnabled) ? [{
                       label: 'Credit Facility',
@@ -887,43 +1040,59 @@ export default function Profile() {
                       color: 'bg-emerald-50 text-emerald-600',
                       action: () => setActiveSection('credit')
                     }] : []),
-                    { label: 'My Orders', sub: 'Track & manage', icon: 'pkg', color: 'bg-blue-50 text-blue-600', action: () => navigate('/orders') },
-                    { label: 'Wishlist', sub: 'Saved items', icon: 'heart', color: 'bg-rose-50 text-rose-600', action: () => navigate('/wishlist') },
-                    { label: 'Addresses', sub: `${savedAddresses.length} saved`, icon: 'map', color: 'bg-emerald-50 text-emerald-600', action: () => setActiveSection('addresses') },
-                    { label: 'Support', sub: `${tickets.length} tickets`, icon: 'help', color: 'bg-violet-50 text-violet-600', action: () => setActiveSection('support') },
+                    { label: 'My Orders', sub: 'Track & manage purchases', icon: 'pkg', color: 'bg-blue-50 text-blue-600', action: () => navigate('/orders') },
+                    { label: 'Wishlist', sub: 'Saved products', icon: 'heart', color: 'bg-rose-50 text-rose-600', action: () => navigate('/wishlist') },
+                    { label: 'Addresses', sub: `${savedAddresses.length} saved destinations`, icon: 'map', color: 'bg-teal-50 text-teal-600', action: () => setActiveSection('addresses') },
+                    { label: 'Support Desk', sub: `${tickets.length} active tickets`, icon: 'help', color: 'bg-violet-50 text-violet-600', action: () => setActiveSection('support') },
+                    { label: 'Business Profile', sub: formData.businessName || 'Tax & KYC', icon: 'gear', color: 'bg-amber-50 text-amber-600', action: () => setActiveSection('business') },
                   ].map(({ label, sub, icon, color, action }) => (
-                    <button key={label} onClick={action}
-                      className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 active:scale-[0.97] transition-all text-left">
-                      <div className={`w-10 h-10 rounded-xl ${color} flex items-center justify-center mb-3`}>
-                        <Ico n={icon} cls="w-5 h-5" />
+                    <button
+                      key={label}
+                      onClick={action}
+                      className="bg-white rounded-3xl p-5 border border-slate-200/70 shadow-sm hover:shadow-lg hover:border-violet-200 hover:-translate-y-0.5 active:scale-[0.98] transition-all text-left group"
+                    >
+                      <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center mb-3.5 group-hover:scale-110 transition-transform`}>
+                        <Ico n={icon} cls="w-6 h-6" />
                       </div>
-                      <div className="pf-display font-black text-slate-800 text-sm">{label}</div>
-                      <div className="text-slate-400 text-xs mt-0.5">{sub}</div>
+                      <div className="pf-display font-black text-slate-900 text-sm">{label}</div>
+                      <div className="text-slate-400 text-xs mt-0.5 font-medium">{sub}</div>
                     </button>
                   ))}
                 </div>
 
-                {/* Profile summary */}
-                <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="pf-display font-black text-slate-800 text-sm">Profile Info</h3>
-                    <button onClick={() => setActiveSection('personal')} className="text-violet-600 text-xs font-bold hover:underline">Edit →</button>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3 text-sm">
-                      <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 flex-shrink-0">
-                        <Ico n="user" cls="w-4 h-4" />
-                      </div>
-                      <span className="text-slate-600 font-medium">{user?.name || '—'}</span>
+                {/* Profile summary card */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div>
+                      <h3 className="pf-display font-black text-slate-900 text-base">Account Identity & Verification</h3>
+                      <p className="text-xs text-slate-400">Verified wholesaler contact and business profile</p>
                     </div>
-                    {user?.phone && (
-                      <div className="flex items-center gap-3 text-sm">
-                        <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 flex-shrink-0">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
-                        </div>
-                        <span className="text-slate-600 font-medium">{user.phone}</span>
+                    <button
+                      onClick={() => setActiveSection('personal')}
+                      className="text-xs font-bold text-violet-600 hover:text-violet-800 bg-violet-50 px-3 py-1.5 rounded-xl transition"
+                    >
+                      Edit Profile →
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                      <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Contact Person</span>
+                      <div className="font-bold text-slate-900 text-sm mt-1">{user?.name || '—'}</div>
+                    </div>
+                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                      <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Registered Mobile (Protected)</span>
+                      <div className="font-bold text-slate-900 text-sm mt-1 flex items-center gap-1.5">
+                        <span>{user?.phone || '—'}</span>
+                        <span className="text-[10px]">🔒</span>
                       </div>
-                    )}
+                    </div>
+                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                      <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Registered Email (Protected)</span>
+                      <div className="font-bold text-slate-900 text-sm mt-1 flex items-center gap-1.5 truncate">
+                        <span className="truncate">{user?.email || '—'}</span>
+                        <span className="text-[10px]">🔒</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -2011,33 +2180,43 @@ export default function Profile() {
             <div className="p-5 space-y-4">
               {/* Payment Method Selector */}
               <div>
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Payment Option</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setRepayMethod('RAZORPAY')}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      repayMethod === 'RAZORPAY'
-                        ? 'border-violet-600 bg-violet-50/60 ring-2 ring-violet-500/20'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="text-xs font-bold text-slate-800">Razorpay</div>
-                    <div className="text-[10px] text-slate-400">Instant Online</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setRepayMethod('BANK_TRANSFER')}
-                    className={`p-3 rounded-xl border text-left transition-all ${
-                      repayMethod === 'BANK_TRANSFER'
-                        ? 'border-violet-600 bg-violet-50/60 ring-2 ring-violet-500/20'
-                        : 'border-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="text-xs font-bold text-slate-800">Bank Transfer</div>
-                    <div className="text-[10px] text-slate-400">NEFT / RTGS / IMPS</div>
-                  </button>
-                </div>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">Payment Method</label>
+                {companyBankConfig?.enabled ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRepayMethod('RAZORPAY')}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        repayMethod === 'RAZORPAY'
+                          ? 'border-violet-600 bg-violet-50/60 ring-2 ring-violet-500/20'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="text-xs font-bold text-slate-800">Razorpay</div>
+                      <div className="text-[10px] text-slate-400">Instant Online (UPI / Card)</div>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRepayMethod('BANK_TRANSFER')}
+                      className={`p-3 rounded-xl border text-left transition-all ${
+                        repayMethod === 'BANK_TRANSFER'
+                          ? 'border-violet-600 bg-violet-50/60 ring-2 ring-violet-500/20'
+                          : 'border-slate-200 hover:border-slate-300'
+                      }`}
+                    >
+                      <div className="text-xs font-bold text-slate-800">Bank Transfer</div>
+                      <div className="text-[10px] text-slate-400">NEFT / RTGS / IMPS</div>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl border border-violet-200 bg-violet-50/50 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">Instant Online Payment (Razorpay)</div>
+                      <div className="text-[10px] text-slate-500">UPI, Netbanking, Credit & Debit Cards</div>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Secure Gateway</span>
+                  </div>
+                )}
               </div>
 
               {/* Quick Amount Chips */}
@@ -2085,12 +2264,49 @@ export default function Profile() {
                 </div>
               </Field>
 
-              {repayMethod === 'BANK_TRANSFER' && (
+              {repayMethod === 'BANK_TRANSFER' && companyBankConfig?.enabled && (
                 <div className="space-y-3 pt-2 border-t border-slate-100">
-                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200/60 text-amber-800 text-xs space-y-1">
-                    <div className="font-bold">Company Bank Account for Transfer:</div>
-                    <div className="text-[11px] text-amber-900">A/C: Click2Kart Pvt Ltd | A/C No: 123456789012 | IFSC: HDFC0001234</div>
-                    <div className="text-[10px] text-amber-700 italic">Balance will be updated after verification by administrator.</div>
+                  <div className="p-3.5 bg-gradient-to-br from-amber-50 to-orange-50/50 rounded-2xl border border-amber-200/80 text-amber-900 text-xs space-y-2">
+                    <div className="font-bold flex items-center justify-between">
+                      <span>🏦 Official Receiving Account</span>
+                      <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-semibold">NEFT / RTGS / IMPS / UPI</span>
+                    </div>
+                    {companyBankConfig.bankDetails ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] bg-white/70 p-3 rounded-xl border border-amber-100">
+                        {companyBankConfig.bankDetails.bankName && (
+                          <div><span className="text-gray-500">Bank:</span> <strong>{companyBankConfig.bankDetails.bankName}</strong></div>
+                        )}
+                        {companyBankConfig.bankDetails.accountHolder && (
+                          <div><span className="text-gray-500">Beneficiary:</span> <strong>{companyBankConfig.bankDetails.accountHolder}</strong></div>
+                        )}
+                        {companyBankConfig.bankDetails.accountNumber && (
+                          <div><span className="text-gray-500">A/C Number:</span> <strong className="font-mono">{companyBankConfig.bankDetails.accountNumber}</strong></div>
+                        )}
+                        {companyBankConfig.bankDetails.ifscCode && (
+                          <div><span className="text-gray-500">IFSC:</span> <strong className="font-mono">{companyBankConfig.bankDetails.ifscCode}</strong></div>
+                        )}
+                        {companyBankConfig.bankDetails.branch && (
+                          <div><span className="text-gray-500">Branch:</span> <strong>{companyBankConfig.bankDetails.branch}</strong></div>
+                        )}
+                        {companyBankConfig.bankDetails.upiId && (
+                          <div><span className="text-gray-500">UPI ID:</span> <strong className="font-mono">{companyBankConfig.bankDetails.upiId}</strong></div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-amber-800">
+                        A/C: Click2Kart Pvt Ltd • Contact Admin for bank transfer instructions
+                      </div>
+                    )}
+                    {companyBankConfig.bankDetails?.qrCodeUrl && (
+                      <div className="flex items-center gap-3 p-2 bg-white rounded-xl border border-amber-100">
+                        <img src={companyBankConfig.bankDetails.qrCodeUrl} alt="UPI QR" className="w-16 h-16 object-contain rounded-lg border p-1" />
+                        <div className="text-[11px] text-gray-600">
+                          <div className="font-bold text-gray-800">Scan UPI QR to Pay</div>
+                          <div>Scan via any UPI app and enter UTR reference below</div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="text-[10px] text-amber-700 italic">Balance will be updated once payment is verified on company bank statement.</div>
                   </div>
 
                   <Field label="UTR / Transaction Reference (Required)">

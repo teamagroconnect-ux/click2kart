@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useToast } from '../../components/Toast'
 import { useCart } from '../../lib/CartContext'
@@ -14,19 +14,46 @@ export default function ManualPayment() {
   const amountDefault = Number(loc.state?.amount || 0)
   const cod20         = !!loc.state?.cod20
 
-  const upiId   = import.meta.env.VITE_UPI_ID   || 'payments@click2kart'
-  const upiName = import.meta.env.VITE_UPI_NAME  || 'Click2Kart'
-  const qr      = import.meta.env.VITE_UPI_QR    || ''
+  const [bankInfo, setBankInfo] = useState(null)
+  const [loadingBank, setLoadingBank] = useState(true)
+
+  useEffect(() => {
+    ;(async () => {
+      try {
+        const { data } = await api.get('/api/public/bank-details')
+        if (!data || !data.enabled) {
+          notify('Direct Bank Transfer is currently disabled by administrator', 'error')
+          nav('/cart')
+          return
+        }
+        setBankInfo(data.bankDetails || {})
+      } catch (err) {
+        console.error('Failed to load bank details', err)
+      } finally {
+        setLoadingBank(false)
+      }
+    })()
+  }, [])
+
+  const upiId   = bankInfo?.upiId || import.meta.env.VITE_UPI_ID || 'payments@click2kart'
+  const upiName = bankInfo?.accountHolder || import.meta.env.VITE_UPI_NAME || 'Click2Kart'
+  const qr      = bankInfo?.qrCodeUrl || import.meta.env.VITE_UPI_QR || ''
 
   const [utr,     setUtr]     = useState('')
   const [note,    setNote]    = useState('')
   const [copied,  setCopied]  = useState(false)
+  const [copiedBank, setCopiedBank] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   const totalText = useMemo(() => `₹${Number(amountDefault).toLocaleString('en-IN')}`, [amountDefault])
 
   const copy = async () => {
     try { await navigator.clipboard.writeText(upiId); setCopied(true); setTimeout(()=>setCopied(false), 2000); notify('UPI ID copied!','success') } catch {}
+  }
+
+  const copyAcc = async () => {
+    if (!bankInfo?.accountNumber) return
+    try { await navigator.clipboard.writeText(bankInfo.accountNumber); setCopiedBank(true); setTimeout(()=>setCopiedBank(false), 2000); notify('Account number copied!','success') } catch {}
   }
 
   const submit = async (e) => {
@@ -398,6 +425,26 @@ export default function ManualPayment() {
                         </div>
                       </div>
                     </div>
+
+                    {/* Bank Details Card (NEFT / RTGS / IMPS) */}
+                    {bankInfo?.accountNumber && (
+                      <div style={{ marginTop: 12, padding: 14, background: '#f8fafc', borderRadius: 16, border: '1px solid #e2e8f0', fontSize: 12 }}>
+                        <div style={{ fontWeight: 800, color: '#1e293b', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span>🏦 Direct Bank Account (NEFT / RTGS / IMPS)</span>
+                          <span style={{ fontSize: 10, color: '#059669', background: '#ecfdf5', padding: '2px 8px', borderRadius: 99, fontWeight: 700 }}>Verified Receiving Account</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8, color: '#475569', fontSize: 11 }}>
+                          <div><span style={{ color: '#94a3b8' }}>Bank:</span> <strong>{bankInfo.bankName || 'Company Bank'}</strong></div>
+                          <div><span style={{ color: '#94a3b8' }}>Beneficiary:</span> <strong>{bankInfo.accountHolder || 'Click2Kart Pvt Ltd'}</strong></div>
+                          <div>
+                            <span style={{ color: '#94a3b8' }}>A/C Number:</span> <strong style={{ fontFamily: 'monospace' }}>{bankInfo.accountNumber}</strong>
+                            <button type="button" onClick={copyAcc} style={{ marginLeft: 6, fontSize: 10, color: '#7c3aed', fontWeight: 700 }}>{copiedBank ? 'Copied' : 'Copy'}</button>
+                          </div>
+                          <div><span style={{ color: '#94a3b8' }}>IFSC:</span> <strong style={{ fontFamily: 'monospace' }}>{bankInfo.ifscCode || '—'}</strong></div>
+                          {bankInfo.branch && <div><span style={{ color: '#94a3b8' }}>Branch:</span> <strong>{bankInfo.branch}</strong></div>}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 

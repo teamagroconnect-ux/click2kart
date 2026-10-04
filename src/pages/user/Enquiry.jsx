@@ -57,6 +57,7 @@ export default function Enquiry() {
   const [ship,           setShip]           = useState({ loading:false, amount:0, discount:0, final:0 })
   const [paymentMethod,  setPaymentMethod]  = useState('RAZORPAY')
   const [codAdvMethod,   setCodAdvMethod]   = useState('RAZORPAY')
+  const [bankConfig,     setBankConfig]     = useState({ enabled: false, bankDetails: null })
   const [loading,        setLoading]        = useState(false)
   const [couponCode,     setCouponCode]     = useState('')
   const [appliedCoupon,  setAppliedCoupon]  = useState(loc.state?.appliedCoupon || null)
@@ -134,6 +135,16 @@ export default function Enquiry() {
 
         const pin = String(prof?.kyc?.pincode||'').trim()
         if (pin) loadServiceability(pin)
+
+        // Check if company bank transfer is enabled
+        try {
+          const { data: bData } = await api.get('/api/public/bank-details')
+          if (bData) {
+            setBankConfig(bData)
+          }
+        } catch (bErr) {
+          console.error('Failed to load bank details', bErr)
+        }
       } catch { nav('/login') }
     })()
   }, [])
@@ -287,6 +298,11 @@ export default function Enquiry() {
       }
 
       if (paymentMethod==='MANUAL') {
+        if (!bankConfig?.enabled) {
+          notify('Direct Bank Transfer is currently unavailable. Please choose Online Payment.', 'error');
+          setLoading(false);
+          return;
+        }
         setLoading(false);
         nav('/manual-payment',{ state:{ items:cleanItems, amount:totalPayable, deliveryChannel, couponCode:appliedCoupon?.code || '' } });
         return
@@ -2159,26 +2175,28 @@ export default function Enquiry() {
                       </div>
                     </button>
 
-                    {/* Manual */}
-                    <button
-                      type="button"
-                      disabled={!isDeliveryReady}
-                      className={`eq-pay-opt ${paymentMethod === 'MANUAL' ? 'active-green' : ''}`}
-                      onClick={() => setPaymentMethod('MANUAL')}
-                    >
-                      <div className="eq-pay-ico green">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                        </svg>
-                      </div>
-                      <div className="eq-pay-info">
-                        <div className="eq-pay-name">Direct Bank Transfer / UPI</div>
-                        <div className="eq-pay-desc green">Manual Verification · No Convenience Fees</div>
-                      </div>
-                      <div className="eq-pay-radio">
-                        <div className="eq-pay-radio-dot" />
-                      </div>
-                    </button>
+                    {/* Manual Bank Transfer - Strictly gated by Admin Bank Configuration */}
+                    {bankConfig?.enabled && (
+                      <button
+                        type="button"
+                        disabled={!isDeliveryReady}
+                        className={`eq-pay-opt ${paymentMethod === 'MANUAL' ? 'active-green' : ''}`}
+                        onClick={() => setPaymentMethod('MANUAL')}
+                      >
+                        <div className="eq-pay-ico green">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div className="eq-pay-info">
+                          <div className="eq-pay-name">Direct Bank Transfer / UPI</div>
+                          <div className="eq-pay-desc green">Manual Verification · No Convenience Fees</div>
+                        </div>
+                        <div className="eq-pay-radio">
+                          <div className="eq-pay-radio-dot" />
+                        </div>
+                      </button>
+                    )}
 
                     {/* COD - strictly forbidden if credit is enabled */}
                     {!profile?.isCreditEnabled && (
@@ -2223,13 +2241,15 @@ export default function Enquiry() {
                         >
                           Pay 20% via Razorpay
                         </button>
-                        <button
-                          type="button"
-                          className={`eq-cod-sub-btn ${codAdvMethod === 'MANUAL' ? 'active' : 'inactive'}`}
-                          onClick={() => setCodAdvMethod('MANUAL')}
-                        >
-                          Pay 20% via UPI/Bank
-                        </button>
+                        {bankConfig?.enabled && (
+                          <button
+                            type="button"
+                            className={`eq-cod-sub-btn ${codAdvMethod === 'MANUAL' ? 'active' : 'inactive'}`}
+                            onClick={() => setCodAdvMethod('MANUAL')}
+                          >
+                            Pay 20% via UPI/Bank
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
