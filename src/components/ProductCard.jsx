@@ -16,6 +16,7 @@ export default function ProductCard({ p, authed, addToCart, navigate, index, set
     queryClient.prefetchQuery({
       queryKey: ['product', productIdOrSlug],
       queryFn: () => api.get(`/api/products/${productIdOrSlug}`).then(res => res.data),
+      staleTime: 1000 * 60 * 5,
     })
   }
 

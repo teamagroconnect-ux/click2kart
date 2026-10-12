@@ -7,36 +7,33 @@ import ToastProvider from './components/Toast.jsx'
 import { CartProvider } from './lib/CartContext.jsx'
 import { AuthProvider } from './lib/AuthContext.jsx'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import './index.css'
 
-// Purge any legacy persisted client-side cache from localStorage
-try {
-  if (typeof window !== 'undefined' && window.localStorage) {
-    window.localStorage.removeItem('REACT_QUERY_OFFLINE_CACHE');
-  }
-} catch (e) {
-  console.warn('Could not clear offline cache:', e);
-}
-
-// Client-side caching disabled: queries are always stale and refetched fresh from live database
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 0, // No caching: immediately stale so data is always fetched fresh
-      gcTime: 0, // Do not retain cached query data in memory
-      refetchOnWindowFocus: true, // Auto-refresh when tab/window is refocused
-      refetchOnMount: true, // Always fetch latest data on component mount
-      refetchOnReconnect: true,
+      staleTime: 1000 * 60 * 10, // Increase to 10 minutes for better persistence
+      cacheTime: 1000 * 60 * 60 * 24, // 24 hours
+      refetchOnWindowFocus: false,
       retry: 1,
     },
   },
 })
 
+const persister = createSyncStoragePersister({
+  storage: window.localStorage,
+})
+
 createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{ persister }}
+      >
         <ToastProvider>
           <AuthProvider>
             <CartProvider>
@@ -47,7 +44,7 @@ createRoot(document.getElementById('root')).render(
           </AuthProvider>
         </ToastProvider>
         <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
+      </PersistQueryClientProvider>
     </HelmetProvider>
   </React.StrictMode>
 )

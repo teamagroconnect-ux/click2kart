@@ -9,6 +9,7 @@ export default function Categories() {
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: () => api.get('/api/public/categories').then(res => res.data || []),
+    staleTime: 1000 * 60 * 60 * 24,
   })
 
   return (

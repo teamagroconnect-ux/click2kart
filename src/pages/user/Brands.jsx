@@ -9,6 +9,7 @@ export default function Brands() {
   const { data: brands = [] } = useQuery({
     queryKey: ['brands'],
     queryFn: () => api.get('/api/brands', { params: { active: true } }).then(res => res.data || []),
+    staleTime: 1000 * 60 * 60 * 24,
   })
 
   return (

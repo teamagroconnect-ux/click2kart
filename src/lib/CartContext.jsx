@@ -23,20 +23,6 @@ export function CartProvider({ children }) {
   const [mode, setMode] = useState((token && user?.role === 'customer') ? 'server' : 'guest')
   const mergedRef = useRef(false)
 
-  const syncGuestCart = async (itemsToSync) => {
-    try {
-      const items = itemsToSync || cart
-      if (!items || !items.length) return
-      const { data } = await api.post('/api/public/cart/sync', { items })
-      if (Array.isArray(data?.items)) {
-        setCart(data.items)
-        localStorage.setItem('cart', JSON.stringify(data.items))
-      }
-    } catch (e) {
-      console.warn('Guest cart live sync warning:', e)
-    }
-  }
-
   useEffect(() => {
     if (mode === 'guest') {
       localStorage.setItem('cart', JSON.stringify(cart))
@@ -49,11 +35,7 @@ export function CartProvider({ children }) {
       mergedRef.current = false
       if (!token) {
         const saved = localStorage.getItem('cart')
-        const parsed = saved ? JSON.parse(saved) : []
-        setCart(parsed)
-        if (parsed.length) {
-          syncGuestCart(parsed)
-        }
+        setCart(saved ? JSON.parse(saved) : [])
       }
       return
     }
@@ -234,20 +216,8 @@ export function CartProvider({ children }) {
       } catch (e) {
         console.error('Failed to refresh cart', e)
       }
-    } else if (mode === 'guest') {
-      const saved = typeof window !== 'undefined' ? localStorage.getItem('cart') : null
-      const parsed = saved ? JSON.parse(saved) : cart
-      await syncGuestCart(parsed)
     }
   }
-
-  useEffect(() => {
-    const handleFocus = () => {
-      refreshCart()
-    }
-    window.addEventListener('focus', handleFocus)
-    return () => window.removeEventListener('focus', handleFocus)
-  }, [mode, token, cart])
 
   const cartCount = cart.reduce((total, item) => {
     // Only count items that are in stock

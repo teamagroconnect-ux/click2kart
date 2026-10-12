@@ -59,12 +59,15 @@ export default function ProductDetail() {
   const { data: p, isLoading: loading, error: queryError } = useQuery({
     queryKey: ['product', idOrSlug, user?._id],
     queryFn: () => api.get(`/api/products/${idOrSlug}`).then(res => res.data),
+    staleTime: 1000 * 60 * 5, // 5 minutes (reduced from 30 to reflect changes faster)
+    gcTime: 1000 * 60 * 60 * 24, // 24 hours in cache
   })
 
   const { data: similarProducts = [] } = useQuery({
     queryKey: ['recommendations', idOrSlug],
     queryFn: () => api.get(`/api/products/${idOrSlug}/recommendations?limit=8`).then(res => res.data || []),
     enabled: !!idOrSlug,
+    staleTime: 1000 * 60 * 60, // 1 hour for recommendations
   })
 
   // Normalize an attributes object to lowercase keys
