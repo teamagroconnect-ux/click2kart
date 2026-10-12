@@ -7,7 +7,7 @@ import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { getPackSize, getEffectiveMoq } from '../../lib/packSize.js'
 
 export default function Cart() {
-  const { cart, removeFromCart, updateQuantity, cartTotal, addToCart } = useCart()
+  const { cart, removeFromCart, updateQuantity, cartTotal, addToCart, refreshCart } = useCart()
   const { notify } = useToast()
   const navigate = useNavigate()
   const [suggestions, setSuggestions] = useState([])
@@ -16,6 +16,10 @@ export default function Cart() {
   const [couponError, setCouponError] = useState('')
   const [isApplying, setIsApplying] = useState(false)
   const minAmount = Number(import.meta.env.VITE_MIN_ORDER_AMOUNT || 5000)
+
+  useEffect(() => {
+    refreshCart()
+  }, [])
 
   /* ── product availability check (Flipkart-style) ── */
   const isItemAvailable = (it) => {

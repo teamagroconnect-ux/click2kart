@@ -63,21 +63,17 @@ export default function Catalogue({ initialBrand, brandName }) {
     queryKey: ['products', { q, brand, category, subCategory, limit, currentPage, authed }],
     queryFn: fetchProducts,
     enabled: viewMode === 'PRODUCTS' || !!q,
-    staleTime: 1000 * 60 * 30, // 30 minutes for products
-    gcTime: 1000 * 60 * 60 * 24, // Keep in garbage collection for 24 hours
   })
 
   const { data: groupedItems = [], isLoading: loadingGrouped } = useQuery({
     queryKey: ['products-grouped', { brand, category, authed }],
     queryFn: fetchGrouped,
     enabled: viewMode === 'GROUPED' || (viewMode === 'START' && !browsePath),
-    staleTime: 1000 * 60 * 60, // 1 hour for grouped items
   })
 
   const { data: brands = [] } = useQuery({
     queryKey: ['brands'],
     queryFn: () => api.get('/api/brands', { params: { active: true } }).then(res => res.data || []),
-    staleTime: 1000 * 60 * 60 * 24, // 24 hours for brands
   })
 
   const { data: categories = [] } = useQuery({
@@ -87,7 +83,6 @@ export default function Catalogue({ initialBrand, brandName }) {
       if (brand && browsePath === 'brand') params.brand = brand
       return api.get('/api/categories', { params }).then(res => res.data || [])
     },
-    staleTime: 1000 * 60 * 60 * 24, // 24 hours for categories
   })
 
   const { data: subcategories = [] } = useQuery({
@@ -97,7 +92,6 @@ export default function Catalogue({ initialBrand, brandName }) {
       return api.get('/api/subcategories', { params: { category, active: true } }).then(res => res.data || [])
     },
     enabled: !!category,
-    staleTime: 1000 * 60 * 60 * 24, // 24 hours for subcategories
   })
 
   const items = useMemo(() => {
