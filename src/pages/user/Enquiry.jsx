@@ -226,21 +226,61 @@ export default function Enquiry() {
       image: logo, order_id: razorpayOrderId,
       handler: async (response) => {
         try {
-          await api.post('/api/orders/create-after-verify', {
+          const res = await api.post('/api/orders/create-after-verify', {
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature,
             items,
             paymentMethod,
-            deliveryChannel
+            deliveryChannel,
+            couponCode: appliedCoupon?.code || ''
           })
-          notify('Payment Successful!','success'); clearCart(); nav('/orders')
-        } catch { notify('Payment verification failed','error') }
+          notify('Payment Successful!','success');
+          clearCart();
+          const targetId = res.data?.orderId || res.data?.order?._id;
+          nav(`/order-confirmation/${targetId}`, {
+            state: {
+              orderId: targetId,
+              status: 'SUCCESS',
+              paymentMethod
+            }
+          });
+        } catch {
+          notify('Payment verification failed','error')
+          nav('/order-confirmation', {
+            state: {
+              status: 'FAILED',
+              reason: 'Payment was charged but server verification timed out. If money was deducted, our team will confirm or refund it.',
+              paymentMethod
+            }
+          });
+        }
       },
       prefill: { name:profile.name, email:profile.email, contact:profile.phone },
-      theme: { color:"#7c3aed" }
+      theme: { color:"#7c3aed" },
+      modal: {
+        ondismiss: () => {
+          setLoading(false);
+        }
+      }
     }
-    try { const rzp = new window.Razorpay(options); rzp.open() }
+    try {
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (resp) {
+        setLoading(false);
+        const reason = resp.error?.description || resp.error?.reason || 'Payment could not be completed. Please try again.';
+        notify(reason, 'error');
+        nav('/order-confirmation', {
+          state: {
+            status: 'FAILED',
+            reason: reason,
+            paymentMethod: paymentMethod,
+            amount: amountPaise / 100
+          }
+        });
+      });
+      rzp.open();
+    }
     catch { notify('Payment initialization failed. Please retry.','error') }
   }
 
@@ -279,7 +319,7 @@ export default function Enquiry() {
           return
         }
         try {
-          await api.post('/api/orders', {
+          const { data } = await api.post('/api/orders', {
             items: cleanItems,
             paymentMethod: 'CREDIT',
             deliveryChannel,
@@ -287,7 +327,14 @@ export default function Enquiry() {
           })
           clearCart()
           notify('Order placed successfully with Retailer Credit!', 'success')
-          nav('/orders')
+          const targetId = data?.order?._id || data?.orderId
+          nav(`/order-confirmation/${targetId}`, {
+            state: {
+              orderId: targetId,
+              status: 'SUCCESS',
+              paymentMethod: 'CREDIT'
+            }
+          })
           return
         } catch (err) {
           const errMsg = err?.response?.data?.message || err?.response?.data?.error || 'Failed to place order with credit'

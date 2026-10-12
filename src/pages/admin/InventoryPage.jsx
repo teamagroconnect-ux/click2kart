@@ -76,6 +76,8 @@ export default function InventoryPage() {
   const [categories, setCategories] = useState([])
 
   const [history, setHistory] = useState([])
+  const [historyType, setHistoryType] = useState('ALL')
+  const [historyLoading, setHistoryLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [summary, setSummary] = useState({ kpis: { totalSkus:0, totalUnits:0, lowStockCount:0, totalAdded30d:0 }, daily: [], topProducts: [], lowStock: [] })
   const [overview, setOverview] = useState([])
@@ -87,11 +89,22 @@ export default function InventoryPage() {
     api.get('/api/categories', { params: { active: true } }).then(({ data }) => setCategories(data || [])).catch(() => {})
   }, [])
 
+  const loadHistoryOnly = useCallback(async (type) => {
+    setHistoryLoading(true)
+    try {
+      const res = await api.get('/api/inventory/history', {
+        params: { limit: 50, type: type !== 'ALL' ? type : undefined }
+      })
+      setHistory(res.data?.items || [])
+    } catch {}
+    finally { setHistoryLoading(false) }
+  }, [])
+
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
       const [hist, sum, over] = await Promise.all([
-        api.get('/api/inventory/history', { params: { limit: 20 } }),
+        api.get('/api/inventory/history', { params: { limit: 50, type: historyType !== 'ALL' ? historyType : undefined } }),
         api.get('/api/inventory/summary', { params: { days: 30 } }),
         api.get('/api/inventory/overview')
       ])
@@ -101,9 +114,14 @@ export default function InventoryPage() {
     } catch {} finally {
       setLoading(false)
     }
-  }, [])
+  }, [historyType])
 
   useEffect(() => { loadData() }, [loadData])
+
+  const handleHistoryTypeChange = (type) => {
+    setHistoryType(type)
+    loadHistoryOnly(type)
+  }
 
   useEffect(() => {
     if (selectedProductForSkuView) {
@@ -502,8 +520,32 @@ export default function InventoryPage() {
       )}
 
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-black uppercase tracking-widest text-gray-500">Recent Stock-In</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-widest text-gray-800">Inventory Activity & Audit Log</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Real-time log of stock deductions, cancellations, and restocks</p>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {[
+              { id: 'ALL', label: 'All Activity' },
+              { id: 'SOLD', label: 'Deductions (Sold)' },
+              { id: 'RESTOCKED', label: 'Reversals (Cancelled)' },
+              { id: 'ADDED', label: 'Stock In' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleHistoryTypeChange(tab.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                  historyType === tab.id
+                    ? 'bg-gray-900 text-white shadow-sm'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -511,29 +553,72 @@ export default function InventoryPage() {
               <tr>
                 <th className="px-4 py-3 text-left">Date</th>
                 <th className="px-4 py-3 text-left">Product / SKU</th>
+                <th className="px-4 py-3 text-left">Type</th>
                 <th className="px-4 py-3 text-left">Quantity</th>
-                <th className="px-4 py-3 text-left">Location</th>
-                <th className="px-4 py-3 text-left">Note</th>
+                <th className="px-4 py-3 text-left">Stock Balance</th>
+                <th className="px-4 py-3 text-left">Reference / Note</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {loading ? (
-                <tr><td colSpan="5" className="px-4 py-6 text-center text-gray-400">Loading...</td></tr>
+              {loading || historyLoading ? (
+                <tr><td colSpan="6" className="px-4 py-6 text-center text-gray-400">Loading activity logs...</td></tr>
               ) : history.length === 0 ? (
-                <tr><td colSpan="5" className="px-4 py-6 text-center text-gray-400">No stock-in records yet</td></tr>
+                <tr><td colSpan="6" className="px-4 py-6 text-center text-gray-400">No activity records found for this filter</td></tr>
               ) : (
-                history.map((h) => (
-                  <tr key={h.id}>
-                    <td className="px-4 py-3 text-gray-600">{new Date(h.createdAt).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}</td>
-                    <td className="px-4 py-3">
-                      <div className="font-semibold text-gray-900 leading-tight">{h.productName || h.productId}</div>
-                      {h.variantSku && <div className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mt-0.5">SKU: {h.variantSku}</div>}
-                    </td>
-                    <td className="px-4 py-3 text-emerald-700 font-bold">+{h.quantity}</td>
-                    <td className="px-4 py-3 text-gray-600">{(h.store || '-')}{h.section ? `(${h.section})` : ''}</td>
-                    <td className="px-4 py-3 text-gray-600">{h.note || '—'}</td>
-                  </tr>
-                ))
+                history.map((h) => {
+                  const isSold = h.type === 'SOLD'
+                  const isRestocked = h.type === 'RESTOCKED' || h.type === 'RETURNED'
+                  const isAdded = h.type === 'ADDED'
+
+                  return (
+                    <tr key={h.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="px-4 py-3 text-gray-600 whitespace-nowrap text-xs">
+                        {new Date(h.createdAt).toLocaleString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' })}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-gray-900 leading-tight">{h.productName || h.productId}</div>
+                        {h.variantSku && <div className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mt-0.5">SKU: {h.variantSku}</div>}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {isSold && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
+                            ORDER DEDUCTION
+                          </span>
+                        )}
+                        {isRestocked && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-purple-50 text-purple-700 border border-purple-200">
+                            CANCEL REVERSAL
+                          </span>
+                        )}
+                        {isAdded && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            STOCK IN
+                          </span>
+                        )}
+                        {!isSold && !isRestocked && !isAdded && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-gray-100 text-gray-700">
+                            {h.type || 'ADJUST'}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {isSold ? (
+                          <span className="text-rose-700 font-extrabold">-{h.quantity}</span>
+                        ) : (
+                          <span className="text-emerald-700 font-extrabold">+{h.quantity}</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-xs font-mono text-gray-600">
+                        {typeof h.before === 'number' && typeof h.after === 'number' ? (
+                          <span>{h.before} → <strong className="text-gray-900">{h.after}</strong></span>
+                        ) : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-gray-600 max-w-xs truncate" title={h.note}>
+                        {h.note || (h.refId ? `Ref: ${h.refId}` : '—')}
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>

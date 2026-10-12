@@ -44,6 +44,7 @@ import OrderHistory from './pages/user/OrderHistory.jsx'
 import Cart from './pages/user/Cart.jsx'
 import Profile from './pages/user/Profile.jsx'
 import ManualPayment from './pages/user/ManualPayment.jsx'
+import OrderConfirmation from './pages/user/OrderConfirmation.jsx'
 import PrivacyPolicy from './pages/user/PrivacyPolicy.jsx'
 import TermsOfService from './pages/user/TermsOfService.jsx'
 import PartnerLogin from './pages/partner/Login.jsx'
@@ -111,6 +112,11 @@ export default function App() {
         <Route path="profile" element={<Profile />} />
         <Route path="cart" element={<Cart />} />
         <Route path="manual-payment" element={<ManualPayment />} />
+        <Route path="order-confirmation" element={<OrderConfirmation />} />
+        <Route path="order-confirmation/:orderId" element={<OrderConfirmation />} />
+        <Route path="order-success" element={<OrderConfirmation />} />
+        <Route path="order-success/:orderId" element={<OrderConfirmation />} />
+        <Route path="order-failed" element={<OrderConfirmation />} />
         <Route path="privacy-policy" element={<PrivacyPolicy />} />
         <Route path="terms-of-service" element={<TermsOfService />} />
       </Route>

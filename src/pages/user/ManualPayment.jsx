@@ -62,7 +62,7 @@ export default function ManualPayment() {
     if (!utr || utr.trim().length < 6) { notify('Enter a valid UTR / Transaction ID','error'); return }
     setSubmitting(true)
     try {
-      await api.post('/api/orders/manual-submit', {
+      const { data } = await api.post('/api/orders/manual-submit', {
         items,
         amountPaid: amountDefault,
         utr: utr.trim(),
@@ -73,7 +73,16 @@ export default function ManualPayment() {
       })
       notify('Payment details submitted. Verification in progress.', 'success')
       clearCart()
-      nav('/orders')
+      const targetId = data?.orderId || data?.order?._id
+      nav(`/order-confirmation/${targetId}`, {
+        state: {
+          orderId: targetId,
+          status: 'PENDING_APPROVAL',
+          isManual: true,
+          utr: utr.trim(),
+          amount: amountDefault
+        }
+      })
     } catch { notify('Failed to submit payment details','error') }
     finally { setSubmitting(false) }
   }
