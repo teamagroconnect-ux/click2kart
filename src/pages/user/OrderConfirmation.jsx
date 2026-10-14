@@ -14,14 +14,14 @@ export default function OrderConfirmation() {
   const { clearCart } = useCart()
   const { notify } = useToast()
 
-  const [order, setOrder] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [order, setOrder] = useState(state?.order || null)
+  const [loading, setLoading] = useState(!state?.order && !!targetId)
   const [copiedId, setCopiedId] = useState(false)
   const [copiedUtr, setCopiedUtr] = useState(false)
   const [copiedWaybill, setCopiedWaybill] = useState(false)
 
   // Determine target order ID from params or router state
-  const targetId = orderId || state?.orderId
+  const targetId = orderId || state?.orderId || state?.order?._id
 
   // Explicit failure check from state or URL query
   const queryParams = new URLSearchParams(window.location.search)
@@ -48,14 +48,13 @@ export default function OrderConfirmation() {
     }
 
     if (!targetId) {
-      // If neither failed nor valid target ID, redirect to orders or home
       setLoading(false)
       return
     }
 
     const fetchOrder = async () => {
       try {
-        setLoading(true)
+        if (!order) setLoading(true)
         const { data } = await api.get(`/api/orders/my/${targetId}`)
         if (active) setOrder(data)
       } catch (err) {
@@ -64,8 +63,8 @@ export default function OrderConfirmation() {
           const { data } = await api.get(`/api/orders/${targetId}`)
           if (active) setOrder(data)
         } catch (adminErr) {
-          if (active && !isExplicitFailed) {
-            notify('Unable to load order receipt', 'error')
+          if (active && !isExplicitFailed && !order && !state?.order) {
+            notify('Unable to load order receipt', 'info')
           }
         }
       } finally {
@@ -130,9 +129,11 @@ export default function OrderConfirmation() {
   }
 
   // Derive order status details
-  const isFailed = isExplicitFailed || order?.status === 'CANCELLED' || order?.paymentStatus === 'FAILED'
+  const isCancelled = order?.status === 'CANCELLED'
+  const isFailed = isExplicitFailed || order?.paymentStatus === 'FAILED'
   const isPendingApproval = order?.status === 'PENDING_ADMIN_APPROVAL' || order?.paymentStatus === 'PAYMENT_SUBMITTED' || state?.isManual
-  const isCredit = order?.paymentMethod === 'CREDIT' || state?.paymentMethod === 'CREDIT'
+  const isSplitCredit = !!(order?.splitPayment?.creditAmount > 0)
+  const isCredit = (order?.paymentMethod === 'CREDIT' || state?.paymentMethod === 'CREDIT') && !isSplitCredit
   const isCod = order?.paymentMethod === 'COD_20' || order?.paymentMethod === 'COD' || order?.codAdvancePercent > 0
   const isRazorpay = order?.paymentMethod === 'RAZORPAY'
 
@@ -142,6 +143,7 @@ export default function OrderConfirmation() {
   // Timeline computation
   const getTimelineProgress = () => {
     const s = String(order?.status || '').toUpperCase()
+    if (s === 'CANCELLED') return { index: 1, width: '100%', label: 'Cancelled', isCancelled: true }
     if (s === 'DELIVERED' || s === 'FULFILLED') return { index: 4, width: '100%', label: 'Delivered' }
     if (s === 'OUT_FOR_DELIVERY') return { index: 3, width: '75%', label: 'Out for Delivery' }
     if (s === 'SHIPPED') return { index: 2, width: '50%', label: 'Shipped' }
@@ -334,7 +336,13 @@ export default function OrderConfirmation() {
         {/* Top Hero Banner */}
         <div className="oc-card oc-hero-card">
           <div className="oc-hero-content">
-            {isPendingApproval ? (
+            {isCancelled ? (
+              <div className="oc-success-icon" style={{ background: '#fef2f2', borderColor: '#fca5a5', color: '#dc2626' }}>
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+            ) : isPendingApproval ? (
               <div className="oc-success-icon oc-icon-pending">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -349,9 +357,17 @@ export default function OrderConfirmation() {
             )}
 
             <div className="oc-badge-wrap">
-              {isPendingApproval ? (
+              {isCancelled ? (
+                <span className="oc-status-pill" style={{ background: '#fef2f2', color: '#dc2626', borderColor: '#fca5a5' }}>
+                  <span className="oc-dot" style={{ background: '#ef4444' }}></span> ORDER CANCELLED · VOID
+                </span>
+              ) : isPendingApproval ? (
                 <span className="oc-status-pill oc-status-amber">
                   <span className="oc-dot oc-dot-amber"></span> PAYMENT SUBMITTED · PENDING VERIFICATION
+                </span>
+              ) : isSplitCredit ? (
+                <span className="oc-status-pill oc-status-purple">
+                  <span className="oc-dot oc-dot-purple"></span> ORDER CONFIRMED · SPLIT PAYMENT (CREDIT + ONLINE)
                 </span>
               ) : isCredit ? (
                 <span className="oc-status-pill oc-status-purple">
@@ -369,7 +385,9 @@ export default function OrderConfirmation() {
             </div>
 
             <h1 className="oc-hero-title">
-              {isPendingApproval ? (
+              {isCancelled ? (
+                <>Order <span style={{ color: '#dc2626' }}>Cancelled</span></>
+              ) : isPendingApproval ? (
                 <>Order Received, <span>Verifying Payment</span></>
               ) : (
                 <>Order Officially <span>Confirmed!</span></>
@@ -377,7 +395,14 @@ export default function OrderConfirmation() {
             </h1>
 
             <p className="oc-hero-sub">
-              {isPendingApproval ? (
+              {isCancelled ? (
+                <>
+                  This order was cancelled {order.cancellation?.reason ? `(${order.cancellation.reason})` : ''}.
+                  {Number(order.creditAmountUsed || order.splitPayment?.creditAmount || (order.paymentMethod === 'CREDIT' ? totalAmount : 0)) > 0
+                    ? ` Credit of ₹${Math.round(Number(order.creditAmountUsed || order.splitPayment?.creditAmount || totalAmount)).toLocaleString('en-IN')} has been restored to your retailer credit balance.`
+                    : ' If payment was deducted, refund will be processed as per terms.'}
+                </>
+              ) : isPendingApproval ? (
                 <>
                   Thank you, <strong>{buyer.name}</strong>. Your payment details have been submitted. Our accounts team will verify your UTR and begin fulfillment.
                 </>
@@ -419,9 +444,9 @@ export default function OrderConfirmation() {
               <div className="oc-quick-divider" />
 
               <div className="oc-quick-item">
-                <span className="oc-quick-lbl">Estimated Delivery</span>
-                <span className="oc-quick-val text-purple-700 font-extrabold">
-                  {getEstimatedDelivery(order.createdAt)}
+                <span className="oc-quick-lbl">{isCancelled ? 'Order Status' : 'Estimated Delivery'}</span>
+                <span className={`oc-quick-val font-extrabold ${isCancelled ? 'text-rose-600' : 'text-purple-700'}`}>
+                  {isCancelled ? 'CANCELLED' : getEstimatedDelivery(order.createdAt)}
                 </span>
               </div>
 
@@ -441,10 +466,14 @@ export default function OrderConfirmation() {
         <div className="oc-card oc-timeline-card">
           <div className="oc-timeline-header">
             <div className="flex items-center gap-2">
-              <div className="oc-section-dot"></div>
+              <div className="oc-section-dot" style={isCancelled ? { background: '#ef4444' } : {}}></div>
               <h2 className="oc-section-title">Fulfillment Progress</h2>
             </div>
-            {waybill ? (
+            {isCancelled ? (
+              <span className="oc-courier-tag" style={{ background: '#fef2f2', color: '#dc2626', borderColor: '#fca5a5' }}>
+                ORDER CANCELLED
+              </span>
+            ) : waybill ? (
               <span className="oc-courier-tag">
                 DELHIVERY EXPRESS
               </span>
@@ -459,50 +488,69 @@ export default function OrderConfirmation() {
             )}
           </div>
 
-          <div className="oc-timeline">
-            <div className="oc-timeline-bg-line" />
-            <div className="oc-timeline-active-line" style={{ width: progress.width }} />
+          {isCancelled ? (
+            <div className="oc-timeline">
+              <div className="oc-timeline-bg-line" />
+              <div className="oc-timeline-active-line" style={{ width: '100%', background: '#ef4444' }} />
 
-            <div className={`oc-t-step ${progress.index >= 0 ? 'active' : ''} ${progress.index === 0 ? 'current' : ''}`}>
-              <div className="oc-t-node">
-                {progress.index > 0 ? '✓' : '1'}
+              <div className="oc-t-step active">
+                <div className="oc-t-node">✓</div>
+                <span className="oc-t-label">Order Placed</span>
+                <span className="oc-t-sub">{order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
               </div>
-              <span className="oc-t-label">Order Placed</span>
-              <span className="oc-t-sub">{order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
-            </div>
 
-            <div className={`oc-t-step ${progress.index >= 1 ? 'active' : ''} ${progress.index === 1 ? 'current' : ''}`}>
-              <div className="oc-t-node">
-                {progress.index > 1 ? '✓' : '2'}
+              <div className="oc-t-step active current">
+                <div className="oc-t-node" style={{ background: '#ef4444', borderColor: '#b91c1c', color: 'white' }}>✕</div>
+                <span className="oc-t-label" style={{ color: '#dc2626' }}>Cancelled</span>
+                <span className="oc-t-sub">{order.cancellation?.cancelledAt ? new Date(order.cancellation.cancelledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Void'}</span>
               </div>
-              <span className="oc-t-label">Confirmed</span>
-              <span className="oc-t-sub">{isPendingApproval ? 'Verifying' : 'Approved'}</span>
             </div>
+          ) : (
+            <div className="oc-timeline">
+              <div className="oc-timeline-bg-line" />
+              <div className="oc-timeline-active-line" style={{ width: progress.width }} />
 
-            <div className={`oc-t-step ${progress.index >= 2 ? 'active' : ''} ${progress.index === 2 ? 'current' : ''}`}>
-              <div className="oc-t-node">
-                {progress.index > 2 ? '✓' : '3'}
+              <div className={`oc-t-step ${progress.index >= 0 ? 'active' : ''} ${progress.index === 0 ? 'current' : ''}`}>
+                <div className="oc-t-node">
+                  {progress.index > 0 ? '✓' : '1'}
+                </div>
+                <span className="oc-t-label">Order Placed</span>
+                <span className="oc-t-sub">{order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}</span>
               </div>
-              <span className="oc-t-label">Packed & Shipped</span>
-              <span className="oc-t-sub">{waybill ? 'Dispatched' : 'Warehouse'}</span>
-            </div>
 
-            <div className={`oc-t-step ${progress.index >= 3 ? 'active' : ''} ${progress.index === 3 ? 'current' : ''}`}>
-              <div className="oc-t-node">
-                {progress.index > 3 ? '✓' : '4'}
+              <div className={`oc-t-step ${progress.index >= 1 ? 'active' : ''} ${progress.index === 1 ? 'current' : ''}`}>
+                <div className="oc-t-node">
+                  {progress.index > 1 ? '✓' : '2'}
+                </div>
+                <span className="oc-t-label">Confirmed</span>
+                <span className="oc-t-sub">{isPendingApproval ? 'Verifying' : 'Approved'}</span>
               </div>
-              <span className="oc-t-label">Out for Delivery</span>
-              <span className="oc-t-sub">Courier Hub</span>
-            </div>
 
-            <div className={`oc-t-step ${progress.index >= 4 ? 'active' : ''}`}>
-              <div className="oc-t-node">
-                {progress.index >= 4 ? '✓' : '5'}
+              <div className={`oc-t-step ${progress.index >= 2 ? 'active' : ''} ${progress.index === 2 ? 'current' : ''}`}>
+                <div className="oc-t-node">
+                  {progress.index > 2 ? '✓' : '3'}
+                </div>
+                <span className="oc-t-label">Packed & Shipped</span>
+                <span className="oc-t-sub">{waybill ? 'Dispatched' : 'Warehouse'}</span>
               </div>
-              <span className="oc-t-label">Delivered</span>
-              <span className="oc-t-sub">Destination</span>
+
+              <div className={`oc-t-step ${progress.index >= 3 ? 'active' : ''} ${progress.index === 3 ? 'current' : ''}`}>
+                <div className="oc-t-node">
+                  {progress.index > 3 ? '✓' : '4'}
+                </div>
+                <span className="oc-t-label">Out for Delivery</span>
+                <span className="oc-t-sub">Courier Hub</span>
+              </div>
+
+              <div className={`oc-t-step ${progress.index >= 4 ? 'active' : ''}`}>
+                <div className="oc-t-node">
+                  {progress.index >= 4 ? '✓' : '5'}
+                </div>
+                <span className="oc-t-label">Delivered</span>
+                <span className="oc-t-sub">Destination</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Courier Waybill / Tracking Banner */}
           {waybill && (
@@ -751,7 +799,11 @@ export default function OrderConfirmation() {
                 <span className="oc-card-icon">💳</span>
                 <h3 className="oc-card-heading">Payment Information</h3>
               </div>
-              {order.paymentStatus === 'PAID' ? (
+              {isCancelled ? (
+                <span className="oc-pill-tag" style={{ background: '#fef2f2', color: '#dc2626', borderColor: '#fca5a5' }}>
+                  Cancelled
+                </span>
+              ) : order.paymentStatus === 'PAID' ? (
                 <span className="oc-pill-tag oc-pill-emerald">Fully Paid</span>
               ) : isPendingApproval ? (
                 <span className="oc-pill-tag oc-pill-amber">Pending Approval</span>
@@ -764,7 +816,8 @@ export default function OrderConfirmation() {
               <div className="oc-detail-row">
                 <span className="oc-detail-label">Payment Method</span>
                 <span className="oc-detail-val font-bold text-slate-800">
-                  {order.paymentMethod === 'CREDIT' ? 'Retailer Credit Account' :
+                  {isSplitCredit ? `Split (Credit: ₹${order.splitPayment.creditAmount.toLocaleString('en-IN')} + ${order.splitPayment.onlineMethod}: ₹${order.splitPayment.onlineAmount.toLocaleString('en-IN')})` :
+                   order.paymentMethod === 'CREDIT' ? 'Retailer Credit Account (100%)' :
                    order.paymentMethod === 'RAZORPAY' ? 'Online Gateway (UPI/Card/NetBanking)' :
                    order.paymentMethod === 'MANUAL' ? 'Direct Bank Transfer / UPI' :
                    order.paymentMethod === 'COD_20' ? 'Advance COD (20% Prepaid + 80% On Delivery)' :
@@ -782,7 +835,16 @@ export default function OrderConfirmation() {
                 </div>
               )}
 
-              {isCredit && (
+              {isSplitCredit && (
+                <div className="oc-notice-card oc-notice-purple mt-2">
+                  <div className="font-bold text-xs text-purple-900 mb-0.5">Split Credit & Online Payment</div>
+                  <div className="text-[11px] text-purple-700 leading-relaxed">
+                    ₹{order.splitPayment.creditAmount.toLocaleString('en-IN')} deducted from your available retailer credit balance, and the remaining ₹{order.splitPayment.onlineAmount.toLocaleString('en-IN')} was paid via {order.splitPayment.onlineMethod}.
+                  </div>
+                </div>
+              )}
+
+              {isCredit && !isSplitCredit && (
                 <div className="oc-notice-card oc-notice-purple mt-2">
                   <div className="font-bold text-xs text-purple-900 mb-0.5">Charged to Retailer Credit Balance</div>
                   <div className="text-[11px] text-purple-700 leading-relaxed">
@@ -876,8 +938,47 @@ export default function OrderConfirmation() {
                 </div>
               </div>
 
-              {/* Payment Split */}
-              {isCod ? (
+              {/* Payment Split & Ledger Reversal Breakdown */}
+              {isCancelled ? (
+                <div className="oc-split-box mt-3" style={{ background: '#fef2f2', borderColor: '#fca5a5' }}>
+                  <div className="oc-split-row">
+                    <span className="text-xs font-bold text-red-900">Order Financial Status:</span>
+                    <span className="text-xs font-extrabold text-red-700">
+                      ORDER CANCELLED · VOID
+                    </span>
+                  </div>
+                  {Number(order.creditAmountUsed || order.splitPayment?.creditAmount || (order.paymentMethod === 'CREDIT' ? totalAmount : 0)) > 0 && (
+                    <div className="oc-split-row mt-1.5 pt-1.5 border-t border-red-200">
+                      <span className="text-xs font-semibold text-slate-700">Restored to Credit Ledger:</span>
+                      <span className="text-xs font-extrabold text-emerald-700">
+                        +₹{Math.round(Number(order.creditAmountUsed || order.splitPayment?.creditAmount || totalAmount)).toLocaleString('en-IN')} ✓
+                      </span>
+                    </div>
+                  )}
+                  {order.cancellation?.reason && (
+                    <div className="text-[11px] text-red-600 mt-1 italic">
+                      Cancellation Reason: {order.cancellation.reason}
+                    </div>
+                  )}
+                </div>
+              ) : isSplitCredit ? (
+                <div className="oc-split-box mt-3" style={{ background: '#f5f3ff', borderColor: '#ddd6fe' }}>
+                  <div className="oc-split-row">
+                    <span className="text-xs font-bold text-purple-900">B2B Credit Applied:</span>
+                    <span className="text-xs font-extrabold text-purple-900">
+                      ₹{Math.round(order.splitPayment.creditAmount).toLocaleString('en-IN')} ✓
+                    </span>
+                  </div>
+                  <div className="oc-split-row mt-1.5 pt-1.5 border-t border-purple-200">
+                    <span className="text-xs font-bold text-slate-800">
+                      Online Paid ({order.splitPayment.onlineMethod || 'Online'}):
+                    </span>
+                    <span className="text-xs font-extrabold text-emerald-700">
+                      ₹{Math.round(order.splitPayment.onlineAmount).toLocaleString('en-IN')} ✓
+                    </span>
+                  </div>
+                </div>
+              ) : isCod ? (
                 <div className="oc-split-box mt-3">
                   <div className="oc-split-row">
                     <span className="text-xs font-semibold text-slate-600">Advance Paid (20%)</span>
@@ -895,9 +996,9 @@ export default function OrderConfirmation() {
               ) : isCredit ? (
                 <div className="oc-split-box oc-split-credit mt-3">
                   <div className="oc-split-row">
-                    <span className="text-xs font-bold text-purple-900">B2B Credit Settled</span>
+                    <span className="text-xs font-bold text-purple-900">B2B Credit Settled (100%)</span>
                     <span className="text-xs font-extrabold text-purple-900">
-                      ₹{Math.round(totalAmount).toLocaleString('en-IN')}
+                      ₹{Math.round(totalAmount).toLocaleString('en-IN')} ✓
                     </span>
                   </div>
                 </div>

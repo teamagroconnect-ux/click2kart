@@ -58,6 +58,7 @@ export default function Enquiry() {
   const [paymentMethod,  setPaymentMethod]  = useState('RAZORPAY')
   const [codAdvMethod,   setCodAdvMethod]   = useState('RAZORPAY')
   const [bankConfig,     setBankConfig]     = useState({ enabled: false, bankDetails: null })
+  const [applyCredit,    setApplyCredit]    = useState(true)
   const [loading,        setLoading]        = useState(false)
   const [couponCode,     setCouponCode]     = useState('')
   const [appliedCoupon,  setAppliedCoupon]  = useState(loc.state?.appliedCoupon || null)
@@ -128,9 +129,10 @@ export default function Enquiry() {
           setDeliveryChannel('DELHIVERY')
         }
 
-        // Set default payment method: if credit-enabled, default to CREDIT
-        if (prof.isCreditEnabled) {
+        // Set default payment method: if credit-enabled and has credit, select CREDIT or default RAZORPAY with credit applied
+        if (prof.isCreditEnabled && prof.availableCredit > 0) {
           setPaymentMethod('CREDIT')
+          setApplyCredit(true)
         }
 
         const pin = String(prof?.kyc?.pincode||'').trim()
@@ -186,6 +188,14 @@ export default function Enquiry() {
   const couponDiscount = appliedCoupon ? appliedCoupon.discount : 0
   const totalPayable = subTotal - couponDiscount + ship.final
 
+  // Credit calculation
+  const availableCredit = Number(profile?.availableCredit || 0)
+  const isCreditEligible = !!profile?.isCreditEnabled && availableCredit > 0
+  const canFullCredit = isCreditEligible && availableCredit >= totalPayable
+  const shouldApplyCredit = isCreditEligible && applyCredit && availableCredit > 0 && paymentMethod !== 'COD'
+  const creditDeduction = shouldApplyCredit ? Math.min(availableCredit, totalPayable) : 0
+  const netPayableRemaining = Math.max(0, totalPayable - creditDeduction)
+
   const handleApplyCoupon = async (e) => {
     e?.preventDefault()
     if (!couponCode.trim()) return
@@ -218,7 +228,7 @@ export default function Enquiry() {
     setCouponError('')
   }
 
-  const handleRazorpay = async ({ items, paymentMethod, deliveryChannel, razorpayOrderId, amountPaise }) => {
+  const handleRazorpay = async ({ items, paymentMethod, deliveryChannel, razorpayOrderId, amountPaise, applyCredit: isApplyCredit }) => {
     try { await ensureRazorpayLoaded() } catch { notify('Unable to load payment gateway. Please try again.','error'); return }
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID||"rzp_test_placeholder",
@@ -233,7 +243,8 @@ export default function Enquiry() {
             items,
             paymentMethod,
             deliveryChannel,
-            couponCode: appliedCoupon?.code || ''
+            couponCode: appliedCoupon?.code || '',
+            applyCredit: !!isApplyCredit
           })
           notify('Payment Successful!','success');
           clearCart();
@@ -241,6 +252,7 @@ export default function Enquiry() {
           nav(`/order-confirmation/${targetId}`, {
             state: {
               orderId: targetId,
+              order: res.data?.order,
               status: 'SUCCESS',
               paymentMethod
             }
@@ -306,7 +318,7 @@ export default function Enquiry() {
       const visibleTotal = computedVisibleTotal(items)
       if (visibleTotal < minAmount) { notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`,'error'); setLoading(false); return }
 
-      // ── RETAILER CREDIT PAYMENT ──
+      // ── RETAILER CREDIT PAYMENT (Full 100% Credit) ──
       if (paymentMethod === 'CREDIT') {
         if (!profile?.isCreditEnabled) {
           notify('Credit facility is not enabled for your account', 'error')
@@ -314,7 +326,9 @@ export default function Enquiry() {
           return
         }
         if (profile.availableCredit < totalPayable) {
-          notify(`Insufficient credit balance. Available: ₹${profile.availableCredit.toLocaleString('en-IN')}`, 'error')
+          notify(`Insufficient credit for full payment. You can apply ₹${profile.availableCredit.toLocaleString('en-IN')} credit and pay the remaining balance via Razorpay or Bank Transfer.`, 'info')
+          setPaymentMethod('RAZORPAY')
+          setApplyCredit(true)
           setLoading(false)
           return
         }
@@ -331,6 +345,7 @@ export default function Enquiry() {
           nav(`/order-confirmation/${targetId}`, {
             state: {
               orderId: targetId,
+              order: data?.order,
               status: 'SUCCESS',
               paymentMethod: 'CREDIT'
             }
@@ -344,35 +359,48 @@ export default function Enquiry() {
         }
       }
 
-      if (paymentMethod==='MANUAL') {
+      if (paymentMethod === 'MANUAL') {
         if (!bankConfig?.enabled) {
           notify('Direct Bank Transfer is currently unavailable. Please choose Online Payment.', 'error');
           setLoading(false);
           return;
         }
         setLoading(false);
-        nav('/manual-payment',{ state:{ items:cleanItems, amount:totalPayable, deliveryChannel, couponCode:appliedCoupon?.code || '' } });
-        return
-      }
-
-      if (paymentMethod==='RAZORPAY') {
-        try {
-          const { data } = await api.post('/api/orders', {
+        const willUseCredit = isCreditEligible && applyCredit && creditDeduction > 0;
+        nav('/manual-payment', {
+          state: {
             items: cleanItems,
-            paymentMethod: 'RAZORPAY',
+            amount: willUseCredit ? netPayableRemaining : totalPayable,
+            totalOrderValue: totalPayable,
+            creditAmount: willUseCredit ? creditDeduction : 0,
+            applyCredit: willUseCredit,
             deliveryChannel,
             couponCode: appliedCoupon?.code || ''
+          }
+        });
+        return;
+      }
+
+      if (paymentMethod === 'RAZORPAY') {
+        try {
+          const willUseCredit = isCreditEligible && applyCredit && creditDeduction > 0;
+          const { data } = await api.post('/api/orders/prepare-payment', {
+            items: cleanItems,
+            paymentMethod: 'RAZORPAY',
+            couponCode: appliedCoupon?.code || '',
+            applyCredit: willUseCredit
           });
           await handleRazorpay({
             items: cleanItems,
             paymentMethod: 'RAZORPAY',
             deliveryChannel,
             razorpayOrderId: data.razorpayOrderId,
-            amountPaise: Math.round(totalPayable * 100)
+            amountPaise: data.amountPaise,
+            applyCredit: willUseCredit
           })
         }
         catch (err) {
-          notify(err?.response?.data?.message || err?.response?.data?.error || 'Payment initialization failed. Please retry.','error')
+          notify(err?.response?.data?.message || err?.response?.data?.error || 'Payment initialization failed. Please retry.', 'error')
         }
       } else if (paymentMethod==='COD') {
         if (profile?.isCreditEnabled) {
@@ -1947,6 +1975,21 @@ export default function Enquiry() {
                   <span className="eq-total-val">₹{totalPayable.toLocaleString()}</span>
                 </div>
 
+                {shouldApplyCredit && creditDeduction > 0 && (
+                  <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(124, 58, 237, 0.06)', borderRadius: 12, border: '1px solid rgba(124, 58, 237, 0.2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, color: '#7c3aed', marginBottom: 4 }}>
+                      <span>B2B Credit Applied:</span>
+                      <span>-₹{creditDeduction.toLocaleString('en-IN')}</span>
+                    </div>
+                    {creditDeduction < totalPayable && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 800, color: '#1e1b2e', borderTop: '1px dashed rgba(124, 58, 237, 0.2)', paddingTop: 4 }}>
+                        <span>Net Balance to Pay:</span>
+                        <span style={{ color: '#059669', fontSize: 15 }}>₹{netPayableRemaining.toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {totalSavings > 0 && (
                   <div style={{
                     marginTop: 12,
@@ -2154,50 +2197,88 @@ export default function Enquiry() {
                   <div className="eq-pay-options">
                     {/* Retailer Credit Facility */}
                     {profile?.isCreditEnabled && (
-                      <button
-                        type="button"
-                        disabled={profile.availableCredit < totalPayable}
-                        className={`eq-pay-opt ${paymentMethod === 'CREDIT' ? 'active-credit' : ''} ${profile.availableCredit < totalPayable ? 'disabled-opt' : ''}`}
-                        onClick={() => {
-                          if (profile.availableCredit >= totalPayable) setPaymentMethod('CREDIT')
-                        }}
-                      >
-                        <div className="eq-pay-ico credit">
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <rect x="2" y="5" width="20" height="14" rx="2" />
-                            <line x1="2" y1="10" x2="22" y2="10" />
-                          </svg>
-                        </div>
-                        <div className="eq-pay-info">
-                          <div className="eq-pay-name" style={{ color: profile.availableCredit < totalPayable ? '#64748b' : '#0f172a' }}>
-                            Approved Credit Facility
+                      canFullCredit ? (
+                        <button
+                          type="button"
+                          className={`eq-pay-opt ${paymentMethod === 'CREDIT' ? 'active-credit' : ''}`}
+                          onClick={() => setPaymentMethod('CREDIT')}
+                        >
+                          <div className="eq-pay-ico credit">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <rect x="2" y="5" width="20" height="14" rx="2" />
+                              <line x1="2" y1="10" x2="22" y2="10" />
+                            </svg>
                           </div>
-                          {profile.availableCredit >= totalPayable ? (
+                          <div className="eq-pay-info">
+                            <div className="eq-pay-name">
+                              Approved Credit Facility (100% Covered)
+                            </div>
                             <div className="eq-pay-desc credit-ok">
                               <span>Available Balance: ₹{Number(profile.availableCredit || 0).toLocaleString('en-IN')}</span>
                               <span style={{ color: '#059669', fontWeight: 700, marginLeft: 8 }}>
                                 · ✓ Full order covered
                               </span>
                             </div>
-                          ) : (
-                            <div className="eq-pay-desc credit-err">
-                              <span style={{ color: '#dc2626', fontWeight: 800 }}>
-                                Available Balance: ₹{Number(profile.availableCredit || 0).toLocaleString('en-IN')}
-                              </span>
-                              <span style={{ color: '#e11d48', fontWeight: 700, marginLeft: 8 }}>
-                                · ⚠️ Insufficient (Short by ₹{(totalPayable - (profile.availableCredit || 0)).toLocaleString('en-IN')})
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        {profile.availableCredit >= totalPayable ? (
+                          </div>
                           <div className="eq-pay-radio">
                             <div className="eq-pay-radio-dot" />
                           </div>
-                        ) : (
-                          <div className="eq-pay-lock" title="Insufficient credit balance">🔒</div>
-                        )}
-                      </button>
+                        </button>
+                      ) : (
+                        <div
+                          style={{
+                            background: shouldApplyCredit ? 'linear-gradient(135deg, #faf5ff, #f3e8ff)' : '#f8fafc',
+                            border: `2px solid ${shouldApplyCredit ? '#7c3aed' : '#cbd5e1'}`,
+                            borderRadius: 18,
+                            padding: '16px 20px',
+                            marginBottom: 10,
+                            boxShadow: shouldApplyCredit ? '0 4px 18px rgba(124,58,237,0.1)' : 'none',
+                            transition: 'all 0.25s ease'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                              <div style={{
+                                width: 36,
+                                height: 36,
+                                borderRadius: 10,
+                                background: '#7c3aed',
+                                color: 'white',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 16,
+                                flexShrink: 0,
+                                marginTop: 2
+                              }}>
+                                💳
+                              </div>
+                              <div>
+                                <div style={{ fontSize: 14, fontWeight: 800, color: '#1e1b2e' }}>
+                                  Apply Partial Credit Balance (₹{availableCredit.toLocaleString('en-IN')})
+                                </div>
+                                <div style={{ fontSize: 12, color: '#6b7280', marginTop: 3, lineHeight: 1.4 }}>
+                                  Deduct ₹{availableCredit.toLocaleString('en-IN')} from your credit balance. Pay remaining <strong style={{ color: '#7c3aed' }}>₹{netPayableRemaining.toLocaleString('en-IN')}</strong> via Online Gateway or Direct Bank Transfer below.
+                                </div>
+                              </div>
+                            </div>
+                            <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                              <input
+                                type="checkbox"
+                                checked={applyCredit}
+                                onChange={(e) => {
+                                  setApplyCredit(e.target.checked)
+                                  if (paymentMethod === 'CREDIT') setPaymentMethod('RAZORPAY')
+                                }}
+                                style={{ width: 20, height: 20, accentColor: '#7c3aed', cursor: 'pointer' }}
+                              />
+                              <span style={{ fontSize: 12, fontWeight: 800, color: '#7c3aed', marginLeft: 6 }}>
+                                {applyCredit ? 'Applied' : 'Apply'}
+                              </span>
+                            </label>
+                          </div>
+                        </div>
+                      )
                     )}
 
                     {/* Razorpay */}
@@ -2214,8 +2295,16 @@ export default function Enquiry() {
                         </svg>
                       </div>
                       <div className="eq-pay-info">
-                        <div className="eq-pay-name">Instant Online Payment</div>
-                        <div className="eq-pay-desc violet">Credit/Debit Cards, UPI, Netbanking · Instant Confirmation</div>
+                        <div className="eq-pay-name">
+                          {shouldApplyCredit && creditDeduction < totalPayable
+                            ? `Pay Remaining ₹${netPayableRemaining.toLocaleString('en-IN')} Online`
+                            : 'Instant Online Payment'}
+                        </div>
+                        <div className="eq-pay-desc violet">
+                          {shouldApplyCredit && creditDeduction < totalPayable
+                            ? `Apply ₹${creditDeduction.toLocaleString('en-IN')} credit + pay ₹${netPayableRemaining.toLocaleString('en-IN')} via Cards/UPI/Netbanking`
+                            : 'Credit/Debit Cards, UPI, Netbanking · Instant Confirmation'}
+                        </div>
                       </div>
                       <div className="eq-pay-radio">
                         <div className="eq-pay-radio-dot" />
@@ -2236,8 +2325,16 @@ export default function Enquiry() {
                           </svg>
                         </div>
                         <div className="eq-pay-info">
-                          <div className="eq-pay-name">Direct Bank Transfer / UPI</div>
-                          <div className="eq-pay-desc green">Manual Verification · No Convenience Fees</div>
+                          <div className="eq-pay-name">
+                            {shouldApplyCredit && creditDeduction < totalPayable
+                              ? `Transfer Remaining ₹${netPayableRemaining.toLocaleString('en-IN')} via Bank`
+                              : 'Direct Bank Transfer / UPI'}
+                          </div>
+                          <div className="eq-pay-desc green">
+                            {shouldApplyCredit && creditDeduction < totalPayable
+                              ? `Apply ₹${creditDeduction.toLocaleString('en-IN')} credit + transfer balance via Bank / UPI`
+                              : 'Manual Verification · No Convenience Fees'}
+                          </div>
                         </div>
                         <div className="eq-pay-radio">
                           <div className="eq-pay-radio-dot" />
@@ -2318,7 +2415,7 @@ export default function Enquiry() {
                       `Add ₹${minLeft.toLocaleString()} more`
                     ) : paymentMethod === 'CREDIT' ? (
                       profile.availableCredit < totalPayable ? (
-                        'Insufficient Credit Balance'
+                        'Select Split Payment Above'
                       ) : (
                         <>
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -2332,10 +2429,14 @@ export default function Enquiry() {
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
-                        Pay & Confirm Order
+                        {shouldApplyCredit && creditDeduction < totalPayable
+                          ? `Pay Remaining ₹${netPayableRemaining.toLocaleString('en-IN')} & Confirm Order`
+                          : 'Pay & Confirm Order'}
                       </>
                     ) : paymentMethod === 'MANUAL' ? (
-                      'Proceed to Manual Payment →'
+                      shouldApplyCredit && creditDeduction < totalPayable
+                        ? `Transfer Remaining ₹${netPayableRemaining.toLocaleString('en-IN')} via Bank →`
+                        : 'Proceed to Manual Payment →'
                     ) : codAdvMethod === 'RAZORPAY' ? (
                       'Pay 20% Advance & Confirm COD'
                     ) : (

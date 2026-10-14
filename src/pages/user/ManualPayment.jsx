@@ -69,7 +69,8 @@ export default function ManualPayment() {
         note: note.trim(),
         codAdvance20: cod20,
         deliveryChannel: loc.state?.deliveryChannel,
-        couponCode: loc.state?.couponCode || ''
+        couponCode: loc.state?.couponCode || '',
+        applyCredit: !!loc.state?.applyCredit
       })
       notify('Payment details submitted. Verification in progress.', 'success')
       clearCart()
@@ -77,6 +78,7 @@ export default function ManualPayment() {
       nav(`/order-confirmation/${targetId}`, {
         state: {
           orderId: targetId,
+          order: data?.order,
           status: 'PENDING_APPROVAL',
           isManual: true,
           utr: utr.trim(),
@@ -368,15 +370,22 @@ export default function ManualPayment() {
               {/* amount banner */}
               <div className="mp-amount-banner">
                 <div>
-                  <div className="mp-amount-label">{cod20 ? '20% Advance Amount' : 'Amount to Pay'}</div>
+                  <div className="mp-amount-label">
+                    {cod20 ? '20% Advance Amount' : loc.state?.applyCredit ? 'Remaining Balance to Transfer' : 'Amount to Pay'}
+                  </div>
                   <div className="mp-amount-val">{totalText}</div>
                   {cod20 && <div className="mp-cod-note">Remaining 80% payable on delivery</div>}
+                  {loc.state?.applyCredit && (
+                    <div style={{ fontSize: 11, color: '#7c3aed', fontWeight: 600, marginTop: 4 }}>
+                      ✓ ₹{Number(loc.state?.creditAmount || 0).toLocaleString('en-IN')} credit deducted from Total ₹{Number(loc.state?.totalOrderValue || 0).toLocaleString('en-IN')}
+                    </div>
+                  )}
                 </div>
                 <div className="mp-amount-tag">
                   <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                   </svg>
-                  Fixed Amount
+                  {loc.state?.applyCredit ? 'Split Credit' : 'Fixed Amount'}
                 </div>
               </div>
             </div>

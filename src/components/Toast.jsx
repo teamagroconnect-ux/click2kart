@@ -5,12 +5,12 @@ export const useToast = () => useContext(ToastCtx)
 
 export default function ToastProvider({ children }) {
   const [messages, setMessages] = useState([])
-  const notify = (text, kind='info') => {
+  const notify = (text, kind='info', title=null) => {
     const id = Math.random().toString(36).slice(2)
     setMessages((m)=>{
       const last = m[m.length - 1]
       if (last && last.text === text && last.kind === kind) return m
-      return [...m, { id, text, kind }]
+      return [...m, { id, text, kind, title }]
     })
     setTimeout(()=> setMessages((m)=> m.filter(x=>x.id!==id)), 3500)
   }
@@ -48,7 +48,7 @@ export default function ToastProvider({ children }) {
                 </span>
                 <div className="flex-1">
                   <div className="text-sm font-black leading-tight">
-                    {m.kind==='error' ? 'Action Required' : m.kind==='success' ? 'Success' : 'Notice'}
+                    {m.title || (m.kind==='error' ? 'Notice' : m.kind==='success' ? 'Success' : 'Notice')}
                   </div>
                   <div className="text-[13px] font-medium text-gray-700 mt-0.5">{m.text}</div>
                 </div>
