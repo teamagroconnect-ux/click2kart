@@ -740,7 +740,7 @@ export default function CreditManagement() {
                         <td className="px-4 py-3">
                           <span
                             className={`inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                              tx.type.includes('GRANTED') || tx.type.includes('ADDED') || tx.type.includes('REPAID')
+                              tx.type.includes('GRANTED') || tx.type.includes('ADDED') || tx.type.includes('REPAID') || tx.type.includes('REVERSAL')
                                 ? 'bg-emerald-50 text-emerald-700'
                                 : tx.type.includes('USED')
                                 ? 'bg-rose-50 text-rose-700'

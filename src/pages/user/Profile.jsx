@@ -103,7 +103,7 @@ const txnTypeBadge = (type) => {
     CREDIT_REPAID: { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200', label: 'Credit Repaid' },
     CREDIT_ADJUSTMENT: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', label: 'Adjustment' },
     REFUND_CREDIT: { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200', label: 'Refund' },
-    REVERSAL: { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200', label: 'Reversal' }
+    REVERSAL: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', label: 'Credit Reversal (+)' }
   };
   const t = map[type] || { bg: 'bg-slate-50', text: 'text-slate-600', border: 'border-slate-200', label: type };
   return (
@@ -1267,8 +1267,8 @@ export default function Profile() {
                                   {txnTypeBadge(tx.type)}
                                 </td>
                                 <td className="px-4 py-3 whitespace-nowrap font-black">
-                                  <span className={['CREDIT_USED', 'REVERSAL'].includes(tx.type) ? 'text-rose-600' : 'text-emerald-600'}>
-                                    {['CREDIT_USED', 'REVERSAL'].includes(tx.type) ? '-' : '+'}₹{Number(tx.amount || 0).toLocaleString('en-IN')}
+                                  <span className={tx.type === 'CREDIT_USED' ? 'text-rose-600' : 'text-emerald-600'}>
+                                    {tx.type === 'CREDIT_USED' ? '-' : '+'}₹{Number(tx.amount || 0).toLocaleString('en-IN')}
                                   </span>
                                 </td>
                                 <td className="px-4 py-3 whitespace-nowrap text-slate-600 font-semibold">

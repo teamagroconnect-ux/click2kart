@@ -14,14 +14,14 @@ export default function OrderConfirmation() {
   const { clearCart } = useCart()
   const { notify } = useToast()
 
+  // Determine target order ID from params or router state BEFORE any state initialization
+  const targetId = orderId || state?.orderId || state?.order?._id
+
   const [order, setOrder] = useState(state?.order || null)
   const [loading, setLoading] = useState(!state?.order && !!targetId)
   const [copiedId, setCopiedId] = useState(false)
   const [copiedUtr, setCopiedUtr] = useState(false)
   const [copiedWaybill, setCopiedWaybill] = useState(false)
-
-  // Determine target order ID from params or router state
-  const targetId = orderId || state?.orderId || state?.order?._id
 
   // Explicit failure check from state or URL query
   const queryParams = new URLSearchParams(window.location.search)
@@ -58,13 +58,19 @@ export default function OrderConfirmation() {
         const { data } = await api.get(`/api/orders/my/${targetId}`)
         if (active) setOrder(data)
       } catch (err) {
-        console.warn('Customer order lookup failed, trying fallback:', err)
+        console.warn('Customer order lookup failed, trying receipt fallback:', err)
         try {
-          const { data } = await api.get(`/api/orders/${targetId}`)
+          // Public safe receipt endpoint for mobile & external link access
+          const { data } = await api.get(`/api/orders/receipt/${targetId}`)
           if (active) setOrder(data)
-        } catch (adminErr) {
-          if (active && !isExplicitFailed && !order && !state?.order) {
-            notify('Unable to load order receipt', 'info')
+        } catch (receiptErr) {
+          try {
+            const { data } = await api.get(`/api/orders/${targetId}`)
+            if (active) setOrder(data)
+          } catch (adminErr) {
+            if (active && !isExplicitFailed && !order && !state?.order) {
+              notify('Unable to load order receipt', 'info')
+            }
           }
         }
       } finally {
@@ -453,10 +459,15 @@ export default function OrderConfirmation() {
               <div className="oc-quick-divider" />
 
               <div className="oc-quick-item">
-                <span className="oc-quick-lbl">Net Total Payable</span>
-                <span className="oc-quick-val text-slate-900 font-extrabold">
-                  ₹{Math.round(totalAmount).toLocaleString('en-IN')}
+                <span className="oc-quick-lbl">{isCancelled ? 'Order Value' : (isCod ? 'Advance Paid' : 'Total Paid')}</span>
+                <span className={`oc-quick-val font-extrabold ${isCancelled ? 'text-slate-900' : 'text-emerald-700'}`}>
+                  ₹{Math.round(isCod ? advancePaid : totalAmount).toLocaleString('en-IN')} {!isCancelled && '✓'}
                 </span>
+                {isCod && (
+                  <span className="text-[10px] text-amber-600 font-bold block mt-0.5">
+                    (Bal. Due: ₹{Math.round(balanceDue).toLocaleString('en-IN')})
+                  </span>
+                )}
               </div>
             </div>
           </div>
