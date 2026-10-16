@@ -1456,26 +1456,44 @@ export default function Profile() {
             {/* ──── BUSINESS ──── */}
             {activeSection === 'business' && (
               <div className="pf-panel bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100">
-                  <h2 className="pf-display font-black text-slate-800">Business Info</h2>
-                  <p className="text-slate-400 text-xs mt-0.5">Update your business details and KYC documents</p>
+                <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+                  <div>
+                    <h2 className="pf-display font-black text-slate-800">Business Info & KYC</h2>
+                    <p className="text-slate-400 text-xs mt-0.5">Your official business profile, GSTIN, and identity documents</p>
+                  </div>
+                  <Link
+                    to="/verify-kyc"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl text-xs font-bold shadow-md shadow-violet-200 hover:from-violet-700 hover:to-indigo-700 transition-all"
+                  >
+                    <span>🛡️ Structured KYC Verification Desk →</span>
+                  </Link>
                 </div>
                 <form onSubmit={handleSaveKyc} className="p-5 space-y-5">
-                  {/* Disclaimer */}
-                  <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-700 flex-shrink-0 mt-0.5">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
+                  {/* Guided KYC Verification Banner */}
+                  <div className="p-5 bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xl">📋</span>
+                        <h4 className="font-extrabold text-slate-900 text-sm">One-Stop KYC Verification Process</h4>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                          user?.kyc?.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
+                          user?.kyc?.status === 'PENDING_VERIFICATION' ? 'bg-purple-100 text-purple-800 border-purple-300' :
+                          user?.kyc?.status === 'REJECTED' ? 'bg-rose-100 text-rose-800 border-rose-300' :
+                          'bg-amber-100 text-amber-800 border-amber-300'
+                        }`}>
+                          {user?.kyc?.status || (user?.isKycComplete ? 'VERIFIED' : 'PENDING')}
+                        </span>
                       </div>
-                      <div>
-                        <h4 className="font-black text-amber-800 text-sm mb-1">Please Enter Correct Details</h4>
-                        <p className="text-amber-700 text-xs leading-relaxed">
-                          Once these details are verified, they cannot be edited. Please double-check your business name, GSTIN, and PAN before saving.
-                        </p>
-                      </div>
+                      <p className="text-xs text-slate-600 mt-1 max-w-xl">
+                        Submit all business details, PAN & Aadhaar (Front & Back) in a single streamlined 3-step process. Once submitted, records are locked for security compliance.
+                      </p>
                     </div>
+                    <Link
+                      to="/verify-kyc"
+                      className="whitespace-nowrap px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all"
+                    >
+                      {user?.kyc?.isLocked || ['PENDING_VERIFICATION', 'VERIFIED'].includes(user?.kyc?.status) ? 'View Locked KYC →' : 'Complete Verification →'}
+                    </Link>
                   </div>
                   
                   {/* Profile Picture */}

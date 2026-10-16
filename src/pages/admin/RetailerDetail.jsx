@@ -16,6 +16,7 @@ export default function RetailerDetail() {
   const [partnerForm, setPartnerForm] = useState(null)
   const [partnerError, setPartnerError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [previewDoc, setPreviewDoc] = useState(null)
   const load = async () => {
     setLoading(true)
     try {
@@ -498,17 +499,109 @@ export default function RetailerDetail() {
           </div>
         )}
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
-          <h3 className="text-lg font-black text-gray-900 italic mb-6">KYC & Account Details</h3>
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-black text-gray-900 italic">KYC & Account Details</h3>
+            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+              user.kyc?.status === 'VERIFIED' || user.isKycComplete
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                : user.kyc?.status === 'PENDING_VERIFICATION'
+                ? 'bg-purple-50 text-purple-800 border-purple-200'
+                : user.kyc?.status === 'REJECTED'
+                ? 'bg-rose-50 text-rose-800 border-rose-200'
+                : 'bg-gray-100 text-gray-600 border-gray-200'
+            }`}>
+              {user.kyc?.status || (user.isKycComplete ? 'VERIFIED' : 'PENDING')}
+            </span>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <KycItem label="Business Name" value={user.kyc?.businessName} />
+            <KycItem label="Business Type" value={user.kyc?.businessType || 'Retail Store'} />
             <KycItem label="GSTIN" value={user.kyc?.gstin} />
-            <KycItem label="PAN" value={user.kyc?.pan} />
+            <KycItem label="PAN Number" value={user.kyc?.pan} />
+            <KycItem label="Aadhaar Number" value={user.kyc?.aadhaarNumber ? `XXXX-XXXX-${user.kyc.aadhaarNumber.slice(-4)}` : '—'} />
+            <KycItem label="Verification Date" value={user.kyc?.verifiedAt ? new Date(user.kyc.verifiedAt).toLocaleDateString('en-IN') : '—'} />
             <KycItem label="Pincode" value={user.kyc?.pincode} />
             <KycItem label="State" value={user.kyc?.state} />
             <KycItem label="City" value={user.kyc?.city} />
             <KycItem label="Address Line 1" value={user.kyc?.addressLine1} className="md:col-span-2" />
             <KycItem label="Address Line 2" value={user.kyc?.addressLine2} className="md:col-span-2" />
           </div>
+
+          {/* Official Verification Documents Gallery */}
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4">Official Verification Documents (Click to Enlarge)</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* PAN Document */}
+              <div className="border border-gray-200 rounded-2xl p-3 bg-gray-50/50">
+                <span className="text-[10px] font-bold text-gray-500 uppercase block mb-1">PAN Card Photo</span>
+                {user.kyc?.panCard ? (
+                  <div
+                    className="relative group rounded-xl overflow-hidden bg-white border border-gray-200 cursor-pointer"
+                    onClick={() => setPreviewDoc(user.kyc.panCard)}
+                  >
+                    <img src={user.kyc.panCard} alt="PAN Card" className="h-32 w-full object-cover group-hover:scale-105 transition-all" />
+                    <div className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold">
+                      🔍 Click to Zoom
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-32 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-gray-400 text-xs font-medium">
+                    No PAN photo uploaded
+                  </div>
+                )}
+              </div>
+
+              {/* Aadhaar Front */}
+              <div className="border border-gray-200 rounded-2xl p-3 bg-gray-50/50">
+                <span className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Aadhaar Front Photo</span>
+                {(user.kyc?.aadhaarFront || user.kyc?.aadhaarCard) ? (
+                  <div
+                    className="relative group rounded-xl overflow-hidden bg-white border border-gray-200 cursor-pointer"
+                    onClick={() => setPreviewDoc(user.kyc?.aadhaarFront || user.kyc?.aadhaarCard)}
+                  >
+                    <img
+                      src={user.kyc?.aadhaarFront || user.kyc?.aadhaarCard}
+                      alt="Aadhaar Front"
+                      className="h-32 w-full object-cover group-hover:scale-105 transition-all"
+                    />
+                    <div className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold">
+                      🔍 Click to Zoom
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-32 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-gray-400 text-xs font-medium">
+                    No Aadhaar Front photo
+                  </div>
+                )}
+              </div>
+
+              {/* Aadhaar Back */}
+              <div className="border border-gray-200 rounded-2xl p-3 bg-gray-50/50">
+                <span className="text-[10px] font-bold text-gray-500 uppercase block mb-1">Aadhaar Back Photo</span>
+                {user.kyc?.aadhaarBack ? (
+                  <div
+                    className="relative group rounded-xl overflow-hidden bg-white border border-gray-200 cursor-pointer"
+                    onClick={() => setPreviewDoc(user.kyc.aadhaarBack)}
+                  >
+                    <img
+                      src={user.kyc.aadhaarBack}
+                      alt="Aadhaar Back"
+                      className="h-32 w-full object-cover group-hover:scale-105 transition-all"
+                    />
+                    <div className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs font-bold">
+                      🔍 Click to Zoom
+                    </div>
+                  </div>
+                ) : (
+                  <div className="h-32 rounded-xl border border-dashed border-gray-200 flex items-center justify-center text-gray-400 text-xs font-medium">
+                    No Aadhaar Back photo
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
           {user.kyc?.profilePicture && (
             <div className="mt-6 pt-6 border-t border-gray-50">
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-3">Profile Picture</h4>
@@ -517,6 +610,33 @@ export default function RetailerDetail() {
           )}
         </div>
       </div>
+
+      {/* High-Res Document Preview Modal */}
+      {previewDoc && (
+        <div
+          className="fixed inset-0 bg-black/85 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setPreviewDoc(null)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[95vh] bg-white rounded-3xl overflow-hidden shadow-2xl p-4 flex flex-col items-center"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="w-full flex items-center justify-between pb-3 border-b border-gray-100">
+              <span className="text-sm font-extrabold text-gray-900">Official Retailer Document</span>
+              <button
+                type="button"
+                onClick={() => setPreviewDoc(null)}
+                className="px-3.5 py-1.5 bg-gray-900 hover:bg-gray-800 text-white text-xs font-bold rounded-xl"
+              >
+                Close ✕
+              </button>
+            </div>
+            <div className="p-3 overflow-auto max-h-[80vh]">
+              <img src={previewDoc} alt="Document Preview" className="max-h-[75vh] w-auto rounded-2xl object-contain mx-auto" />
+            </div>
+          </div>
+        </div>
+      )}
 
       <PasswordConfirmModal
         open={deleteModalOpen}

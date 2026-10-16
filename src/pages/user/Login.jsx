@@ -40,7 +40,11 @@ export default function Login() {
         try { await refreshProfile() } catch {}
         sessionStorage.removeItem('login_redirect')
         notify('Welcome back!', 'success')
-        navigate(from)
+        if (data.redirectTo && (!from || from === '/')) {
+          navigate(data.redirectTo)
+        } else {
+          navigate(from)
+        }
       } catch (err) {
         const code = err?.response?.data?.error
         const msg = code === 'account_pending_approval'
@@ -58,7 +62,11 @@ export default function Login() {
         try { await refreshProfile() } catch {}
         sessionStorage.removeItem('login_redirect')
         notify('Welcome back!', 'success')
-        navigate(from)
+        if (data.redirectTo && (!from || from === '/')) {
+          navigate(data.redirectTo)
+        } else {
+          navigate(from)
+        }
       } catch (err) {
         const code = err?.response?.data?.error
         const msg = code === 'account_pending_approval'

@@ -16,6 +16,7 @@ import RetailerDetail from './pages/admin/RetailerDetail.jsx'
 import CreditManagement from './pages/admin/CreditManagement.jsx'
 import Customers from './pages/admin/Customers.jsx'
 import CustomerDetail from './pages/admin/CustomerDetail.jsx'
+import KycVerification from './pages/admin/KycVerification.jsx'
 import AdminLayout from './components/AdminLayout.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import InventoryPage from './pages/admin/InventoryPage.jsx'
@@ -43,6 +44,7 @@ import ResetPassword from './pages/user/ResetPassword.jsx'
 import OrderHistory from './pages/user/OrderHistory.jsx'
 import Cart from './pages/user/Cart.jsx'
 import Profile from './pages/user/Profile.jsx'
+import VerifyKyc from './pages/user/VerifyKyc.jsx'
 import ManualPayment from './pages/user/ManualPayment.jsx'
 import OrderConfirmation from './pages/user/OrderConfirmation.jsx'
 import PrivacyPolicy from './pages/user/PrivacyPolicy.jsx'
@@ -82,6 +84,7 @@ export default function App() {
         <Route path="partners" element={<Partners />} />
         <Route path="retailers" element={<Retailers />} />
         <Route path="retailers/:id" element={<RetailerDetail />} />
+        <Route path="kyc-verification" element={<KycVerification />} />
         <Route path="credit-management" element={<CreditManagement />} />
         <Route path="customers" element={<Customers />} />
               <Route path="customers/:id" element={<CustomerDetail />} />
@@ -110,6 +113,8 @@ export default function App() {
         <Route path="reset-password" element={<ResetPassword />} />
         <Route path="orders" element={<OrderHistory />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="verify-kyc" element={<VerifyKyc />} />
+        <Route path="kyc" element={<VerifyKyc />} />
         <Route path="cart" element={<Cart />} />
         <Route path="manual-payment" element={<ManualPayment />} />
         <Route path="order-confirmation" element={<OrderConfirmation />} />

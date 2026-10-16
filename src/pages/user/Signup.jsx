@@ -101,11 +101,20 @@ export default function Signup() {
         email: formData.email,
         otp
       })
-      // Wait, but in backend, we don't auto-login anymore, right? Wait let's check backend!
-      // Oh, in backend verify-otp, we return { message: "application_submitted", pendingApproval: true }
-      // So we should adjust frontend accordingly!
-      notify('Account created successfully! Please wait for admin approval.', 'success')
-      navigate('/login')
+      if (data.token) {
+        localStorage.setItem('token', data.token)
+        if (setAuth) {
+          setAuth({ token: data.token, user: data.user })
+        }
+        if (refreshProfile) {
+          try { await refreshProfile() } catch {}
+        }
+        notify('Account created! Please complete your KYC verification.', 'success')
+        navigate(data.redirectTo || '/verify-kyc')
+      } else {
+        notify('Account created successfully! Please log in.', 'success')
+        navigate('/login')
+      }
     } catch (err) {
       notify(err?.response?.data?.error || 'Invalid OTP', 'error')
     } finally {
