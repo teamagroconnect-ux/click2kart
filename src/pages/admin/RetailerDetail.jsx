@@ -501,17 +501,38 @@ export default function RetailerDetail() {
         <div className="bg-white border border-gray-100 rounded-3xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-black text-gray-900 italic">KYC & Account Details</h3>
-            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-              user.kyc?.status === 'VERIFIED' || user.isKycComplete
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : user.kyc?.status === 'PENDING_VERIFICATION'
-                ? 'bg-purple-50 text-purple-800 border-purple-200'
-                : user.kyc?.status === 'REJECTED'
-                ? 'bg-rose-50 text-rose-800 border-rose-200'
-                : 'bg-gray-100 text-gray-600 border-gray-200'
-            }`}>
-              {user.kyc?.status || (user.isKycComplete ? 'VERIFIED' : 'PENDING')}
-            </span>
+            <div className="flex items-center gap-3">
+              {(!user.isKycComplete || user.kyc?.status !== 'VERIFIED') && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (window.confirm(`Approve KYC verification for "${user.kyc?.businessName || user.name}"?`)) {
+                      try {
+                        await api.post(`/api/admin/customers/${id}/approve-kyc`);
+                        notify('KYC approved successfully', 'success');
+                        load();
+                      } catch (err) {
+                        notify(err?.response?.data?.error || 'Failed to approve KYC', 'error');
+                      }
+                    }
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black uppercase tracking-wider shadow-sm transition-all"
+                >
+                  ✓ Approve KYC
+                </button>
+              )}
+              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                user.kyc?.status === 'VERIFIED' || user.isKycComplete
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                  : user.kyc?.status === 'PENDING_VERIFICATION'
+                  ? 'bg-purple-50 text-purple-800 border-purple-200'
+                  : user.kyc?.status === 'REJECTED'
+                  ? 'bg-rose-50 text-rose-800 border-rose-200'
+                  : 'bg-gray-100 text-gray-600 border-gray-200'
+              }`}>
+                {user.kyc?.status || (user.isKycComplete ? 'VERIFIED' : 'PENDING')}
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

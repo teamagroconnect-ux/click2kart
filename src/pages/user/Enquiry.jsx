@@ -109,7 +109,15 @@ export default function Enquiry() {
     ;(async () => {
       try {
         const { data } = await api.get('/api/user/me')
-        if (!data.isKycComplete) { notify('Complete your KYC to place orders','error'); nav('/profile'); return }
+        if (!data.isKycComplete || data.kyc?.status !== 'VERIFIED') {
+          if (data.kyc?.status === 'PENDING_VERIFICATION') {
+            notify('Wait for some time, your KYC details are in review. It will be verified soon.', 'warning');
+          } else {
+            notify('Please complete your KYC verification before placing orders.', 'error');
+          }
+          nav('/verify-kyc');
+          return;
+        }
         const prof = {
           name: data.name || '',
           phone: data.phone || '',

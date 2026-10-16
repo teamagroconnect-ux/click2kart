@@ -55,7 +55,7 @@ export default function KycVerification() {
 
     setActionLoading(retailer._id)
     try {
-      await api.post(`/api/admin/customers/${retailer._id}/approve`)
+      await api.post(`/api/admin/customers/${retailer._id}/approve-kyc`)
       notify(`KYC approved for ${retailer.name}! Wholesale access unlocked.`, 'success')
       await loadData()
     } catch (err) {

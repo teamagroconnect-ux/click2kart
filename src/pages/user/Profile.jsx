@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { useAuth } from '../../lib/AuthContext';
 import { useToast } from '../../components/Toast';
@@ -764,13 +764,13 @@ export default function Profile() {
 
   /* Nav config */
   const navItems = [
-    { id: 'overview',   label: 'Overview',   icon: 'home'  },
-    ...((isCreditEnabled || user?.isCreditEnabled) ? [{ id: 'credit', label: 'Credit Account', icon: 'credit' }] : []),
-    { id: 'personal',   label: 'Profile',    icon: 'user'  },
-    { id: 'business',   label: 'Business',   icon: 'pkg'   },
-    { id: 'addresses',  label: 'Business Address',  icon: 'map'   },
-    { id: 'support',    label: 'Support',    icon: 'help'  },
-    { id: 'settings',   label: 'Settings',   icon: 'gear'  },
+    { id: 'overview',   label: 'Overview',   shortLabel: 'Home',     icon: 'home'  },
+    ...((isCreditEnabled || user?.isCreditEnabled) ? [{ id: 'credit', label: 'Credit Account', shortLabel: 'Credit', icon: 'credit' }] : []),
+    { id: 'personal',   label: 'Profile',    shortLabel: 'Profile',  icon: 'user'  },
+    { id: 'business',   label: 'Business',   shortLabel: 'Business', icon: 'pkg'   },
+    { id: 'addresses',  label: 'Business Address', shortLabel: 'Address', icon: 'map' },
+    { id: 'support',    label: 'Support',    shortLabel: 'Support',  icon: 'help'  },
+    { id: 'settings',   label: 'Settings',   shortLabel: 'Settings', icon: 'gear'  },
   ];
 
   if (loading) return (
@@ -825,10 +825,10 @@ export default function Profile() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h1 className="pf-display font-black text-lg text-slate-900 leading-tight truncate">
-                      {formData.businessName || user?.name || 'Retailer Account'}
+                      {formData.businessName || 'Partner Account'}
                     </h1>
                     <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      ✓ Verified B2B Wholesaler
+                      {user?.kyc?.status === 'VERIFIED' ? '✓ Verified Partner' : '● Partner'}
                     </span>
                     {user?.kyc?.gstin && (
                       <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
@@ -837,11 +837,9 @@ export default function Profile() {
                     )}
                   </div>
                   <div className="text-xs text-slate-500 mt-1 flex items-center gap-2 font-medium">
-                    <span className="text-slate-700 font-semibold">{user?.name}</span>
-                    <span>•</span>
-                    <span>{user?.phone}</span>
-                    <span>•</span>
-                    <span className="text-slate-400">{user?.email}</span>
+                    {user?.phone && <span>{user.phone}</span>}
+                    {user?.phone && user?.email && <span>•</span>}
+                    {user?.email && <span className="text-slate-400">{user.email}</span>}
                   </div>
                 </div>
               </div>
@@ -892,9 +890,9 @@ export default function Profile() {
             <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
               <Avatar user={user} size="md" />
               <div className="min-w-0">
-                <div className="pf-display font-black text-slate-900 text-sm truncate">{user?.name}</div>
-                <div className="text-[11px] text-slate-500 font-medium truncate">{user?.email}</div>
-                <div className="text-[10px] text-emerald-600 font-bold mt-0.5">● Wholesaler Partner</div>
+                <div className="pf-display font-black text-slate-900 text-sm truncate">{formData.businessName || user?.name || 'Partner Account'}</div>
+                <div className="text-[11px] text-slate-500 font-medium truncate">{user?.phone || user?.email}</div>
+                <div className="text-[10px] text-emerald-600 font-bold mt-0.5">{user?.kyc?.status === 'VERIFIED' ? '● Verified Partner' : '● Partner Account'}</div>
               </div>
             </div>
 
@@ -934,18 +932,15 @@ export default function Profile() {
             {/* ──── OVERVIEW ──── */}
             {activeSection === 'overview' && (
               <div className="pf-panel space-y-6">
-                {/* Executive Welcome Card (Light, Crisp B2B Wholesaler Banner) */}
+                {/* Executive Welcome Card */}
                 <div className="bg-gradient-to-r from-violet-50/70 via-indigo-50/40 to-slate-50 rounded-3xl p-6 sm:p-8 text-slate-900 relative overflow-hidden border border-violet-100/80 shadow-xs">
                   <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 text-violet-800 text-[10px] font-black uppercase tracking-wider mb-2.5 border border-violet-200">
-                        Wholesale Portal • Enterprise Wholesaler
-                      </div>
                       <h2 className="pf-display font-black text-2xl sm:text-3xl tracking-tight text-slate-900">
-                        Welcome back, {user?.name?.split(' ')[0]}
+                        Welcome Back
                       </h2>
                       <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-lg leading-relaxed font-medium">
-                        Manage your wholesale orders, trade verification, and revolving credit limit with Click2Kart.
+                        Manage your partner orders, business verification, and credit facility with Click2Kart.
                       </p>
                     </div>
 
@@ -954,7 +949,7 @@ export default function Profile() {
                         onClick={() => navigate('/products')}
                         className="px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-violet-200 active:scale-95 transition-all"
                       >
-                        Wholesale Catalogue →
+                        Product Catalogue →
                       </button>
                       <button
                         onClick={() => navigate('/orders')}
@@ -1035,7 +1030,7 @@ export default function Profile() {
                 )}
 
                 {/* Quick action grid */}
-                <div className={`grid ${(isCreditEnabled || user?.isCreditEnabled) ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'} gap-4`}>
+                <div className={`grid ${(isCreditEnabled || user?.isCreditEnabled) ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-2'} gap-2.5 sm:gap-4`}>
                   {[
                     ...((isCreditEnabled || user?.isCreditEnabled) ? [{
                       label: 'Credit Facility',
@@ -1052,14 +1047,15 @@ export default function Profile() {
                   ].map(({ label, sub, icon, color, action }) => (
                     <button
                       key={label}
+                      type="button"
                       onClick={action}
-                      className="bg-white rounded-3xl p-5 border border-slate-200/70 shadow-sm hover:shadow-lg hover:border-violet-200 hover:-translate-y-0.5 active:scale-[0.98] transition-all text-left group"
+                      className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 border border-slate-200/70 shadow-xs hover:shadow-md hover:border-violet-200 hover:-translate-y-0.5 active:scale-[0.98] transition-all text-left group"
                     >
-                      <div className={`w-12 h-12 rounded-2xl ${color} flex items-center justify-center mb-3.5 group-hover:scale-110 transition-transform`}>
-                        <Ico n={icon} cls="w-6 h-6" />
+                      <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl ${color} flex items-center justify-center mb-2.5 sm:mb-3.5 group-hover:scale-105 transition-transform`}>
+                        <Ico n={icon} cls="w-4 h-4 sm:w-6 h-6" />
                       </div>
-                      <div className="pf-display font-black text-slate-900 text-sm">{label}</div>
-                      <div className="text-slate-400 text-xs mt-0.5 font-medium">{sub}</div>
+                      <div className="pf-display font-black text-slate-900 text-xs sm:text-sm leading-snug truncate">{label}</div>
+                      <div className="text-slate-400 text-[10px] sm:text-xs mt-0.5 font-medium truncate">{sub}</div>
                     </button>
                   ))}
                 </div>
@@ -1117,13 +1113,13 @@ export default function Profile() {
                 <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="pf-display font-black text-xl text-slate-800">Retailer Credit Facility</h2>
+                      <h2 className="pf-display font-black text-xl text-slate-800">Partner Credit Facility</h2>
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                         Active Account
                       </span>
                     </div>
                     <p className="text-slate-400 text-xs mt-1">
-                      Revolving B2B credit limit for seamless purchasing and flexible repayments
+                      Revolving credit limit for seamless purchasing and flexible repayments
                     </p>
                   </div>
                   <button
@@ -2035,15 +2031,22 @@ export default function Profile() {
         </div>
 
         {/* ── MOBILE BOTTOM NAV ── */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-100 z-40 safe-area-pb">
-          <div className="flex">
-            {navItems.map(({ id, label, icon }) => (
-              <button key={id} onClick={() => setActiveSection(id)}
-                className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-all
-                  ${activeSection === id ? 'text-violet-600' : 'text-slate-400 hover:text-slate-600'}`}>
-                <Ico n={icon} cls="w-5 h-5" />
-                <span className="text-[9px] font-black uppercase tracking-wider">{label}</span>
-                {activeSection === id && <div className="w-1 h-1 rounded-full bg-violet-500" />}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 z-40 safe-area-pb shadow-lg">
+          <div className="flex items-center justify-around px-1 py-1 overflow-x-auto no-scrollbar">
+            {navItems.map(({ id, label, shortLabel, icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveSection(id)}
+                className={`min-w-[46px] flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl transition-all ${
+                  activeSection === id ? 'text-violet-600 font-extrabold' : 'text-slate-400 hover:text-slate-600 font-medium'
+                }`}
+              >
+                <Ico n={icon} cls="w-4 h-4 sm:w-5 h-5 flex-shrink-0" />
+                <span className="text-[9px] uppercase tracking-wider truncate max-w-[56px] text-center leading-tight">
+                  {shortLabel || label}
+                </span>
+                {activeSection === id && <div className="w-1 h-1 rounded-full bg-violet-600 mt-0.5" />}
               </button>
             ))}
           </div>

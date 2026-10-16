@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart, getStockStatus } from '../../lib/CartContext'
 import { useToast } from '../../components/Toast'
+import { useAuth } from '../../lib/AuthContext'
 import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { getPackSize, getEffectiveMoq } from '../../lib/packSize.js'
 
 export default function Cart() {
   const { cart, removeFromCart, updateQuantity, cartTotal, addToCart } = useCart()
+  const { user } = useAuth()
   const { notify } = useToast()
   const navigate = useNavigate()
   const [suggestions, setSuggestions] = useState([])
@@ -69,6 +71,19 @@ export default function Cart() {
     }
     if (totalPayable < minAmount) {
       notify(`Minimum order amount is ₹${minAmount.toLocaleString()}`, 'error');
+      return;
+    }
+    if (!user) {
+      navigate('/login', { state: { from: '/cart' } });
+      return;
+    }
+    if (!user.isKycComplete || user.kyc?.status !== 'VERIFIED') {
+      if (user.kyc?.status === 'PENDING_VERIFICATION') {
+        notify('Wait for some time, your KYC details are in review. It will be verified soon.', 'warning');
+      } else {
+        notify('Please complete your KYC verification before placing orders.', 'warning');
+      }
+      navigate('/verify-kyc');
       return;
     }
     if (unavailableCount > 0) {

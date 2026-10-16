@@ -229,11 +229,20 @@ export default function UserLayout() {
       </header>
 
       <main className={`flex-1 min-h-0 ${location.pathname.startsWith('/profile') ? 'pb-6' : 'pb-32 lg:pb-0'} animate-in fade-in duration-700`}>
-        {user && user.isKycComplete === false && (
+        {user && user.isKycComplete === false && !location.pathname.startsWith('/verify-kyc') && !location.pathname.startsWith('/kyc') && (
           <div className="max-w-7xl mx-auto px-6 md:px-10 mt-4">
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 px-4 py-3 text-[12px] font-bold flex items-center justify-between">
-              <div>Complete your KYC to place orders.</div>
-              <Link to="/profile" className="px-3 py-1.5 rounded-lg bg-amber-600 text-white text-[10px] uppercase tracking-widest">Update KYC</Link>
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 text-amber-900 px-4 py-3 text-[12px] font-bold flex items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-2">
+                <span>{user.kyc?.status === 'PENDING_VERIFICATION' ? '⏳' : '⚠️'}</span>
+                <span>
+                  {user.kyc?.status === 'PENDING_VERIFICATION'
+                    ? 'Wait for some time, your KYC details are in review. It will be verified soon.'
+                    : 'Complete your structured KYC verification to unlock order placement and wholesale rates.'}
+                </span>
+              </div>
+              <Link to="/verify-kyc" className="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-black uppercase tracking-wider whitespace-nowrap shadow-xs transition-all">
+                {user.kyc?.status === 'PENDING_VERIFICATION' ? 'View KYC Status →' : 'Verify KYC →'}
+              </Link>
             </div>
           </div>
         )}

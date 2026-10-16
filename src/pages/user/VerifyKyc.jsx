@@ -317,10 +317,10 @@ export default function VerifyKyc() {
               <div className="bg-purple-50 border border-purple-200 rounded-2xl p-5 flex items-start gap-4">
                 <span className="text-2xl">⏳</span>
                 <div className="flex-1">
-                  <h3 className="text-sm font-bold text-purple-900">Application Under Verification</h3>
+                  <h3 className="text-sm font-bold text-purple-900">Wait for some time, your KYC details are in review. It will be verified soon.</h3>
                   <p className="text-xs text-purple-700 mt-1 leading-relaxed">
-                    We have received your KYC application submitted on {kyc.submittedAt ? new Date(kyc.submittedAt).toLocaleDateString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'today'}. 
-                    Our verification team is cross-checking your PAN and Aadhaar details with government databases. This usually completes within <strong>2 to 24 hours</strong>.
+                    We have received your KYC application submitted on {kyc.submittedAt ? new Date(kyc.submittedAt).toLocaleDateString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'recently'}. 
+                    Our verification team is cross-checking your PAN and Aadhaar documents. Once approved by administration, your partner ordering access will be automatically unlocked.
                   </p>
                 </div>
               </div>
