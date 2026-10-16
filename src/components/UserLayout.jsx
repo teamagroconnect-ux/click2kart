@@ -6,9 +6,18 @@ import { CONFIG } from '../shared/lib/config.js'
 import ConfirmModal from './ConfirmModal'
 import { getImageUrl } from '../lib/cloudinary'
 
+function BlueVerifiedIcon({ cls = "w-3.5 h-3.5" }) {
+  return (
+    <svg className={`${cls} text-blue-500 fill-current inline-block flex-shrink-0 drop-shadow-xs`} viewBox="0 0 24 24" aria-label="Verified Partner">
+      <path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+    </svg>
+  );
+}
+
 function Avatar({ user, size = 'md' }) {
   const sz = { sm: 'h-8 w-8', md: 'h-10 w-10', lg: 'h-14 w-14' }[size]
   const avatarUrl = user?.kyc?.profilePicture || user?.avatar
+  const isVerified = user?.kyc?.status === 'VERIFIED' || user?.isKycComplete
   
   const getInitials = (name = '') => {
     const names = name.trim().split(/\s+/)
@@ -18,25 +27,32 @@ function Avatar({ user, size = 'md' }) {
   }
   
   return (
-    <div className={`${sz} rounded-xl overflow-hidden ring-2 ring-white shadow-md bg-gradient-to-br from-indigo-50 to-white flex-shrink-0`}>
-      {avatarUrl ? (
-        <img 
-          src={getImageUrl(avatarUrl)} 
-          alt={user?.name} 
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.style.display = 'none';
-            e.target.nextSibling.style.display = 'flex';
-          }}
-        />
-      ) : null}
-      <div 
-        className="w-full h-full items-center justify-center font-black text-indigo-600 text-xs tracking-tighter"
-        style={{ display: avatarUrl ? 'none' : 'flex' }}
-      >
-        {getInitials(user?.name)}
+    <div className="relative inline-block flex-shrink-0">
+      <div className={`${sz} rounded-xl overflow-hidden ring-2 ring-white shadow-md bg-gradient-to-br from-indigo-50 to-white flex-shrink-0`}>
+        {avatarUrl ? (
+          <img 
+            src={getImageUrl(avatarUrl)} 
+            alt={user?.name} 
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.style.display = 'none';
+              e.target.nextSibling.style.display = 'flex';
+            }}
+          />
+        ) : null}
+        <div 
+          className="w-full h-full items-center justify-center font-black text-indigo-600 text-xs tracking-tighter"
+          style={{ display: avatarUrl ? 'none' : 'flex' }}
+        >
+          {getInitials(user?.name)}
+        </div>
       </div>
+      {isVerified && (
+        <div className="absolute -bottom-1 -right-1 bg-white rounded-full ring-1 ring-white flex items-center justify-center shadow-xs">
+          <BlueVerifiedIcon cls="w-3.5 h-3.5 text-blue-500" />
+        </div>
+      )}
     </div>
   )
 }
@@ -178,7 +194,10 @@ export default function UserLayout() {
                       <div className="flex flex-col items-start gap-0">
                         <div className="inline-flex items-center gap-1.5">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-lg shadow-emerald-200"></span>
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900">{user.name}</span>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-900 truncate max-w-[130px]">{user.name}</span>
+                          {(user?.kyc?.status === 'VERIFIED' || user?.isKycComplete) && (
+                            <BlueVerifiedIcon cls="w-3.5 h-3.5 text-blue-500" />
+                          )}
                         </div>
                       </div>
                     </Link>

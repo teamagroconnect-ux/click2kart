@@ -244,9 +244,9 @@ export default function KycVerification() {
         <div className="space-y-4">
           {data.items.map(retailer => {
             const kyc = retailer.kyc || {}
-            const isApproved = retailer.approvalStatus === 'approved' || kyc.status === 'VERIFIED'
-            const isPending = retailer.approvalStatus === 'pending' || kyc.status === 'PENDING_VERIFICATION'
-            const isRej = retailer.approvalStatus === 'rejected' || kyc.status === 'REJECTED'
+            const isApproved = retailer.isKycComplete === true && kyc.status === 'VERIFIED'
+            const isRej = kyc.status === 'REJECTED'
+            const isPending = !isApproved && !isRej
 
             return (
               <div

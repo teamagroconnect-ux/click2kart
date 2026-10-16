@@ -257,33 +257,45 @@ export default function VerifyKyc() {
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Top Header Card */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm ${
-              isVerified ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
+              isVerified ? 'bg-blue-50 text-blue-600 border border-blue-200' :
               isUnderReview ? 'bg-purple-50 text-purple-600 border border-purple-200 animate-pulse' :
               isRejected ? 'bg-rose-50 text-rose-600 border border-rose-200' :
               'bg-violet-50 text-violet-600 border border-violet-200'
             }`}>
-              {isVerified ? '🛡️' : isUnderReview ? '⏳' : isRejected ? '⚠️' : '📋'}
+              {isVerified ? (
+                <svg className="w-8 h-8 text-blue-600 fill-current" viewBox="0 0 24 24">
+                  <path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+                </svg>
+              ) : isUnderReview ? '⏳' : isRejected ? '⚠️' : '📋'}
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Retailer KYC Verification</h1>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                  isVerified ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                  isUnderReview ? 'bg-purple-50 text-purple-700 border-purple-200' :
-                  isRejected ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                  'bg-slate-100 text-slate-600 border-slate-200'
-                }`}>
-                  {isVerified ? 'VERIFIED ✓' : isUnderReview ? 'UNDER REVIEW' : isRejected ? 'REVISION NEEDED' : 'REQUIRED'}
-                </span>
+                {isVerified ? (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 shadow-xs">
+                    <svg className="w-3.5 h-3.5 text-blue-600 fill-current" viewBox="0 0 24 24">
+                      <path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+                    </svg>
+                    <span>VERIFIED PARTNER</span>
+                  </span>
+                ) : (
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                    isUnderReview ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                    isRejected ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                    'bg-slate-100 text-slate-600 border-slate-200'
+                  }`}>
+                    {isUnderReview ? 'UNDER REVIEW' : isRejected ? 'REVISION NEEDED' : 'REQUIRED'}
+                  </span>
+                )}
               </div>
               <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
-                {isVerified ? 'Your business identity is fully verified. Enjoy wholesale prices and credit limits.' :
+                {isVerified ? 'Your business identity is officially verified. Enjoy wholesale prices and credit limits.' :
                  isUnderReview ? 'Your documents are being checked by Click2Kart Compliance.' :
                  isRejected ? 'Please review the admin feedback and re-submit corrected documents.' :
                  'Complete your one-time verification to unlock wholesale electronics buying and GST billing.'}
@@ -303,11 +315,20 @@ export default function VerifyKyc() {
           <div className="space-y-6">
             {/* Status Alert Banner */}
             {isVerified ? (
-              <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-start gap-4">
-                <span className="text-2xl">🎉</span>
+              <div className="bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent border border-blue-200/90 rounded-2xl p-5 flex items-start gap-4 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-200">
+                  <svg className="w-7 h-7 text-white fill-current" viewBox="0 0 24 24">
+                    <path fillRule="evenodd" d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clipRule="evenodd" />
+                  </svg>
+                </div>
                 <div>
-                  <h3 className="text-sm font-bold text-emerald-900">Retailer Account Verified & Active</h3>
-                  <p className="text-xs text-emerald-700 mt-1 leading-relaxed">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-black text-blue-950">Official Partner Account Verified & Active</h3>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300">
+                      Verified Partner
+                    </span>
+                  </div>
+                  <p className="text-xs text-blue-900/80 mt-1 leading-relaxed">
                     Your KYC documentation has been officially verified by Click2Kart on {kyc.verifiedAt ? new Date(kyc.verifiedAt).toLocaleDateString('en-IN') : 'recently'}. 
                     All wholesale rates, official GST tax invoicing, and credit facilities are enabled.
                   </p>
@@ -502,68 +523,141 @@ export default function VerifyKyc() {
               </div>
             )}
 
-            {/* Stepper Wizard Indicator */}
-            <div className="flex items-center justify-between relative max-w-xl mx-auto px-4">
-              <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-slate-200 -translate-y-1/2 z-0" />
-              <div
-                className="absolute top-1/2 left-0 h-0.5 bg-violet-600 -translate-y-1/2 transition-all duration-300 z-0"
-                style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '50%' : '100%' }}
-              />
+            {/* ── Luxury 3-Phase Stepper Dashboard ── */}
+            <div className="space-y-4">
+              {/* Progress Summary Header */}
+              <div className="flex items-center justify-between text-xs font-bold text-slate-500 px-1">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-violet-600 animate-pulse" />
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-700">
+                    Verification Phase {currentStep} of 3
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider">Overall Progress:</span>
+                  <span className="text-violet-700 font-black text-xs px-2.5 py-0.5 rounded-full bg-violet-50 border border-violet-200">
+                    {currentStep === 1 ? '33% Completed' : currentStep === 2 ? '66% Completed' : '100% Ready'}
+                  </span>
+                </div>
+              </div>
 
-              {/* Step 1 */}
-              <div className="relative z-10 flex flex-col items-center">
+              {/* Progress Track Bar */}
+              <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/70 shadow-inner">
+                <div
+                  className="h-full bg-gradient-to-r from-violet-600 via-indigo-600 to-emerald-500 rounded-full transition-all duration-500 ease-out shadow-sm"
+                  style={{ width: currentStep === 1 ? '33%' : currentStep === 2 ? '66%' : '100%' }}
+                />
+              </div>
+
+              {/* 3 Interactive Phase Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-1">
+                {/* Phase 1 */}
                 <button
                   type="button"
                   onClick={() => setCurrentStep(1)}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-extrabold transition-all ${
+                  className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between group ${
                     currentStep === 1
-                      ? 'bg-violet-600 text-white ring-4 ring-violet-100 shadow-md'
+                      ? 'bg-gradient-to-br from-violet-50 via-white to-indigo-50/40 border-violet-400 ring-2 ring-violet-400/30 shadow-lg shadow-violet-100/70'
                       : currentStep > 1
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-white text-slate-400 border-2 border-slate-200'
+                      ? 'bg-white border-emerald-200/90 hover:bg-emerald-50/30 shadow-xs'
+                      : 'bg-white border-slate-200/80 hover:bg-slate-50 shadow-xs'
                   }`}
                 >
-                  {currentStep > 1 ? '✓' : '1'}
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-violet-100/70 text-violet-700 flex items-center justify-center font-bold text-lg">
+                      🏢
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                      currentStep === 1
+                        ? 'bg-violet-600 text-white shadow-xs'
+                        : currentStep > 1
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      {currentStep > 1 ? '✓ Complete' : currentStep === 1 ? 'Active Phase' : 'Step 1'}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 tracking-tight group-hover:text-violet-700 transition-colors">
+                      1. Business Profile
+                    </h4>
+                    <p className="text-[10px] text-slate-500 font-medium mt-0.5 leading-snug">
+                      Shop name, GSTIN & registered address
+                    </p>
+                  </div>
                 </button>
-                <span className="text-[11px] font-bold text-slate-700 mt-1.5">Business Info</span>
-              </div>
 
-              {/* Step 2 */}
-              <div className="relative z-10 flex flex-col items-center">
+                {/* Phase 2 */}
                 <button
                   type="button"
                   onClick={() => {
                     if (validateStep1()) setCurrentStep(2)
                   }}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-extrabold transition-all ${
+                  className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between group ${
                     currentStep === 2
-                      ? 'bg-violet-600 text-white ring-4 ring-violet-100 shadow-md'
+                      ? 'bg-gradient-to-br from-violet-50 via-white to-indigo-50/40 border-violet-400 ring-2 ring-violet-400/30 shadow-lg shadow-violet-100/70'
                       : currentStep > 2
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-white text-slate-400 border-2 border-slate-200'
+                      ? 'bg-white border-emerald-200/90 hover:bg-emerald-50/30 shadow-xs'
+                      : 'bg-white border-slate-200/80 hover:bg-slate-50 shadow-xs'
                   }`}
                 >
-                  {currentStep > 2 ? '✓' : '2'}
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-indigo-100/70 text-indigo-700 flex items-center justify-center font-bold text-lg">
+                      🪪
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                      currentStep === 2
+                        ? 'bg-violet-600 text-white shadow-xs'
+                        : currentStep > 2
+                        ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      {currentStep > 2 ? '✓ Complete' : currentStep === 2 ? 'Active Phase' : 'Step 2'}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 tracking-tight group-hover:text-indigo-700 transition-colors">
+                      2. KYC Documents
+                    </h4>
+                    <p className="text-[10px] text-slate-500 font-medium mt-0.5 leading-snug">
+                      PAN number & Aadhaar photo proofs
+                    </p>
+                  </div>
                 </button>
-                <span className="text-[11px] font-bold text-slate-700 mt-1.5">ID & Documents</span>
-              </div>
 
-              {/* Step 3 */}
-              <div className="relative z-10 flex flex-col items-center">
+                {/* Phase 3 */}
                 <button
                   type="button"
                   onClick={() => {
                     if (validateStep1() && validateStep2()) setCurrentStep(3)
                   }}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-extrabold transition-all ${
+                  className={`p-4 rounded-2xl border text-left transition-all relative flex flex-col justify-between group ${
                     currentStep === 3
-                      ? 'bg-violet-600 text-white ring-4 ring-violet-100 shadow-md'
-                      : 'bg-white text-slate-400 border-2 border-slate-200'
+                      ? 'bg-gradient-to-br from-violet-50 via-white to-indigo-50/40 border-violet-400 ring-2 ring-violet-400/30 shadow-lg shadow-violet-100/70'
+                      : 'bg-white border-slate-200/80 hover:bg-slate-50 shadow-xs'
                   }`}
                 >
-                  3
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-emerald-100/70 text-emerald-700 flex items-center justify-center font-bold text-lg">
+                      🛡️
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                      currentStep === 3
+                        ? 'bg-violet-600 text-white shadow-xs'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}>
+                      {currentStep === 3 ? 'Active Phase' : 'Step 3'}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-black text-slate-900 tracking-tight group-hover:text-emerald-700 transition-colors">
+                      3. Verification Review
+                    </h4>
+                    <p className="text-[10px] text-slate-500 font-medium mt-0.5 leading-snug">
+                      Declaration & official submission
+                    </p>
+                  </div>
                 </button>
-                <span className="text-[11px] font-bold text-slate-700 mt-1.5">Review & Submit</span>
               </div>
             </div>
 

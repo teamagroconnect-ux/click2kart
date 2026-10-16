@@ -69,15 +69,79 @@ const ensureRazorpayLoaded = async () => {
   });
 };
 
-/* ── Avatar ── */
+/* ── Blue Professional Verified Badge Icon ── */
+export const BlueVerifiedIcon = ({ cls = "w-4 h-4", title = "Verified Partner" }) => (
+  <svg
+    className={`${cls} text-blue-500 fill-current inline-block flex-shrink-0 drop-shadow-xs`}
+    viewBox="0 0 24 24"
+    role="img"
+    aria-label={title}
+  >
+    <title>{title}</title>
+    <path
+      fillRule="evenodd"
+      d="M8.603 3.799A4.49 4.49 0 0112 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 013.498 1.307 4.491 4.491 0 011.307 3.497A4.49 4.49 0 0121.75 12a4.49 4.49 0 01-1.549 3.397 4.491 4.491 0 01-1.307 3.497 4.491 4.491 0 01-3.497 1.307A4.49 4.49 0 0112 21.75a4.49 4.49 0 01-3.397-1.549 4.49 4.49 0 01-3.498-1.306 4.491 4.491 0 01-1.307-3.498A4.49 4.49 0 012.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 011.307-3.497 4.49 4.49 0 013.497-1.307zm7.007 6.387a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
+      clipRule="evenodd"
+    />
+  </svg>
+);
+
+export const VerifiedPartnerPill = ({ verified = false }) => {
+  if (verified) {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200 shadow-xs shadow-blue-100">
+        <BlueVerifiedIcon cls="w-3.5 h-3.5 text-blue-600" />
+        <span>Verified Partner</span>
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+      <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+      <span>Partner Account</span>
+    </span>
+  );
+};
+
+/* ── Avatar with Verified Badge Overlay ── */
 const Avatar = ({ user, size = 'md' }) => {
   const sz = { sm: 'w-9 h-9 text-sm', md: 'w-12 h-12 text-base', lg: 'w-16 h-16 text-xl' }[size];
+  const badgeCls = {
+    sm: 'w-3.5 h-3.5 -bottom-1 -right-1 ring-1',
+    md: 'w-4.5 h-4.5 -bottom-1 -right-1 ring-2',
+    lg: 'w-5 h-5 -bottom-1 -right-1 ring-2'
+  }[size];
+  const iconCls = {
+    sm: 'w-3.5 h-3.5',
+    md: 'w-4 h-4',
+    lg: 'w-4.5 h-4.5'
+  }[size];
+  const isVerified = user?.kyc?.status === 'VERIFIED' || user?.isKycComplete;
   const avatarUrl = user?.kyc?.profilePicture || user?.avatar;
-  if (avatarUrl)
-    return <img src={getImageUrl(avatarUrl)} alt={user?.name} className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`} />;
+
   return (
-    <div className={`${sz} rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center font-black text-white ring-2 ring-white shadow-md`}>
-      {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+    <div className="relative inline-block flex-shrink-0">
+      {avatarUrl ? (
+        <img
+          src={getImageUrl(avatarUrl)}
+          alt={user?.name}
+          className={`${sz} rounded-2xl object-cover ring-2 ring-white shadow-md`}
+        />
+      ) : (
+        <div
+          className={`${sz} rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center font-black text-white ring-2 ring-white shadow-md`}
+        >
+          {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+        </div>
+      )}
+      {isVerified && (
+        <div
+          className={`absolute ${badgeCls} rounded-full bg-white ring-white flex items-center justify-center shadow-xs`}
+          title="Verified B2B Partner"
+        >
+          <BlueVerifiedIcon cls={`${iconCls} text-blue-500`} />
+        </div>
+      )}
     </div>
   );
 };
@@ -145,10 +209,12 @@ export default function Profile() {
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState(null);
   const [formData, setFormData] = useState({
     name: '', phone: '', 
     profilePicture: '', panCard: '', aadhaarCard: '',
-    businessName: '', gstin: '', pan: '',
+    aadhaarFront: '', aadhaarBack: '', aadhaarNumber: '',
+    businessName: '', tradeName: '', businessType: 'Retail Store', gstin: '', pan: '',
     addressLine1: '', addressLine2: '', city: '', district: '', state: '', pincode: ''
   });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -435,8 +501,13 @@ export default function Profile() {
         phone: data.phone || '',
         profilePicture: data.kyc?.profilePicture || data.avatar || '',
         panCard: data.kyc?.panCard || '',
-        aadhaarCard: data.kyc?.aadhaarCard || '',
+        aadhaarCard: data.kyc?.aadhaarFront || data.kyc?.aadhaarCard || '',
+        aadhaarFront: data.kyc?.aadhaarFront || data.kyc?.aadhaarCard || '',
+        aadhaarBack: data.kyc?.aadhaarBack || '',
+        aadhaarNumber: data.kyc?.aadhaarNumber || '',
         businessName: data.kyc?.businessName || '',
+        tradeName: data.kyc?.tradeName || data.kyc?.businessName || '',
+        businessType: data.kyc?.businessType || 'Retail Store',
         gstin: data.kyc?.gstin || '',
         pan: data.kyc?.pan || '',
         addressLine1: data.kyc?.addressLine1 || '',
@@ -824,12 +895,13 @@ export default function Profile() {
                 <Avatar user={user} size="md" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="pf-display font-black text-lg text-slate-900 leading-tight truncate">
-                      {formData.businessName || 'Partner Account'}
+                    <h1 className="pf-display font-black text-lg text-slate-900 leading-tight truncate flex items-center gap-1.5">
+                      <span>{formData.businessName || user?.name || 'Partner Account'}</span>
+                      {(user?.kyc?.status === 'VERIFIED' || user?.isKycComplete) && (
+                        <BlueVerifiedIcon cls="w-5 h-5 text-blue-600" title="Officially Verified Partner" />
+                      )}
                     </h1>
-                    <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      {user?.kyc?.status === 'VERIFIED' ? '✓ Verified Partner' : '● Partner'}
-                    </span>
+                    <VerifiedPartnerPill verified={user?.kyc?.status === 'VERIFIED' || user?.isKycComplete} />
                     {user?.kyc?.gstin && (
                       <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200">
                         GSTIN: {user.kyc.gstin}
@@ -890,9 +962,23 @@ export default function Profile() {
             <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
               <Avatar user={user} size="md" />
               <div className="min-w-0">
-                <div className="pf-display font-black text-slate-900 text-sm truncate">{formData.businessName || user?.name || 'Partner Account'}</div>
+                <div className="pf-display font-black text-slate-900 text-sm truncate flex items-center gap-1">
+                  <span className="truncate">{formData.businessName || user?.name || 'Partner Account'}</span>
+                  {(user?.kyc?.status === 'VERIFIED' || user?.isKycComplete) && (
+                    <BlueVerifiedIcon cls="w-4 h-4 text-blue-600 flex-shrink-0" />
+                  )}
+                </div>
                 <div className="text-[11px] text-slate-500 font-medium truncate">{user?.phone || user?.email}</div>
-                <div className="text-[10px] text-emerald-600 font-bold mt-0.5">{user?.kyc?.status === 'VERIFIED' ? '● Verified Partner' : '● Partner Account'}</div>
+                <div className="mt-1">
+                  {(user?.kyc?.status === 'VERIFIED' || user?.isKycComplete) ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-black text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/80">
+                      <BlueVerifiedIcon cls="w-3 h-3 text-blue-600" />
+                      <span>Verified Partner</span>
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-slate-500 font-bold">● Partner Account</span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1064,7 +1150,12 @@ export default function Profile() {
                 <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                     <div>
-                      <h3 className="pf-display font-black text-slate-900 text-base">Account Identity & Verification</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="pf-display font-black text-slate-900 text-base">Account Identity & Verification</h3>
+                        {(user?.kyc?.status === 'VERIFIED' || user?.isKycComplete) && (
+                          <BlueVerifiedIcon cls="w-5 h-5 text-blue-600" />
+                        )}
+                      </div>
                       <p className="text-xs text-slate-400">Verified wholesaler contact and business profile</p>
                     </div>
                     <button
@@ -1449,153 +1540,270 @@ export default function Profile() {
               </div>
             )}
 
-            {/* ──── BUSINESS ──── */}
+            {/* ──── BUSINESS INFO & KYC (Strictly Read-Only, No Direct Uploads) ──── */}
             {activeSection === 'business' && (
-              <div className="pf-panel bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+              <div className="pf-panel bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden space-y-6 p-6 sm:p-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                   <div>
-                    <h2 className="pf-display font-black text-slate-800">Business Info & KYC</h2>
-                    <p className="text-slate-400 text-xs mt-0.5">Your official business profile, GSTIN, and identity documents</p>
+                    <h2 className="pf-display font-black text-xl text-slate-800 tracking-tight">Business Profile & KYC Records</h2>
+                    <p className="text-slate-400 text-xs mt-0.5">Verified partner identity records, GSTIN, and encrypted compliance documents</p>
                   </div>
                   <Link
                     to="/verify-kyc"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl text-xs font-bold shadow-md shadow-violet-200 hover:from-violet-700 hover:to-indigo-700 transition-all"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-violet-200 transition-all whitespace-nowrap active:scale-95"
                   >
-                    <span>🛡️ Structured KYC Verification Desk →</span>
+                    <span>🛡️ KYC Verification Desk →</span>
                   </Link>
                 </div>
-                <form onSubmit={handleSaveKyc} className="p-5 space-y-5">
-                  {/* Guided KYC Verification Banner */}
-                  <div className="p-5 bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">📋</span>
-                        <h4 className="font-extrabold text-slate-900 text-sm">One-Stop KYC Verification Process</h4>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
-                          user?.kyc?.status === 'VERIFIED' ? 'bg-emerald-100 text-emerald-800 border-emerald-300' :
-                          user?.kyc?.status === 'PENDING_VERIFICATION' ? 'bg-purple-100 text-purple-800 border-purple-300' :
-                          user?.kyc?.status === 'REJECTED' ? 'bg-rose-100 text-rose-800 border-rose-300' :
-                          'bg-amber-100 text-amber-800 border-amber-300'
-                        }`}>
-                          {user?.kyc?.status || (user?.isKycComplete ? 'VERIFIED' : 'PENDING')}
-                        </span>
+
+                {/* ── STATUS BANNERS ── */}
+                {(!user?.kyc?.status || user?.kyc?.status === 'NOT_SUBMITTED' || (!user?.isKycComplete && !user?.kyc?.status)) && (
+                  <div className="p-5 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-11 h-11 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold text-xl flex-shrink-0">⚠️</div>
+                      <div>
+                        <h4 className="font-black text-amber-900 text-sm">Complete Your KYC Verification</h4>
+                        <p className="text-xs text-amber-700/90 mt-0.5 font-medium leading-relaxed">
+                          Your KYC is currently unverified. Complete the 3-step structured verification to unlock order placement and GST invoicing.
+                        </p>
                       </div>
-                      <p className="text-xs text-slate-600 mt-1 max-w-xl">
-                        Submit all business details, PAN & Aadhaar (Front & Back) in a single streamlined 3-step process. Once submitted, records are locked for security compliance.
-                      </p>
                     </div>
-                    <Link
-                      to="/verify-kyc"
-                      className="whitespace-nowrap px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all"
-                    >
-                      {user?.kyc?.isLocked || ['PENDING_VERIFICATION', 'VERIFIED'].includes(user?.kyc?.status) ? 'View Locked KYC →' : 'Complete Verification →'}
+                    <Link to="/verify-kyc" className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-sm transition-all whitespace-nowrap">
+                      Complete Your KYC →
                     </Link>
                   </div>
-                  
-                  {/* Profile Picture */}
-                  <div className="flex items-center gap-6">
-                    <div className="relative group">
-                      <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-4xl font-black border-4 border-gray-100 overflow-hidden">
-                        {formData.profilePicture
-                          ? <img src={getImageUrl(formData.profilePicture) || formData.profilePicture} alt="Profile" className="w-full h-full object-cover" />
-                          : user?.name?.charAt(0)?.toUpperCase() || 'U'
-                        }
+                )}
+
+                {user?.kyc?.status === 'PENDING_VERIFICATION' && (
+                  <div className="p-5 bg-gradient-to-r from-purple-500/10 via-purple-500/5 to-transparent border border-purple-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-11 h-11 rounded-2xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold text-xl flex-shrink-0 animate-pulse">⏳</div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-black text-purple-900 text-sm">Already Submitted, Wait for Approval</h4>
+                          <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-purple-100 text-purple-800 border border-purple-300">In Review</span>
+                        </div>
+                        <p className="text-xs text-purple-700/90 mt-0.5 font-medium leading-relaxed">
+                          Wait for some time, your KYC details are in review. It will be verified soon by administration.
+                        </p>
                       </div>
-                      <label className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer rounded-2xl">
-                        <Ico n="user" cls="w-8 h-8 text-white" />
-                        <input type="file" accept="image/*" className="hidden" onChange={handleProfilePictureChange} />
-                      </label>
                     </div>
+                    <Link to="/verify-kyc" className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-sm transition-all whitespace-nowrap">
+                      View Status →
+                    </Link>
+                  </div>
+                )}
+
+                {(user?.kyc?.status === 'VERIFIED' || user?.isKycComplete) && (
+                  <div className="p-5 bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent border border-blue-200/90 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-blue-200">
+                        <BlueVerifiedIcon cls="w-7 h-7 text-white" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-black text-blue-950 text-sm">KYC Verified & Officially Locked</h4>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-100 text-blue-800 border border-blue-300">
+                            <BlueVerifiedIcon cls="w-3 h-3 text-blue-600" />
+                            Verified Partner
+                          </span>
+                        </div>
+                        <p className="text-xs text-blue-900/80 mt-0.5 font-medium leading-relaxed">
+                          Your business documentation is officially verified. For compliance security, records are locked against direct edits.
+                        </p>
+                      </div>
+                    </div>
+                    <Link to="/verify-kyc" className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-md shadow-blue-200 transition-all whitespace-nowrap active:scale-95">
+                      View Certificate →
+                    </Link>
+                  </div>
+                )}
+
+                {user?.kyc?.status === 'REJECTED' && (
+                  <div className="p-5 bg-gradient-to-r from-rose-500/10 via-rose-500/5 to-transparent border border-rose-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-11 h-11 rounded-2xl bg-rose-100 text-rose-800 flex items-center justify-center font-bold text-xl flex-shrink-0">⚠️</div>
+                      <div>
+                        <h4 className="font-black text-rose-900 text-sm">KYC Revision Required</h4>
+                        <p className="text-xs text-rose-700/90 mt-0.5 font-medium leading-relaxed">
+                          {user?.kyc?.rejectionReason || 'Please review admin feedback and re-submit corrected documents.'}
+                        </p>
+                      </div>
+                    </div>
+                    <Link to="/verify-kyc" className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs uppercase tracking-wider shadow-sm transition-all whitespace-nowrap">
+                      Re-upload Documents →
+                    </Link>
+                  </div>
+                )}
+
+                {/* ── READ-ONLY BUSINESS INFORMATION ── */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Official Business Details</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 text-xs">
+                    <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Business / Shop Name</span>
+                      <div className="font-extrabold text-slate-900 text-sm">{formData.businessName || user?.kyc?.businessName || '—'}</div>
+                    </div>
+                    <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Trade Name</span>
+                      <div className="font-bold text-slate-800 text-sm">{formData.tradeName || user?.kyc?.tradeName || formData.businessName || '—'}</div>
+                    </div>
+                    <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Business Constitution</span>
+                      <div className="font-bold text-slate-800 text-sm">{formData.businessType || user?.kyc?.businessType || 'Retail Store'}</div>
+                    </div>
+                    <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">GSTIN Number</span>
+                      <div className="font-mono font-bold text-slate-900 text-sm">{formData.gstin || user?.kyc?.gstin || 'Not Provided (Exempt)'}</div>
+                    </div>
+                    <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">PAN Number</span>
+                      <div className="font-mono font-bold text-purple-700 text-sm">{formData.pan || user?.kyc?.pan || '—'}</div>
+                    </div>
+                    <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Aadhaar Number</span>
+                      <div className="font-mono font-bold text-slate-900 text-sm">
+                        {(formData.aadhaarNumber || user?.kyc?.aadhaarNumber)
+                          ? `•••• •••• ${(formData.aadhaarNumber || user?.kyc?.aadhaarNumber).slice(-4)}`
+                          : '—'}
+                      </div>
+                    </div>
+                    <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 sm:col-span-2 lg:col-span-3">
+                      <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1">Registered Business Address</span>
+                      <div className="font-semibold text-slate-800 text-xs leading-relaxed">
+                        {formData.addressLine1
+                          ? `${formData.addressLine1}${formData.addressLine2 ? ', ' + formData.addressLine2 : ''}, ${formData.city}, ${formData.state} - ${formData.pincode}`
+                          : (user?.address || 'No registered address on file')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── OFFICIAL VERIFICATION DOCUMENTS (Hidden by default, Eye button to view) ── */}
+                <div className="space-y-3 pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between">
                     <div>
-                      <div className="font-bold text-gray-800">Profile Picture</div>
-                      <div className="text-xs text-gray-400 mt-1">Click to change your photo</div>
+                      <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Official Verification Documents</h3>
+                      <p className="text-[11px] text-slate-500 font-medium">Click the eye icon to securely inspect submitted documents</p>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-wider">
+                      Encrypted Records 🔒
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    {/* PAN Document Card */}
+                    <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-3 hover:bg-slate-100/70 transition-all">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-base flex-shrink-0">
+                          🪪
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-black text-slate-900 truncate">PAN Card Photo</div>
+                          <div className="text-[10px] text-slate-500 font-medium">
+                            {formData.panCard || user?.kyc?.panCard ? 'Document on file' : 'Not uploaded'}
+                          </div>
+                        </div>
+                      </div>
+                      {(formData.panCard || user?.kyc?.panCard) ? (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDoc({
+                            url: getImageUrl(formData.panCard || user?.kyc?.panCard) || (formData.panCard || user?.kyc?.panCard),
+                            title: 'PAN Card Official Photo'
+                          })}
+                          className="px-3 py-1.5 rounded-xl bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 hover:border-violet-300 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-all active:scale-95 flex-shrink-0"
+                          title="View PAN Card"
+                        >
+                          <span>👁️</span>
+                          <span>View</span>
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400 italic">Pending</span>
+                      )}
+                    </div>
+
+                    {/* Aadhaar Front Card */}
+                    <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-3 hover:bg-slate-100/70 transition-all">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-base flex-shrink-0">
+                          📄
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-black text-slate-900 truncate">Aadhaar Front</div>
+                          <div className="text-[10px] text-slate-500 font-medium">
+                            {(formData.aadhaarFront || user?.kyc?.aadhaarFront || user?.kyc?.aadhaarCard) ? 'Document on file' : 'Not uploaded'}
+                          </div>
+                        </div>
+                      </div>
+                      {(formData.aadhaarFront || user?.kyc?.aadhaarFront || user?.kyc?.aadhaarCard) ? (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDoc({
+                            url: getImageUrl(formData.aadhaarFront || user?.kyc?.aadhaarFront || user?.kyc?.aadhaarCard) || (formData.aadhaarFront || user?.kyc?.aadhaarFront || user?.kyc?.aadhaarCard),
+                            title: 'Aadhaar Card Front Photo'
+                          })}
+                          className="px-3 py-1.5 rounded-xl bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 hover:border-violet-300 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-all active:scale-95 flex-shrink-0"
+                          title="View Aadhaar Front"
+                        >
+                          <span>👁️</span>
+                          <span>View</span>
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400 italic">Pending</span>
+                      )}
+                    </div>
+
+                    {/* Aadhaar Back Card */}
+                    <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-3 hover:bg-slate-100/70 transition-all">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-base flex-shrink-0">
+                          📑
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-xs font-black text-slate-900 truncate">Aadhaar Back</div>
+                          <div className="text-[10px] text-slate-500 font-medium">
+                            {(formData.aadhaarBack || user?.kyc?.aadhaarBack) ? 'Document on file' : 'Not uploaded'}
+                          </div>
+                        </div>
+                      </div>
+                      {(formData.aadhaarBack || user?.kyc?.aadhaarBack) ? (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDoc({
+                            url: getImageUrl(formData.aadhaarBack || user?.kyc?.aadhaarBack) || (formData.aadhaarBack || user?.kyc?.aadhaarBack),
+                            title: 'Aadhaar Card Back Photo'
+                          })}
+                          className="px-3 py-1.5 rounded-xl bg-white hover:bg-violet-50 text-violet-700 border border-violet-200 hover:border-violet-300 text-xs font-black uppercase tracking-wider flex items-center gap-1.5 shadow-xs transition-all active:scale-95 flex-shrink-0"
+                          title="View Aadhaar Back"
+                        >
+                          <span>👁️</span>
+                          <span>View</span>
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-400 italic">Pending</span>
+                      )}
                     </div>
                   </div>
+                </div>
 
-                  <div className="grid md:grid-cols-2 gap-5">
-                    <Field label="Business Name">
-                      <input 
-                        type="text" 
-                        value={formData.businessName}
-                        onChange={e => setFormData(p => ({ ...p, businessName: e.target.value }))}
-                        className={originalKyc.businessName ? disabledCls : inputCls} 
-                        placeholder="Your business name"
-                        disabled={!!originalKyc.businessName}
-                      />
-                    </Field>
-                    <Field label="GSTIN">
-                      <input 
-                        type="text" 
-                        value={formData.gstin}
-                        onChange={e => setFormData(p => ({ ...p, gstin: e.target.value }))}
-                        className={originalKyc.gstin ? disabledCls : inputCls} 
-                        placeholder="Your GSTIN"
-                        disabled={!!originalKyc.gstin}
-                      />
-                    </Field>
-                    <Field label="PAN Number">
-                      <input 
-                        type="text" 
-                        value={formData.pan}
-                        onChange={e => setFormData(p => ({ ...p, pan: e.target.value }))}
-                        className={originalKyc.pan ? disabledCls : inputCls} 
-                        placeholder="Your PAN number"
-                        disabled={!!originalKyc.pan}
-                      />
-                    </Field>
+                {/* Notice & Support Ticket Redirection */}
+                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5 text-slate-600">
+                    <span className="text-base">🔒</span>
+                    <span className="font-medium">Direct document uploads are disabled here to prevent tampering. To update any details, raise a compliance ticket.</span>
                   </div>
-
-                  {/* Document uploads */}
-                  <div className="grid md:grid-cols-2 gap-5">
-                    <Field label="PAN Card (Upload)">
-                      <div className="relative group">
-                        {formData.panCard ? (
-                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 flex items-center justify-center overflow-hidden">
-                            <img src={getImageUrl(formData.panCard) || formData.panCard} alt="PAN Card" className="w-full h-full object-cover" />
-                          </div>
-                        ) : (
-                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 flex flex-col items-center justify-center cursor-pointer hover:border-violet-400 transition-colors">
-                            <Ico n="user" cls="w-8 h-8 text-violet-400 mb-2" />
-                            <div className="text-xs text-violet-500 font-semibold">Click to upload PAN Card</div>
-                          </div>
-                        )}
-                        <label className="absolute inset-0 cursor-pointer rounded-xl">
-                          <input type="file" accept="image/*" className="hidden" onChange={handlePanCardChange} />
-                        </label>
-                      </div>
-                    </Field>
-
-                    <Field label="Aadhaar Card (Upload)">
-                      <div className="relative group">
-                        {formData.aadhaarCard ? (
-                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 flex items-center justify-center overflow-hidden">
-                            <img src={getImageUrl(formData.aadhaarCard) || formData.aadhaarCard} alt="Aadhaar Card" className="w-full h-full object-cover" />
-                          </div>
-                        ) : (
-                          <div className="w-full h-40 rounded-xl border-2 border-dashed border-violet-200 bg-violet-50 flex flex-col items-center justify-center cursor-pointer hover:border-violet-400 transition-colors">
-                            <Ico n="user" cls="w-8 h-8 text-violet-400 mb-2" />
-                            <div className="text-xs text-violet-500 font-semibold">Click to upload Aadhaar Card</div>
-                          </div>
-                        )}
-                        <label className="absolute inset-0 cursor-pointer rounded-xl">
-                          <input type="file" accept="image/*" className="hidden" onChange={handleAadhaarCardChange} />
-                        </label>
-                      </div>
-                    </Field>
-                  </div>
-
-                  {/* Check if all restricted fields are filled */}
-                  {(originalKyc.businessName && originalKyc.gstin && originalKyc.pan) ? (
-                    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-center">
-                      <div className="text-slate-700 font-bold text-sm mb-1">Business details are verified</div>
-                      <div className="text-slate-500 text-xs">These details can't be edited. Please contact support if you need to change them.</div>
-                    </div>
-                  ) : (
-                    <button type="submit" disabled={saving} className={btnPrimary}>
-                      {saving ? 'Saving…' : 'Save Changes'}
-                    </button>
-                  )}
-                </form>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNewTicketForm({ subject: 'KYC Document Update Request', description: '', category: 'KYC/Profile', relatedOrder: '' });
+                      setShowNewTicketModal(true);
+                    }}
+                    className="text-violet-700 font-bold hover:underline whitespace-nowrap text-left"
+                  >
+                    Raise KYC Ticket →
+                  </button>
+                </div>
               </div>
             )}
 
@@ -2445,6 +2653,82 @@ export default function Profile() {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Document Inspection Modal ── */}
+      {previewDoc && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fade-in"
+          onClick={() => setPreviewDoc(null)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] shadow-2xl border border-slate-100 flex flex-col overflow-hidden animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-violet-100 text-violet-700 flex items-center justify-center font-bold text-sm">
+                  👁️
+                </div>
+                <div>
+                  <h3 className="font-black text-slate-900 text-sm tracking-tight">{previewDoc.title || 'Official Document Preview'}</h3>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Confidential Verification Document</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewDoc.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5"
+                >
+                  <span>Open Full</span>
+                  <span>↗</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewDoc(null)}
+                  className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-all"
+                  aria-label="Close modal"
+                >
+                  <Ico n="close" cls="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4 sm:p-6 overflow-auto flex items-center justify-center bg-slate-950/5 min-h-[300px]">
+              {previewDoc.url && (previewDoc.url.toLowerCase().endsWith('.pdf') || previewDoc.url.toLowerCase().includes('.pdf')) ? (
+                <iframe
+                  src={previewDoc.url}
+                  title={previewDoc.title}
+                  className="w-full h-[65vh] rounded-xl border border-slate-200 bg-white"
+                />
+              ) : (
+                <img
+                  src={previewDoc.url}
+                  alt={previewDoc.title}
+                  className="max-h-[70vh] w-auto max-w-full rounded-2xl object-contain shadow-md border border-slate-200 bg-white"
+                />
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <span className="text-[11px] font-medium text-slate-500">
+                🔒 Stored securely in official records
+              </span>
+              <button
+                type="button"
+                onClick={() => setPreviewDoc(null)}
+                className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all"
+              >
+                Close Preview
+              </button>
             </div>
           </div>
         </div>
