@@ -912,16 +912,28 @@ export default function Home() {
 
           <p className="hm-sub">{CONFIG.HERO_SUBHEAD}</p>
 
-          <div className="hm-ctas">
-            <Link to="/products" className="hm-btn-primary">
-              Wholesale Catalog
-              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-              </svg>
-            </Link>
-            <Link to="/signup" className="hm-btn-secondary" style={{ whiteSpace: 'nowrap' }}>
-              Create Your Retailer Account
-            </Link>
+          <div className="flex flex-col items-center gap-4">
+            <div className="hm-ctas">
+              <Link to="/products" className="hm-btn-primary">
+                Wholesale Catalog
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                </svg>
+              </Link>
+              <Link to="/signup" className="hm-btn-secondary" style={{ whiteSpace: 'nowrap' }}>
+                Open Retailer Account
+              </Link>
+            </div>
+            <div className="flex items-center gap-2 pt-2 text-xs font-semibold text-slate-500">
+              <span>Already an authorized retailer?</span>
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-1 font-black text-violet-700 hover:text-violet-900 hover:underline"
+              >
+                <span>Retailer Sign In</span>
+                <span>→</span>
+              </Link>
+            </div>
           </div>
 
           <div className="hm-trust-grid">
@@ -1020,6 +1032,109 @@ export default function Home() {
 
         <div className="hm-divider" />
 
+        {/* ── B2B INSTITUTIONAL CREDIT FACILITIES ── */}
+        <section className="hm-features-section" style={{ paddingTop: '80px', paddingBottom: '60px' }}>
+          <div className="hm-section-label">Enterprise Financing</div>
+          <h2 className="hm-section-heading">
+            Dual <em>Credit Lines</em> for Maximum Retail Growth
+          </h2>
+          <p className="hm-section-sub">
+            Empowering verified partners with institutional purchasing power. Choose between revolving order credit and structured working capital term facilities.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Card 1: Trade Credit Line */}
+            <div className="bg-gradient-to-br from-white to-violet-50/60 rounded-3xl p-8 sm:p-10 border border-violet-200/80 shadow-xl shadow-violet-500/5 relative overflow-hidden flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <span className="w-14 h-14 rounded-2xl bg-violet-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-violet-200">
+                    🛒
+                  </span>
+                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-100 text-violet-800 border border-violet-200">
+                    Product #1: Revolving Orders
+                  </span>
+                </div>
+                <h3 className="font-sans font-black text-2xl text-slate-900 tracking-tight mb-3">
+                  Trade Credit Line
+                </h3>
+                <p className="text-slate-600 text-sm leading-relaxed mb-6">
+                  Order stock directly from our wholesale catalogue without paying cash upfront. Complete checkout using your revolving credit limit, receive GST-compliant invoices for business tax accounting, and repay on your agreed billing cycle.
+                </p>
+                <div className="space-y-3 mb-8 text-xs font-semibold text-slate-700">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">✓</span>
+                    <span>Direct deduction during catalog checkout</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">✓</span>
+                    <span>Split payments supported (Credit + Gateway / Bank Transfer)</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">✓</span>
+                    <span>Real-time balance ledger & automated repayment receipts</span>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-4 border-t border-violet-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <Link
+                  to="/products"
+                  className="px-6 py-3 rounded-xl font-black text-xs text-white bg-slate-900 hover:bg-slate-800 shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Explore Wholesale Products</span>
+                  <span>→</span>
+                </Link>
+                <span className="text-[11px] text-slate-400 font-bold">Available for verified partner retailers</span>
+              </div>
+            </div>
+
+            {/* Card 2: Business Credit Line */}
+            <div className="bg-gradient-to-br from-white to-amber-50/50 rounded-3xl p-8 sm:p-10 border border-amber-200/80 shadow-xl shadow-amber-500/5 relative overflow-hidden flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <span className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-amber-600 text-white flex items-center justify-center text-2xl shadow-lg shadow-amber-200">
+                    💼
+                  </span>
+                  <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+                    Product #2: Working Capital
+                  </span>
+                </div>
+                <h3 className="font-sans font-black text-2xl text-slate-900 tracking-tight mb-3">
+                  Business Credit Line (Term Capital)
+                </h3>
+                <p className="text-slate-600 text-sm leading-relaxed mb-6">
+                  Sanctioned working capital limits disbursed directly to your bank account for business expansion. Structured over a strict 3 to 5 months term with daily compounding interest.
+                </p>
+                <div className="space-y-3 mb-8 text-xs font-semibold text-slate-700">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">✓</span>
+                    <span>Strict 3–5 Months tenure with scheduled weekly or daily repayments</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">✓</span>
+                    <span>18% p.a. daily compounding formula: A = P(1+r/365)^n (paise precision)</span>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">✓</span>
+                    <span>Repay via Online Gateway, Verified Bank Transfer, or e-Mandate</span>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-4 border-t border-amber-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <Link
+                  to="/profile"
+                  className="px-6 py-3 rounded-xl font-black text-xs text-amber-950 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 shadow-md shadow-amber-300/40 transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Apply for Working Capital Line</span>
+                  <span>→</span>
+                </Link>
+                <span className="text-[11px] text-slate-400 font-bold">Fast sanction desk</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div className="hm-divider" />
+
         {/* ── FEATURES ── */}
         <section className="hm-features-section">
           <div className="hm-section-label">Why Click2Kart</div>
@@ -1032,7 +1147,7 @@ export default function Home() {
           <div className="hm-features-grid">
             {[
               { num:'01', icon:'🏭', title:'Factory-Direct Stock',   desc:'Source directly from authorized distributors. No middlemen. Guaranteed authentic products at the best margins.' },
-              { num:'02', icon:'💳', title:'B2B Credit Lines',       desc:'Flexible payment terms up to 60 days. Grow your inventory without straining your cash flow.' },
+              { num:'02', icon:'💳', title:'Dual Credit Lines',      desc:'Revolving order credit for wholesale cart checkout + 3 to 5 months working capital term loans with daily compounding.' },
               { num:'03', icon:'📊', title:'Volume Intelligence',    desc:'Dynamic pricing that rewards scale. The more you buy, the better your margin per unit.' },
               { num:'04', icon:'🚀', title:'Priority Dispatch',      desc:'Dedicated freight lanes ensure your bulk orders ship first. Sub-48hr processing for verified partners.' },
               { num:'05', icon:'🧾', title:'Clean GST Compliance',   desc:'Every invoice is GST-ready. Maximize your input tax credit on every purchase, automatically.' },
@@ -1073,6 +1188,12 @@ export default function Home() {
               </Link>
               <Link to="/products" className="hm-btn-secondary">
                 Browse Catalog
+              </Link>
+            </div>
+            <div className="flex items-center justify-center gap-2 pt-4 text-xs font-semibold text-slate-500">
+              <span>Already registered with us?</span>
+              <Link to="/login" className="font-black text-violet-700 hover:text-violet-900 underline">
+                Sign In to Wholesale & Credit Desk →
               </Link>
             </div>
           </div>

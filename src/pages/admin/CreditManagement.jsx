@@ -4,6 +4,11 @@ import { useToast } from '../../components/Toast'
 
 export default function CreditManagement() {
   const { notify } = useToast()
+
+  // Navigation tab: 'trade_credit' | 'business_apps' | 'business_facilities' | 'bureau_report' | 'product_settings'
+  const [mainTab, setMainTab] = useState('trade_credit')
+
+  // Overall Trade Stats
   const [stats, setStats] = useState({
     totalLimit: 0,
     totalAvailable: 0,
@@ -12,7 +17,9 @@ export default function CreditManagement() {
     enabledCount: 0
   })
 
-  // Retailers state
+  // ==========================================
+  // TRADE CREDIT (ORDER CREDIT) STATE
+  // ==========================================
   const [retailers, setRetailers] = useState([])
   const [loadingRetailers, setLoadingRetailers] = useState(true)
   const [searchQ, setSearchQ] = useState('')
@@ -35,14 +42,13 @@ export default function CreditManagement() {
   const [formLimit, setFormLimit] = useState('')
   const [formAdjustAmount, setFormAdjustAmount] = useState('')
   const [formAdjustType, setFormAdjustType] = useState('INCREASE')
-  const [formAdminNotes, setFormAdminNotes] = useState('')
   const [actionLoading, setActionLoading] = useState(false)
   const [ledgerHistory, setLedgerHistory] = useState([])
   const [reconciling, setReconciling] = useState(false)
   const [notifyModalOpen, setNotifyModalOpen] = useState(false)
   const [notifying, setNotifying] = useState(false)
 
-  // Reason presets
+  // Presets
   const ADJUST_PRESETS = {
     INCREASE: [
       'Credit limit enhancement based on consistent repayment history',
@@ -72,28 +78,90 @@ export default function CreditManagement() {
     ]
   }
 
-  const REJECT_PRESETS = [
-    'UTR transaction not found in company bank account statement',
-    'Amount mismatch between payment receipt and bank credit',
-    'Payment receipt image is illegible or missing UTR details',
-    'Duplicate payment claim already credited previously'
-  ]
+  // ==========================================
+  // BUSINESS CREDIT APPLICATIONS STATE
+  // ==========================================
+  const [businessApps, setBusinessApps] = useState([])
+  const [loadingApps, setLoadingApps] = useState(false)
+  const [appStatusFilter, setAppStatusFilter] = useState('ALL')
+  const [appSearchQ, setAppSearchQ] = useState('')
+  const [selectedApp, setSelectedApp] = useState(null)
 
-  // Notify All Outstanding Balance Holders
-  const handleNotifyOutstanding = async () => {
-    setNotifying(true)
-    try {
-      const { data } = await api.post('/api/credit/admin/notify-outstanding')
-      notify(data.message || `Sent reminders to ${data.sentCount || 0} retailers`, 'success')
-      setNotifyModalOpen(false)
-    } catch (err) {
-      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to send notifications', 'error')
-    } finally {
-      setNotifying(false)
-    }
-  }
+  // Review modal
+  const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [reviewAction, setReviewAction] = useState('APPROVE')
+  const [reviewLimit, setReviewLimit] = useState('')
+  const [reviewRate, setReviewRate] = useState(18)
+  const [reviewTenure, setReviewTenure] = useState(3) // 3 to 5 months
+  const [reviewFreq, setReviewFreq] = useState('WEEKLY')
+  const [reviewFee, setReviewFee] = useState(2)
+  const [reviewReason, setReviewReason] = useState('')
+  const [reviewRemarks, setReviewRemarks] = useState('')
 
-  // Load retailers
+  // Proactive grant modal
+  const [proactiveModalOpen, setProactiveModalOpen] = useState(false)
+  const [proactiveRetailerId, setProactiveRetailerId] = useState('')
+  const [proactiveLimit, setProactiveLimit] = useState('50000')
+  const [proactiveTenure, setProactiveTenure] = useState(3)
+  const [proactiveRate, setProactiveRate] = useState(18)
+  const [proactiveFreq, setProactiveFreq] = useState('WEEKLY')
+  const [proactiveFee, setProactiveFee] = useState(2)
+  const [proactivePurpose, setProactivePurpose] = useState('Working Capital Expansion')
+  const [proactiveRemarks, setProactiveRemarks] = useState('')
+
+  // Disbursement confirmation modal
+  const [disburseModalOpen, setDisburseModalOpen] = useState(false)
+  const [disburseRef, setDisburseRef] = useState('')
+  const [disburseMode, setDisburseMode] = useState('NEFT')
+  const [disburseRemarks, setDisburseRemarks] = useState('')
+
+  // ==========================================
+  // BUSINESS CREDIT FACILITIES STATE
+  // ==========================================
+  const [businessFacilities, setBusinessFacilities] = useState([])
+  const [loadingFacilities, setLoadingFacilities] = useState(false)
+  const [facStatusFilter, setFacStatusFilter] = useState('ALL')
+  const [facSearchQ, setFacSearchQ] = useState('')
+  const [selectedFacility, setSelectedFacility] = useState(null)
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false)
+
+  // Facility offline repayment reconciliation modal
+  const [facRepayModalOpen, setFacRepayModalOpen] = useState(false)
+  const [facRepayAmount, setFacRepayAmount] = useState('')
+  const [facRepayMode, setFacRepayMode] = useState('BANK_TRANSFER')
+  const [facRepayRef, setFacRepayRef] = useState('')
+  const [facRepayNotes, setFacRepayNotes] = useState('')
+  const [runningAccrual, setRunningAccrual] = useState(false)
+
+  // ==========================================
+  // CREDIT BUREAU REPORT STATE
+  // ==========================================
+  const [bureauData, setBureauData] = useState(null)
+  const [loadingBureau, setLoadingBureau] = useState(false)
+
+  // ==========================================
+  // PRODUCT SETTINGS STATE
+  // ==========================================
+  const [productSettings, setProductSettings] = useState({
+    isProductEnabled: true,
+    defaultAnnualInterestRatePercent: 18,
+    minAnnualInterestRatePercent: 12,
+    maxAnnualInterestRatePercent: 36,
+    defaultTenureMonths: 3,
+    minTenureMonths: 3,
+    maxTenureMonths: 5,
+    processingFeePercent: 2,
+    minCreditLimit: 10000,
+    maxCreditLimit: 1000000
+  })
+  const [loadingSettings, setLoadingSettings] = useState(false)
+  const [savingSettings, setSavingSettings] = useState(false)
+
+  // ==========================================
+  // DATA LOADERS
+  // ==========================================
+
+  // Load Trade Credit Retailers
   const loadRetailers = async () => {
     setLoadingRetailers(true)
     try {
@@ -109,6 +177,70 @@ export default function CreditManagement() {
     }
   }
 
+  // Load Business Credit Applications
+  const loadBusinessApplications = async () => {
+    setLoadingApps(true)
+    try {
+      const { data } = await api.get('/api/credit/admin/business/applications', {
+        params: { status: appStatusFilter, q: appSearchQ }
+      })
+      setBusinessApps(data.applications || [])
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Failed to load business credit applications', 'error')
+    } finally {
+      setLoadingApps(false)
+    }
+  }
+
+  // Load Business Credit Facilities
+  const loadBusinessFacilities = async () => {
+    setLoadingFacilities(true)
+    try {
+      const { data } = await api.get('/api/credit/admin/business/facilities', {
+        params: { status: facStatusFilter, q: facSearchQ }
+      })
+      setBusinessFacilities(data.facilities || [])
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Failed to load credit facilities', 'error')
+    } finally {
+      setLoadingFacilities(false)
+    }
+  }
+
+  // Load Bureau Report
+  const loadBureauReport = async () => {
+    setLoadingBureau(true)
+    try {
+      const { data } = await api.get('/api/credit/admin/business/bureau-report')
+      setBureauData(data)
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Failed to load credit bureau dataset', 'error')
+    } finally {
+      setLoadingBureau(false)
+    }
+  }
+
+  // Load Product Settings
+  const loadProductSettings = async () => {
+    setLoadingSettings(true)
+    try {
+      const { data } = await api.get('/api/credit/admin/business/settings')
+      if (data?.settings) setProductSettings(data.settings)
+    } catch (err) {
+      console.warn('Could not load credit product settings', err)
+    } finally {
+      setLoadingSettings(false)
+    }
+  }
+
+  useEffect(() => {
+    if (mainTab === 'trade_credit') loadRetailers()
+    if (mainTab === 'business_apps') loadBusinessApplications()
+    if (mainTab === 'business_facilities') loadBusinessFacilities()
+    if (mainTab === 'bureau_report') loadBureauReport()
+    if (mainTab === 'product_settings') loadProductSettings()
+  }, [mainTab, searchQ, statusFilter, appStatusFilter, appSearchQ, facStatusFilter, facSearchQ])
+
   // Open Retailer Quick Detail Modal
   const openRetailerQuickDetail = async (retailer) => {
     setQuickDetailOpen(true)
@@ -122,10 +254,6 @@ export default function CreditManagement() {
       setLoadingQuickDetail(false)
     }
   }
-
-  useEffect(() => {
-    loadRetailers()
-  }, [searchQ, statusFilter])
 
   // Toggle credit modal submit
   const handleToggleCredit = async (e) => {
@@ -178,6 +306,30 @@ export default function CreditManagement() {
     }
   }
 
+  // Set Credit Limit submit
+  const handleSetLimit = async (e) => {
+    e.preventDefault()
+    if (!formLimit || Number(formLimit) < 0) return notify('Valid limit is required', 'error')
+    if (!formReason.trim()) return notify('Reason is required for audit trail', 'error')
+    setActionLoading(true)
+    try {
+      await api.post(`/api/credit/admin/retailers/${selectedRetailer._id}/adjust`, {
+        amount: Number(formLimit),
+        type: 'SET_LIMIT',
+        reason: formReason.trim()
+      })
+      notify('Credit limit updated successfully', 'success')
+      setLimitModalOpen(false)
+      setFormReason('')
+      setFormLimit('')
+      loadRetailers()
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Failed to update limit', 'error')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   // View ledger
   const openLedgerModal = async (retailer) => {
     setSelectedRetailer(retailer)
@@ -208,14 +360,207 @@ export default function CreditManagement() {
     }
   }
 
+  // Notify Outstanding Balance Holders
+  const handleNotifyOutstanding = async () => {
+    setNotifying(true)
+    try {
+      const { data } = await api.post('/api/credit/admin/notify-outstanding')
+      notify(data.message || `Sent reminders to ${data.sentCount || 0} retailers`, 'success')
+      setNotifyModalOpen(false)
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to send notifications', 'error')
+    } finally {
+      setNotifying(false)
+    }
+  }
+
+  // ==========================================
+  // BUSINESS CREDIT ACTIONS
+  // ==========================================
+
+  // Submit Review on Business Credit Application
+  const handleReviewApplication = async (e) => {
+    e.preventDefault()
+    if (!selectedApp) return
+    if (reviewAction === 'REJECT' && !reviewReason.trim()) {
+      return notify('Rejection reason is required', 'error')
+    }
+    if ((reviewAction === 'APPROVE' || reviewAction === 'PARTIAL_APPROVE')) {
+      const t = Number(reviewTenure)
+      if (t < 3 || t > 5) return notify('Tenure must be strictly between 3 and 5 months', 'error')
+      if (!reviewLimit || Number(reviewLimit) <= 0) return notify('Valid approved limit is required', 'error')
+    }
+
+    setActionLoading(true)
+    try {
+      await api.post(`/api/credit/admin/business/applications/${selectedApp._id}/review`, {
+        action: reviewAction,
+        approvedLimit: Number(reviewLimit),
+        approvedTenureMonths: Number(reviewTenure),
+        approvedFrequency: reviewFreq,
+        annualInterestRatePercent: Number(reviewRate),
+        processingFeePercent: Number(reviewFee),
+        rejectionReason: reviewReason.trim(),
+        remarks: reviewRemarks.trim()
+      })
+      notify(`Application status updated to ${reviewAction}`, 'success')
+      setReviewModalOpen(false)
+      loadBusinessApplications()
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Review submission failed', 'error')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // Submit Proactive Credit Grant
+  const handleProactiveGrant = async (e) => {
+    e.preventDefault()
+    if (!proactiveRetailerId) return notify('Please select or specify a verified retailer', 'error')
+    const t = Number(proactiveTenure)
+    if (t < 3 || t > 5) return notify('Tenure must be strictly between 3 and 5 months', 'error')
+    if (!proactiveLimit || Number(proactiveLimit) <= 0) return notify('Valid credit limit is required', 'error')
+
+    setActionLoading(true)
+    try {
+      await api.post('/api/credit/admin/business/proactive-grant', {
+        retailerId: proactiveRetailerId,
+        approvedLimit: Number(proactiveLimit),
+        approvedTenureMonths: t,
+        approvedFrequency: proactiveFreq,
+        annualInterestRatePercent: Number(proactiveRate),
+        processingFeePercent: Number(proactiveFee),
+        purpose: proactivePurpose.trim(),
+        remarks: proactiveRemarks.trim()
+      })
+      notify('Proactive credit line granted successfully! Retailer can now review & accept.', 'success')
+      setProactiveModalOpen(false)
+      setProactiveLimit('50000')
+      setProactiveRemarks('')
+      loadBusinessApplications()
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to grant proactive credit', 'error')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // Confirm Disbursement
+  const handleConfirmDisbursement = async (e) => {
+    e.preventDefault()
+    if (!selectedApp) return
+    if (!disburseRef.trim()) return notify('Bank transfer transaction reference (UTR/Ref) is required', 'error')
+
+    setActionLoading(true)
+    try {
+      const { data } = await api.post(`/api/credit/admin/business/applications/${selectedApp._id}/disburse`, {
+        bankTransferReference: disburseRef.trim(),
+        disbursementMode: disburseMode,
+        remarks: disburseRemarks.trim()
+      })
+      notify(`Disbursement confirmed! Facility activated with ${data.schedulesCount} scheduled instalments.`, 'success')
+      setDisburseModalOpen(false)
+      setDisburseRef('')
+      setDisburseRemarks('')
+      loadBusinessApplications()
+      loadBusinessFacilities()
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to confirm disbursement', 'error')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // Reconcile Offline Repayment for Facility
+  const handleReconcileFacilityRepayment = async (e) => {
+    e.preventDefault()
+    if (!selectedFacility) return
+    const amt = Number(facRepayAmount)
+    if (!amt || amt <= 0) return notify('Valid repayment amount is required', 'error')
+
+    setActionLoading(true)
+    try {
+      await api.post(`/api/credit/admin/business/facilities/${selectedFacility._id}/repay-reconcile`, {
+        amount: amt,
+        paymentMode: facRepayMode,
+        paymentReference: facRepayRef.trim() || `OFFLINE_REC_${Date.now()}`,
+        notes: facRepayNotes.trim()
+      })
+      notify('Repayment successfully recorded and applied to outstanding balance!', 'success')
+      setFacRepayModalOpen(false)
+      setFacRepayAmount('')
+      setFacRepayRef('')
+      setFacRepayNotes('')
+      loadBusinessFacilities()
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Repayment reconciliation failed', 'error')
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
+  // Trigger Daily Compounding Interest Accrual
+  const handleRunDailyAccrual = async () => {
+    if (!window.confirm('Trigger daily compounding interest accrual for all active facilities now?')) return
+    setRunningAccrual(true)
+    try {
+      const { data } = await api.post('/api/credit/admin/business/run-accrual')
+      const r = data.result || {}
+      notify(
+        `Daily accrual executed! Processed ${r.processedCount || 0} active facilities. Total Interest Accrued: ₹${(r.totalInterestAccrued || 0).toLocaleString('en-IN')}`,
+        'success'
+      )
+      loadBusinessFacilities()
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Daily accrual run failed', 'error')
+    } finally {
+      setRunningAccrual(false)
+    }
+  }
+
+  // Save Product Settings
+  const handleSaveProductSettings = async (e) => {
+    e.preventDefault()
+    const tDef = Number(productSettings.defaultTenureMonths)
+    const tMin = Number(productSettings.minTenureMonths)
+    const tMax = Number(productSettings.maxTenureMonths)
+
+    if (tDef < 3 || tDef > 5 || tMin < 3 || tMax > 5) {
+      return notify('Business credit policy strictly enforces tenure between 3 and 5 months', 'error')
+    }
+
+    setSavingSettings(true)
+    try {
+      const { data } = await api.put('/api/credit/admin/business/settings', productSettings)
+      notify('Product configuration updated successfully', 'success')
+      if (data?.settings) setProductSettings(data.settings)
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Failed to save product settings', 'error')
+    } finally {
+      setSavingSettings(false)
+    }
+  }
+
+  // Export Bureau JSON
+  const handleExportBureauJSON = () => {
+    if (!bureauData) return
+    const blob = new Blob([JSON.stringify(bureauData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `Click2Kart_Credit_Bureau_Report_${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="space-y-8 max-w-[1600px] mx-auto px-4 py-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Credit Management</h1>
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Credit Management & Financing</h1>
           <p className="text-sm text-gray-500 font-medium mt-1 uppercase tracking-widest text-[10px]">
-            Retailer Credit Limits, Balance Ledgers & Repayment Verification
+            Trade Credit Line • Business Credit Line (3-5 Months Daily Compounding) • Bureau Reporting
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -238,46 +583,77 @@ export default function CreditManagement() {
             <svg className={`w-4 h-4 ${reconciling ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            {reconciling ? 'Reconciling...' : 'Reconcile Gateway Payments'}
+            {reconciling ? 'Reconciling...' : 'Reconcile Gateway'}
           </button>
         </div>
       </div>
 
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-          <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Credit Retailers</div>
-          <div className="text-2xl font-black text-gray-900 mt-2">{stats.enabledCount}</div>
-          <div className="text-[11px] text-gray-500 mt-1">Authorized for credit checkout</div>
-        </div>
-
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-          <div className="text-xs font-bold text-blue-500 uppercase tracking-wider">Total Credit Limit</div>
-          <div className="text-2xl font-black text-blue-600 mt-2">₹{(stats.totalLimit || 0).toLocaleString('en-IN')}</div>
-          <div className="text-[11px] text-gray-500 mt-1">Total credit assigned</div>
-        </div>
-
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-          <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Available Credit</div>
-          <div className="text-2xl font-black text-emerald-600 mt-2">₹{(stats.totalAvailable || 0).toLocaleString('en-IN')}</div>
-          <div className="text-[11px] text-gray-500 mt-1">Ready for purchases</div>
-        </div>
-
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-          <div className="text-xs font-bold text-amber-500 uppercase tracking-wider">Used Credit</div>
-          <div className="text-2xl font-black text-amber-600 mt-2">₹{(stats.totalUsed || 0).toLocaleString('en-IN')}</div>
-          <div className="text-[11px] text-gray-500 mt-1">Currently utilized</div>
-        </div>
-
-        <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-          <div className="text-xs font-bold text-rose-500 uppercase tracking-wider">Outstanding Due</div>
-          <div className="text-2xl font-black text-rose-600 mt-2">₹{(stats.totalOutstanding || 0).toLocaleString('en-IN')}</div>
-          <div className="text-[11px] text-gray-500 mt-1">Total pending repayment</div>
-        </div>
+      {/* Top Main Navigation Tabs */}
+      <div className="flex items-center gap-2 border-b border-gray-200 pb-3 overflow-x-auto no-scrollbar">
+        {[
+          { id: 'trade_credit', label: 'Trade Credit (Orders)', badge: retailers.filter(r => r.isCreditEnabled).length },
+          { id: 'business_apps', label: 'Business Credit Applications', badge: businessApps.filter(a => a.status === 'PENDING_REVIEW').length, badgeColor: 'bg-amber-100 text-amber-800' },
+          { id: 'business_facilities', label: 'Active Facilities & Amortization', badge: businessFacilities.filter(f => f.status === 'ACTIVE').length, badgeColor: 'bg-emerald-100 text-emerald-800' },
+          { id: 'bureau_report', label: 'Credit Bureau Reporting (CIBIL)' },
+          { id: 'product_settings', label: 'Product Settings (Tenure 3-5M)' }
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setMainTab(tab.id)}
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-xs font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+              mainTab === tab.id
+                ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-200'
+                : 'bg-white text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-gray-200'
+            }`}
+          >
+            <span>{tab.label}</span>
+            {tab.badge !== undefined && tab.badge > 0 && (
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${mainTab === tab.id ? 'bg-white/20 text-white' : tab.badgeColor || 'bg-gray-100 text-gray-700'}`}>
+                {tab.badge}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
-      {/* Retailers Directory */}
-      <div className="space-y-6">
+      {/* ========================================================================= */}
+      {/* TAB 1: TRADE CREDIT (ORDER CREDIT) */}
+      {/* ========================================================================= */}
+      {mainTab === 'trade_credit' && (
+        <div className="space-y-6">
+          {/* Metrics Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Credit Retailers</div>
+              <div className="text-2xl font-black text-gray-900 mt-2">{stats.enabledCount}</div>
+              <div className="text-[11px] text-gray-500 mt-1">Authorized for order checkout</div>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="text-xs font-bold text-blue-500 uppercase tracking-wider">Total Credit Limit</div>
+              <div className="text-2xl font-black text-blue-600 mt-2">₹{(stats.totalLimit || 0).toLocaleString('en-IN')}</div>
+              <div className="text-[11px] text-gray-500 mt-1">Total credit assigned</div>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Available Credit</div>
+              <div className="text-2xl font-black text-emerald-600 mt-2">₹{(stats.totalAvailable || 0).toLocaleString('en-IN')}</div>
+              <div className="text-[11px] text-gray-500 mt-1">Ready for purchases</div>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="text-xs font-bold text-amber-500 uppercase tracking-wider">Used Credit</div>
+              <div className="text-2xl font-black text-amber-600 mt-2">₹{(stats.totalUsed || 0).toLocaleString('en-IN')}</div>
+              <div className="text-[11px] text-gray-500 mt-1">Currently utilized</div>
+            </div>
+
+            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="text-xs font-bold text-rose-500 uppercase tracking-wider">Outstanding Due</div>
+              <div className="text-2xl font-black text-rose-600 mt-2">₹{(stats.totalOutstanding || 0).toLocaleString('en-IN')}</div>
+              <div className="text-[11px] text-gray-500 mt-1">Total pending repayment</div>
+            </div>
+          </div>
+
           {/* Filters */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="relative w-full sm:w-80">
@@ -330,7 +706,7 @@ export default function CreditManagement() {
                 <tbody className="divide-y divide-gray-50">
                   {loadingRetailers ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-12 text-gray-400">Loading retailers...</td>
+                      <td colSpan="6" className="text-center py-12 text-gray-400 font-semibold">Loading retailers...</td>
                     </tr>
                   ) : retailers.length === 0 ? (
                     <tr>
@@ -428,8 +804,995 @@ export default function CreditManagement() {
             </div>
           </div>
         </div>
+      )}
 
-      {/* MODAL: Toggle Credit Status */}
+      {/* ========================================================================= */}
+      {/* TAB 2: BUSINESS CREDIT APPLICATIONS */}
+      {/* ========================================================================= */}
+      {mainTab === 'business_apps' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <input
+                className="w-full sm:w-80 bg-white border border-gray-200 text-gray-900 text-sm rounded-2xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-violet-500 shadow-sm"
+                placeholder="Search applications by retailer / business..."
+                value={appSearchQ}
+                onChange={(e) => setAppSearchQ(e.target.value)}
+              />
+              <select
+                value={appStatusFilter}
+                onChange={(e) => setAppStatusFilter(e.target.value)}
+                className="bg-white border border-gray-200 text-gray-900 text-xs font-bold rounded-2xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-violet-500 shadow-sm"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="PENDING_REVIEW">Pending Review</option>
+                <option value="APPROVED">Approved</option>
+                <option value="ACCEPTED">Offer Accepted (Ready for Disburse)</option>
+                <option value="DISBURSED">Disbursed & Active</option>
+                <option value="REJECTED">Rejected</option>
+              </select>
+            </div>
+
+            <button
+              onClick={() => {
+                setProactiveRetailerId(retailers[0]?._id || '')
+                setProactiveModalOpen(true)
+              }}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-xs font-black uppercase tracking-wider rounded-2xl shadow-md shadow-violet-200 transition-all active:scale-95"
+            >
+              <span>+ Proactive Credit Grant</span>
+            </button>
+          </div>
+
+          {/* Applications Table */}
+          <div className="bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm border-collapse">
+                <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">
+                  <tr>
+                    <th className="px-6 py-4">App # & Retailer</th>
+                    <th className="px-6 py-4">Requested Terms</th>
+                    <th className="px-6 py-4">Approved Terms</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4">Submitted</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {loadingApps ? (
+                    <tr>
+                      <td colSpan="6" className="text-center py-12 text-gray-400 font-semibold">Loading applications...</td>
+                    </tr>
+                  ) : businessApps.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className="text-center py-12 text-gray-400">No applications found</td>
+                    </tr>
+                  ) : (
+                    businessApps.map((app) => {
+                      const ret = app.retailerId || {}
+                      return (
+                        <tr key={app._id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="font-mono text-xs font-bold text-violet-600">{app.applicationNumber}</div>
+                            <div className="font-bold text-gray-900 mt-0.5">{ret.name || 'Retailer'}</div>
+                            <div className="text-xs text-gray-500">{ret.kyc?.businessName || ret.phone}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="font-bold text-gray-900">₹{(app.requestedAmount || 0).toLocaleString('en-IN')}</div>
+                            <div className="text-xs text-gray-500">
+                              {app.requestedTenureMonths} Months • {app.requestedFrequency}
+                            </div>
+                            <div className="text-[11px] text-gray-400 italic truncate max-w-xs">{app.purpose || 'Working capital'}</div>
+                          </td>
+                          <td className="px-6 py-4">
+                            {app.approvedLimit ? (
+                              <>
+                                <div className="font-black text-emerald-600">₹{(app.approvedLimit || 0).toLocaleString('en-IN')}</div>
+                                <div className="text-xs text-gray-600">
+                                  {app.approvedTenureMonths}M @ {app.annualInterestRatePercent}% p.a.
+                                </div>
+                                <div className="text-[10px] text-gray-400">{app.approvedFrequency} compounding</div>
+                              </>
+                            ) : (
+                              <span className="text-xs text-gray-400 italic">Under Review</span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              app.status === 'PENDING_REVIEW' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                              app.status === 'APPROVED' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                              app.status === 'ACCEPTED' ? 'bg-purple-50 text-purple-700 border border-purple-200 font-black animate-pulse' :
+                              app.status === 'DISBURSED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                              'bg-rose-50 text-rose-700 border border-rose-200'
+                            }`}>
+                              {app.status === 'ACCEPTED' ? 'Ready to Disburse' : app.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-xs text-gray-500">
+                            {new Date(app.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              {app.status === 'PENDING_REVIEW' && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedApp(app)
+                                    setReviewLimit(String(app.requestedAmount || ''))
+                                    setReviewTenure(app.requestedTenureMonths || 3)
+                                    setReviewFreq(app.requestedFrequency || 'WEEKLY')
+                                    setReviewRate(18)
+                                    setReviewFee(2)
+                                    setReviewAction('APPROVE')
+                                    setReviewModalOpen(true)
+                                  }}
+                                  className="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+                                >
+                                  Review
+                                </button>
+                              )}
+                              {app.status === 'ACCEPTED' && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedApp(app)
+                                    setDisburseRef('')
+                                    setDisburseRemarks('')
+                                    setDisburseModalOpen(true)
+                                  }}
+                                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+                                >
+                                  Confirm Payout
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 3: BUSINESS FACILITIES & REPAYMENT AMORTIZATION */}
+      {/* ========================================================================= */}
+      {mainTab === 'business_facilities' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <input
+                className="w-full sm:w-80 bg-white border border-gray-200 text-gray-900 text-sm rounded-2xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+                placeholder="Search facility by number or retailer..."
+                value={facSearchQ}
+                onChange={(e) => setFacSearchQ(e.target.value)}
+              />
+              <select
+                value={facStatusFilter}
+                onChange={(e) => setFacStatusFilter(e.target.value)}
+                className="bg-white border border-gray-200 text-gray-900 text-xs font-bold rounded-2xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-emerald-500 shadow-sm"
+              >
+                <option value="ALL">All Accounts</option>
+                <option value="ACTIVE">Active Loans</option>
+                <option value="OVERDUE">Overdue Accounts</option>
+                <option value="CLOSED">Fully Closed</option>
+              </select>
+            </div>
+
+            <button
+              onClick={handleRunDailyAccrual}
+              disabled={runningAccrual}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs font-black uppercase tracking-wider rounded-2xl shadow-md shadow-emerald-200 transition-all active:scale-95 disabled:opacity-50"
+            >
+              <svg className={`w-4 h-4 ${runningAccrual ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>{runningAccrual ? 'Calculating Accrual...' : 'Run Daily Accrual Now'}</span>
+            </button>
+          </div>
+
+          {/* Facilities Table */}
+          <div className="bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm border-collapse">
+                <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">
+                  <tr>
+                    <th className="px-6 py-4">Facility # & Borrower</th>
+                    <th className="px-6 py-4">Disbursed (₹)</th>
+                    <th className="px-6 py-4">Principal Bal (₹)</th>
+                    <th className="px-6 py-4">Accrued Interest (₹)</th>
+                    <th className="px-6 py-4">Total Payable (₹)</th>
+                    <th className="px-6 py-4">Next Due Date</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {loadingFacilities ? (
+                    <tr>
+                      <td colSpan="8" className="text-center py-12 text-gray-400 font-semibold">Loading facilities...</td>
+                    </tr>
+                  ) : businessFacilities.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="text-center py-12 text-gray-400">No active facilities found</td>
+                    </tr>
+                  ) : (
+                    businessFacilities.map((fac) => {
+                      const ret = fac.retailerId || {}
+                      return (
+                        <tr key={fac._id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="font-mono text-xs font-black text-indigo-600">{fac.facilityNumber}</div>
+                            <div className="font-bold text-gray-900 mt-0.5">{ret.name || 'Retailer'}</div>
+                            <div className="text-xs text-gray-500">{ret.kyc?.businessName || ret.phone}</div>
+                          </td>
+                          <td className="px-6 py-4 font-bold text-gray-900">
+                            ₹{(fac.disbursedAmount || 0).toLocaleString('en-IN')}
+                            <div className="text-[10px] text-gray-400">{fac.tenureMonths}M @ {fac.annualInterestRatePercent}%</div>
+                          </td>
+                          <td className="px-6 py-4 font-black text-gray-800">
+                            ₹{(fac.currentPrincipalBalance || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-6 py-4 font-bold text-amber-600">
+                            ₹{(fac.accruedInterestUnpaid || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-6 py-4 font-black text-rose-600">
+                            ₹{(fac.totalPayable || 0).toLocaleString('en-IN')}
+                          </td>
+                          <td className="px-6 py-4 text-xs font-semibold text-gray-700">
+                            {fac.nextDueDate ? new Date(fac.nextDueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                              fac.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                              fac.status === 'OVERDUE' ? 'bg-rose-50 text-rose-700 border border-rose-200 animate-pulse' :
+                              'bg-gray-100 text-gray-600'
+                            }`}>
+                              {fac.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedFacility(fac)
+                                  setScheduleModalOpen(true)
+                                }}
+                                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold transition-all"
+                              >
+                                Schedules ({fac.schedules?.length || 0})
+                              </button>
+                              {fac.status !== 'CLOSED' && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedFacility(fac)
+                                    setFacRepayAmount('')
+                                    setFacRepayRef('')
+                                    setFacRepayNotes('')
+                                    setFacRepayModalOpen(true)
+                                  }}
+                                  className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold transition-all"
+                                >
+                                  Reconcile
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 4: CREDIT BUREAU REPORTING (CIBIL / EQUIFAX) */}
+      {/* ========================================================================= */}
+      {mainTab === 'bureau_report' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl font-black text-gray-900">Commercial Credit Bureau Feed</h2>
+              <p className="text-xs text-gray-500 mt-0.5">Automated asset classification & DPD tracking compliant with RBI norms</p>
+            </div>
+            <button
+              onClick={handleExportBureauJSON}
+              disabled={!bureauData || bureauData.records?.length === 0}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black text-white text-xs font-black uppercase tracking-wider rounded-2xl shadow-md transition-all disabled:opacity-50 active:scale-95"
+            >
+              <span>Download CIBIL JSON Extract 📥</span>
+            </button>
+          </div>
+
+          {/* Bureau Summary Cards */}
+          {bureauData?.summary && (
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+                <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Standard Accounts (STD)</div>
+                <div className="text-2xl font-black text-gray-900 mt-2">{bureauData.summary.standardAccounts}</div>
+                <div className="text-[11px] text-gray-500 mt-1">0 - 30 DPD (Healthy)</div>
+              </div>
+              <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+                <div className="text-xs font-bold text-amber-500 uppercase tracking-wider">Special Mention (SMA)</div>
+                <div className="text-2xl font-black text-amber-600 mt-2">{bureauData.summary.smaAccounts}</div>
+                <div className="text-[11px] text-gray-500 mt-1">31 - 90 DPD (Early stress)</div>
+              </div>
+              <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+                <div className="text-xs font-bold text-rose-500 uppercase tracking-wider">NPA Accounts (SUB)</div>
+                <div className="text-2xl font-black text-rose-600 mt-2">{bureauData.summary.npaAccounts}</div>
+                <div className="text-[11px] text-gray-500 mt-1">&gt; 90 DPD (Defaulted)</div>
+              </div>
+              <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
+                <div className="text-xs font-bold text-blue-500 uppercase tracking-wider">Total Portfolio Exposure</div>
+                <div className="text-2xl font-black text-blue-600 mt-2">₹{(bureauData.summary.totalOutstanding || 0).toLocaleString('en-IN')}</div>
+                <div className="text-[11px] text-gray-500 mt-1">Across all facilities</div>
+              </div>
+            </div>
+          )}
+
+          {/* Bureau Records Table */}
+          <div className="bg-white border border-gray-100 rounded-[2.5rem] overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm border-collapse">
+                <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">
+                  <tr>
+                    <th className="px-6 py-4">Borrower Entity</th>
+                    <th className="px-6 py-4">Tax IDs (PAN / GSTIN)</th>
+                    <th className="px-6 py-4">Facility #</th>
+                    <th className="px-6 py-4">Sanctioned (₹)</th>
+                    <th className="px-6 py-4">Current Outstanding (₹)</th>
+                    <th className="px-6 py-4">DPD</th>
+                    <th className="px-6 py-4">Classification</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {loadingBureau ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-12 text-gray-400 font-semibold">Generating Bureau extract...</td>
+                    </tr>
+                  ) : !bureauData || bureauData.records?.length === 0 ? (
+                    <tr>
+                      <td colSpan="7" className="text-center py-12 text-gray-400">No loan records available for bureau reporting</td>
+                    </tr>
+                  ) : (
+                    bureauData.records.map((r, i) => (
+                      <tr key={i} className="hover:bg-gray-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-gray-900">{r.borrower.entityName}</div>
+                          <div className="text-xs text-gray-500">Contact: {r.borrower.keyPersonName} • {r.borrower.phone}</div>
+                        </td>
+                        <td className="px-6 py-4 font-mono text-xs text-gray-700">
+                          <div>PAN: {r.borrower.pan || '—'}</div>
+                          <div>GSTIN: {r.borrower.gstin || '—'}</div>
+                        </td>
+                        <td className="px-6 py-4 font-mono text-xs font-bold text-indigo-600">
+                          {r.account.facilityNumber}
+                        </td>
+                        <td className="px-6 py-4 font-bold text-gray-900">
+                          ₹{(r.account.sanctionedAmount || 0).toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-6 py-4 font-black text-rose-600">
+                          ₹{(r.performance.currentOutstandingTotal || 0).toLocaleString('en-IN')}
+                        </td>
+                        <td className="px-6 py-4 font-black text-gray-900">
+                          {r.performance.daysPastDue} DPD
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            r.performance.assetClassification === 'STD' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                            r.performance.assetClassification.startsWith('SMA') ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                            'bg-rose-50 text-rose-700 border border-rose-200 font-black'
+                          }`}>
+                            {r.performance.assetClassification}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 5: PRODUCT SETTINGS */}
+      {/* ========================================================================= */}
+      {mainTab === 'product_settings' && (
+        <div className="max-w-2xl bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm space-y-6">
+          <div>
+            <h2 className="text-xl font-black text-gray-900">Business Credit Product Configuration</h2>
+            <p className="text-xs text-gray-500 mt-1">Configure parameters, interest engine bounds, and tenure limits</p>
+          </div>
+
+          <form onSubmit={handleSaveProductSettings} className="space-y-5">
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+              <div>
+                <div className="text-sm font-black text-gray-900">Business Credit Facility Active</div>
+                <div className="text-xs text-gray-500">Allow verified retailers to apply for short-term working capital</div>
+              </div>
+              <input
+                type="checkbox"
+                checked={productSettings.isProductEnabled}
+                onChange={(e) => setProductSettings(p => ({ ...p, isProductEnabled: e.target.checked }))}
+                className="w-5 h-5 rounded accent-violet-600 cursor-pointer"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Default Annual Interest Rate (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="5"
+                  max="60"
+                  required
+                  value={productSettings.defaultAnnualInterestRatePercent}
+                  onChange={(e) => setProductSettings(p => ({ ...p, defaultAnnualInterestRatePercent: e.target.value }))}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-500"
+                />
+                <span className="text-[10px] text-gray-400 mt-1 block">Compounded daily (A = P(1+r)^n)</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Default Tenure (Months)
+                </label>
+                <select
+                  value={productSettings.defaultTenureMonths}
+                  onChange={(e) => setProductSettings(p => ({ ...p, defaultTenureMonths: Number(e.target.value) }))}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-500"
+                >
+                  <option value={3}>3 Months (Default)</option>
+                  <option value={4}>4 Months</option>
+                  <option value={5}>5 Months (Maximum limit)</option>
+                </select>
+                <span className="text-[10px] text-emerald-600 font-bold mt-1 block">Strictly enforced: 3 to 5 months</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Processing Fee (%)
+                </label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="10"
+                  required
+                  value={productSettings.processingFeePercent}
+                  onChange={(e) => setProductSettings(p => ({ ...p, processingFeePercent: e.target.value }))}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-500"
+                />
+                <span className="text-[10px] text-gray-400 mt-1 block">Deducted upfront + 18% GST</span>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Max Credit Limit per Retailer (₹)
+                </label>
+                <input
+                  type="number"
+                  step="10000"
+                  min="50000"
+                  max="5000000"
+                  required
+                  value={productSettings.maxCreditLimit}
+                  onChange={(e) => setProductSettings(p => ({ ...p, maxCreditLimit: e.target.value }))}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-500"
+                />
+              </div>
+            </div>
+
+            <div className="pt-3">
+              <button
+                type="submit"
+                disabled={savingSettings}
+                className="w-full py-3.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-violet-200 transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                {savingSettings ? 'Saving Configuration...' : 'Save Product Settings'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODALS */}
+      {/* ========================================================================= */}
+
+      {/* MODAL: Review Business Credit Application */}
+      {reviewModalOpen && selectedApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-gray-100 space-y-5 my-8">
+            <h3 className="text-xl font-black text-gray-900">Review Application #{selectedApp.applicationNumber}</h3>
+            <p className="text-xs text-gray-500">
+              Retailer: <span className="font-bold text-gray-800">{selectedApp.retailerId?.name}</span> ({selectedApp.retailerId?.phone})
+            </p>
+
+            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-1 text-xs">
+              <div>Requested: <strong>₹{(selectedApp.requestedAmount || 0).toLocaleString('en-IN')}</strong> over <strong>{selectedApp.requestedTenureMonths} Months</strong> ({selectedApp.requestedFrequency})</div>
+              <div>Purpose: <span className="italic">{selectedApp.purpose}</span></div>
+            </div>
+
+            <form onSubmit={handleReviewApplication} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Decision Action</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'APPROVE', label: 'Approve', color: 'text-emerald-700 bg-emerald-50 border-emerald-300' },
+                    { id: 'PARTIAL_APPROVE', label: 'Partial Offer', color: 'text-blue-700 bg-blue-50 border-blue-300' },
+                    { id: 'REJECT', label: 'Reject', color: 'text-rose-700 bg-rose-50 border-rose-300' }
+                  ].map(act => (
+                    <button
+                      key={act.id}
+                      type="button"
+                      onClick={() => setReviewAction(act.id)}
+                      className={`py-2 text-xs font-black rounded-xl border transition-all ${reviewAction === act.id ? act.color : 'bg-white text-gray-500 border-gray-200'}`}
+                    >
+                      {act.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {reviewAction !== 'REJECT' && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Sanction Limit (₹)</label>
+                      <input
+                        type="number"
+                        step="5000"
+                        min="10000"
+                        required
+                        value={reviewLimit}
+                        onChange={(e) => setReviewLimit(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tenure (3-5 Months)</label>
+                      <select
+                        value={reviewTenure}
+                        onChange={(e) => setReviewTenure(Number(e.target.value))}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
+                      >
+                        <option value={3}>3 Months</option>
+                        <option value={4}>4 Months</option>
+                        <option value={5}>5 Months</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Interest Rate (% p.a.)</label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        min="10"
+                        max="36"
+                        required
+                        value={reviewRate}
+                        onChange={(e) => setReviewRate(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Repayment Frequency</label>
+                      <select
+                        value={reviewFreq}
+                        onChange={(e) => setReviewFreq(e.target.value)}
+                        className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
+                      >
+                        <option value="WEEKLY">Weekly Instalments</option>
+                        <option value="DAILY">Daily Instalments</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {reviewAction === 'REJECT' && (
+                <div>
+                  <label className="block text-xs font-bold text-rose-700 uppercase tracking-wider mb-1">Rejection Reason</label>
+                  <textarea
+                    required
+                    rows="2"
+                    value={reviewReason}
+                    onChange={(e) => setReviewReason(e.target.value)}
+                    placeholder="Enter reason for rejecting the credit application..."
+                    className="w-full bg-rose-50 border border-rose-200 rounded-xl p-3 text-sm text-gray-900 outline-none"
+                  />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Admin Remarks</label>
+                <input
+                  type="text"
+                  value={reviewRemarks}
+                  onChange={(e) => setReviewRemarks(e.target.value)}
+                  placeholder="Notes for internal record..."
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setReviewModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-violet-600 hover:bg-violet-700 rounded-xl shadow-md transition-all disabled:opacity-50"
+                >
+                  {actionLoading ? 'Submitting...' : 'Submit Decision'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Proactive Credit Grant */}
+      {proactiveModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-gray-100 space-y-5 my-8">
+            <h3 className="text-xl font-black text-gray-900">Grant Proactive Credit Line</h3>
+            <p className="text-xs text-gray-500">
+              Grant a pre-approved business credit facility directly to an eligible verified partner.
+            </p>
+
+            <form onSubmit={handleProactiveGrant} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Select Retailer</label>
+                <select
+                  required
+                  value={proactiveRetailerId}
+                  onChange={(e) => setProactiveRetailerId(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-bold text-gray-900"
+                >
+                  <option value="">-- Choose Retailer --</option>
+                  {retailers.map(r => (
+                    <option key={r._id} value={r._id}>
+                      {r.name} ({r.kyc?.businessName || r.phone})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Sanctioned Limit (₹)</label>
+                  <input
+                    type="number"
+                    step="5000"
+                    min="10000"
+                    required
+                    value={proactiveLimit}
+                    onChange={(e) => setProactiveLimit(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tenure (3-5 Months)</label>
+                  <select
+                    value={proactiveTenure}
+                    onChange={(e) => setProactiveTenure(Number(e.target.value))}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
+                  >
+                    <option value={3}>3 Months</option>
+                    <option value={4}>4 Months</option>
+                    <option value={5}>5 Months</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Interest Rate (% p.a.)</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="10"
+                    max="36"
+                    required
+                    value={proactiveRate}
+                    onChange={(e) => setProactiveRate(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Repayment Frequency</label>
+                  <select
+                    value={proactiveFreq}
+                    onChange={(e) => setProactiveFreq(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
+                  >
+                    <option value="WEEKLY">Weekly</option>
+                    <option value="DAILY">Daily</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Purpose / Facility Tag</label>
+                <input
+                  type="text"
+                  value={proactivePurpose}
+                  onChange={(e) => setProactivePurpose(e.target.value)}
+                  placeholder="e.g. Bulk Procurement Financing"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setProactiveModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-violet-600 hover:bg-violet-700 rounded-xl shadow-md transition-all disabled:opacity-50"
+                >
+                  {actionLoading ? 'Granting...' : 'Grant Proactive Credit'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Confirm Disbursement */}
+      {disburseModalOpen && selectedApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4">
+            <h3 className="text-xl font-black text-gray-900">Confirm Loan Payout</h3>
+            <p className="text-xs text-gray-500">
+              Retailer accepted terms. Record bank transaction reference to activate the facility.
+            </p>
+
+            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs space-y-1">
+              <div>Sanctioned Limit: <strong>₹{(selectedApp.approvedLimit || 0).toLocaleString('en-IN')}</strong></div>
+              <div>Tenure: <strong>{selectedApp.approvedTenureMonths} Months</strong> ({selectedApp.approvedFrequency})</div>
+            </div>
+
+            <form onSubmit={handleConfirmDisbursement} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Disbursement Mode</label>
+                <select
+                  value={disburseMode}
+                  onChange={(e) => setDisburseMode(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
+                >
+                  <option value="NEFT">NEFT Bank Transfer</option>
+                  <option value="RTGS">RTGS Bank Transfer</option>
+                  <option value="IMPS">IMPS Instant Transfer</option>
+                  <option value="CHEQUE">Company Cheque</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Bank Transfer Reference / UTR (Required)
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={disburseRef}
+                  onChange={(e) => setDisburseRef(e.target.value)}
+                  placeholder="Enter Bank UTR or Transaction Ref"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-mono font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Remarks</label>
+                <input
+                  type="text"
+                  value={disburseRemarks}
+                  onChange={(e) => setDisburseRemarks(e.target.value)}
+                  placeholder="e.g. Transferred via HDFC Bank"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setDisburseModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md transition-all disabled:opacity-50"
+                >
+                  {actionLoading ? 'Activating...' : 'Confirm & Activate Facility'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Facility Repayment Schedules */}
+      {scheduleModalOpen && selectedFacility && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-3xl w-full shadow-2xl border border-gray-100 space-y-5 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+              <div>
+                <h3 className="text-xl font-black text-gray-900">Amortization Schedule — {selectedFacility.facilityNumber}</h3>
+                <p className="text-xs text-gray-500">
+                  Total Payable: ₹{(selectedFacility.totalPayable || 0).toLocaleString('en-IN')} • Frequency: {selectedFacility.repaymentFrequency}
+                </p>
+              </div>
+              <button
+                onClick={() => setScheduleModalOpen(false)}
+                className="p-2 hover:bg-gray-100 rounded-full text-gray-400"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="max-h-[60vh] overflow-y-auto">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-gray-50 border-b border-gray-100 text-gray-400 uppercase font-black tracking-wider text-[9px] sticky top-0">
+                  <tr>
+                    <th className="px-4 py-3">#</th>
+                    <th className="px-4 py-3">Due Date</th>
+                    <th className="px-4 py-3">Principal (₹)</th>
+                    <th className="px-4 py-3">Interest (₹)</th>
+                    <th className="px-4 py-3">Total (₹)</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {selectedFacility.schedules?.map((s) => (
+                    <tr key={s._id} className="hover:bg-gray-50">
+                      <td className="px-4 py-2.5 font-bold text-gray-900">{s.instalmentNumber}</td>
+                      <td className="px-4 py-2.5 font-semibold text-gray-700">
+                        {new Date(s.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </td>
+                      <td className="px-4 py-2.5 font-mono text-gray-800">₹{(s.principalDue || 0).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-2.5 font-mono text-amber-600">₹{(s.interestDue || 0).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-2.5 font-mono font-black text-gray-900">
+                        ₹{((s.principalDue || 0) + (s.interestDue || 0) + (s.feeDue || 0)).toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${
+                          s.status === 'PAID' ? 'bg-emerald-100 text-emerald-800' :
+                          s.status === 'OVERDUE' ? 'bg-rose-100 text-rose-800' :
+                          'bg-gray-100 text-gray-600'
+                        }`}>
+                          {s.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setScheduleModalOpen(false)}
+                className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Reconcile Offline Facility Repayment */}
+      {facRepayModalOpen && selectedFacility && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4">
+            <h3 className="text-xl font-black text-gray-900">Record Offline Repayment</h3>
+            <p className="text-xs text-gray-500">
+              Facility: <span className="font-mono font-bold text-gray-800">{selectedFacility.facilityNumber}</span> • Remaining Total Payable: ₹{(selectedFacility.totalPayable || 0).toLocaleString('en-IN')}
+            </p>
+
+            <form onSubmit={handleReconcileFacilityRepayment} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Repayment Amount (₹)</label>
+                <input
+                  type="number"
+                  min="1"
+                  step="50"
+                  required
+                  value={facRepayAmount}
+                  onChange={(e) => setFacRepayAmount(e.target.value)}
+                  placeholder="Enter amount received"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Payment Mode</label>
+                <select
+                  value={facRepayMode}
+                  onChange={(e) => setFacRepayMode(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
+                >
+                  <option value="BANK_TRANSFER">Bank Transfer (NEFT/RTGS/IMPS)</option>
+                  <option value="UPI">UPI Payment</option>
+                  <option value="CHEQUE">Cheque Clearance</option>
+                  <option value="CASH">Cash Collection</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">UTR / Transaction Reference</label>
+                <input
+                  type="text"
+                  value={facRepayRef}
+                  onChange={(e) => setFacRepayRef(e.target.value)}
+                  placeholder="Enter bank reference number"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Notes</label>
+                <input
+                  type="text"
+                  value={facRepayNotes}
+                  onChange={(e) => setFacRepayNotes(e.target.value)}
+                  placeholder="e.g. Received in current account"
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => setFacRepayModalOpen(false)}
+                  className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md transition-all disabled:opacity-50"
+                >
+                  {actionLoading ? 'Recording...' : 'Apply Repayment'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Toggle Credit Status (Existing) */}
       {toggleModalOpen && selectedRetailer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-5">
@@ -449,8 +1812,7 @@ export default function CreditManagement() {
                   <input
                     type="number"
                     min="0"
-                    step="1000"
-                    required
+                    step="500"
                     value={formLimit}
                     onChange={(e) => setFormLimit(e.target.value)}
                     placeholder="e.g. 50000"
@@ -460,34 +1822,15 @@ export default function CreditManagement() {
               )}
 
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Audit Reason (Required)
-                  </label>
-                  <span className="text-[10px] text-gray-400 font-medium">Quick Presets:</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {(selectedRetailer.isCreditEnabled ? TOGGLE_PRESETS.DISABLE : TOGGLE_PRESETS.ENABLE).map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => setFormReason(preset)}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all text-left ${
-                        formReason === preset
-                          ? 'bg-blue-50 text-blue-700 border-blue-300'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-transparent'
-                      }`}
-                    >
-                      {preset}
-                    </button>
-                  ))}
-                </div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Audit Reason (Required)
+                </label>
                 <textarea
                   required
-                  rows="2"
+                  rows="3"
                   value={formReason}
                   onChange={(e) => setFormReason(e.target.value)}
-                  placeholder="Explain why this retailer's credit status is being modified..."
+                  placeholder="Reason for enabling/disabling credit..."
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -515,71 +1858,7 @@ export default function CreditManagement() {
         </div>
       )}
 
-      {/* MODAL: Set Credit Limit */}
-      {limitModalOpen && selectedRetailer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-5">
-            <h3 className="text-xl font-black text-gray-900">Set Credit Limit</h3>
-            <p className="text-xs text-gray-500">
-              Retailer: <span className="font-bold text-gray-800">{selectedRetailer.name}</span>
-            </p>
-
-            <form onSubmit={handleSetLimit} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  New Credit Limit (₹)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="500"
-                  required
-                  value={formLimit}
-                  onChange={(e) => setFormLimit(e.target.value)}
-                  placeholder="Enter credit limit in INR"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <div className="text-[11px] text-gray-400 mt-1">
-                  Current Limit: ₹{(selectedRetailer.creditLimit || 0).toLocaleString('en-IN')}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                  Audit Reason (Required)
-                </label>
-                <textarea
-                  required
-                  rows="3"
-                  value={formReason}
-                  onChange={(e) => setFormReason(e.target.value)}
-                  placeholder="Reason for limit modification..."
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setLimitModalOpen(false)}
-                  className="px-4 py-2 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={actionLoading}
-                  className="px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md transition-all"
-                >
-                  {actionLoading ? 'Saving...' : 'Update Limit'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: Manual Credit Adjustment */}
+      {/* MODAL: Manual Credit Adjustment (Existing) */}
       {adjustModalOpen && selectedRetailer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-5">
@@ -642,34 +1921,15 @@ export default function CreditManagement() {
               </div>
 
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
-                    Audit Reason (Required)
-                  </label>
-                  <span className="text-[10px] text-gray-400 font-medium">Quick Presets:</span>
-                </div>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {(ADJUST_PRESETS[formAdjustType] || []).map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => setFormReason(preset)}
-                      className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition-all text-left ${
-                        formReason === preset
-                          ? 'bg-blue-50 text-blue-700 border-blue-300'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-transparent'
-                      }`}
-                    >
-                      {preset}
-                    </button>
-                  ))}
-                </div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  Audit Reason (Required)
+                </label>
                 <textarea
                   required
                   rows="2"
                   value={formReason}
                   onChange={(e) => setFormReason(e.target.value)}
-                  placeholder="Explain the reason for this manual adjustment..."
+                  placeholder="Reason for adjustment..."
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -685,9 +1945,9 @@ export default function CreditManagement() {
                 <button
                   type="submit"
                   disabled={actionLoading}
-                  className="px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-gray-900 hover:bg-black rounded-xl shadow-md transition-all"
+                  className="px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md transition-all"
                 >
-                  {actionLoading ? 'Processing...' : 'Apply Adjustment'}
+                  {actionLoading ? 'Saving...' : 'Apply Adjustment'}
                 </button>
               </div>
             </form>
@@ -695,73 +1955,57 @@ export default function CreditManagement() {
         </div>
       )}
 
-      {/* MODAL: Credit Ledger History */}
+      {/* MODAL: Ledger History (Existing) */}
       {ledgerModalOpen && selectedRetailer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl border border-gray-100 space-y-4">
-            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-4xl w-full shadow-2xl border border-gray-100 space-y-4 my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <div>
-                <h3 className="text-xl font-black text-gray-900">Credit Transaction Audit Ledger</h3>
+                <h3 className="text-xl font-black text-gray-900">Credit Ledger — {selectedRetailer.name}</h3>
                 <p className="text-xs text-gray-500">
-                  Retailer: <span className="font-bold text-gray-800">{selectedRetailer.name}</span> • Limit: ₹{(selectedRetailer.creditLimit || 0).toLocaleString('en-IN')}
+                  Approved Limit: ₹{(selectedRetailer.creditLimit || 0).toLocaleString('en-IN')} • Outstanding: ₹{(selectedRetailer.outstandingBalance || 0).toLocaleString('en-IN')}
                 </p>
               </div>
               <button
                 onClick={() => setLedgerModalOpen(false)}
-                className="p-2 text-gray-400 hover:text-gray-700 rounded-xl"
+                className="p-2 hover:bg-gray-100 rounded-full text-gray-400"
               >
                 ✕
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-1">
+            <div className="max-h-[60vh] overflow-y-auto">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-gray-50 sticky top-0 text-gray-400 font-bold uppercase tracking-wider text-[10px]">
+                <thead className="bg-gray-50 border-b border-gray-100 text-gray-400 uppercase font-black tracking-wider text-[9px] sticky top-0">
                   <tr>
-                    <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Timestamp</th>
                     <th className="px-4 py-3">Type</th>
-                    <th className="px-4 py-3">Amount</th>
-                    <th className="px-4 py-3">Balance Before → After</th>
-                    <th className="px-4 py-3">Reason</th>
-                    <th className="px-4 py-3">Actor</th>
+                    <th className="px-4 py-3">Amount (₹)</th>
+                    <th className="px-4 py-3">Available Balance</th>
+                    <th className="px-4 py-3">Notes / Reason</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {ledgerHistory.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-8 text-gray-400">No ledger entries found</td>
+                      <td colSpan="5" className="text-center py-8 text-gray-400">No transaction entries found</td>
                     </tr>
                   ) : (
-                    ledgerHistory.map((tx) => (
-                      <tr key={tx._id} className="hover:bg-gray-50/50">
-                        <td className="px-4 py-3 whitespace-nowrap text-gray-500">
-                          {new Date(tx.createdAt).toLocaleString('en-IN')}
+                    ledgerHistory.map((entry) => (
+                      <tr key={entry._id} className="hover:bg-gray-50">
+                        <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap">
+                          {new Date(entry.createdAt).toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </td>
-                        <td className="px-4 py-3">
-                          <span
-                            className={`inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase ${
-                              tx.type.includes('GRANTED') || tx.type.includes('ADDED') || tx.type.includes('REPAID') || tx.type.includes('REVERSAL')
-                                ? 'bg-emerald-50 text-emerald-700'
-                                : tx.type.includes('USED')
-                                ? 'bg-rose-50 text-rose-700'
-                                : 'bg-blue-50 text-blue-700'
-                            }`}
-                          >
-                            {tx.type}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 font-bold text-gray-900">
-                          ₹{Number(tx.amount).toLocaleString('en-IN')}
-                        </td>
-                        <td className="px-4 py-3 text-gray-600 font-mono text-[11px]">
-                          ₹{Number(tx.balanceBefore).toLocaleString('en-IN')} → ₹{Number(tx.balanceAfter).toLocaleString('en-IN')}
-                        </td>
-                        <td className="px-4 py-3 text-gray-700 max-w-xs truncate" title={tx.reason}>
-                          {tx.reason}
-                        </td>
-                        <td className="px-4 py-3 text-gray-500">
-                          {tx.createdByName || tx.createdBy || 'System'}
-                        </td>
+                        <td className="px-4 py-2.5 font-bold text-gray-800">{entry.type}</td>
+                        <td className="px-4 py-2.5 font-black text-gray-900">₹{(entry.amount || 0).toLocaleString('en-IN')}</td>
+                        <td className="px-4 py-2.5 font-mono text-emerald-600">₹{(entry.balanceAfter || 0).toLocaleString('en-IN')}</td>
+                        <td className="px-4 py-2.5 text-gray-500 max-w-xs truncate">{entry.description || entry.reason || '—'}</td>
                       </tr>
                     ))
                   )}
@@ -769,8 +2013,9 @@ export default function CreditManagement() {
               </table>
             </div>
 
-            <div className="flex justify-end pt-2 border-t border-gray-100">
+            <div className="flex justify-end pt-2">
               <button
+                type="button"
                 onClick={() => setLedgerModalOpen(false)}
                 className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold rounded-xl"
               >
@@ -781,153 +2026,71 @@ export default function CreditManagement() {
         </div>
       )}
 
-      {/* MODAL: Retailer Quick Detail */}
+      {/* MODAL: Retailer Quick Detail Modal (Existing) */}
       {quickDetailOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-gray-100 overflow-hidden">
-            <div className="px-6 py-5 bg-gradient-to-r from-gray-900 to-gray-800 text-white flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-gray-100 overflow-hidden my-8">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-black tracking-tight">Retailer Account Profile</h3>
-                <p className="text-xs text-gray-400">KYC Verification, Credit Limits & Trade Details</p>
+                <h3 className="text-xl font-black text-gray-900">Retailer Detail</h3>
+                <p className="text-xs text-gray-500">Official business profile & credit parameters</p>
               </div>
-              <button
-                onClick={() => setQuickDetailOpen(false)}
-                className="p-2 text-gray-400 hover:text-white rounded-xl transition-colors"
-              >
-                ✕
-              </button>
+              <button onClick={() => setQuickDetailOpen(false)} className="p-2 hover:bg-gray-100 rounded-full text-gray-400">✕</button>
             </div>
 
-            <div className="p-6 overflow-y-auto space-y-6">
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
               {loadingQuickDetail ? (
-                <div className="py-12 text-center text-gray-400 text-xs">Loading retailer details...</div>
+                <div className="py-12 text-center text-gray-400">Loading details...</div>
               ) : quickDetailRetailer ? (
-                <>
-                  {/* Header identity */}
-                  {(() => {
-                    const u = quickDetailRetailer.user || quickDetailRetailer
-                    const kyc = u.kyc || {}
-                    return (
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-gray-50 border border-gray-100">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg font-black text-gray-900">{u.name}</span>
-                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                              u.isCreditEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-200 text-gray-600'
-                            }`}>
-                              {u.isCreditEnabled ? 'Credit Active' : 'No Credit'}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                              u.isKycComplete ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'
-                            }`}>
-                              {u.isKycComplete ? 'KYC Verified' : 'KYC Pending'}
-                            </span>
-                          </div>
-                          <div className="text-xs font-semibold text-gray-600 mt-1">
-                            {kyc.businessName ? `🏢 ${kyc.businessName}` : 'Individual Trader'}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-0.5">
-                            📞 {u.phone} {u.email ? `• ✉️ ${u.email}` : ''}
-                          </div>
+                (() => {
+                  const u = quickDetailRetailer.user || quickDetailRetailer
+                  const kyc = u.kyc || {}
+                  return (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div className="p-3 bg-gray-50 rounded-xl">
+                          <span className="text-gray-400 font-bold uppercase block text-[10px]">Name</span>
+                          <span className="font-bold text-gray-900">{u.name}</span>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-xl">
+                          <span className="text-gray-400 font-bold uppercase block text-[10px]">Phone</span>
+                          <span className="font-bold text-gray-900">{u.phone}</span>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-xl">
+                          <span className="text-gray-400 font-bold uppercase block text-[10px]">Business Name</span>
+                          <span className="font-bold text-gray-900">{kyc.businessName || '—'}</span>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-xl">
+                          <span className="text-gray-400 font-bold uppercase block text-[10px]">GSTIN</span>
+                          <span className="font-mono font-bold text-gray-900">{kyc.gstin || '—'}</span>
                         </div>
                       </div>
-                    )
-                  })()}
 
-                  {/* Credit Metrics */}
-                  {(() => {
-                    const u = quickDetailRetailer.user || quickDetailRetailer
-                    return (
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div className="bg-blue-50/60 p-3 rounded-2xl border border-blue-100 text-center">
-                          <div className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Credit Limit</div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="p-3 bg-blue-50/60 rounded-xl text-center">
+                          <div className="text-[10px] font-bold text-blue-600 uppercase">Limit</div>
                           <div className="text-base font-black text-blue-700 mt-1">₹{(u.creditLimit || 0).toLocaleString('en-IN')}</div>
                         </div>
-                        <div className="bg-emerald-50/60 p-3 rounded-2xl border border-emerald-100 text-center">
-                          <div className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Available</div>
+                        <div className="p-3 bg-emerald-50/60 rounded-xl text-center">
+                          <div className="text-[10px] font-bold text-emerald-600 uppercase">Available</div>
                           <div className="text-base font-black text-emerald-700 mt-1">₹{(u.availableCredit || 0).toLocaleString('en-IN')}</div>
                         </div>
-                        <div className="bg-amber-50/60 p-3 rounded-2xl border border-amber-100 text-center">
-                          <div className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Used Credit</div>
-                          <div className="text-base font-black text-amber-700 mt-1">₹{(u.usedCredit || 0).toLocaleString('en-IN')}</div>
-                        </div>
-                        <div className="bg-rose-50/60 p-3 rounded-2xl border border-rose-100 text-center">
-                          <div className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Outstanding</div>
+                        <div className="p-3 bg-rose-50/60 rounded-xl text-center">
+                          <div className="text-[10px] font-bold text-rose-600 uppercase">Outstanding</div>
                           <div className="text-base font-black text-rose-700 mt-1">₹{(u.outstandingBalance || 0).toLocaleString('en-IN')}</div>
                         </div>
                       </div>
-                    )
-                  })()}
-
-                  {/* Trade & Tax Information */}
-                  {(() => {
-                    const u = quickDetailRetailer.user || quickDetailRetailer
-                    const kyc = u.kyc || {}
-                    return (
-                      <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-3">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-gray-400">Trade & Tax Registration</h4>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                          <div>
-                            <span className="text-gray-400 font-medium">Business / Trade Name:</span>
-                            <div className="font-bold text-gray-900">{kyc.businessName || '—'}</div>
-                          </div>
-                          <div>
-                            <span className="text-gray-400 font-medium">GSTIN:</span>
-                            <div className="font-mono font-bold text-gray-900">{kyc.gstin || '—'}</div>
-                          </div>
-                          <div>
-                            <span className="text-gray-400 font-medium">PAN Number:</span>
-                            <div className="font-mono font-bold text-gray-900">{kyc.pan || '—'}</div>
-                          </div>
-                          <div>
-                            <span className="text-gray-400 font-medium">Account Role:</span>
-                            <div className="font-bold text-gray-900 uppercase">{u.role || 'RETAILER'}</div>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })()}
-
-                  {/* Registered Business & Billing Address */}
-                  {(() => {
-                    const u = quickDetailRetailer.user || quickDetailRetailer
-                    const kyc = u.kyc || {}
-                    return (
-                      <div className="bg-white border border-gray-100 rounded-2xl p-4 space-y-2">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-1.5">
-                          <span>📍</span> Registered Business / KYC Address
-                        </h4>
-                        {kyc.addressLine1 || kyc.city || kyc.pincode ? (
-                          <div className="text-xs text-gray-700 leading-relaxed bg-gray-50/60 p-3 rounded-xl border border-gray-100">
-                            <div>{kyc.addressLine1}</div>
-                            {kyc.addressLine2 && <div>{kyc.addressLine2}</div>}
-                            <div className="font-semibold text-gray-900">
-                              {[kyc.city, kyc.district, kyc.state].filter(Boolean).join(', ')} — {kyc.pincode}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-xs text-gray-400 italic">No business address recorded in KYC profile.</div>
-                        )}
-                      </div>
-                    )
-                  })()}
-                </>
+                    </div>
+                  )
+                })()
               ) : null}
             </div>
 
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
-              <a
-                href={quickDetailRetailer?.user?._id ? `/admin/retailers/${quickDetailRetailer.user._id}` : '/admin/retailers'}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
-              >
-                Open Full Retailer Profile ↗
-              </a>
+            <div className="p-4 bg-gray-50 flex justify-end">
               <button
                 type="button"
                 onClick={() => setQuickDetailOpen(false)}
-                className="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold rounded-xl transition"
+                className="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold rounded-xl"
               >
                 Close
               </button>
@@ -936,31 +2099,18 @@ export default function CreditManagement() {
         </div>
       )}
 
-      {/* MODAL: Notify Outstanding Retailers */}
+      {/* MODAL: Notify Outstanding Retailers (Existing) */}
       {notifyModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-gray-100 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-              </div>
-              <div>
-                <h3 className="text-lg font-black text-gray-900">Notify Outstanding Retailers</h3>
-                <p className="text-xs text-gray-500">Dispatch repayment notices via official email</p>
-              </div>
-            </div>
+            <h3 className="text-lg font-black text-gray-900">Notify Outstanding Retailers</h3>
+            <p className="text-xs text-gray-500">
+              Email statements & payment reminders to all retailers with outstanding trade credit dues.
+            </p>
 
-            <div className="p-4 bg-amber-50/60 rounded-2xl border border-amber-100 space-y-2 text-xs text-amber-900">
-              <p className="font-semibold">
-                This action will immediately email all credit-enabled retailers who currently have an outstanding balance.
-              </p>
-              <div className="pt-1 text-[11px] text-amber-800 space-y-1">
-                <div>• Total Outstanding: <strong>₹{(stats.totalOutstanding || 0).toLocaleString('en-IN')}</strong></div>
-                <div>• Active Credit Retailers: <strong>{stats.enabledCount}</strong></div>
-                <div>• Notice includes: statement breakdown, outstanding balance, online Razorpay repayment link, and credit terms notice.</div>
-              </div>
+            <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 space-y-1">
+              <div>Total Outstanding: <strong>₹{(stats.totalOutstanding || 0).toLocaleString('en-IN')}</strong></div>
+              <div>Recipients: <strong>{stats.enabledCount} credit retailers</strong></div>
             </div>
 
             <div className="flex items-center justify-end gap-3 pt-2">
@@ -975,18 +2125,9 @@ export default function CreditManagement() {
                 type="button"
                 onClick={handleNotifyOutstanding}
                 disabled={notifying}
-                className="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all disabled:opacity-50 flex items-center gap-2"
+                className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all disabled:opacity-50"
               >
-                {notifying ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Sending Reminders...
-                  </>
-                ) : (
-                  'Send Notifications Now'
-                )}
+                {notifying ? 'Sending Reminders...' : 'Send Reminders'}
               </button>
             </div>
           </div>

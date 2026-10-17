@@ -252,6 +252,35 @@ export default function Profile() {
   const [uploadingSlip, setUploadingSlip] = useState(false);
   const [companyBankConfig, setCompanyBankConfig] = useState({ enabled: false, bankDetails: null });
 
+  // Facility Sub-tabs: 'trade' | 'business'
+  const [creditFacilityType, setCreditFacilityType] = useState('trade');
+
+  // Business Credit Facility State
+  const [businessEligibility, setBusinessEligibility] = useState(null);
+  const [businessApps, setBusinessApps] = useState([]);
+  const [businessFacilities, setBusinessFacilities] = useState([]);
+  const [loadingBusinessCredit, setLoadingBusinessCredit] = useState(false);
+  const [showBusinessApplyModal, setShowBusinessApplyModal] = useState(false);
+  const [businessApplyForm, setBusinessApplyForm] = useState({
+    requestedAmount: '',
+    purpose: 'Working Capital Expansion',
+    requestedTenureMonths: 3,
+    requestedFrequency: 'WEEKLY'
+  });
+  const [submittingBusinessApp, setSubmittingBusinessApp] = useState(false);
+  const [showAcceptOfferModal, setShowAcceptOfferModal] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState(null);
+  const [acceptedTermsChecked, setAcceptedTermsChecked] = useState(false);
+  const [acceptingOffer, setAcceptingOffer] = useState(false);
+  const [showBusinessRepayModal, setShowBusinessRepayModal] = useState(false);
+  const [selectedRepayFacility, setSelectedRepayFacility] = useState(null);
+  const [businessRepayAmount, setBusinessRepayAmount] = useState('');
+  const [businessRepayMethod, setBusinessRepayMethod] = useState('RAZORPAY');
+  const [businessBankForm, setBusinessBankForm] = useState({ utr: '', paymentSlip: '', notes: '' });
+  const [submittingBusinessRepay, setSubmittingBusinessRepay] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [selectedScheduleFacility, setSelectedScheduleFacility] = useState(null);
+
   const loadBankDetails = async () => {
     try {
       const { data } = await api.get('/api/public/bank-details');
@@ -457,9 +486,204 @@ export default function Profile() {
     if (activeSection === 'support' && tickets.length === 0) loadTickets();
   }, [activeSection]);
 
+  const loadBusinessCredit = async () => {
+    setLoadingBusinessCredit(true);
+    try {
+      const [resElig, resApps, resFacs] = await Promise.all([
+        api.get('/api/credit/business/eligibility').catch(() => ({ data: { isEligible: false } })),
+        api.get('/api/credit/business/my-applications').catch(() => ({ data: { applications: [] } })),
+        api.get('/api/credit/business/my-facilities').catch(() => ({ data: { facilities: [] } }))
+      ]);
+      setBusinessEligibility(resElig.data || {});
+      setBusinessApps(resApps.data?.applications || []);
+      setBusinessFacilities(resFacs.data?.facilities || []);
+    } catch (err) {
+      console.error('Failed to load business credit details', err);
+    } finally {
+      setLoadingBusinessCredit(false);
+    }
+  };
+
+  const handleApplyBusinessCredit = async (e) => {
+    e.preventDefault();
+    const amt = Number(businessApplyForm.requestedAmount);
+    if (!amt || amt <= 0) return notify('Please enter a valid requested amount', 'error');
+    const tenure = Number(businessApplyForm.requestedTenureMonths);
+    if (tenure < 3 || tenure > 5) return notify('Tenure must be strictly between 3 and 5 months', 'error');
+
+    setSubmittingBusinessApp(true);
+    try {
+      await api.post('/api/credit/business/apply', {
+        requestedAmount: amt,
+        purpose: businessApplyForm.purpose,
+        requestedTenureMonths: tenure,
+        requestedFrequency: businessApplyForm.requestedFrequency
+      });
+      notify('Business Credit application submitted for review!', 'success');
+      setShowBusinessApplyModal(false);
+      setBusinessApplyForm({
+        requestedAmount: '',
+        purpose: 'Working Capital Expansion',
+        requestedTenureMonths: 3,
+        requestedFrequency: 'WEEKLY'
+      });
+      await loadBusinessCredit();
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to submit application', 'error');
+    } finally {
+      setSubmittingBusinessApp(false);
+    }
+  };
+
+  const handleAcceptBusinessOffer = async (e) => {
+    e.preventDefault();
+    if (!selectedOffer) return;
+    if (!acceptedTermsChecked) return notify('Please review and check the agreement acceptance checkbox', 'error');
+
+    setAcceptingOffer(true);
+    try {
+      await api.post(`/api/credit/business/accept-offer/${selectedOffer._id}`);
+      notify('Offer accepted! Facility agreement recorded. Payout will be processed shortly.', 'success');
+      setShowAcceptOfferModal(false);
+      setSelectedOffer(null);
+      await loadBusinessCredit();
+      await refreshProfile();
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to accept offer', 'error');
+    } finally {
+      setAcceptingOffer(false);
+    }
+  };
+
+  const handleBusinessRazorpayRepayment = async (facility) => {
+    const amt = Number(businessRepayAmount);
+    if (!amt || amt <= 0) return notify('Please enter a valid repayment amount', 'error');
+    if (amt > facility.totalPayable) {
+      return notify(`Repayment cannot exceed total payable of ₹${facility.totalPayable.toLocaleString('en-IN')}`, 'error');
+    }
+
+    try {
+      await ensureRazorpayLoaded();
+    } catch {
+      return notify('Unable to load payment gateway', 'error');
+    }
+
+    setSubmittingBusinessRepay(true);
+    try {
+      const { data } = await api.post('/api/credit/business/repay/razorpay-init', {
+        facilityId: facility._id,
+        amount: amt
+      });
+
+      const logo = typeof window !== 'undefined' ? `${window.location.origin}/layoutlogo.png` : '/layoutlogo.png';
+      const options = {
+        key: data.key,
+        amount: data.order.amount,
+        currency: 'INR',
+        name: 'Click2Kart Business Credit',
+        description: `Loan Repayment — ${facility.facilityNumber}`,
+        image: logo,
+        order_id: data.order.id,
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+          contact: user?.phone
+        },
+        theme: { color: '#7c3aed' },
+        handler: async (response) => {
+          try {
+            notify('Verifying business loan repayment...', 'info');
+            const verifyRes = await api.post('/api/credit/business/repay/razorpay-verify', {
+              facilityId: facility._id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              amount: amt
+            });
+            if (verifyRes.data.success) {
+              notify('Repayment successfully verified and applied!', 'success');
+              setShowBusinessRepayModal(false);
+              setBusinessRepayAmount('');
+              await loadBusinessCredit();
+            }
+          } catch (verErr) {
+            notify(verErr?.response?.data?.message || 'Repayment verification pending', 'warning');
+            loadBusinessCredit();
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setSubmittingBusinessRepay(false);
+          }
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to initiate repayment', 'error');
+    } finally {
+      setSubmittingBusinessRepay(false);
+    }
+  };
+
+  const handleBusinessBankTransferRepayment = async (facility) => {
+    const amt = Number(businessRepayAmount);
+    if (!amt || amt <= 0) return notify('Please enter a valid repayment amount', 'error');
+    if (!businessBankForm.utr.trim()) return notify('UTR number is required', 'error');
+
+    setSubmittingBusinessRepay(true);
+    try {
+      await api.post('/api/credit/business/repay/bank-transfer', {
+        facilityId: facility._id,
+        amount: amt,
+        utr: businessBankForm.utr.trim(),
+        paymentSlip: businessBankForm.paymentSlip,
+        notes: businessBankForm.notes.trim()
+      });
+      notify('Bank transfer proof submitted for admin verification!', 'success');
+      setShowBusinessRepayModal(false);
+      setBusinessRepayAmount('');
+      setBusinessBankForm({ utr: '', paymentSlip: '', notes: '' });
+      await loadBusinessCredit();
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Failed to submit bank transfer', 'error');
+    } finally {
+      setSubmittingBusinessRepay(false);
+    }
+  };
+
+  const handleInitAutoPay = async (facility) => {
+    try {
+      notify('Initiating AutoPay mandate setup...', 'info');
+      const { data } = await api.post('/api/credit/business/mandate/init', { facilityId: facility._id });
+      if (data.mandateOrder) {
+        await ensureRazorpayLoaded();
+        const options = {
+          key: data.key,
+          amount: data.mandateOrder.amount,
+          currency: 'INR',
+          name: 'Click2Kart AutoPay Mandate',
+          description: `Auto-debit setup for ${facility.facilityNumber}`,
+          order_id: data.mandateOrder.id,
+          theme: { color: '#7c3aed' },
+          handler: () => {
+            notify('AutoPay mandate authorized! Collections will be automatic on due date.', 'success');
+            loadBusinessCredit();
+          }
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      }
+    } catch (err) {
+      notify(err?.response?.data?.message || 'AutoPay mandate setup requires bank authorization', 'info');
+    }
+  };
+
   useEffect(() => {
-    if ((isCreditEnabled || user?.isCreditEnabled) && (activeSection === 'credit' || activeSection === 'overview')) {
-      loadCredit();
+    if (activeSection === 'credit' || activeSection === 'overview') {
+      if (isCreditEnabled || user?.isCreditEnabled) loadCredit();
+      loadBusinessCredit();
     }
   }, [isCreditEnabled, user?.isCreditEnabled, activeSection]);
 
@@ -835,13 +1059,13 @@ export default function Profile() {
 
   /* Nav config */
   const navItems = [
-    { id: 'overview',   label: 'Overview',   shortLabel: 'Home',     icon: 'home'  },
-    ...((isCreditEnabled || user?.isCreditEnabled) ? [{ id: 'credit', label: 'Credit Account', shortLabel: 'Credit', icon: 'credit' }] : []),
-    { id: 'personal',   label: 'Profile',    shortLabel: 'Profile',  icon: 'user'  },
-    { id: 'business',   label: 'Business',   shortLabel: 'Business', icon: 'pkg'   },
+    { id: 'overview',   label: 'Overview',        shortLabel: 'Home',     icon: 'home'  },
+    { id: 'credit',     label: 'Credit Facility', shortLabel: 'Credit',   icon: 'credit' },
+    { id: 'personal',   label: 'Profile',         shortLabel: 'Profile',  icon: 'user'  },
+    { id: 'business',   label: 'Business',        shortLabel: 'Business', icon: 'pkg'   },
     { id: 'addresses',  label: 'Business Address', shortLabel: 'Address', icon: 'map' },
-    { id: 'support',    label: 'Support',    shortLabel: 'Support',  icon: 'help'  },
-    { id: 'settings',   label: 'Settings',   shortLabel: 'Settings', icon: 'gear'  },
+    { id: 'support',    label: 'Support',         shortLabel: 'Support',  icon: 'help'  },
+    { id: 'settings',   label: 'Settings',        shortLabel: 'Settings', icon: 'gear'  },
   ];
 
   if (loading) return (
@@ -895,11 +1119,8 @@ export default function Profile() {
                 <Avatar user={user} size="md" />
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="pf-display font-black text-lg text-slate-900 leading-tight truncate flex items-center gap-1.5">
-                      <span>{formData.businessName || user?.name || 'Partner Account'}</span>
-                      {(user?.kyc?.status === 'VERIFIED' || user?.isKycComplete) && (
-                        <BlueVerifiedIcon cls="w-5 h-5 text-blue-600" title="Officially Verified Partner" />
-                      )}
+                    <h1 className="pf-display font-black text-lg text-slate-900 leading-tight truncate">
+                      {formData.businessName || user?.name || 'Partner Account'}
                     </h1>
                     <VerifiedPartnerPill verified={user?.kyc?.status === 'VERIFIED' || user?.isKycComplete} />
                     {user?.kyc?.gstin && (
@@ -1198,8 +1419,78 @@ export default function Profile() {
             )}
 
             {/* ──── CREDIT ACCOUNT ──── */}
-            {activeSection === 'credit' && (isCreditEnabled || user?.isCreditEnabled) && (
-              <div className="pf-panel space-y-5">
+            {activeSection === 'credit' && (
+              <div className="pf-panel space-y-6">
+                {/* Dual Product Facility Switcher */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                  <div>
+                    <h2 className="pf-display font-black text-xl text-slate-800">Partner Financing & Credit Lines</h2>
+                    <p className="text-slate-400 text-xs mt-0.5">Switch between order trade credit and direct business capital</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl w-fit">
+                    <button
+                      type="button"
+                      onClick={() => setCreditFacilityType('trade')}
+                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                        creditFacilityType === 'trade'
+                          ? 'bg-white text-violet-700 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      Trade Credit (Orders)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCreditFacilityType('business')}
+                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
+                        creditFacilityType === 'business'
+                          ? 'bg-white text-violet-700 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      <span>Business Credit Line</span>
+                      {businessFacilities.some(f => f.status === 'ACTIVE') ? (
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      ) : businessApps.some(a => a.status === 'APPROVED' || a.status === 'PROACTIVE_GRANTED') ? (
+                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                      ) : null}
+                    </button>
+                  </div>
+                </div>
+
+                {creditFacilityType === 'trade' ? (
+                  (!isCreditEnabled && !user?.isCreditEnabled) ? (
+                    <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xs text-center max-w-xl mx-auto space-y-4">
+                      <div className="w-14 h-14 rounded-3xl bg-violet-50 text-violet-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                        💳
+                      </div>
+                      <h3 className="pf-display font-black text-xl text-slate-900">Trade Credit Facility for Wholesale Orders</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+                        Trade Credit allows verified partners to order wholesale catalogue inventory without upfront cash.
+                        Dues can be cleared within the agreed revolving billing cycle via online gateway or bank transfer.
+                      </p>
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-left text-xs space-y-2 text-slate-700">
+                        <div className="font-bold text-slate-900">Eligibility Criteria:</div>
+                        <div className="flex items-center gap-2">
+                          <span>{user?.kyc?.status === 'VERIFIED' ? '✓' : '○'}</span>
+                          <span>Officially Verified KYC Documentation</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span>○</span>
+                          <span>Consistent wholesale order and trade volume on Click2Kart</span>
+                        </div>
+                      </div>
+                      <div className="pt-2">
+                        <Link
+                          to="/verify-kyc"
+                          className="inline-block px-6 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md shadow-violet-200"
+                        >
+                          Complete Verification Desk →
+                        </Link>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-5">
                 {/* Header card */}
                 <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div>
@@ -1460,7 +1751,376 @@ export default function Profile() {
                       )}
                     </div>
                   )}
-                </div>
+                ) : (
+                  /* ──── BUSINESS CREDIT LINE TAB CONTENT ──── */
+                  <div className="space-y-6">
+                    {/* Header Card */}
+                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h2 className="pf-display font-black text-xl text-slate-800">Business Credit Line</h2>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-50 text-violet-700 border border-violet-200">
+                            Strict 3–5 Months
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            18% p.a. Daily Compounding
+                          </span>
+                        </div>
+                        <p className="text-slate-400 text-xs mt-1">
+                          Dedicated working capital term line for inventory expansion & business operations. Daily compounding interest with weekly/daily repayments.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {businessEligibility?.isEligible && (
+                          <button
+                            type="button"
+                            onClick={() => setShowBusinessApplyModal(true)}
+                            className="px-4 py-2.5 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-md shadow-violet-200 active:scale-[0.98] transition-all"
+                          >
+                            + Apply for Working Capital
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={loadBusinessCredit}
+                          disabled={loadingBusinessCredit}
+                          className="p-2.5 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all text-xs"
+                          title="Refresh Facility"
+                        >
+                          🔄
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Pending Offers (Waiting for Acceptance) */}
+                    {businessApps.filter(a => a.status === 'APPROVED' || a.status === 'PROACTIVE_GRANTED').map(offer => (
+                      <div
+                        key={offer._id}
+                        className="bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-violet-500/10 rounded-2xl p-6 border-2 border-amber-300 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">🎉</span>
+                            <span className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-400 text-amber-950 shadow-xs">
+                              {offer.status === 'PROACTIVE_GRANTED' ? 'Pre-Approved Credit Grant' : 'Facility Sanctioned'}
+                            </span>
+                          </div>
+                          <h3 className="pf-display font-black text-2xl text-slate-900">
+                            ₹{Number(offer.approvedAmount || offer.requestedAmount).toLocaleString('en-IN')} Working Capital Approved
+                          </h3>
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-xs">
+                            <div className="bg-white/80 p-2.5 rounded-xl border border-amber-200">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Tenure</span>
+                              <span className="font-black text-slate-800">{offer.approvedTenureMonths || offer.requestedTenureMonths} Months</span>
+                            </div>
+                            <div className="bg-white/80 p-2.5 rounded-xl border border-amber-200">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Interest Rate</span>
+                              <span className="font-black text-slate-800">{offer.approvedInterestRateAnnual || 18}% p.a. (Daily Comp.)</span>
+                            </div>
+                            <div className="bg-white/80 p-2.5 rounded-xl border border-amber-200">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Frequency</span>
+                              <span className="font-black text-slate-800 capitalize">{offer.repaymentFrequency || 'WEEKLY'}</span>
+                            </div>
+                            <div className="bg-white/80 p-2.5 rounded-xl border border-amber-200">
+                              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Processing Fee</span>
+                              <span className="font-black text-slate-800">2% + 18% GST</span>
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedOffer(offer);
+                            setAcceptedTermsChecked(false);
+                            setShowAcceptOfferModal(true);
+                          }}
+                          className="px-6 py-4 rounded-xl font-black text-sm text-amber-950 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 shadow-lg shadow-amber-300/40 active:scale-[0.98] transition-all whitespace-nowrap"
+                        >
+                          Review & Accept Agreement →
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* Active Facilities Section */}
+                    {loadingBusinessCredit ? (
+                      <div className="bg-white rounded-2xl p-12 text-center text-slate-400 font-medium">
+                        Loading business credit line details...
+                      </div>
+                    ) : businessFacilities.length === 0 ? (
+                      <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xs text-center max-w-xl mx-auto space-y-4">
+                        <div className="w-14 h-14 rounded-3xl bg-violet-50 text-violet-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                          💼
+                        </div>
+                        <h3 className="pf-display font-black text-xl text-slate-900">Working Capital Credit Facility</h3>
+                        <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+                          Get approved for high-limit business capital to finance purchase orders, supplier payments, and working inventory. Strict 3 to 5 months term with transparent daily compounding interest.
+                        </p>
+                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-left text-xs space-y-2 text-slate-700">
+                          <div className="font-bold text-slate-900 flex items-center justify-between">
+                            <span>Facility Features & Eligibility:</span>
+                            {businessEligibility?.isEligible ? (
+                              <span className="text-emerald-600 font-bold">✓ Pre-Qualified</span>
+                            ) : (
+                              <span className="text-slate-400">KYC Verification Required</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span>✓</span>
+                            <span>Strict 3–5 Months flexible tenure with weekly or daily auto-debit</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span>✓</span>
+                            <span>Daily compounding formula: A = P(1+r/365)^n, paise precision</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span>✓</span>
+                            <span>Automated CIBIL / Equifax commercial bureau positive scoring</span>
+                          </div>
+                        </div>
+
+                        {businessEligibility?.isEligible ? (
+                          <div className="pt-2 space-y-2">
+                            <button
+                              type="button"
+                              onClick={() => setShowBusinessApplyModal(true)}
+                              className="inline-block px-6 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md shadow-violet-200 hover:from-violet-700 hover:to-indigo-700"
+                            >
+                              Apply for ₹{(businessEligibility?.preQualifiedLimit || 100000).toLocaleString('en-IN')} Working Capital →
+                            </button>
+                            <p className="text-[11px] text-slate-400">No collateral required. Disbursed directly after compliance review.</p>
+                          </div>
+                        ) : (
+                          <div className="pt-2">
+                            <Link
+                              to="/verify-kyc"
+                              className="inline-block px-6 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md shadow-violet-200"
+                            >
+                              Complete KYC to Unlock Business Credit →
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {businessFacilities.map(fac => {
+                          const isDelinquent = fac.status === 'DELINQUENT';
+                          const isClosed = fac.status === 'CLOSED';
+                          return (
+                            <div
+                              key={fac._id}
+                              className={`bg-white rounded-2xl border ${
+                                isDelinquent ? 'border-rose-200' : 'border-slate-100'
+                              } shadow-sm overflow-hidden`}
+                            >
+                              {/* Facility Header */}
+                              <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 bg-slate-50/50">
+                                <div>
+                                  <div className="flex items-center gap-2.5">
+                                    <h3 className="pf-display font-black text-lg text-slate-900">
+                                      {fac.facilityNumber || 'Facility Account'}
+                                    </h3>
+                                    <span
+                                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                        fac.status === 'ACTIVE'
+                                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                          : fac.status === 'DELINQUENT'
+                                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                          : 'bg-slate-100 text-slate-600 border-slate-200'
+                                      }`}
+                                    >
+                                      {fac.status}
+                                    </span>
+                                    <span className="text-xs text-slate-400">
+                                      Sanctioned {new Date(fac.createdAt).toLocaleDateString('en-IN')}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-slate-500 mt-1">
+                                    Tenure: {fac.tenureMonths} Months ({fac.repaymentFrequency} instalments) • {fac.interestRateAnnual}% p.a. daily compounding
+                                  </p>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                  {!isClosed && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedRepayFacility(fac);
+                                        setBusinessRepayAmount(String(fac.nextDueAmount || fac.totalOutstandingBalance || ''));
+                                        setShowBusinessRepayModal(true);
+                                      }}
+                                      className="px-4 py-2.5 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-md shadow-violet-200 active:scale-[0.98] transition-all"
+                                    >
+                                      Repay Facility
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedScheduleFacility(fac);
+                                      setShowScheduleModal(true);
+                                    }}
+                                    className="px-4 py-2.5 rounded-xl font-bold text-xs border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all"
+                                  >
+                                    View Schedule
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* 4 Cards Grid */}
+                              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-6">
+                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                    Principal Outstanding
+                                  </div>
+                                  <div className="font-black text-slate-900 text-xl mt-1">
+                                    ₹{Math.round(fac.currentPrincipalBalance || 0).toLocaleString('en-IN')}
+                                  </div>
+                                  <div className="text-[10px] text-slate-400 mt-0.5">
+                                    Original: ₹{Math.round(fac.disbursedAmount || 0).toLocaleString('en-IN')}
+                                  </div>
+                                </div>
+
+                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                    Accrued Interest
+                                  </div>
+                                  <div className="font-black text-violet-700 text-xl mt-1">
+                                    ₹{Number(fac.accruedInterestBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </div>
+                                  <div className="text-[10px] text-slate-400 mt-0.5">
+                                    Daily compounding formula
+                                  </div>
+                                </div>
+
+                                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                  <div className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                                    Next Due Instalment
+                                  </div>
+                                  <div className="font-black text-amber-700 text-xl mt-1">
+                                    ₹{Math.round(fac.nextDueAmount || 0).toLocaleString('en-IN')}
+                                  </div>
+                                  <div className="text-[10px] text-slate-400 mt-0.5">
+                                    {fac.nextDueDate ? `Due ${new Date(fac.nextDueDate).toLocaleDateString('en-IN')}` : 'None'}
+                                  </div>
+                                </div>
+
+                                <div className="p-4 rounded-2xl bg-violet-50/50 border border-violet-100">
+                                  <div className="text-[10px] font-black uppercase tracking-wider text-violet-600">
+                                    Total Outstanding
+                                  </div>
+                                  <div className="font-black text-slate-900 text-xl mt-1">
+                                    ₹{Math.round(fac.totalOutstandingBalance || 0).toLocaleString('en-IN')}
+                                  </div>
+                                  <div className="text-[10px] text-violet-600 font-bold mt-0.5">
+                                    Principal + Accrued Interest
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Mandate Bar */}
+                              <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-slate-700">AutoPay Mandate:</span>
+                                  {fac.mandate?.status === 'ACTIVE' ? (
+                                    <span className="text-emerald-700 font-bold flex items-center gap-1">
+                                      <span>✓ Active</span>
+                                      <span className="text-slate-400 font-normal">({fac.mandate.mandateId})</span>
+                                    </span>
+                                  ) : (
+                                    <span className="text-amber-700 font-bold">
+                                      ⚠️ Pending authorization
+                                    </span>
+                                  )}
+                                </div>
+                                {fac.mandate?.status !== 'ACTIVE' && !isClosed && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleInitAutoPay(fac)}
+                                    className="text-violet-600 hover:text-violet-800 font-bold text-xs underline"
+                                  >
+                                    Authorize e-Mandate →
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Applications Tracker */}
+                    {businessApps.length > 0 && (
+                      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                        <div className="px-6 py-4 border-b border-slate-100">
+                          <h3 className="pf-display font-black text-base text-slate-900">Application History</h3>
+                          <p className="text-xs text-slate-400">All submitted business credit line requests</p>
+                        </div>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs text-slate-600">
+                            <thead className="bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                              <tr>
+                                <th className="px-6 py-3">Date</th>
+                                <th className="px-6 py-3">Requested Limit</th>
+                                <th className="px-6 py-3">Tenure</th>
+                                <th className="px-6 py-3">Frequency</th>
+                                <th className="px-6 py-3">Status</th>
+                                <th className="px-6 py-3">Action</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {businessApps.map(app => (
+                                <tr key={app._id} className="hover:bg-slate-50/50">
+                                  <td className="px-6 py-3 whitespace-nowrap font-medium text-slate-900">
+                                    {new Date(app.createdAt).toLocaleDateString('en-IN')}
+                                  </td>
+                                  <td className="px-6 py-3 whitespace-nowrap font-bold text-slate-900">
+                                    ₹{Number(app.requestedAmount).toLocaleString('en-IN')}
+                                  </td>
+                                  <td className="px-6 py-3 whitespace-nowrap font-semibold">
+                                    {app.requestedTenureMonths} Months
+                                  </td>
+                                  <td className="px-6 py-3 whitespace-nowrap capitalize">
+                                    {app.repaymentFrequency}
+                                  </td>
+                                  <td className="px-6 py-3 whitespace-nowrap">
+                                    <span
+                                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                        app.status === 'APPROVED' || app.status === 'PROACTIVE_GRANTED'
+                                          ? 'bg-amber-100 text-amber-800'
+                                          : app.status === 'DISBURSED' || app.status === 'ACCEPTED'
+                                          ? 'bg-emerald-100 text-emerald-800'
+                                          : app.status === 'REJECTED'
+                                          ? 'bg-rose-100 text-rose-800'
+                                          : 'bg-slate-100 text-slate-700'
+                                      }`}
+                                    >
+                                      {app.status}
+                                    </span>
+                                  </td>
+                                  <td className="px-6 py-3 whitespace-nowrap">
+                                    {(app.status === 'APPROVED' || app.status === 'PROACTIVE_GRANTED') && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedOffer(app);
+                                          setAcceptedTermsChecked(false);
+                                          setShowAcceptOfferModal(true);
+                                        }}
+                                        className="text-violet-600 font-bold hover:underline"
+                                      >
+                                        Accept Offer →
+                                      </button>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -2653,6 +3313,515 @@ export default function Profile() {
                   </button>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Business Credit Application Modal ── */}
+      {showBusinessApplyModal && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setShowBusinessApplyModal(false)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 my-8 animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="pf-display font-black text-xl text-slate-900">Apply for Business Credit Facility</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Working capital term facility for inventory, stock expansion and business operations
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBusinessApplyModal(false)}
+                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center"
+              >
+                <Ico n="close" cls="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleApplyBusinessCredit} className="space-y-4">
+              <Field label="Requested Facility Amount (₹)">
+                <input
+                  type="number"
+                  min="10000"
+                  max="1000000"
+                  step="5000"
+                  value={businessApplyForm.requestedAmount}
+                  onChange={(e) => setBusinessApplyForm(p => ({ ...p, requestedAmount: e.target.value }))}
+                  placeholder="e.g., 100000"
+                  className={inputCls}
+                  required
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  Pre-qualified limit up to ₹{(businessEligibility?.preQualifiedLimit || 100000).toLocaleString('en-IN')}. Min ₹10,000.
+                </p>
+              </Field>
+
+              <Field label="Loan Tenure (Strictly 3 to 5 Months)">
+                <div className="grid grid-cols-3 gap-2">
+                  {[3, 4, 5].map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => setBusinessApplyForm(p => ({ ...p, requestedTenureMonths: m }))}
+                      className={`py-3 rounded-xl font-black text-xs transition-all border ${
+                        Number(businessApplyForm.requestedTenureMonths) === m
+                          ? 'bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-200'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {m} Months
+                    </button>
+                  ))}
+                </div>
+              </Field>
+
+              <Field label="Repayment Frequency">
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'WEEKLY', label: 'Weekly Instalments' },
+                    { id: 'DAILY', label: 'Daily Instalments' }
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setBusinessApplyForm(p => ({ ...p, requestedFrequency: f.id }))}
+                      className={`py-2.5 rounded-xl font-bold text-xs transition-all border ${
+                        businessApplyForm.requestedFrequency === f.id
+                          ? 'bg-slate-900 text-white border-slate-900'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+
+              <Field label="Business Purpose">
+                <select
+                  value={businessApplyForm.purpose}
+                  onChange={(e) => setBusinessApplyForm(p => ({ ...p, purpose: e.target.value }))}
+                  className={inputCls}
+                >
+                  <option value="Working Capital Expansion">Working Capital Expansion</option>
+                  <option value="Bulk Inventory Procurement">Bulk Inventory Procurement</option>
+                  <option value="Store Renovation & Fitout">Store Renovation & Fitout</option>
+                  <option value="Vendor / Supplier Settlement">Vendor / Supplier Settlement</option>
+                  <option value="Logistics & Warehousing">Logistics & Warehousing</option>
+                  <option value="Other Business Operations">Other Business Operations</option>
+                </select>
+              </Field>
+
+              {/* Estimate Summary */}
+              {businessApplyForm.requestedAmount && Number(businessApplyForm.requestedAmount) > 0 && (
+                <div className="p-4 bg-violet-50/60 rounded-2xl border border-violet-100 space-y-1.5 text-xs">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Sanction Amount:</span>
+                    <span className="font-bold text-slate-900">₹{Number(businessApplyForm.requestedAmount).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Processing Fee (2% + 18% GST):</span>
+                    <span className="font-bold text-slate-900">
+                      ₹{Math.round(Number(businessApplyForm.requestedAmount) * 0.02 * 1.18).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-slate-600">
+                    <span>Interest Rate:</span>
+                    <span className="font-bold text-violet-700">18.00% p.a. (Compounded Daily)</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600 pt-1 border-t border-violet-100">
+                    <span className="font-bold text-slate-800">Estimated Net Payout:</span>
+                    <span className="font-black text-slate-900">
+                      ₹{Math.round(Number(businessApplyForm.requestedAmount) * (1 - 0.02 * 1.18)).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBusinessApplyModal(false)}
+                  className={btnOutline}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingBusinessApp || !businessApplyForm.requestedAmount}
+                  className={btnPrimary}
+                >
+                  {submittingBusinessApp ? 'Submitting Application…' : 'Submit Application'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Business Credit Offer Acceptance Modal ── */}
+      {showAcceptOfferModal && selectedOffer && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setShowAcceptOfferModal(false)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 my-8 animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-200">
+                  Facility Sanction Letter
+                </span>
+                <h3 className="pf-display font-black text-xl text-slate-900 mt-2">
+                  Accept Business Credit Line Facility
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAcceptOfferModal(false)}
+                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center"
+              >
+                <Ico n="close" cls="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3 text-xs">
+              <div className="flex justify-between py-1 border-b border-slate-200/60">
+                <span className="text-slate-500">Sanctioned Principal:</span>
+                <span className="font-black text-slate-900 text-base">
+                  ₹{Number(selectedOffer.approvedAmount || selectedOffer.requestedAmount).toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200/60">
+                <span className="text-slate-500">Facility Tenure:</span>
+                <span className="font-bold text-slate-800">
+                  {selectedOffer.approvedTenureMonths || selectedOffer.requestedTenureMonths} Months
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200/60">
+                <span className="text-slate-500">Interest Calculation:</span>
+                <span className="font-bold text-violet-700">
+                  {selectedOffer.approvedInterestRateAnnual || 18}% p.a. (Daily Compounding)
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200/60">
+                <span className="text-slate-500">Repayment Frequency:</span>
+                <span className="font-bold text-slate-800 capitalize">
+                  {selectedOffer.repaymentFrequency || 'WEEKLY'}
+                </span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200/60">
+                <span className="text-slate-500">Processing Fee (2% + 18% GST):</span>
+                <span className="font-bold text-slate-800">
+                  ₹{Math.round(Number(selectedOffer.approvedAmount || selectedOffer.requestedAmount) * 0.02 * 1.18).toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex justify-between py-1 font-bold text-slate-900">
+                <span>Net Disbursal to Bank Account:</span>
+                <span className="font-black text-emerald-600 text-base">
+                  ₹{Math.round(Number(selectedOffer.approvedAmount || selectedOffer.requestedAmount) * (1 - 0.02 * 1.18)).toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 bg-amber-50/60 rounded-2xl border border-amber-200 space-y-2 text-xs text-amber-950">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={acceptedTermsChecked}
+                  onChange={(e) => setAcceptedTermsChecked(e.target.checked)}
+                  className="mt-0.5 rounded border-amber-300 text-violet-600 focus:ring-violet-500 w-4 h-4"
+                />
+                <span className="leading-relaxed">
+                  I accept the Business Credit Line Facility terms. I understand that interest compounds daily at 18% p.a., instalments will be due according to the amortization schedule, and performance will be reported to commercial credit bureaus (CIBIL/Equifax).
+                </span>
+              </label>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowAcceptOfferModal(false)}
+                className={btnOutline}
+              >
+                Decline / Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAcceptBusinessOffer}
+                disabled={acceptingOffer || !acceptedTermsChecked}
+                className={btnPrimary}
+              >
+                {acceptingOffer ? 'Executing Agreement…' : 'Sign & Accept Sanction Offer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Business Credit Repayment Modal ── */}
+      {showBusinessRepayModal && selectedRepayFacility && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setShowBusinessRepayModal(false)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 my-8 animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="pf-display font-black text-xl text-slate-900">
+                  Repay Business Credit Facility
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Account: {selectedRepayFacility.facilityNumber}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBusinessRepayModal(false)}
+                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center"
+              >
+                <Ico n="close" cls="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs">
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Next Due</span>
+                <span className="font-black text-amber-700 text-base">
+                  ₹{Math.round(selectedRepayFacility.nextDueAmount || 0).toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div>
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Outstanding</span>
+                <span className="font-black text-slate-900 text-base">
+                  ₹{Math.round(selectedRepayFacility.totalOutstandingBalance || 0).toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+
+            <Field label="Repayment Amount (₹)">
+              <input
+                type="number"
+                min="1"
+                max={selectedRepayFacility.totalOutstandingBalance}
+                value={businessRepayAmount}
+                onChange={(e) => setBusinessRepayAmount(e.target.value)}
+                placeholder="Enter amount to pay"
+                className={inputCls}
+              />
+              <div className="flex gap-2 mt-2">
+                {selectedRepayFacility.nextDueAmount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setBusinessRepayAmount(String(Math.round(selectedRepayFacility.nextDueAmount)))}
+                    className="text-[11px] font-bold text-violet-600 bg-violet-50 px-2.5 py-1 rounded-lg hover:bg-violet-100 transition"
+                  >
+                    Pay Next Due (₹{Math.round(selectedRepayFacility.nextDueAmount).toLocaleString('en-IN')})
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setBusinessRepayAmount(String(Math.round(selectedRepayFacility.totalOutstandingBalance)))}
+                  className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg hover:bg-slate-200 transition"
+                >
+                  Pay Full Balance (₹{Math.round(selectedRepayFacility.totalOutstandingBalance).toLocaleString('en-IN')})
+                </button>
+              </div>
+            </Field>
+
+            <Field label="Payment Method">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBusinessRepayMethod('RAZORPAY')}
+                  className={`py-3 rounded-xl font-black text-xs transition-all border ${
+                    businessRepayMethod === 'RAZORPAY'
+                      ? 'bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-200'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  Online Gateway (Razorpay)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBusinessRepayMethod('BANK_TRANSFER')}
+                  className={`py-3 rounded-xl font-black text-xs transition-all border ${
+                    businessRepayMethod === 'BANK_TRANSFER'
+                      ? 'bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-200'
+                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  Direct Bank Transfer
+                </button>
+              </div>
+            </Field>
+
+            {businessRepayMethod === 'BANK_TRANSFER' && (
+              <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs">
+                {companyBankConfig.bankDetails && (
+                  <div className="p-3 bg-white rounded-xl border border-slate-200 space-y-1">
+                    <div className="font-bold text-slate-800">Click2Kart Collection Account:</div>
+                    <div className="text-slate-600">Bank: {companyBankConfig.bankDetails.bankName || 'HDFC Bank'}</div>
+                    <div className="text-slate-600">Account: {companyBankConfig.bankDetails.accountNumber}</div>
+                    <div className="text-slate-600">IFSC: {companyBankConfig.bankDetails.ifscCode}</div>
+                  </div>
+                )}
+                <Field label="UTR / Transaction Reference (Required)">
+                  <input
+                    type="text"
+                    value={businessBankForm.utr}
+                    onChange={(e) => setBusinessBankForm(p => ({ ...p, utr: e.target.value }))}
+                    placeholder="e.g., UTR987654321"
+                    className={inputCls}
+                    required
+                  />
+                </Field>
+                <Field label="Upload Receipt / Slip">
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={async (e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      const fd = new FormData();
+                      fd.append('file', file);
+                      try {
+                        const res = await api.post('/api/upload/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+                        setBusinessBankForm(p => ({ ...p, paymentSlip: res.data.url }));
+                        notify('Receipt uploaded successfully', 'success');
+                      } catch {
+                        notify('Failed to upload receipt', 'error');
+                      }
+                    }}
+                    className="text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100"
+                  />
+                  {businessBankForm.paymentSlip && (
+                    <p className="text-[10px] text-emerald-600 font-bold mt-1">✓ Receipt attached</p>
+                  )}
+                </Field>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowBusinessRepayModal(false)}
+                className={btnOutline}
+              >
+                Cancel
+              </button>
+              {businessRepayMethod === 'RAZORPAY' ? (
+                <button
+                  type="button"
+                  onClick={() => handleBusinessRazorpayRepayment(selectedRepayFacility)}
+                  disabled={submittingBusinessRepay || !businessRepayAmount || Number(businessRepayAmount) <= 0}
+                  className={btnPrimary}
+                >
+                  {submittingBusinessRepay ? 'Processing Gateway…' : `Pay ₹${Number(businessRepayAmount || 0).toLocaleString('en-IN')} Online`}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => handleBusinessBankTransferRepayment(selectedRepayFacility)}
+                  disabled={submittingBusinessRepay || !businessRepayAmount || Number(businessRepayAmount) <= 0 || !businessBankForm.utr.trim()}
+                  className={btnPrimary}
+                >
+                  {submittingBusinessRepay ? 'Submitting…' : 'Submit Bank Transfer Proof'}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Business Credit Repayment Schedule Modal ── */}
+      {showScheduleModal && selectedScheduleFacility && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setShowScheduleModal(false)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 my-8 animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="pf-display font-black text-xl text-slate-900">
+                  Amortization Schedule — {selectedScheduleFacility.facilityNumber}
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Sanctioned Principal: ₹{Number(selectedScheduleFacility.disbursedAmount).toLocaleString('en-IN')} • Tenure: {selectedScheduleFacility.tenureMonths} Months ({selectedScheduleFacility.repaymentFrequency})
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowScheduleModal(false)}
+                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center"
+              >
+                <Ico n="close" cls="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="overflow-x-auto max-h-[60vh]">
+              <table className="w-full text-left text-xs text-slate-600">
+                <thead className="sticky top-0 bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                  <tr>
+                    <th className="px-4 py-3">#</th>
+                    <th className="px-4 py-3">Due Date</th>
+                    <th className="px-4 py-3">Principal Due</th>
+                    <th className="px-4 py-3">Interest Due</th>
+                    <th className="px-4 py-3">Total Due</th>
+                    <th className="px-4 py-3">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {(selectedScheduleFacility.repaymentSchedule || []).map((item) => (
+                    <tr key={item.installmentNumber} className="hover:bg-slate-50/50">
+                      <td className="px-4 py-3 font-bold text-slate-900">#{item.installmentNumber}</td>
+                      <td className="px-4 py-3 whitespace-nowrap font-medium text-slate-900">
+                        {new Date(item.dueDate).toLocaleDateString('en-IN')}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">₹{Math.round(item.principalDue).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">₹{Math.round(item.interestDue).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3 whitespace-nowrap font-bold text-slate-900">₹{Math.round(item.totalDue).toLocaleString('en-IN')}</td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                            item.status === 'PAID'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : item.status === 'OVERDUE'
+                              ? 'bg-rose-100 text-rose-800'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setShowScheduleModal(false)}
+                className="px-6 py-2.5 rounded-xl font-bold text-xs bg-slate-900 text-white hover:bg-slate-800 transition"
+              >
+                Close Schedule
+              </button>
             </div>
           </div>
         </div>
