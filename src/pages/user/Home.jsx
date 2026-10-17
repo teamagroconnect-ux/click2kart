@@ -4,6 +4,7 @@ import { CONFIG } from '../../shared/lib/config.js'
 import { SEO } from '../../shared/lib/seo.jsx'
 import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
+import { useAuth } from '../../lib/AuthContext'
 
 function useCountUp(target, duration = 1800, start = false) {
   const [val, setVal] = useState(0)
@@ -44,6 +45,7 @@ function StatItem({ n, t, delay }) {
 }
 
 export default function Home() {
+  const { user } = useAuth()
   const [cats, setCats] = useState([])
   const [brands, setBrands] = useState([])
   const [recs, setRecs] = useState([])
@@ -920,20 +922,34 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
               </Link>
-              <Link to="/signup" className="hm-btn-secondary" style={{ whiteSpace: 'nowrap' }}>
-                Open Retailer Account
-              </Link>
+              {user ? (
+                <Link to="/profile?tab=credit" className="hm-btn-secondary" style={{ whiteSpace: 'nowrap' }}>
+                  Partner Credit Desk
+                </Link>
+              ) : (
+                <Link to="/signup" className="hm-btn-secondary" style={{ whiteSpace: 'nowrap' }}>
+                  Open Retailer Account
+                </Link>
+              )}
             </div>
-            <div className="flex items-center gap-2 pt-2 text-xs font-semibold text-slate-500">
-              <span>Already an authorized retailer?</span>
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-1 font-black text-violet-700 hover:text-violet-900 hover:underline"
-              >
-                <span>Retailer Sign In</span>
-                <span>→</span>
-              </Link>
-            </div>
+            {user ? (
+              <div className="flex items-center gap-2 pt-2 text-xs font-semibold text-slate-500">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                <span>Signed in as <strong className="text-slate-800">{user.businessName || user.name || 'Authorized Partner'}</strong></span>
+                <span className="text-slate-400">• Wholesale & Credit Ready</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 pt-2 text-xs font-semibold text-slate-500">
+                <span>Already an authorized retailer?</span>
+                <Link
+                  to="/login"
+                  className="inline-flex items-center gap-1 font-black text-violet-700 hover:text-violet-900 hover:underline"
+                >
+                  <span>Retailer Sign In</span>
+                  <span>→</span>
+                </Link>
+              </div>
+            )}
           </div>
 
           <div className="hm-trust-grid">
@@ -1051,27 +1067,27 @@ export default function Home() {
                     🛒
                   </span>
                   <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-100 text-violet-800 border border-violet-200">
-                    Product #1: Revolving Orders
+                    Revolving Order Credit
                   </span>
                 </div>
                 <h3 className="font-sans font-black text-2xl text-slate-900 tracking-tight mb-3">
                   Trade Credit Line
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                  Order stock directly from our wholesale catalogue without paying cash upfront. Complete checkout using your revolving credit limit, receive GST-compliant invoices for business tax accounting, and repay on your agreed billing cycle.
+                  Order inventory directly from our wholesale catalogue without paying upfront. Checkout using your approved credit line, receive GST-compliant tax invoices, and settle balances on your agreed payment cycle.
                 </p>
                 <div className="space-y-3 mb-8 text-xs font-semibold text-slate-700">
                   <div className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">✓</span>
-                    <span>Direct deduction during catalog checkout</span>
+                    <span>Direct one-click deduction during wholesale catalogue checkout</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">✓</span>
-                    <span>Split payments supported (Credit + Gateway / Bank Transfer)</span>
+                    <span>Split payments supported (Credit + Gateway / Direct Bank Transfer)</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">✓</span>
-                    <span>Real-time balance ledger & automated repayment receipts</span>
+                    <span>Real-time balance ledger & automated repayment reconciliation</span>
                   </div>
                 </div>
               </div>
@@ -1083,7 +1099,7 @@ export default function Home() {
                   <span>Explore Wholesale Products</span>
                   <span>→</span>
                 </Link>
-                <span className="text-[11px] text-slate-400 font-bold">Available for verified partner retailers</span>
+                <span className="text-[11px] text-slate-400 font-bold">Active for verified retailers</span>
               </div>
             </div>
 
@@ -1095,39 +1111,39 @@ export default function Home() {
                     💼
                   </span>
                   <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
-                    Product #2: Working Capital
+                    Working Capital Facility
                   </span>
                 </div>
                 <h3 className="font-sans font-black text-2xl text-slate-900 tracking-tight mb-3">
                   Business Credit Line (Term Capital)
                 </h3>
                 <p className="text-slate-600 text-sm leading-relaxed mb-6">
-                  Sanctioned working capital limits disbursed directly to your bank account for business expansion. Structured over a strict 3 to 5 months term with daily compounding interest.
+                  Sanctioned working capital limits disbursed directly to your business bank account. Flexible 1 to 5 months tenure with transparent daily interest accrual on outstanding principal.
                 </p>
                 <div className="space-y-3 mb-8 text-xs font-semibold text-slate-700">
                   <div className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">✓</span>
-                    <span>Strict 3–5 Months tenure with scheduled weekly or daily repayments</span>
+                    <span>Configurable 1 to 5 months tenure with weekly or daily instalment schedules</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">✓</span>
-                    <span>18% p.a. daily compounding formula: A = P(1+r/365)^n (paise precision)</span>
+                    <span>18% p.a. daily accrual on outstanding balance (exact paise precision)</span>
                   </div>
                   <div className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] font-black">✓</span>
-                    <span>Repay via Online Gateway, Verified Bank Transfer, or e-Mandate</span>
+                    <span>Flexible repayments via Verified Bank Transfer (NEFT/RTGS/IMPS) or Instant Online Gateway</span>
                   </div>
                 </div>
               </div>
               <div className="pt-4 border-t border-amber-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <Link
-                  to="/profile"
+                  to="/profile?tab=credit"
                   className="px-6 py-3 rounded-xl font-black text-xs text-amber-950 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 shadow-md shadow-amber-300/40 transition-all flex items-center justify-center gap-2"
                 >
                   <span>Apply for Working Capital Line</span>
                   <span>→</span>
                 </Link>
-                <span className="text-[11px] text-slate-400 font-bold">Fast sanction desk</span>
+                <span className="text-[11px] text-slate-400 font-bold">Fast sanction & transparent terms</span>
               </div>
             </div>
           </div>
@@ -1147,7 +1163,7 @@ export default function Home() {
           <div className="hm-features-grid">
             {[
               { num:'01', icon:'🏭', title:'Factory-Direct Stock',   desc:'Source directly from authorized distributors. No middlemen. Guaranteed authentic products at the best margins.' },
-              { num:'02', icon:'💳', title:'Dual Credit Lines',      desc:'Revolving order credit for wholesale cart checkout + 3 to 5 months working capital term loans with daily compounding.' },
+              { num:'02', icon:'💳', title:'Dual Credit Lines',      desc:'Revolving trade credit for wholesale catalogue checkout + 1 to 5 months working capital term facilities with daily interest accrual.' },
               { num:'03', icon:'📊', title:'Volume Intelligence',    desc:'Dynamic pricing that rewards scale. The more you buy, the better your margin per unit.' },
               { num:'04', icon:'🚀', title:'Priority Dispatch',      desc:'Dedicated freight lanes ensure your bulk orders ship first. Sub-48hr processing for verified partners.' },
               { num:'05', icon:'🧾', title:'Clean GST Compliance',   desc:'Every invoice is GST-ready. Maximize your input tax credit on every purchase, automatically.' },
@@ -1171,31 +1187,57 @@ export default function Home() {
           <div className="hm-cta-inner">
             <div className="hm-cta-badge">
               <span className="hm-eyebrow-dot" style={{ width: '8px', height: '8px' }} />
-              Get Started Today
+              {user ? 'Empowering Your Growth' : 'Get Started Today'}
             </div>
             <h2 className="hm-cta-title">
-              Ready to <em>Grow</em> Your Business?
+              {user ? (
+                <>Scale Your <em>Inventory</em> Today</>
+              ) : (
+                <>Ready to <em>Grow</em> Your Business?</>
+              )}
             </h2>
             <p className="hm-cta-sub">
-              Join thousands of verified retailers across India who trust Click2Kart for their bulk procurement needs.
+              {user ? (
+                'Procure directly from premier electronics brands with wholesale pricing and access your sanctioned business credit facilities.'
+              ) : (
+                'Join thousands of verified retailers across India who trust Click2Kart for their bulk procurement needs.'
+              )}
             </p>
             <div className="hm-cta-btns">
-              <Link to="/signup" className="hm-btn-primary">
-                Sign Up Now
-                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
-              </Link>
-              <Link to="/products" className="hm-btn-secondary">
-                Browse Catalog
-              </Link>
+              {user ? (
+                <>
+                  <Link to="/products" className="hm-btn-primary">
+                    Explore Wholesale Catalog
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </Link>
+                  <Link to="/profile?tab=credit" className="hm-btn-secondary">
+                    Manage Credit Lines
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/signup" className="hm-btn-primary">
+                    Sign Up Now
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                  </Link>
+                  <Link to="/products" className="hm-btn-secondary">
+                    Browse Catalog
+                  </Link>
+                </>
+              )}
             </div>
-            <div className="flex items-center justify-center gap-2 pt-4 text-xs font-semibold text-slate-500">
-              <span>Already registered with us?</span>
-              <Link to="/login" className="font-black text-violet-700 hover:text-violet-900 underline">
-                Sign In to Wholesale & Credit Desk →
-              </Link>
-            </div>
+            {!user && (
+              <div className="flex items-center justify-center gap-2 pt-4 text-xs font-semibold text-slate-500">
+                <span>Already registered with us?</span>
+                <Link to="/login" className="font-black text-violet-700 hover:text-violet-900 underline">
+                  Sign In to Wholesale & Credit Desk →
+                </Link>
+              </div>
+            )}
           </div>
         </section>
       </div>

@@ -387,7 +387,7 @@ export default function CreditManagement() {
     }
     if ((reviewAction === 'APPROVE' || reviewAction === 'PARTIAL_APPROVE')) {
       const t = Number(reviewTenure)
-      if (t < 3 || t > 5) return notify('Tenure must be strictly between 3 and 5 months', 'error')
+      if (t < 1 || t > 12) return notify('Valid tenure is required (1 to 5 months)', 'error')
       if (!reviewLimit || Number(reviewLimit) <= 0) return notify('Valid approved limit is required', 'error')
     }
 
@@ -396,12 +396,14 @@ export default function CreditManagement() {
       await api.post(`/api/credit/admin/business/applications/${selectedApp._id}/review`, {
         action: reviewAction,
         approvedLimit: Number(reviewLimit),
+        approvedAmount: Number(reviewLimit),
         approvedTenureMonths: Number(reviewTenure),
         approvedFrequency: reviewFreq,
         annualInterestRatePercent: Number(reviewRate),
         processingFeePercent: Number(reviewFee),
         rejectionReason: reviewReason.trim(),
-        remarks: reviewRemarks.trim()
+        remarks: reviewRemarks.trim(),
+        adminNotes: reviewRemarks.trim()
       })
       notify(`Application status updated to ${reviewAction}`, 'success')
       setReviewModalOpen(false)
@@ -418,7 +420,7 @@ export default function CreditManagement() {
     e.preventDefault()
     if (!proactiveRetailerId) return notify('Please select or specify a verified retailer', 'error')
     const t = Number(proactiveTenure)
-    if (t < 3 || t > 5) return notify('Tenure must be strictly between 3 and 5 months', 'error')
+    if (t < 1 || t > 12) return notify('Valid tenure is required (1 to 5 months)', 'error')
     if (!proactiveLimit || Number(proactiveLimit) <= 0) return notify('Valid credit limit is required', 'error')
 
     setActionLoading(true)
@@ -426,12 +428,15 @@ export default function CreditManagement() {
       await api.post('/api/credit/admin/business/proactive-grant', {
         retailerId: proactiveRetailerId,
         approvedLimit: Number(proactiveLimit),
+        approvedAmount: Number(proactiveLimit),
         approvedTenureMonths: t,
         approvedFrequency: proactiveFreq,
         annualInterestRatePercent: Number(proactiveRate),
         processingFeePercent: Number(proactiveFee),
         purpose: proactivePurpose.trim(),
-        remarks: proactiveRemarks.trim()
+        reason: proactivePurpose.trim() || 'Proactive Working Capital Credit Line Grant',
+        remarks: proactiveRemarks.trim(),
+        adminNotes: proactiveRemarks.trim()
       })
       notify('Proactive credit line granted successfully! Retailer can now review & accept.', 'success')
       setProactiveModalOpen(false)
@@ -522,11 +527,8 @@ export default function CreditManagement() {
   const handleSaveProductSettings = async (e) => {
     e.preventDefault()
     const tDef = Number(productSettings.defaultTenureMonths)
-    const tMin = Number(productSettings.minTenureMonths)
-    const tMax = Number(productSettings.maxTenureMonths)
-
-    if (tDef < 3 || tDef > 5 || tMin < 3 || tMax > 5) {
-      return notify('Business credit policy strictly enforces tenure between 3 and 5 months', 'error')
+    if (tDef < 1 || tDef > 12) {
+      return notify('Valid default tenure is required (1 to 5 months)', 'error')
     }
 
     setSavingSettings(true)
@@ -560,7 +562,7 @@ export default function CreditManagement() {
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Credit Management & Financing</h1>
           <p className="text-sm text-gray-500 font-medium mt-1 uppercase tracking-widest text-[10px]">
-            Trade Credit Line • Business Credit Line (3-5 Months Daily Compounding) • Bureau Reporting
+            Trade Credit Line • Business Credit Line (Working Capital) • Bureau Compliance Audit
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -592,10 +594,10 @@ export default function CreditManagement() {
       <div className="flex items-center gap-2 border-b border-gray-200 pb-3 overflow-x-auto no-scrollbar">
         {[
           { id: 'trade_credit', label: 'Trade Credit (Orders)', badge: retailers.filter(r => r.isCreditEnabled).length },
-          { id: 'business_apps', label: 'Business Credit Applications', badge: businessApps.filter(a => a.status === 'PENDING_REVIEW').length, badgeColor: 'bg-amber-100 text-amber-800' },
+          { id: 'business_apps', label: 'Business Credit Applications', badge: businessApps.filter(a => ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_REVIEW'].includes(a.status)).length, badgeColor: 'bg-amber-100 text-amber-800' },
           { id: 'business_facilities', label: 'Active Facilities & Amortization', badge: businessFacilities.filter(f => f.status === 'ACTIVE').length, badgeColor: 'bg-emerald-100 text-emerald-800' },
-          { id: 'bureau_report', label: 'Credit Bureau Reporting (CIBIL)' },
-          { id: 'product_settings', label: 'Product Settings (Tenure 3-5M)' }
+          { id: 'bureau_report', label: 'Credit Bureau Export & Audit' },
+          { id: 'product_settings', label: 'Product Settings & Terms' }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -885,65 +887,87 @@ export default function CreditManagement() {
                             <div className="text-[11px] text-gray-400 italic truncate max-w-xs">{app.purpose || 'Working capital'}</div>
                           </td>
                           <td className="px-6 py-4">
-                            {app.approvedLimit ? (
+                            {(app.approvedOffer?.approvedAmount || app.approvedLimit) ? (
                               <>
-                                <div className="font-black text-emerald-600">₹{(app.approvedLimit || 0).toLocaleString('en-IN')}</div>
-                                <div className="text-xs text-gray-600">
-                                  {app.approvedTenureMonths}M @ {app.annualInterestRatePercent}% p.a.
+                                <div className="font-black text-emerald-600">
+                                  ₹{(app.approvedOffer?.approvedAmount || app.approvedLimit || 0).toLocaleString('en-IN')}
                                 </div>
-                                <div className="text-[10px] text-gray-400">{app.approvedFrequency} compounding</div>
+                                <div className="text-xs text-gray-600">
+                                  {app.approvedOffer?.approvedTenureMonths || app.approvedTenureMonths}M @ {app.approvedOffer?.interestRatePerAnnum || app.annualInterestRatePercent || 18}% p.a.
+                                </div>
+                                <div className="text-[10px] text-gray-400 capitalize">
+                                  {app.approvedOffer?.repaymentFrequency || app.approvedFrequency || 'WEEKLY'} instalments
+                                </div>
                               </>
                             ) : (
                               <span className="text-xs text-gray-400 italic">Under Review</span>
                             )}
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                              app.status === 'PENDING_REVIEW' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                              app.status === 'APPROVED' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                              app.status === 'ACCEPTED' ? 'bg-purple-50 text-purple-700 border border-purple-200 font-black animate-pulse' :
-                              app.status === 'DISBURSED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                              'bg-rose-50 text-rose-700 border border-rose-200'
-                            }`}>
-                              {app.status === 'ACCEPTED' ? 'Ready to Disburse' : app.status}
-                            </span>
+                            {(() => {
+                              const isUnderReview = ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_REVIEW'].includes(app.status);
+                              const isReadyToDisburse = ['OFFER_ACCEPTED', 'ACCEPTED', 'DISBURSEMENT_PENDING'].includes(app.status);
+                              return (
+                                <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                  isUnderReview ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                                  app.status === 'APPROVED' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                  isReadyToDisburse ? 'bg-purple-50 text-purple-700 border border-purple-200 font-bold' :
+                                  app.status === 'DISBURSED' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                                  app.status === 'REJECTED' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                                  'bg-slate-50 text-slate-700 border border-slate-200'
+                                }`}>
+                                  {isUnderReview ? 'Needs Review' :
+                                   isReadyToDisburse ? 'Ready for Payout' :
+                                   app.status === 'APPROVED' ? 'Sanctioned (Pending Acceptance)' :
+                                   app.status}
+                                </span>
+                              );
+                            })()}
                           </td>
                           <td className="px-6 py-4 text-xs text-gray-500">
                             {new Date(app.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              {app.status === 'PENDING_REVIEW' && (
-                                <button
-                                  onClick={() => {
-                                    setSelectedApp(app)
-                                    setReviewLimit(String(app.requestedAmount || ''))
-                                    setReviewTenure(app.requestedTenureMonths || 3)
-                                    setReviewFreq(app.requestedFrequency || 'WEEKLY')
-                                    setReviewRate(18)
-                                    setReviewFee(2)
-                                    setReviewAction('APPROVE')
-                                    setReviewModalOpen(true)
-                                  }}
-                                  className="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
-                                >
-                                  Review
-                                </button>
-                              )}
-                              {app.status === 'ACCEPTED' && (
-                                <button
-                                  onClick={() => {
-                                    setSelectedApp(app)
-                                    setDisburseRef('')
-                                    setDisburseRemarks('')
-                                    setDisburseModalOpen(true)
-                                  }}
-                                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
-                                >
-                                  Confirm Payout
-                                </button>
-                              )}
-                            </div>
+                            {(() => {
+                              const isUnderReview = ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_REVIEW'].includes(app.status);
+                              const isReadyToDisburse = ['OFFER_ACCEPTED', 'ACCEPTED', 'DISBURSEMENT_PENDING'].includes(app.status);
+                              return (
+                                <div className="flex items-center justify-end gap-2">
+                                  {isUnderReview && (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedApp(app)
+                                        setReviewLimit(String(app.approvedOffer?.approvedAmount || app.requestedAmount || ''))
+                                        setReviewTenure(app.approvedOffer?.approvedTenureMonths || app.requestedTenureMonths || 3)
+                                        setReviewFreq(app.approvedOffer?.repaymentFrequency || app.requestedFrequency || 'WEEKLY')
+                                        setReviewRate(app.approvedOffer?.interestRatePerAnnum || app.annualInterestRatePercent || 18)
+                                        setReviewFee(2)
+                                        setReviewAction('APPROVE')
+                                        setReviewReason('')
+                                        setReviewRemarks('')
+                                        setReviewModalOpen(true)
+                                      }}
+                                      className="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+                                    >
+                                      Review
+                                    </button>
+                                  )}
+                                  {isReadyToDisburse && (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedApp(app)
+                                        setDisburseRef('')
+                                        setDisburseRemarks('')
+                                        setDisburseModalOpen(true)
+                                      }}
+                                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+                                    >
+                                      Confirm Payout
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
                         </tr>
                       )
@@ -1241,7 +1265,7 @@ export default function CreditManagement() {
                   onChange={(e) => setProductSettings(p => ({ ...p, defaultAnnualInterestRatePercent: e.target.value }))}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-500"
                 />
-                <span className="text-[10px] text-gray-400 mt-1 block">Compounded daily (A = P(1+r)^n)</span>
+                <span className="text-[10px] text-gray-400 mt-1 block">Accrued daily on reducing balance</span>
               </div>
 
               <div>
@@ -1253,11 +1277,13 @@ export default function CreditManagement() {
                   onChange={(e) => setProductSettings(p => ({ ...p, defaultTenureMonths: Number(e.target.value) }))}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-500"
                 >
+                  <option value={1}>1 Month</option>
+                  <option value={2}>2 Months</option>
                   <option value={3}>3 Months (Default)</option>
                   <option value={4}>4 Months</option>
-                  <option value={5}>5 Months (Maximum limit)</option>
+                  <option value={5}>5 Months</option>
                 </select>
-                <span className="text-[10px] text-emerald-600 font-bold mt-1 block">Strictly enforced: 3 to 5 months</span>
+                <span className="text-[10px] text-slate-500 font-bold mt-1 block">Configurable tenure: 1 to 5 months</span>
               </div>
             </div>
 
@@ -1364,12 +1390,14 @@ export default function CreditManagement() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tenure (3-5 Months)</label>
+                      <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tenure (Months)</label>
                       <select
                         value={reviewTenure}
                         onChange={(e) => setReviewTenure(Number(e.target.value))}
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
                       >
+                        <option value={1}>1 Month</option>
+                        <option value={2}>2 Months</option>
                         <option value={3}>3 Months</option>
                         <option value={4}>4 Months</option>
                         <option value={5}>5 Months</option>
@@ -1493,12 +1521,14 @@ export default function CreditManagement() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tenure (3-5 Months)</label>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Tenure (Months)</label>
                   <select
                     value={proactiveTenure}
                     onChange={(e) => setProactiveTenure(Number(e.target.value))}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
                   >
+                    <option value={1}>1 Month</option>
+                    <option value={2}>2 Months</option>
                     <option value={3}>3 Months</option>
                     <option value={4}>4 Months</option>
                     <option value={5}>5 Months</option>

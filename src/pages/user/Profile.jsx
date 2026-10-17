@@ -103,20 +103,9 @@ export const VerifiedPartnerPill = ({ verified = false }) => {
   );
 };
 
-/* ── Avatar with Verified Badge Overlay ── */
+/* ── Avatar Component (Clean Profile Photo) ── */
 const Avatar = ({ user, size = 'md' }) => {
   const sz = { sm: 'w-9 h-9 text-sm', md: 'w-12 h-12 text-base', lg: 'w-16 h-16 text-xl' }[size];
-  const badgeCls = {
-    sm: 'w-3.5 h-3.5 -bottom-1 -right-1 ring-1',
-    md: 'w-4.5 h-4.5 -bottom-1 -right-1 ring-2',
-    lg: 'w-5 h-5 -bottom-1 -right-1 ring-2'
-  }[size];
-  const iconCls = {
-    sm: 'w-3.5 h-3.5',
-    md: 'w-4 h-4',
-    lg: 'w-4.5 h-4.5'
-  }[size];
-  const isVerified = user?.kyc?.status === 'VERIFIED' || user?.isKycComplete;
   const avatarUrl = user?.kyc?.profilePicture || user?.avatar;
 
   return (
@@ -132,14 +121,6 @@ const Avatar = ({ user, size = 'md' }) => {
           className={`${sz} rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center font-black text-white ring-2 ring-white shadow-md`}
         >
           {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-        </div>
-      )}
-      {isVerified && (
-        <div
-          className={`absolute ${badgeCls} rounded-full bg-white ring-white flex items-center justify-center shadow-xs`}
-          title="Verified B2B Partner"
-        >
-          <BlueVerifiedIcon cls={`${iconCls} text-blue-500`} />
         </div>
       )}
     </div>
@@ -199,7 +180,28 @@ export default function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [activeSection, setActiveSection] = useState('overview');
+  const getInitialTab = () => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const tab = params.get('tab');
+      if (tab && ['overview', 'credit', 'business', 'personal', 'addresses', 'support', 'settings'].includes(tab)) {
+        return tab === 'personal' ? 'business' : tab;
+      }
+    } catch (e) {}
+    return 'overview';
+  };
+
+  const [activeSection, setActiveSection] = useState(getInitialTab);
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const tab = params.get('tab');
+      if (tab && ['overview', 'credit', 'business', 'personal', 'addresses', 'support', 'settings'].includes(tab)) {
+        setActiveSection(tab === 'personal' ? 'business' : tab);
+      }
+    } catch (e) {}
+  }, [location.search]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [originalKyc, setOriginalKyc] = useState({});
@@ -509,7 +511,10 @@ export default function Profile() {
     const amt = Number(businessApplyForm.requestedAmount);
     if (!amt || amt <= 0) return notify('Please enter a valid requested amount', 'error');
     const tenure = Number(businessApplyForm.requestedTenureMonths);
-    if (tenure < 3 || tenure > 5) return notify('Tenure must be strictly between 3 and 5 months', 'error');
+    const allowedTenures = businessEligibility?.settings?.permittedTenures && businessEligibility.settings.permittedTenures.length > 0
+      ? businessEligibility.settings.permittedTenures
+      : [1, 2, 3, 4, 5];
+    if (!allowedTenures.includes(tenure)) return notify('Please select a valid facility tenure', 'error');
 
     setSubmittingBusinessApp(true);
     try {
@@ -1057,15 +1062,13 @@ export default function Profile() {
     }));
   };
 
-  /* Nav config */
+  /* Nav config - 5 clean primary destinations for mobile and desktop */
   const navItems = [
-    { id: 'overview',   label: 'Overview',        shortLabel: 'Home',     icon: 'home'  },
-    { id: 'credit',     label: 'Credit Facility', shortLabel: 'Credit',   icon: 'credit' },
-    { id: 'personal',   label: 'Profile',         shortLabel: 'Profile',  icon: 'user'  },
-    { id: 'business',   label: 'Business',        shortLabel: 'Business', icon: 'pkg'   },
-    { id: 'addresses',  label: 'Business Address', shortLabel: 'Address', icon: 'map' },
-    { id: 'support',    label: 'Support',         shortLabel: 'Support',  icon: 'help'  },
-    { id: 'settings',   label: 'Settings',        shortLabel: 'Settings', icon: 'gear'  },
+    { id: 'overview',   label: 'Overview',            shortLabel: 'Overview', icon: 'home'   },
+    { id: 'credit',     label: 'Credit Facilities',   shortLabel: 'Credit',   icon: 'credit' },
+    { id: 'business',   label: 'Profile & Business',  shortLabel: 'Business', icon: 'pkg'    },
+    { id: 'addresses',  label: 'Saved Addresses',     shortLabel: 'Address',  icon: 'map'    },
+    { id: 'support',    label: 'Support Desk',        shortLabel: 'Support',  icon: 'help'   },
   ];
 
   if (loading) return (
@@ -1183,11 +1186,8 @@ export default function Profile() {
             <div className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-sm flex items-center gap-3.5">
               <Avatar user={user} size="md" />
               <div className="min-w-0">
-                <div className="pf-display font-black text-slate-900 text-sm truncate flex items-center gap-1">
+                <div className="pf-display font-black text-slate-900 text-sm truncate">
                   <span className="truncate">{formData.businessName || user?.name || 'Partner Account'}</span>
-                  {(user?.kyc?.status === 'VERIFIED' || user?.isKycComplete) && (
-                    <BlueVerifiedIcon cls="w-4 h-4 text-blue-600 flex-shrink-0" />
-                  )}
                 </div>
                 <div className="text-[11px] text-slate-500 font-medium truncate">{user?.phone || user?.email}</div>
                 <div className="mt-1">
@@ -1234,7 +1234,7 @@ export default function Profile() {
           </aside>
 
           {/* ── MAIN CONTENT ── */}
-          <main className="flex-1 min-w-0">
+          <main className="flex-1 min-w-0 pb-28 lg:pb-8">
 
             {/* ──── OVERVIEW ──── */}
             {activeSection === 'overview' && (
@@ -1759,25 +1759,25 @@ export default function Profile() {
                     {/* Header Card */}
                     <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <h2 className="pf-display font-black text-xl text-slate-800">Business Credit Line</h2>
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-50 text-violet-700 border border-violet-200">
-                            Strict 3–5 Months
+                            Working Capital
                           </span>
                           <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            18% p.a. Daily Compounding
+                            18% p.a. Accrual Rate
                           </span>
                         </div>
                         <p className="text-slate-400 text-xs mt-1">
-                          Dedicated working capital term line for inventory expansion & business operations. Daily compounding interest with weekly/daily repayments.
+                          Dedicated working capital term facility for inventory procurement & business expansion. Transparent structured repayments via Bank Transfer or Razorpay.
                         </p>
                       </div>
                       <div className="flex items-center gap-2">
-                        {businessEligibility?.isEligible && (
+                        {(businessEligibility?.isEligible || businessEligibility?.eligible || user?.isKycComplete || user?.kyc?.status === 'VERIFIED') && (
                           <button
                             type="button"
                             onClick={() => setShowBusinessApplyModal(true)}
-                            className="px-4 py-2.5 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-md shadow-violet-200 active:scale-[0.98] transition-all"
+                            className="px-4 py-2.5 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-md shadow-violet-200 active:scale-[0.98] transition-all whitespace-nowrap"
                           >
                             + Apply for Working Capital
                           </button>
@@ -1817,7 +1817,7 @@ export default function Profile() {
                             </div>
                             <div className="bg-white/80 p-2.5 rounded-xl border border-amber-200">
                               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Interest Rate</span>
-                              <span className="font-black text-slate-800">{offer.approvedInterestRateAnnual || 18}% p.a. (Daily Comp.)</span>
+                              <span className="font-black text-slate-800">{offer.approvedInterestRateAnnual || 18}% p.a.</span>
                             </div>
                             <div className="bg-white/80 p-2.5 rounded-xl border border-amber-200">
                               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Frequency</span>
@@ -1849,59 +1849,180 @@ export default function Profile() {
                         Loading business credit line details...
                       </div>
                     ) : businessFacilities.length === 0 ? (
-                      <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xs text-center max-w-xl mx-auto space-y-4">
-                        <div className="w-14 h-14 rounded-3xl bg-violet-50 text-violet-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
-                          💼
-                        </div>
-                        <h3 className="pf-display font-black text-xl text-slate-900">Working Capital Credit Facility</h3>
-                        <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
-                          Get approved for high-limit business capital to finance purchase orders, supplier payments, and working inventory. Strict 3 to 5 months term with transparent daily compounding interest.
-                        </p>
-                        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-left text-xs space-y-2 text-slate-700">
-                          <div className="font-bold text-slate-900 flex items-center justify-between">
-                            <span>Facility Features & Eligibility:</span>
-                            {businessEligibility?.isEligible ? (
-                              <span className="text-emerald-600 font-bold">✓ Pre-Qualified</span>
-                            ) : (
-                              <span className="text-slate-400">KYC Verification Required</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span>✓</span>
-                            <span>Strict 3–5 Months flexible tenure with weekly or daily auto-debit</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span>✓</span>
-                            <span>Daily compounding formula: A = P(1+r/365)^n, paise precision</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span>✓</span>
-                            <span>Automated CIBIL / Equifax commercial bureau positive scoring</span>
-                          </div>
-                        </div>
+                      (() => {
+                        const isKycVerified = Boolean(user?.isKycComplete || user?.kyc?.status === 'VERIFIED');
+                        const isKycPending = user?.kyc?.status === 'PENDING_VERIFICATION' || user?.kyc?.status === 'UNDER_REVIEW' || user?.kyc?.status === 'SUBMITTED';
+                        const payoutPendingApp = businessApps.find(a => ['OFFER_ACCEPTED', 'ACCEPTED', 'DISBURSEMENT_PENDING'].includes(a.status));
+                        const pendingApp = businessApps.find(a => ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_REVIEW'].includes(a.status));
+                        const infoReqApp = businessApps.find(a => a.status === 'ADDITIONAL_INFO_REQUIRED');
 
-                        {businessEligibility?.isEligible ? (
-                          <div className="pt-2 space-y-2">
-                            <button
-                              type="button"
-                              onClick={() => setShowBusinessApplyModal(true)}
-                              className="inline-block px-6 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md shadow-violet-200 hover:from-violet-700 hover:to-indigo-700"
-                            >
-                              Apply for ₹{(businessEligibility?.preQualifiedLimit || 100000).toLocaleString('en-IN')} Working Capital →
-                            </button>
-                            <p className="text-[11px] text-slate-400">No collateral required. Disbursed directly after compliance review.</p>
+                        if (payoutPendingApp) {
+                          return (
+                            <div className="bg-white rounded-3xl p-8 border border-purple-200 shadow-sm text-center max-w-xl mx-auto space-y-4">
+                              <div className="w-14 h-14 rounded-3xl bg-purple-50 text-purple-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                                🏦
+                              </div>
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200">
+                                <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                                <span>Offer Accepted — Payout In Process</span>
+                              </div>
+                              <h3 className="pf-display font-black text-xl text-slate-900">
+                                ₹{Number(payoutPendingApp.approvedOffer?.approvedAmount || payoutPendingApp.requestedAmount).toLocaleString('en-IN')} Sanction Confirmed
+                              </h3>
+                              <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+                                Your facility agreement has been accepted. Administration is processing the disbursement bank transfer (NEFT/RTGS). Funds will be credited directly to your registered bank account shortly.
+                              </p>
+                              <div className="p-3 bg-purple-50/50 rounded-2xl border border-purple-100 text-xs text-purple-900 font-semibold">
+                                Application #{payoutPendingApp.applicationNumber} • Tenure: {payoutPendingApp.approvedOffer?.approvedTenureMonths || payoutPendingApp.requestedTenureMonths} Months ({payoutPendingApp.approvedOffer?.repaymentFrequency || 'Weekly'})
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (pendingApp) {
+                          return (
+                            <div className="bg-white rounded-3xl p-8 border border-amber-200 shadow-sm text-center max-w-xl mx-auto space-y-4">
+                              <div className="w-14 h-14 rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                                ⏳
+                              </div>
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                <span>Application Under Review</span>
+                              </div>
+                              <h3 className="pf-display font-black text-xl text-slate-900">
+                                ₹{Number(pendingApp.requestedAmount).toLocaleString('en-IN')} Working Capital Requested
+                              </h3>
+                              <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+                                Our risk and compliance committee is evaluating your application (#{pendingApp.applicationNumber}). You will be notified as soon as sanctioned loan terms are ready.
+                              </p>
+                              <div className="p-3 bg-amber-50/50 rounded-2xl border border-amber-100 text-xs text-amber-900 font-semibold">
+                                Requested Tenure: {pendingApp.requestedTenureMonths} Months • {pendingApp.requestedFrequency || 'Weekly'} instalments
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (infoReqApp) {
+                          return (
+                            <div className="bg-white rounded-3xl p-8 border border-amber-200 shadow-sm text-center max-w-xl mx-auto space-y-4">
+                              <div className="w-14 h-14 rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                                📋
+                              </div>
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                <span>Additional Information Required</span>
+                              </div>
+                              <h3 className="pf-display font-black text-xl text-slate-900">
+                                Application #{infoReqApp.applicationNumber}
+                              </h3>
+                              <p className="text-xs text-slate-700 bg-amber-50 p-3 rounded-xl border border-amber-100 leading-relaxed max-w-md mx-auto font-medium">
+                                Reviewer Note: {infoReqApp.adminNotes || 'Please submit updated documentation.'}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setActiveSection('support')}
+                                className="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-amber-600 hover:bg-amber-700 transition-all shadow-sm"
+                              >
+                                Contact Support Desk →
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        if (isKycVerified) {
+                          return (
+                            <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xs text-center max-w-xl mx-auto space-y-4">
+                              <div className="w-14 h-14 rounded-3xl bg-violet-50 text-violet-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                                💼
+                              </div>
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span>✓ Pre-Qualified Partner</span>
+                              </div>
+                              <h3 className="pf-display font-black text-xl text-slate-900">Working Capital Credit Facility</h3>
+                              <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+                                Access dedicated working capital to finance wholesale purchase orders, supplier settlements, and seasonal inventory expansion with structured repayment.
+                              </p>
+                              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-left text-xs space-y-2.5 text-slate-700">
+                                <div className="font-bold text-slate-900">Facility Features & Terms:</div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-violet-600 font-bold">✓</span>
+                                  <span>Flexible tenure: 1 to 5 months with weekly or daily structured instalments</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-violet-600 font-bold">✓</span>
+                                  <span>Interest rate: 18% p.a. calculated on outstanding principal balance</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-violet-600 font-bold">✓</span>
+                                  <span>Transparent 2% processing fee (+ 18% GST) deducted directly at disbursement</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-violet-600 font-bold">✓</span>
+                                  <span>Repayment methods: Instant bank transfer (NEFT/RTGS) and Razorpay checkout</span>
+                                </div>
+                              </div>
+
+                              <div className="pt-2 space-y-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setShowBusinessApplyModal(true)}
+                                  className="inline-block px-6 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md shadow-violet-200 hover:from-violet-700 hover:to-indigo-700 active:scale-[0.98] transition-all"
+                                >
+                                  + Apply for Working Capital Facility →
+                                </button>
+                                <p className="text-[11px] text-slate-400">Sanctioned limits up to ₹5,00,000. No collateral required.</p>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        if (isKycPending) {
+                          return (
+                            <div className="bg-white rounded-3xl p-8 border border-purple-100 shadow-xs text-center max-w-xl mx-auto space-y-4">
+                              <div className="w-14 h-14 rounded-3xl bg-purple-50 text-purple-600 flex items-center justify-center text-2xl mx-auto shadow-sm animate-pulse">
+                                ⏳
+                              </div>
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200">
+                                <span>Verification in Progress</span>
+                              </div>
+                              <h3 className="pf-display font-black text-xl text-slate-900">KYC Under Review</h3>
+                              <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+                                Your business KYC documentation is currently being verified by our compliance team. Once approved, the Business Credit application desk will automatically unlock.
+                              </p>
+                              <div className="pt-2">
+                                <Link
+                                  to="/verify-kyc"
+                                  className="inline-block px-6 py-3 rounded-xl font-black text-xs text-white bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-200 transition-all"
+                                >
+                                  View Verification Status →
+                                </Link>
+                              </div>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xs text-center max-w-xl mx-auto space-y-4">
+                            <div className="w-14 h-14 rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                              🛡️
+                            </div>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                              <span>KYC Verification Required</span>
+                            </div>
+                            <h3 className="pf-display font-black text-xl text-slate-900">Complete Your Partner KYC</h3>
+                            <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+                              Complete your 3-step structured business verification to activate wholesale ordering and apply for high-limit business working capital facilities.
+                            </p>
+                            <div className="pt-2">
+                              <Link
+                                to="/verify-kyc"
+                                className="inline-block px-6 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md shadow-violet-200 hover:from-violet-700 hover:to-indigo-700 transition-all"
+                              >
+                                Complete KYC Verification Desk →
+                              </Link>
+                            </div>
                           </div>
-                        ) : (
-                          <div className="pt-2">
-                            <Link
-                              to="/verify-kyc"
-                              className="inline-block px-6 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md shadow-violet-200"
-                            >
-                              Complete KYC to Unlock Business Credit →
-                            </Link>
-                          </div>
-                        )}
-                      </div>
+                        );
+                      })()
                     ) : (
                       <div className="space-y-6">
                         {businessFacilities.map(fac => {
@@ -1937,7 +2058,7 @@ export default function Profile() {
                                     </span>
                                   </div>
                                   <p className="text-xs text-slate-500 mt-1">
-                                    Tenure: {fac.tenureMonths} Months ({fac.repaymentFrequency} instalments) • {fac.interestRateAnnual}% p.a. daily compounding
+                                    Tenure: {fac.tenureMonths} Months ({fac.repaymentFrequency} instalments) • {fac.interestRateAnnual}% p.a. accrued daily on principal
                                   </p>
                                 </div>
 
@@ -1990,7 +2111,7 @@ export default function Profile() {
                                     ₹{Number(fac.accruedInterestBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                   </div>
                                   <div className="text-[10px] text-slate-400 mt-0.5">
-                                    Daily compounding formula
+                                    Accrued daily on outstanding principal
                                   </div>
                                 </div>
 
@@ -2022,27 +2143,20 @@ export default function Profile() {
                               {/* Mandate Bar */}
                               <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-bold text-slate-700">AutoPay Mandate:</span>
+                                  <span className="font-bold text-slate-700">Repayment Status:</span>
                                   {fac.mandate?.status === 'ACTIVE' ? (
                                     <span className="text-emerald-700 font-bold flex items-center gap-1">
-                                      <span>✓ Active</span>
+                                      <span>✓ AutoPay Active</span>
                                       <span className="text-slate-400 font-normal">({fac.mandate.mandateId})</span>
                                     </span>
                                   ) : (
-                                    <span className="text-amber-700 font-bold">
-                                      ⚠️ Pending authorization
+                                    <span className="text-slate-600 font-medium flex items-center gap-1.5">
+                                      <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
+                                      <span>Manual Repayment Active (Bank Transfer / Razorpay)</span>
+                                      <span className="text-slate-400 font-normal">• AutoPay pending gateway onboarding</span>
                                     </span>
                                   )}
                                 </div>
-                                {fac.mandate?.status !== 'ACTIVE' && !isClosed && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleInitAutoPay(fac)}
-                                    className="text-violet-600 hover:text-violet-800 font-bold text-xs underline"
-                                  >
-                                    Authorize e-Mandate →
-                                  </button>
-                                )}
                               </div>
                             </div>
                           );
@@ -3364,20 +3478,20 @@ export default function Profile() {
                 </p>
               </Field>
 
-              <Field label="Loan Tenure (Strictly 3 to 5 Months)">
-                <div className="grid grid-cols-3 gap-2">
-                  {[3, 4, 5].map((m) => (
+              <Field label="Facility Tenure">
+                <div className="grid grid-cols-5 gap-2">
+                  {(businessEligibility?.settings?.permittedTenures || [1, 2, 3, 4, 5]).map((m) => (
                     <button
                       key={m}
                       type="button"
                       onClick={() => setBusinessApplyForm(p => ({ ...p, requestedTenureMonths: m }))}
-                      className={`py-3 rounded-xl font-black text-xs transition-all border ${
+                      className={`py-2.5 rounded-xl font-black text-xs transition-all border ${
                         Number(businessApplyForm.requestedTenureMonths) === m
                           ? 'bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-200'
                           : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                       }`}
                     >
-                      {m} Months
+                      {m} {m === 1 ? 'Month' : 'Months'}
                     </button>
                   ))}
                 </div>
@@ -3435,10 +3549,10 @@ export default function Profile() {
                   </div>
                   <div className="flex justify-between text-slate-600">
                     <span>Interest Rate:</span>
-                    <span className="font-bold text-violet-700">18.00% p.a. (Compounded Daily)</span>
+                    <span className="font-bold text-violet-700">18.00% p.a. (Accrued Daily on Principal)</span>
                   </div>
                   <div className="flex justify-between text-slate-600 pt-1 border-t border-violet-100">
-                    <span className="font-bold text-slate-800">Estimated Net Payout:</span>
+                    <span>Estimated Net Payout:</span>
                     <span className="font-black text-slate-900">
                       ₹{Math.round(Number(businessApplyForm.requestedAmount) * (1 - 0.02 * 1.18)).toLocaleString('en-IN')}
                     </span>
@@ -3511,7 +3625,7 @@ export default function Profile() {
               <div className="flex justify-between py-1 border-b border-slate-200/60">
                 <span className="text-slate-500">Interest Calculation:</span>
                 <span className="font-bold text-violet-700">
-                  {selectedOffer.approvedInterestRateAnnual || 18}% p.a. (Daily Compounding)
+                  {selectedOffer.approvedInterestRateAnnual || 18}% p.a. (Accrued Daily on Principal)
                 </span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-200/60">
@@ -3543,7 +3657,7 @@ export default function Profile() {
                   className="mt-0.5 rounded border-amber-300 text-violet-600 focus:ring-violet-500 w-4 h-4"
                 />
                 <span className="leading-relaxed">
-                  I accept the Business Credit Line Facility terms. I understand that interest compounds daily at 18% p.a., instalments will be due according to the amortization schedule, and performance will be reported to commercial credit bureaus (CIBIL/Equifax).
+                  I accept the Business Credit Line Facility terms. I understand that interest accrues daily on outstanding principal at 18% p.a., instalments will be due according to the amortization schedule, and performance records are maintained for partner credit standing.
                 </span>
               </label>
             </div>
