@@ -1751,9 +1751,11 @@ export default function Profile() {
                       )}
                     </div>
                   )}
-                ) : (
-                  /* ──── BUSINESS CREDIT LINE TAB CONTENT ──── */
-                  <div className="space-y-6">
+                </div>
+              </div>
+            )
+          ) : (
+            <div className="space-y-6">
                     {/* Header Card */}
                     <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div>
