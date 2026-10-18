@@ -291,6 +291,22 @@ export default function Profile() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedScheduleFacility, setSelectedScheduleFacility] = useState(null);
 
+  // Dedicated Bank Account Configuration modal
+  const [showBankConfigModal, setShowBankConfigModal] = useState(false);
+  const [savingBankConfig, setSavingBankConfig] = useState(false);
+  const [bankConfigForm, setBankConfigForm] = useState({
+    accountHolder: '',
+    bankName: '',
+    accountNumber: '',
+    confirmAccountNumber: '',
+    ifsc: '',
+    accountType: 'CURRENT'
+  });
+
+  // Application Activity Timeline & Audit Logs modal
+  const [showAppTimelineModal, setShowAppTimelineModal] = useState(false);
+  const [selectedTimelineApp, setSelectedTimelineApp] = useState(null);
+
   const loadBankDetails = async () => {
     try {
       const { data } = await api.get('/api/public/bank-details');
@@ -551,15 +567,122 @@ export default function Profile() {
   const openAcceptOfferModal = (offer) => {
     setSelectedOffer(offer);
     setAcceptedTermsChecked(false);
+    const bk = user?.bankDetails?.accountNumber
+      ? user.bankDetails
+      : (offer.businessDetails?.bankDetails || {});
     setDisburseBankDetails({
-      accountHolder: offer.businessDetails?.bankDetails?.accountHolder || user?.kyc?.businessName || user?.name || '',
-      bankName: offer.businessDetails?.bankDetails?.bankName || '',
-      accountNumber: offer.businessDetails?.bankDetails?.accountNumber || '',
-      confirmAccountNumber: offer.businessDetails?.bankDetails?.accountNumber || '',
-      ifsc: offer.businessDetails?.bankDetails?.ifsc || '',
-      accountType: offer.businessDetails?.bankDetails?.accountType || 'CURRENT'
+      accountHolder: bk.accountHolder || offer.businessDetails?.bankDetails?.accountHolder || user?.kyc?.businessName || user?.name || '',
+      bankName: bk.bankName || offer.businessDetails?.bankDetails?.bankName || '',
+      accountNumber: bk.accountNumber || offer.businessDetails?.bankDetails?.accountNumber || '',
+      confirmAccountNumber: bk.accountNumber || offer.businessDetails?.bankDetails?.accountNumber || '',
+      ifsc: bk.ifsc || offer.businessDetails?.bankDetails?.ifsc || '',
+      accountType: bk.accountType || offer.businessDetails?.bankDetails?.accountType || 'CURRENT'
     });
     setShowAcceptOfferModal(true);
+  };
+
+  const openBankConfigModal = () => {
+    const bk = user?.bankDetails?.accountNumber
+      ? user.bankDetails
+      : (businessApps[0]?.businessDetails?.bankDetails || {});
+    setBankConfigForm({
+      accountHolder: bk.accountHolder || user?.kyc?.businessName || user?.name || '',
+      bankName: bk.bankName || '',
+      accountNumber: bk.accountNumber || '',
+      confirmAccountNumber: bk.accountNumber || '',
+      ifsc: bk.ifsc || '',
+      accountType: bk.accountType || 'CURRENT'
+    });
+    setShowBankConfigModal(true);
+  };
+
+  const handleSaveBankConfig = async (e) => {
+    e.preventDefault();
+    if (!bankConfigForm.accountHolder.trim()) return notify('Account Holder Name is required', 'error');
+    if (!bankConfigForm.bankName.trim()) return notify('Bank Name is required', 'error');
+    if (!bankConfigForm.accountNumber.trim()) return notify('Bank Account Number is required', 'error');
+    if (bankConfigForm.accountNumber.trim() !== bankConfigForm.confirmAccountNumber.trim()) {
+      return notify('Bank account numbers do not match', 'error');
+    }
+    if (!bankConfigForm.ifsc.trim() || bankConfigForm.ifsc.trim().length < 8) {
+      return notify('Valid Bank IFSC code is required', 'error');
+    }
+
+    setSavingBankConfig(true);
+    try {
+      await api.post('/api/credit/me/bank-details', {
+        accountHolder: bankConfigForm.accountHolder.trim(),
+        bankName: bankConfigForm.bankName.trim(),
+        accountNumber: bankConfigForm.accountNumber.trim(),
+        ifsc: bankConfigForm.ifsc.trim().toUpperCase(),
+        accountType: bankConfigForm.accountType
+      });
+      notify('Disbursement bank account linked & verified successfully!', 'success');
+      setShowBankConfigModal(false);
+      await refreshProfile();
+      await loadBusinessCredit();
+      await loadCredit();
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Failed to save bank details', 'error');
+    } finally {
+      setSavingBankConfig(false);
+    }
+  };
+
+  const openAppTimeline = (app) => {
+    setSelectedTimelineApp(app);
+    setShowAppTimelineModal(true);
+  };
+
+  const handleInitTradeAutoPay = async () => {
+    try {
+      notify('Initiating Trade Credit AutoPay mandate setup...', 'info');
+      const { data } = await api.post('/api/credit/trade/mandate/init');
+      const order = data.mandate?.mandateOrder || data.mandateOrder;
+      const key = data.mandate?.key || data.key || import.meta.env.VITE_RAZORPAY_KEY_ID;
+      const customerId = data.mandate?.customerId || data.customerId;
+
+      if (order && order.id) {
+        await ensureRazorpayLoaded();
+        const options = {
+          key: key,
+          amount: order.amount,
+          currency: order.currency || 'INR',
+          name: 'Click2Kart Trade Credit AutoPay',
+          description: 'Recurring auto-debit setup for wholesale trade credit line',
+          order_id: order.id,
+          customer_id: customerId || undefined,
+          recurring: 1,
+          theme: { color: '#7c3aed' },
+          prefill: {
+            name: user?.name,
+            contact: user?.phone,
+            email: user?.email
+          },
+          handler: async (response) => {
+            try {
+              notify('Verifying Trade Credit mandate authorization...', 'info');
+              await api.post('/api/credit/trade/mandate/verify', {
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature
+              });
+              notify('Trade Credit AutoPay mandate active! Revolving dues will be debited automatically on cycle due dates.', 'success');
+              await loadCredit();
+            } catch (vErr) {
+              notify(vErr?.response?.data?.message || 'Failed to confirm mandate status', 'error');
+              await loadCredit();
+            }
+          }
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      } else {
+        notify(data.message || data.mandate?.message || 'AutoPay e-Mandate is pending aggregator onboarding. Please use manual online repayment or direct bank transfer.', 'info');
+      }
+    } catch (err) {
+      notify(err?.response?.data?.message || 'Trade Credit AutoPay setup requires bank authorization', 'info');
+    }
   };
 
   const handleAcceptBusinessOffer = async (e) => {
@@ -1637,6 +1760,44 @@ export default function Profile() {
                   </div>
                 </div>
 
+                {/* Trade Credit AutoPay e-Mandate Bar */}
+                <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center text-lg">
+                      ⚡
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-800">Trade Credit AutoPay Mandate</span>
+                        {(creditData?.autoPayMandate?.status === 'ACTIVE' || user?.autoPayMandate?.status === 'ACTIVE') ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>Active</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                            <span>Not Active</span>
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">
+                        {(creditData?.autoPayMandate?.status === 'ACTIVE' || user?.autoPayMandate?.status === 'ACTIVE')
+                          ? `Recurring auto-debit active (Mandate ID: ${creditData?.autoPayMandate?.mandateId || user?.autoPayMandate?.mandateId || 'Verified'}). Dues will be cleared automatically on cycle due dates.`
+                          : 'Set up an e-mandate via Razorpay netbanking / UPI so revolving trade credit dues are settled automatically on due dates.'}
+                      </p>
+                    </div>
+                  </div>
+                  {!(creditData?.autoPayMandate?.status === 'ACTIVE' || user?.autoPayMandate?.status === 'ACTIVE') && (
+                    <button
+                      type="button"
+                      onClick={handleInitTradeAutoPay}
+                      className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-violet-200 whitespace-nowrap active:scale-[0.98] transition-all cursor-pointer"
+                    >
+                      ⚡ Set Up Trade AutoPay
+                    </button>
+                  )}
+                </div>
+
                 {/* Ledger & Repayment History Tabs */}
                 <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
                   <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -1858,6 +2019,61 @@ export default function Profile() {
                         </button>
                       </div>
                     </div>
+
+                    {/* Dedicated Disbursement Bank Account Card */}
+                    {(() => {
+                      const bank = user?.bankDetails?.accountNumber
+                        ? user.bankDetails
+                        : (businessApps[0]?.businessDetails?.bankDetails || {});
+                      const isConfigured = Boolean(bank?.accountNumber);
+                      return (
+                        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div className="flex items-start sm:items-center gap-3.5">
+                            <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shrink-0 shadow-xs">
+                              🏛️
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-black text-sm text-slate-800">Disbursement & Settlement Bank Account</h4>
+                                {isConfigured ? (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    <span>Linked & Verified</span>
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    Action Required
+                                  </span>
+                                )}
+                              </div>
+                              {isConfigured ? (
+                                <div className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5">
+                                  <span>Bank: <strong className="text-slate-700">{bank.bankName || 'Bank'}</strong></span>
+                                  <span>A/C: <strong className="font-mono text-slate-700">••••{String(bank.accountNumber).slice(-4)}</strong> ({bank.accountType || 'Current'})</span>
+                                  <span>IFSC: <strong className="font-mono text-slate-700">{bank.ifsc}</strong></span>
+                                  <span>Holder: <strong className="text-slate-700">{bank.accountHolder}</strong></span>
+                                </div>
+                              ) : (
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                  Link your business bank account to receive direct NEFT/RTGS credit limit disbursements.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={openBankConfigModal}
+                            className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+                              isConfigured
+                                ? 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
+                                : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-md shadow-violet-200 hover:from-violet-700 hover:to-indigo-700'
+                            }`}
+                          >
+                            {isConfigured ? '✏️ Update Account' : '+ Configure Bank Account'}
+                          </button>
+                        </div>
+                      );
+                    })()}
 
                     {/* Pending Offers (Waiting for Acceptance) */}
                     {businessApps.filter(a => a.status === 'APPROVED' || a.status === 'PROACTIVE_GRANTED').map(offer => (
@@ -2298,15 +2514,25 @@ export default function Profile() {
                                     </span>
                                   </td>
                                   <td className="px-6 py-3 whitespace-nowrap">
-                                    {(app.status === 'APPROVED' || app.status === 'PROACTIVE_GRANTED') && (
+                                    <div className="flex items-center gap-2">
                                       <button
                                         type="button"
-                                        onClick={() => openAcceptOfferModal(app)}
-                                        className="text-violet-600 font-bold hover:underline cursor-pointer"
+                                        onClick={() => openAppTimeline(app)}
+                                        className="text-slate-600 hover:text-slate-900 font-bold hover:underline cursor-pointer flex items-center gap-1"
+                                        title="View activity log with exact timestamps"
                                       >
-                                        Accept Offer →
+                                        <span>📜 Timeline</span>
                                       </button>
-                                    )}
+                                      {(app.status === 'APPROVED' || app.status === 'PROACTIVE_GRANTED') && (
+                                        <button
+                                          type="button"
+                                          onClick={() => openAcceptOfferModal(app)}
+                                          className="text-violet-600 font-bold hover:underline cursor-pointer ml-1"
+                                        >
+                                          Accept Offer →
+                                        </button>
+                                      )}
+                                    </div>
                                   </td>
                                 </tr>
                               ))}
@@ -3559,7 +3785,7 @@ export default function Profile() {
               </Field>
 
               <Field label="Facility Tenure">
-                <div className="grid grid-cols-5 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                   {(businessEligibility?.settings?.permittedTenures || [1, 2, 3, 4, 5]).map((m) => (
                     <button
                       key={m}
@@ -4174,6 +4400,254 @@ export default function Profile() {
                 className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-all"
               >
                 Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── Standalone Disbursement Bank Account Modal ── */}
+      {showBankConfigModal && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setShowBankConfigModal(false)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 my-8 animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="pf-display font-black text-xl text-slate-900">Configure Disbursement Bank Account</h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Link your primary business bank account for direct working capital disbursements.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBankConfigModal(false)}
+                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center"
+              >
+                <Ico n="close" cls="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBankConfig} className="space-y-4">
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Account Holder Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={bankConfigForm.accountHolder}
+                    onChange={(e) => setBankConfigForm(p => ({ ...p, accountHolder: e.target.value }))}
+                    placeholder="e.g. Ramesh Traders Private Limited"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Bank Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={bankConfigForm.bankName}
+                    onChange={(e) => setBankConfigForm(p => ({ ...p, bankName: e.target.value }))}
+                    placeholder="e.g. HDFC Bank, State Bank of India"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Account Number *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={bankConfigForm.accountNumber}
+                      onChange={(e) => setBankConfigForm(p => ({ ...p, accountNumber: e.target.value }))}
+                      placeholder="Account Number"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-slate-800 outline-none focus:ring-2 focus:ring-violet-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Confirm Account Number *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={bankConfigForm.confirmAccountNumber}
+                      onChange={(e) => setBankConfigForm(p => ({ ...p, confirmAccountNumber: e.target.value }))}
+                      placeholder="Re-enter Number"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-slate-800 outline-none focus:ring-2 focus:ring-violet-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      IFSC Code *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={bankConfigForm.ifsc}
+                      onChange={(e) => setBankConfigForm(p => ({ ...p, ifsc: e.target.value.toUpperCase() }))}
+                      placeholder="e.g. HDFC0001234"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold uppercase text-slate-800 outline-none focus:ring-2 focus:ring-violet-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+                      Account Type
+                    </label>
+                    <select
+                      value={bankConfigForm.accountType}
+                      onChange={(e) => setBankConfigForm(p => ({ ...p, accountType: e.target.value }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-violet-500"
+                    >
+                      <option value="CURRENT">Current Account</option>
+                      <option value="SAVINGS">Savings Account</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-indigo-50/60 rounded-2xl border border-indigo-100 text-[11px] text-indigo-900 leading-relaxed">
+                🔒 Payouts are made directly through official bank transfer (NEFT/RTGS). Click2Kart does not store debit card credentials.
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowBankConfigModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingBankConfig}
+                  className="px-6 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md shadow-violet-200 hover:from-violet-700 hover:to-indigo-700 transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {savingBankConfig ? 'Saving Account…' : 'Save & Link Bank Account'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Application Timeline & Audit Trail Modal ── */}
+      {showAppTimelineModal && selectedTimelineApp && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setShowAppTimelineModal(false)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5 my-8 animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between border-b border-slate-100 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="pf-display font-black text-xl text-slate-900">Application Activity History</h3>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-100 text-violet-800 border border-violet-200 font-mono">
+                    #{selectedTimelineApp.applicationNumber}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  Requested Limit: <strong className="text-slate-700">₹{(selectedTimelineApp.requestedAmount || 0).toLocaleString('en-IN')}</strong> • Status: <strong className="text-slate-700">{selectedTimelineApp.status}</strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAppTimelineModal(false)}
+                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center"
+              >
+                <Ico n="close" cls="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Timeline Stepper */}
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              {(() => {
+                const events = (selectedTimelineApp.timeline && selectedTimelineApp.timeline.length > 0)
+                  ? selectedTimelineApp.timeline
+                  : [
+                      {
+                        status: selectedTimelineApp.status,
+                        title: 'Application Submitted',
+                        description: `Applied for ₹${(selectedTimelineApp.requestedAmount || 0).toLocaleString('en-IN')} working capital (${selectedTimelineApp.requestedTenureMonths || 3} Months).`,
+                        timestamp: selectedTimelineApp.createdAt,
+                        performedBy: selectedTimelineApp.isProactiveGrant ? 'Admin' : 'Retailer'
+                      },
+                      ...(selectedTimelineApp.reviewedAt ? [{
+                        status: selectedTimelineApp.status,
+                        title: `Reviewed & Sanctioned`,
+                        description: selectedTimelineApp.adminNotes || selectedTimelineApp.rejectionReason || 'Sanction terms recorded.',
+                        timestamp: selectedTimelineApp.reviewedAt,
+                        performedBy: selectedTimelineApp.reviewedByName || 'Admin'
+                      }] : []),
+                      ...(selectedTimelineApp.approvedOffer?.offerAcceptedAt ? [{
+                        status: 'OFFER_ACCEPTED',
+                        title: 'Facility Terms Accepted',
+                        description: 'Retailer digitally accepted terms & confirmed disbursement bank account.',
+                        timestamp: selectedTimelineApp.approvedOffer.offerAcceptedAt,
+                        performedBy: 'Retailer'
+                      }] : [])
+                    ];
+
+                return (
+                  <div className="relative border-l-2 border-violet-100 ml-4 space-y-6 py-2">
+                    {events.map((evt, idx) => (
+                      <div key={idx} className="relative pl-6 group">
+                        <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-white border-2 border-violet-600 flex items-center justify-center">
+                          <div className="w-1.5 h-1.5 rounded-full bg-violet-600" />
+                        </div>
+                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-1.5">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-slate-900 text-sm">{evt.title}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              {evt.timestamp ? new Date(evt.timestamp).toLocaleString('en-IN', {
+                                day: '2-digit', month: 'short', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit', hour12: true
+                              }) : '—'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-600 leading-relaxed">
+                            {evt.description}
+                          </p>
+                          <div className="flex items-center gap-2 pt-1 text-[10px] text-slate-400">
+                            <span>Actor: <strong className="text-slate-700">{evt.performedBy || 'System'}</strong></span>
+                            {evt.status && (
+                              <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 font-semibold uppercase tracking-wider">
+                                {evt.status}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+
+            <div className="pt-2 text-right">
+              <button
+                type="button"
+                onClick={() => setShowAppTimelineModal(false)}
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Close History
               </button>
             </div>
           </div>

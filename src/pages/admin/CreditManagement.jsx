@@ -115,6 +115,10 @@ export default function CreditManagement() {
   const [disburseMode, setDisburseMode] = useState('NEFT')
   const [disburseRemarks, setDisburseRemarks] = useState('')
 
+  // Application Timeline & Audit Trail modal
+  const [timelineModalOpen, setTimelineModalOpen] = useState(false)
+  const [selectedTimelineApp, setSelectedTimelineApp] = useState(null)
+
   // ==========================================
   // BUSINESS CREDIT FACILITIES STATE
   // ==========================================
@@ -148,8 +152,10 @@ export default function CreditManagement() {
     minAnnualInterestRatePercent: 12,
     maxAnnualInterestRatePercent: 36,
     defaultTenureMonths: 3,
-    minTenureMonths: 3,
-    maxTenureMonths: 5,
+    minTenureMonths: 1,
+    maxTenureMonths: 12,
+    permittedTenures: [1, 2, 3, 4, 5],
+    autoPayEnabled: false,
     processingFeePercent: 2,
     minCreditLimit: 10000,
     maxCreditLimit: 1000000
@@ -225,13 +231,31 @@ export default function CreditManagement() {
     setLoadingSettings(true)
     try {
       const { data } = await api.get('/api/credit/admin/business/settings')
-      if (data?.settings) setProductSettings(data.settings)
+      if (data?.settings) {
+        const s = data.settings;
+        setProductSettings(prev => ({
+          ...prev,
+          ...s,
+          isProductEnabled: Boolean(s.isEnabled !== undefined ? s.isEnabled : (s.isProductEnabled !== undefined ? s.isProductEnabled : true)),
+          defaultAnnualInterestRatePercent: s.interestRatePerAnnum || s.defaultAnnualInterestRatePercent || 18,
+          defaultTenureMonths: s.defaultTenureMonths || 3,
+          permittedTenures: s.permittedTenures && s.permittedTenures.length > 0 ? s.permittedTenures : [1, 2, 3, 4, 5],
+          processingFeePercent: s.processingFeeValue !== undefined ? s.processingFeeValue : (s.processingFeePercent || 2),
+          maxCreditLimit: s.maxAmount || s.maxCreditLimit || 500000,
+          minCreditLimit: s.minAmount || s.minCreditLimit || 10000,
+          autoPayEnabled: Boolean(s.autoPayEnabled)
+        }))
+      }
     } catch (err) {
       console.warn('Could not load credit product settings', err)
     } finally {
       setLoadingSettings(false)
     }
   }
+
+  useEffect(() => {
+    loadProductSettings()
+  }, [])
 
   useEffect(() => {
     if (mainTab === 'trade_credit') loadRetailers()
@@ -527,16 +551,41 @@ export default function CreditManagement() {
   // Save Product Settings
   const handleSaveProductSettings = async (e) => {
     e.preventDefault()
+    const activeTenures = productSettings.permittedTenures && productSettings.permittedTenures.length > 0
+      ? productSettings.permittedTenures
+      : [1, 2, 3, 4, 5];
+
+    if (activeTenures.length === 0) {
+      return notify('Please enable at least one permitted tenure month (1 to 12).', 'error');
+    }
+
     const tDef = Number(productSettings.defaultTenureMonths)
-    if (tDef < 1 || tDef > 12) {
-      return notify('Valid default tenure is required (1 to 5 months)', 'error')
+    if (!activeTenures.includes(tDef)) {
+      return notify(`Default tenure (${tDef}M) must be one of the enabled permitted tenures: ${activeTenures.join(', ')}M`, 'error')
     }
 
     setSavingSettings(true)
     try {
-      const { data } = await api.put('/api/credit/admin/business/settings', productSettings)
-      notify('Product configuration updated successfully', 'success')
-      if (data?.settings) setProductSettings(data.settings)
+      const payload = {
+        ...productSettings,
+        isEnabled: productSettings.isProductEnabled,
+        permittedTenures: activeTenures,
+        minTenureMonths: Math.min(...activeTenures),
+        maxTenureMonths: Math.max(...activeTenures),
+        interestRatePerAnnum: Number(productSettings.defaultAnnualInterestRatePercent),
+        processingFeeValue: Number(productSettings.processingFeePercent),
+        maxAmount: Number(productSettings.maxCreditLimit),
+        minAmount: Number(productSettings.minCreditLimit)
+      };
+      const { data } = await api.put('/api/credit/admin/business/settings', payload)
+      notify('Product configuration updated successfully! Active tenures saved.', 'success')
+      if (data?.settings) {
+        setProductSettings(prev => ({
+          ...prev,
+          ...data.settings,
+          permittedTenures: data.settings.permittedTenures || activeTenures
+        }))
+      }
     } catch (err) {
       notify(err?.response?.data?.message || 'Failed to save product settings', 'error')
     } finally {
@@ -700,6 +749,7 @@ export default function CreditManagement() {
                   <tr>
                     <th className="px-6 py-4">Retailer</th>
                     <th className="px-6 py-4">Credit Status</th>
+                    <th className="px-6 py-4">AutoPay</th>
                     <th className="px-6 py-4">Limit (₹)</th>
                     <th className="px-6 py-4">Available (₹)</th>
                     <th className="px-6 py-4">Outstanding (₹)</th>
@@ -709,11 +759,11 @@ export default function CreditManagement() {
                 <tbody className="divide-y divide-gray-50">
                   {loadingRetailers ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-12 text-gray-400 font-semibold">Loading retailers...</td>
+                      <td colSpan="7" className="text-center py-12 text-gray-400 font-semibold">Loading retailers...</td>
                     </tr>
                   ) : retailers.length === 0 ? (
                     <tr>
-                      <td colSpan="6" className="text-center py-12 text-gray-400">No retailers found matching criteria</td>
+                      <td colSpan="7" className="text-center py-12 text-gray-400">No retailers found matching criteria</td>
                     </tr>
                   ) : (
                     retailers.map((r) => {
@@ -739,6 +789,18 @@ export default function CreditManagement() {
                             >
                               {isEn ? 'Enabled' : 'Disabled'}
                             </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {r.autoPayMandate?.status === 'ACTIVE' ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span>Active</span>
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-gray-400 font-medium">
+                                Not Set
+                              </span>
+                            )}
                           </td>
                           <td className="px-6 py-4 font-bold text-gray-900">
                             ₹{(r.creditLimit || 0).toLocaleString('en-IN')}
@@ -934,6 +996,17 @@ export default function CreditManagement() {
                               const isReadyToDisburse = ['OFFER_ACCEPTED', 'ACCEPTED', 'DISBURSEMENT_PENDING'].includes(app.status);
                               return (
                                 <div className="flex items-center justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedTimelineApp(app);
+                                      setTimelineModalOpen(true);
+                                    }}
+                                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                                    title="View timestamped audit history"
+                                  >
+                                    <span>📜 Timeline</span>
+                                  </button>
                                   {isUnderReview && (
                                     <button
                                       onClick={() => {
@@ -1284,20 +1357,86 @@ export default function CreditManagement() {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                  Default Tenure (Months)
+                  Default Initial Tenure (Months)
                 </label>
                 <select
                   value={productSettings.defaultTenureMonths}
                   onChange={(e) => setProductSettings(p => ({ ...p, defaultTenureMonths: Number(e.target.value) }))}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-500"
                 >
-                  <option value={1}>1 Month</option>
-                  <option value={2}>2 Months</option>
-                  <option value={3}>3 Months (Default)</option>
-                  <option value={4}>4 Months</option>
-                  <option value={5}>5 Months</option>
+                  {(productSettings.permittedTenures && productSettings.permittedTenures.length > 0
+                    ? productSettings.permittedTenures
+                    : [1, 2, 3, 4, 5]
+                  ).map((m) => (
+                    <option key={m} value={m}>{m} Month{m > 1 ? 's' : ''}</option>
+                  ))}
                 </select>
-                <span className="text-[10px] text-slate-500 font-bold mt-1 block">Configurable tenure: 1 to 5 months</span>
+                <span className="text-[10px] text-slate-500 font-bold mt-1 block">
+                  Active range: {Math.min(...(productSettings.permittedTenures || [1]))}M to {Math.max(...(productSettings.permittedTenures || [12]))}M
+                </span>
+              </div>
+            </div>
+
+            {/* 1 to 12 Month Permitted Tenures Grid */}
+            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200/80 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-bold text-gray-900 uppercase tracking-wider">
+                    Permitted Loan Tenures (1 to 12 Months)
+                  </div>
+                  <div className="text-[11px] text-gray-500">
+                    Click any month to enable or disable it. Only active months will be selectable across retailer application and admin sanctioning.
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-xs font-black bg-violet-100 text-violet-700 border border-violet-200">
+                  {(productSettings.permittedTenures || [1, 2, 3, 4, 5]).length} Active
+                </span>
+              </div>
+
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 pt-1">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((month) => {
+                  const currentTenures = productSettings.permittedTenures && productSettings.permittedTenures.length > 0
+                    ? productSettings.permittedTenures
+                    : [1, 2, 3, 4, 5];
+                  const isEnabled = currentTenures.includes(month);
+                  return (
+                    <button
+                      key={month}
+                      type="button"
+                      onClick={() => {
+                        let updated;
+                        if (isEnabled) {
+                          if (currentTenures.length <= 1) {
+                            return notify('At least one tenure month must remain active', 'error');
+                          }
+                          updated = currentTenures.filter(m => m !== month);
+                        } else {
+                          updated = [...currentTenures, month].sort((a, b) => a - b);
+                        }
+                        const newDef = updated.includes(productSettings.defaultTenureMonths)
+                          ? productSettings.defaultTenureMonths
+                          : updated[0];
+                        setProductSettings(prev => ({
+                          ...prev,
+                          permittedTenures: updated,
+                          defaultTenureMonths: newDef,
+                          minTenureMonths: Math.min(...updated),
+                          maxTenureMonths: Math.max(...updated)
+                        }));
+                      }}
+                      className={`p-2.5 rounded-xl font-black text-xs transition-all border flex flex-col items-center justify-center gap-1 cursor-pointer ${
+                        isEnabled
+                          ? 'bg-violet-600 text-white border-violet-600 shadow-sm shadow-violet-200'
+                          : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300 hover:text-gray-600'
+                      }`}
+                    >
+                      <span className="text-sm font-black">{month}M</span>
+                      <span className="text-[9px] font-semibold opacity-90">
+                        {isEnabled ? '✓ Active' : 'Disabled'}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1410,11 +1549,12 @@ export default function CreditManagement() {
                         onChange={(e) => setReviewTenure(Number(e.target.value))}
                         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
                       >
-                        <option value={1}>1 Month</option>
-                        <option value={2}>2 Months</option>
-                        <option value={3}>3 Months</option>
-                        <option value={4}>4 Months</option>
-                        <option value={5}>5 Months</option>
+                        {(productSettings.permittedTenures && productSettings.permittedTenures.length > 0
+                          ? productSettings.permittedTenures
+                          : [1, 2, 3, 4, 5]
+                        ).map((m) => (
+                          <option key={m} value={m}>{m} Month{m > 1 ? 's' : ''}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -1541,11 +1681,12 @@ export default function CreditManagement() {
                     onChange={(e) => setProactiveTenure(Number(e.target.value))}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold"
                   >
-                    <option value={1}>1 Month</option>
-                    <option value={2}>2 Months</option>
-                    <option value={3}>3 Months</option>
-                    <option value={4}>4 Months</option>
-                    <option value={5}>5 Months</option>
+                    {(productSettings.permittedTenures && productSettings.permittedTenures.length > 0
+                      ? productSettings.permittedTenures
+                      : [1, 2, 3, 4, 5]
+                    ).map((m) => (
+                      <option key={m} value={m}>{m} Month{m > 1 ? 's' : ''}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -2198,6 +2339,105 @@ export default function CreditManagement() {
                 className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-md transition-all disabled:opacity-50"
               >
                 {notifying ? 'Sending Reminders...' : 'Send Reminders'}
+              </button>
+            </div>
+      {/* MODAL: Application Activity & Audit Timeline */}
+      {timelineModalOpen && selectedTimelineApp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-xl w-full shadow-2xl border border-gray-100 space-y-5 my-8">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-black text-gray-900">Application Audit Trail & Timeline</h3>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-200">
+                    {selectedTimelineApp.applicationNumber}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Retailer: <strong className="text-gray-800">{selectedTimelineApp.retailerId?.name || selectedTimelineApp.retailerId?.phone || 'Retailer'}</strong> • Status: <strong>{selectedTimelineApp.status}</strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTimelineModalOpen(false)}
+                className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Event Timeline */}
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              {(() => {
+                const events = (selectedTimelineApp.timeline && selectedTimelineApp.timeline.length > 0)
+                  ? selectedTimelineApp.timeline
+                  : [
+                      {
+                        status: selectedTimelineApp.status,
+                        title: 'Application Created',
+                        description: `Requested ₹${(selectedTimelineApp.requestedAmount || 0).toLocaleString('en-IN')} for ${selectedTimelineApp.requestedTenureMonths || 3} months.`,
+                        timestamp: selectedTimelineApp.createdAt,
+                        performedBy: selectedTimelineApp.isProactiveGrant ? 'Admin' : 'Retailer'
+                      },
+                      ...(selectedTimelineApp.reviewedAt ? [{
+                        status: selectedTimelineApp.status,
+                        title: `Reviewed by ${selectedTimelineApp.reviewedByName || 'Admin'}`,
+                        description: selectedTimelineApp.adminNotes || selectedTimelineApp.rejectionReason || 'Review decision recorded.',
+                        timestamp: selectedTimelineApp.reviewedAt,
+                        performedBy: selectedTimelineApp.reviewedByName || 'Admin'
+                      }] : []),
+                      ...(selectedTimelineApp.approvedOffer?.offerAcceptedAt ? [{
+                        status: 'OFFER_ACCEPTED',
+                        title: 'Offer Accepted by Retailer',
+                        description: 'Agreement digitally confirmed and signed.',
+                        timestamp: selectedTimelineApp.approvedOffer.offerAcceptedAt,
+                        performedBy: 'Retailer'
+                      }] : [])
+                    ];
+
+                return (
+                  <div className="relative border-l-2 border-violet-100 ml-4 space-y-6 py-2">
+                    {events.map((evt, idx) => (
+                      <div key={idx} className="relative pl-6 group">
+                        <div className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-white border-2 border-violet-600 flex items-center justify-center">
+                          <div className="w-1.5 h-1.5 rounded-full bg-violet-600" />
+                        </div>
+                        <div className="bg-gray-50 rounded-2xl p-3.5 border border-gray-100 space-y-1">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-bold text-gray-900">{evt.title}</span>
+                            <span className="text-[10px] text-gray-400 font-mono">
+                              {evt.timestamp ? new Date(evt.timestamp).toLocaleString('en-IN', {
+                                day: '2-digit', month: 'short', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit', hour12: true
+                              }) : '—'}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-600 leading-relaxed">
+                            {evt.description}
+                          </p>
+                          <div className="flex items-center gap-2 pt-1 text-[10px] text-gray-400">
+                            <span>Actor: <strong className="text-gray-600">{evt.performedBy || 'System'}</strong></span>
+                            {evt.status && (
+                              <span className="px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-600 font-semibold">
+                                {evt.status}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+
+            <div className="pt-2 text-right">
+              <button
+                type="button"
+                onClick={() => setTimelineModalOpen(false)}
+                className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all"
+              >
+                Close Audit Log
               </button>
             </div>
           </div>
