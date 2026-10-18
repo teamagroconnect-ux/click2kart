@@ -393,8 +393,9 @@ export default function CreditManagement() {
 
     setActionLoading(true)
     try {
+      const normalizedAction = reviewAction === 'APPROVE' ? 'APPROVED' : reviewAction
       await api.post(`/api/credit/admin/business/applications/${selectedApp._id}/review`, {
-        action: reviewAction,
+        action: normalizedAction,
         approvedLimit: Number(reviewLimit),
         approvedAmount: Number(reviewLimit),
         approvedTenureMonths: Number(reviewTenure),
@@ -405,7 +406,7 @@ export default function CreditManagement() {
         remarks: reviewRemarks.trim(),
         adminNotes: reviewRemarks.trim()
       })
-      notify(`Application status updated to ${reviewAction}`, 'success')
+      notify(`Application status updated to ${normalizedAction}`, 'success')
       setReviewModalOpen(false)
       loadBusinessApplications()
     } catch (err) {
@@ -1250,6 +1251,19 @@ export default function CreditManagement() {
               />
             </div>
 
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+              <div>
+                <div className="text-sm font-black text-gray-900">AutoPay Recurring e-Mandates</div>
+                <div className="text-xs text-gray-500">Allow retailers to register automated Razorpay e-Mandates / UPI AutoPay for collections</div>
+              </div>
+              <input
+                type="checkbox"
+                checked={Boolean(productSettings.autoPayEnabled)}
+                onChange={(e) => setProductSettings(p => ({ ...p, autoPayEnabled: e.target.checked }))}
+                className="w-5 h-5 rounded accent-violet-600 cursor-pointer"
+              />
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
@@ -1604,9 +1618,35 @@ export default function CreditManagement() {
               Retailer accepted terms. Record bank transaction reference to activate the facility.
             </p>
 
-            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs space-y-1">
-              <div>Sanctioned Limit: <strong>₹{(selectedApp.approvedLimit || 0).toLocaleString('en-IN')}</strong></div>
-              <div>Tenure: <strong>{selectedApp.approvedTenureMonths} Months</strong> ({selectedApp.approvedFrequency})</div>
+            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs space-y-2">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Sanctioned Limit:</span>
+                <strong>₹{(selectedApp.approvedLimit || selectedApp.approvedOffer?.approvedAmount || selectedApp.requestedAmount || 0).toLocaleString('en-IN')}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Tenure:</span>
+                <strong>{selectedApp.approvedTenureMonths || selectedApp.approvedOffer?.approvedTenureMonths} Months ({selectedApp.approvedFrequency || selectedApp.approvedOffer?.repaymentFrequency || 'WEEKLY'})</strong>
+              </div>
+              <div className="flex justify-between pt-1 border-t border-emerald-200/60 font-bold text-emerald-900">
+                <span>Net Payout Amount:</span>
+                <span className="text-sm font-black text-emerald-700">
+                  ₹{(selectedApp.approvedOffer?.netDisbursementAmount || Math.round((selectedApp.approvedLimit || selectedApp.requestedAmount || 0) * (1 - 0.02 * 1.18))).toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+
+            {/* Destination Bank Account Details */}
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-1.5">
+              <div className="font-bold text-slate-800 flex items-center justify-between pb-1 border-b border-slate-200/60">
+                <span>Disbursement Destination Account:</span>
+                <span className="text-[10px] text-emerald-700 font-bold bg-emerald-100/60 px-2 py-0.5 rounded-full">
+                  Retailer Bank Details
+                </span>
+              </div>
+              <div>Account Holder: <strong>{selectedApp.businessDetails?.bankDetails?.accountHolder || selectedApp.retailerId?.name || 'Retailer'}</strong></div>
+              <div>Bank Name: <strong>{selectedApp.businessDetails?.bankDetails?.bankName || 'Not specified'}</strong></div>
+              <div className="font-mono">Account No: <strong>{selectedApp.businessDetails?.bankDetails?.accountNumber || 'Pending verification'}</strong></div>
+              <div className="font-mono">IFSC Code: <strong>{selectedApp.businessDetails?.bankDetails?.ifsc || 'N/A'}</strong></div>
             </div>
 
             <form onSubmit={handleConfirmDisbursement} className="space-y-4">

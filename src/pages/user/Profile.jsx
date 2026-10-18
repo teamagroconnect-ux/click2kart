@@ -274,6 +274,14 @@ export default function Profile() {
   const [selectedOffer, setSelectedOffer] = useState(null);
   const [acceptedTermsChecked, setAcceptedTermsChecked] = useState(false);
   const [acceptingOffer, setAcceptingOffer] = useState(false);
+  const [disburseBankDetails, setDisburseBankDetails] = useState({
+    accountHolder: '',
+    bankName: '',
+    accountNumber: '',
+    confirmAccountNumber: '',
+    ifsc: '',
+    accountType: 'CURRENT'
+  });
   const [showBusinessRepayModal, setShowBusinessRepayModal] = useState(false);
   const [selectedRepayFacility, setSelectedRepayFacility] = useState(null);
   const [businessRepayAmount, setBusinessRepayAmount] = useState('');
@@ -540,15 +548,47 @@ export default function Profile() {
     }
   };
 
+  const openAcceptOfferModal = (offer) => {
+    setSelectedOffer(offer);
+    setAcceptedTermsChecked(false);
+    setDisburseBankDetails({
+      accountHolder: offer.businessDetails?.bankDetails?.accountHolder || user?.kyc?.businessName || user?.name || '',
+      bankName: offer.businessDetails?.bankDetails?.bankName || '',
+      accountNumber: offer.businessDetails?.bankDetails?.accountNumber || '',
+      confirmAccountNumber: offer.businessDetails?.bankDetails?.accountNumber || '',
+      ifsc: offer.businessDetails?.bankDetails?.ifsc || '',
+      accountType: offer.businessDetails?.bankDetails?.accountType || 'CURRENT'
+    });
+    setShowAcceptOfferModal(true);
+  };
+
   const handleAcceptBusinessOffer = async (e) => {
     e.preventDefault();
     if (!selectedOffer) return;
+    if (!disburseBankDetails.accountHolder.trim()) return notify('Account Holder Name is required', 'error');
+    if (!disburseBankDetails.bankName.trim()) return notify('Bank Name is required', 'error');
+    if (!disburseBankDetails.accountNumber.trim()) return notify('Bank Account Number is required', 'error');
+    if (disburseBankDetails.accountNumber.trim() !== disburseBankDetails.confirmAccountNumber.trim()) {
+      return notify('Bank account numbers do not match', 'error');
+    }
+    if (!disburseBankDetails.ifsc.trim() || disburseBankDetails.ifsc.trim().length < 8) {
+      return notify('Valid Bank IFSC code is required', 'error');
+    }
     if (!acceptedTermsChecked) return notify('Please review and check the agreement acceptance checkbox', 'error');
 
     setAcceptingOffer(true);
     try {
-      await api.post(`/api/credit/business/accept-offer/${selectedOffer._id}`);
-      notify('Offer accepted! Facility agreement recorded. Payout will be processed shortly.', 'success');
+      await api.post(`/api/credit/business/accept-offer/${selectedOffer._id}`, {
+        bankDetails: {
+          accountHolder: disburseBankDetails.accountHolder.trim(),
+          bankName: disburseBankDetails.bankName.trim(),
+          accountNumber: disburseBankDetails.accountNumber.trim(),
+          ifsc: disburseBankDetails.ifsc.trim().toUpperCase(),
+          accountType: disburseBankDetails.accountType
+        },
+        acceptedTerms: true
+      });
+      notify('Offer accepted & bank details recorded! Payout will be processed to your account.', 'success');
       setShowAcceptOfferModal(false);
       setSelectedOffer(null);
       await loadBusinessCredit();
@@ -662,23 +702,48 @@ export default function Profile() {
     try {
       notify('Initiating AutoPay mandate setup...', 'info');
       const { data } = await api.post('/api/credit/business/mandate/init', { facilityId: facility._id });
-      if (data.mandateOrder) {
+      const order = data.mandate?.mandateOrder || data.mandateOrder;
+      const key = data.mandate?.key || data.key || import.meta.env.VITE_RAZORPAY_KEY_ID;
+      const customerId = data.mandate?.customerId || data.customerId;
+
+      if (order && order.id) {
         await ensureRazorpayLoaded();
         const options = {
-          key: data.key,
-          amount: data.mandateOrder.amount,
-          currency: 'INR',
+          key: key,
+          amount: order.amount,
+          currency: order.currency || 'INR',
           name: 'Click2Kart AutoPay Mandate',
           description: `Auto-debit setup for ${facility.facilityNumber}`,
-          order_id: data.mandateOrder.id,
+          order_id: order.id,
+          customer_id: customerId || undefined,
+          recurring: 1,
           theme: { color: '#7c3aed' },
-          handler: () => {
-            notify('AutoPay mandate authorized! Collections will be automatic on due date.', 'success');
-            loadBusinessCredit();
+          prefill: {
+            name: user?.name,
+            contact: user?.phone,
+            email: user?.email
+          },
+          handler: async (response) => {
+            try {
+              notify('Verifying mandate authorization...', 'info');
+              await api.post('/api/credit/business/mandate/verify', {
+                facilityId: facility._id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature
+              });
+              notify('AutoPay mandate active! Instalments will be debited automatically on due dates.', 'success');
+              await loadBusinessCredit();
+            } catch (vErr) {
+              notify(vErr?.response?.data?.message || 'Failed to confirm mandate status', 'error');
+              await loadBusinessCredit();
+            }
           }
         };
         const rzp = new window.Razorpay(options);
         rzp.open();
+      } else {
+        notify(data.message || data.mandate?.message || 'AutoPay is not yet active for this account. Manual payment is enabled.', 'info');
       }
     } catch (err) {
       notify(err?.response?.data?.message || 'AutoPay mandate setup requires bank authorization', 'info');
@@ -1831,12 +1896,8 @@ export default function Profile() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => {
-                            setSelectedOffer(offer);
-                            setAcceptedTermsChecked(false);
-                            setShowAcceptOfferModal(true);
-                          }}
-                          className="px-6 py-4 rounded-xl font-black text-sm text-amber-950 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 shadow-lg shadow-amber-300/40 active:scale-[0.98] transition-all whitespace-nowrap"
+                          onClick={() => openAcceptOfferModal(offer)}
+                          className="px-6 py-4 rounded-xl font-black text-sm text-amber-950 bg-gradient-to-r from-amber-400 to-amber-300 hover:from-amber-300 hover:to-amber-200 shadow-lg shadow-amber-300/40 active:scale-[0.98] transition-all whitespace-nowrap cursor-pointer"
                         >
                           Review & Accept Agreement →
                         </button>
@@ -1872,8 +1933,20 @@ export default function Profile() {
                               <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
                                 Your facility agreement has been accepted. Administration is processing the disbursement bank transfer (NEFT/RTGS). Funds will be credited directly to your registered bank account shortly.
                               </p>
-                              <div className="p-3 bg-purple-50/50 rounded-2xl border border-purple-100 text-xs text-purple-900 font-semibold">
-                                Application #{payoutPendingApp.applicationNumber} • Tenure: {payoutPendingApp.approvedOffer?.approvedTenureMonths || payoutPendingApp.requestedTenureMonths} Months ({payoutPendingApp.approvedOffer?.repaymentFrequency || 'Weekly'})
+                              <div className="p-3.5 bg-purple-50/60 rounded-2xl border border-purple-100 text-xs text-purple-950 font-medium space-y-1 text-left">
+                                <div className="flex justify-between font-bold text-slate-800">
+                                  <span>Application #{payoutPendingApp.applicationNumber}</span>
+                                  <span className="text-emerald-700">Net Payout: ₹{Math.round(Number(payoutPendingApp.approvedOffer?.approvedAmount || payoutPendingApp.requestedAmount) * (1 - 0.02 * 1.18)).toLocaleString('en-IN')}</span>
+                                </div>
+                                {payoutPendingApp.businessDetails?.bankDetails?.accountNumber ? (
+                                  <div className="text-[11px] text-slate-600 pt-1 border-t border-purple-100">
+                                    Beneficiary Account: <strong className="text-slate-800">{payoutPendingApp.businessDetails.bankDetails.bankName || 'Bank'}</strong> (A/C: <span className="font-mono">{payoutPendingApp.businessDetails.bankDetails.accountNumber}</span>, IFSC: <span className="font-mono">{payoutPendingApp.businessDetails.bankDetails.ifsc}</span>)
+                                  </div>
+                                ) : (
+                                  <div className="text-[11px] text-slate-600 pt-1 border-t border-purple-100">
+                                    Tenure: {payoutPendingApp.approvedOffer?.approvedTenureMonths || payoutPendingApp.requestedTenureMonths} Months ({payoutPendingApp.approvedOffer?.repaymentFrequency || 'Weekly'})
+                                  </div>
+                                )}
                               </div>
                             </div>
                           );
@@ -2141,22 +2214,33 @@ export default function Profile() {
                               </div>
 
                               {/* Mandate Bar */}
-                              <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                              <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-bold text-slate-700">Repayment Status:</span>
-                                  {fac.mandate?.status === 'ACTIVE' ? (
-                                    <span className="text-emerald-700 font-bold flex items-center gap-1">
-                                      <span>✓ AutoPay Active</span>
-                                      <span className="text-slate-400 font-normal">({fac.mandate.mandateId})</span>
+                                  <span className="font-bold text-slate-700">AutoPay Status:</span>
+                                  {(fac.autoPayMandate?.status === 'ACTIVE' || fac.mandate?.status === 'ACTIVE') ? (
+                                    <span className="text-emerald-700 font-bold flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                                      <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                      <span>AutoPay Active</span>
+                                      <span className="text-slate-400 font-mono text-[10px]">({fac.autoPayMandate?.mandateId || fac.mandate?.mandateId})</span>
                                     </span>
                                   ) : (
-                                    <span className="text-slate-600 font-medium flex items-center gap-1.5">
-                                      <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
-                                      <span>Manual Repayment Active (Bank Transfer / Razorpay)</span>
-                                      <span className="text-slate-400 font-normal">• AutoPay pending gateway onboarding</span>
+                                    <span className="text-slate-600 font-medium flex items-center gap-1.5 bg-amber-50/70 px-2.5 py-1 rounded-full border border-amber-200">
+                                      <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+                                      <span>Manual Repayment Active</span>
+                                      <span className="text-slate-400 font-normal hidden sm:inline">• (AutoPay optional)</span>
                                     </span>
                                   )}
                                 </div>
+
+                                {!(fac.autoPayMandate?.status === 'ACTIVE' || fac.mandate?.status === 'ACTIVE') && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleInitAutoPay(fac)}
+                                    className="px-3.5 py-1.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+                                  >
+                                    <span>⚡ Set up AutoPay Mandate</span>
+                                  </button>
+                                )}
                               </div>
                             </div>
                           );
@@ -2217,12 +2301,8 @@ export default function Profile() {
                                     {(app.status === 'APPROVED' || app.status === 'PROACTIVE_GRANTED') && (
                                       <button
                                         type="button"
-                                        onClick={() => {
-                                          setSelectedOffer(app);
-                                          setAcceptedTermsChecked(false);
-                                          setShowAcceptOfferModal(true);
-                                        }}
-                                        className="text-violet-600 font-bold hover:underline"
+                                        onClick={() => openAcceptOfferModal(app)}
+                                        className="text-violet-600 font-bold hover:underline cursor-pointer"
                                       >
                                         Accept Offer →
                                       </button>
@@ -3648,6 +3728,87 @@ export default function Profile() {
               </div>
             </div>
 
+            {/* Disbursement Destination Bank Account */}
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-3 text-xs">
+              <div className="font-bold text-slate-800 flex items-center justify-between">
+                <span>Disbursement Destination Bank Account</span>
+                <span className="text-[10px] text-violet-700 font-bold bg-violet-100/60 px-2 py-0.5 rounded-full border border-violet-200">
+                  NEFT / RTGS Payout
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-500">
+                Please enter or confirm the bank account where the net sanctioned amount will be disbursed.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Account Holder Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={disburseBankDetails.accountHolder}
+                    onChange={(e) => setDisburseBankDetails(p => ({ ...p, accountHolder: e.target.value }))}
+                    placeholder="e.g. Ramesh Trading Co."
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Bank Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={disburseBankDetails.bankName}
+                    onChange={(e) => setDisburseBankDetails(p => ({ ...p, bankName: e.target.value }))}
+                    placeholder="e.g. State Bank of India, HDFC Bank"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Account Number *</label>
+                  <input
+                    type="text"
+                    required
+                    value={disburseBankDetails.accountNumber}
+                    onChange={(e) => setDisburseBankDetails(p => ({ ...p, accountNumber: e.target.value }))}
+                    placeholder="Enter account number"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Confirm Account Number *</label>
+                  <input
+                    type="text"
+                    required
+                    value={disburseBankDetails.confirmAccountNumber}
+                    onChange={(e) => setDisburseBankDetails(p => ({ ...p, confirmAccountNumber: e.target.value }))}
+                    placeholder="Re-enter account number"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-800 outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">IFSC Code *</label>
+                  <input
+                    type="text"
+                    required
+                    value={disburseBankDetails.ifsc}
+                    onChange={(e) => setDisburseBankDetails(p => ({ ...p, ifsc: e.target.value.toUpperCase() }))}
+                    placeholder="e.g. SBIN0001234"
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono font-bold uppercase text-slate-800 outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Account Type</label>
+                  <select
+                    value={disburseBankDetails.accountType}
+                    onChange={(e) => setDisburseBankDetails(p => ({ ...p, accountType: e.target.value }))}
+                    className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-violet-500"
+                  >
+                    <option value="CURRENT">Current Account</option>
+                    <option value="SAVINGS">Savings Account</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <div className="p-4 bg-amber-50/60 rounded-2xl border border-amber-200 space-y-2 text-xs text-amber-950">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
@@ -3676,7 +3837,7 @@ export default function Profile() {
                 disabled={acceptingOffer || !acceptedTermsChecked}
                 className={btnPrimary}
               >
-                {acceptingOffer ? 'Executing Agreement…' : 'Sign & Accept Sanction Offer'}
+                {acceptingOffer ? 'Executing Agreement…' : 'Confirm Bank Details & Accept Sanction Offer'}
               </button>
             </div>
           </div>
