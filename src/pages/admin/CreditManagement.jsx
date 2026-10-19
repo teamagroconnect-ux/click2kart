@@ -48,6 +48,14 @@ export default function CreditManagement() {
   const [notifyModalOpen, setNotifyModalOpen] = useState(false)
   const [notifying, setNotifying] = useState(false)
 
+  // Trade Credit AutoPay Schedule Modal state
+  const [tradeAutoPayModalOpen, setTradeAutoPayModalOpen] = useState(false)
+  const [selectedTradeAutoPayRetailer, setSelectedTradeAutoPayRetailer] = useState(null)
+  const [tradeAutoPayFrequency, setTradeAutoPayFrequency] = useState('WEEKLY')
+  const [tradeAutoPayDebitDay, setTradeAutoPayDebitDay] = useState('MONDAY')
+  const [tradeAutoPayDebitTime, setTradeAutoPayDebitTime] = useState('10:00 AM')
+  const [savingTradeAutoPay, setSavingTradeAutoPay] = useState(false)
+
   // Presets
   const ADJUST_PRESETS = {
     INCREASE: [
@@ -158,7 +166,12 @@ export default function CreditManagement() {
     autoPayEnabled: false,
     processingFeePercent: 2,
     minCreditLimit: 10000,
-    maxCreditLimit: 1000000
+    maxCreditLimit: 1000000,
+    tradeCreditDefaultSchedule: {
+      frequency: 'WEEKLY',
+      weeklyDebitDay: 'MONDAY',
+      debitTime: '10:00 AM'
+    }
   })
   const [loadingSettings, setLoadingSettings] = useState(false)
   const [savingSettings, setSavingSettings] = useState(false)
@@ -243,7 +256,12 @@ export default function CreditManagement() {
           processingFeePercent: s.processingFeeValue !== undefined ? s.processingFeeValue : (s.processingFeePercent || 2),
           maxCreditLimit: s.maxAmount || s.maxCreditLimit || 500000,
           minCreditLimit: s.minAmount || s.minCreditLimit || 10000,
-          autoPayEnabled: Boolean(s.autoPayEnabled)
+          autoPayEnabled: Boolean(s.autoPayEnabled),
+          tradeCreditDefaultSchedule: s.tradeCreditDefaultSchedule || {
+            frequency: 'WEEKLY',
+            weeklyDebitDay: 'MONDAY',
+            debitTime: '10:00 AM'
+          }
         }))
       }
     } catch (err) {
@@ -351,6 +369,37 @@ export default function CreditManagement() {
       notify(err?.response?.data?.message || 'Failed to update limit', 'error')
     } finally {
       setActionLoading(false)
+    }
+  }
+
+  // Open Trade Credit AutoPay modal
+  const openTradeAutoPayModal = (retailer) => {
+    setSelectedTradeAutoPayRetailer(retailer)
+    const sched = retailer?.tradeCreditAutoPaySchedule || {}
+    setTradeAutoPayFrequency(sched.frequency || 'WEEKLY')
+    setTradeAutoPayDebitDay(sched.weeklyDebitDay || 'MONDAY')
+    setTradeAutoPayDebitTime(sched.debitTime || '10:00 AM')
+    setTradeAutoPayModalOpen(true)
+  }
+
+  // Save Trade Credit AutoPay Schedule
+  const handleSaveTradeAutoPaySchedule = async (e) => {
+    e.preventDefault()
+    if (!selectedTradeAutoPayRetailer) return
+    setSavingTradeAutoPay(true)
+    try {
+      await api.put(`/api/credit/admin/retailers/${selectedTradeAutoPayRetailer._id}/autopay-schedule`, {
+        frequency: tradeAutoPayFrequency,
+        weeklyDebitDay: tradeAutoPayDebitDay,
+        debitTime: tradeAutoPayDebitTime
+      })
+      notify('Trade Credit AutoPay schedule updated successfully!', 'success')
+      setTradeAutoPayModalOpen(false)
+      loadRetailers()
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to update AutoPay schedule', 'error')
+    } finally {
+      setSavingTradeAutoPay(false)
     }
   }
 
@@ -575,7 +624,8 @@ export default function CreditManagement() {
         interestRatePerAnnum: Number(productSettings.defaultAnnualInterestRatePercent),
         processingFeeValue: Number(productSettings.processingFeePercent),
         maxAmount: Number(productSettings.maxCreditLimit),
-        minAmount: Number(productSettings.minCreditLimit)
+        minAmount: Number(productSettings.minCreditLimit),
+        tradeCreditDefaultSchedule: productSettings.tradeCreditDefaultSchedule
       };
       const { data } = await api.put('/api/credit/admin/business/settings', payload)
       notify('Product configuration updated successfully! Active tenures saved.', 'success')
@@ -791,16 +841,26 @@ export default function CreditManagement() {
                             </span>
                           </td>
                           <td className="px-6 py-4">
-                            {r.autoPayMandate?.status === 'ACTIVE' ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                <span>Active</span>
+                            <div className="flex flex-col gap-1 items-start">
+                              {r.autoPayMandate?.status === 'ACTIVE' ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  <span>Mandate Active</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500">
+                                  Mandate Inactive
+                                </span>
+                              )}
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-700 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200/60">
+                                <span className="text-[10px]">🗓️</span>
+                                <span>
+                                  {r.tradeCreditAutoPaySchedule?.frequency === 'DAILY'
+                                    ? `Daily (${r.tradeCreditAutoPaySchedule?.debitTime || '10:00 AM'})`
+                                    : `Weekly (${r.tradeCreditAutoPaySchedule?.weeklyDebitDay ? r.tradeCreditAutoPaySchedule.weeklyDebitDay.slice(0, 3) : 'Mon'} ${r.tradeCreditAutoPaySchedule?.debitTime || '10:00 AM'})`}
+                                </span>
                               </span>
-                            ) : (
-                              <span className="text-[11px] text-gray-400 font-medium">
-                                Not Set
-                              </span>
-                            )}
+                            </div>
                           </td>
                           <td className="px-6 py-4 font-bold text-gray-900">
                             ₹{(r.creditLimit || 0).toLocaleString('en-IN')}
@@ -813,6 +873,14 @@ export default function CreditManagement() {
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => openTradeAutoPayModal(r)}
+                                title="Configure Auto-Debit Schedule (Daily / Weekly)"
+                                className="px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                              >
+                                <span>⚙️</span>
+                                <span>Schedule</span>
+                              </button>
                               <button
                                 onClick={() => openLedgerModal(r)}
                                 title="View Credit Ledger"
@@ -1472,6 +1540,82 @@ export default function CreditManagement() {
                   onChange={(e) => setProductSettings(p => ({ ...p, maxCreditLimit: e.target.value }))}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-bold outline-none focus:ring-2 focus:ring-violet-500"
                 />
+              </div>
+            </div>
+
+            {/* Trade Credit Default Auto-Debit Schedule */}
+            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200/80 space-y-3">
+              <div>
+                <div className="text-xs font-bold text-gray-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>🗓️</span>
+                  <span>Trade Credit Default Auto-Debit Schedule</span>
+                </div>
+                <div className="text-[11px] text-gray-500 mt-0.5">
+                  Default auto-debit frequency and schedule applied when trade credit is enabled for retailers. Retailers will be notified of exact balance requirements before debits.
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Frequency
+                  </label>
+                  <select
+                    value={productSettings.tradeCreditDefaultSchedule?.frequency || 'WEEKLY'}
+                    onChange={(e) => setProductSettings(p => ({
+                      ...p,
+                      tradeCreditDefaultSchedule: {
+                        ...(p.tradeCreditDefaultSchedule || {}),
+                        frequency: e.target.value
+                      }
+                    }))}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-violet-500"
+                  >
+                    <option value="WEEKLY">Weekly (Recommended)</option>
+                    <option value="DAILY">Daily</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Debit Day {productSettings.tradeCreditDefaultSchedule?.frequency === 'DAILY' ? '(N/A for Daily)' : ''}
+                  </label>
+                  <select
+                    disabled={productSettings.tradeCreditDefaultSchedule?.frequency === 'DAILY'}
+                    value={productSettings.tradeCreditDefaultSchedule?.weeklyDebitDay || 'MONDAY'}
+                    onChange={(e) => setProductSettings(p => ({
+                      ...p,
+                      tradeCreditDefaultSchedule: {
+                        ...(p.tradeCreditDefaultSchedule || {}),
+                        weeklyDebitDay: e.target.value
+                      }
+                    }))}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50"
+                  >
+                    {['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'].map(day => (
+                      <option key={day} value={day}>{day.charAt(0) + day.slice(1).toLowerCase()}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Debit Time
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="10:00 AM"
+                    value={productSettings.tradeCreditDefaultSchedule?.debitTime || '10:00 AM'}
+                    onChange={(e) => setProductSettings(p => ({
+                      ...p,
+                      tradeCreditDefaultSchedule: {
+                        ...(p.tradeCreditDefaultSchedule || {}),
+                        debitTime: e.target.value
+                      }
+                    }))}
+                    className="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs font-bold outline-none focus:ring-2 focus:ring-violet-500"
+                  />
+                </div>
               </div>
             </div>
 
@@ -2444,6 +2588,174 @@ export default function CreditManagement() {
                 Close Audit Log
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: Configure Trade Credit AutoPay Schedule */}
+      {tradeAutoPayModalOpen && selectedTradeAutoPayRetailer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-gray-100 space-y-5 my-8">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-black text-gray-900">Trade Credit AutoPay Schedule</h3>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-200">
+                    Auto-Debit Policy
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Retailer: <strong className="text-gray-800">{selectedTradeAutoPayRetailer.name}</strong> • {selectedTradeAutoPayRetailer.phone}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTradeAutoPayModalOpen(false)}
+                className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Account Status Card */}
+            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 font-medium">AutoPay e-Mandate Status:</span>
+                {selectedTradeAutoPayRetailer.autoPayMandate?.status === 'ACTIVE' ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Mandate Active</span>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                    Mandate Pending Retailer Activation
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 font-medium">Current Outstanding Balance:</span>
+                <span className="font-black text-rose-600">
+                  ₹{(selectedTradeAutoPayRetailer.outstandingBalance || 0).toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 font-medium">Credit Limit:</span>
+                <span className="font-bold text-gray-900">
+                  ₹{(selectedTradeAutoPayRetailer.creditLimit || 0).toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveTradeAutoPaySchedule} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Debit Recurrence Frequency
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setTradeAutoPayFrequency('WEEKLY')}
+                    className={`p-3 rounded-2xl border text-left transition-all ${
+                      tradeAutoPayFrequency === 'WEEKLY'
+                        ? 'border-violet-600 bg-violet-50/60 ring-2 ring-violet-500'
+                        : 'border-gray-200 bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-xs font-black text-gray-900 flex items-center gap-1.5">
+                      <span>🗓️ Weekly</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-violet-100 text-violet-700 font-bold">Standard</span>
+                    </div>
+                    <div className="text-[11px] text-gray-500 mt-1">
+                      Auto-debit once every week on a specific day
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTradeAutoPayFrequency('DAILY')}
+                    className={`p-3 rounded-2xl border text-left transition-all ${
+                      tradeAutoPayFrequency === 'DAILY'
+                        ? 'border-violet-600 bg-violet-50/60 ring-2 ring-violet-500'
+                        : 'border-gray-200 bg-white hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="text-xs font-black text-gray-900 flex items-center gap-1.5">
+                      <span>⚡ Daily</span>
+                    </div>
+                    <div className="text-[11px] text-gray-500 mt-1">
+                      Daily clearance of outstanding invoices
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {tradeAutoPayFrequency === 'WEEKLY' && (
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                    Designated Weekly Debit Day
+                  </label>
+                  <select
+                    value={tradeAutoPayDebitDay}
+                    onChange={(e) => setTradeAutoPayDebitDay(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-violet-500"
+                  >
+                    {['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'].map((day) => (
+                      <option key={day} value={day}>
+                        {day.charAt(0) + day.slice(1).toLowerCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  Scheduled Auto-Debit Time
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 10:00 AM"
+                  required
+                  value={tradeAutoPayDebitTime}
+                  onChange={(e) => setTradeAutoPayDebitTime(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-bold outline-none focus:ring-2 focus:ring-violet-500"
+                />
+                <span className="text-[10px] text-gray-400 mt-1 block">
+                  Debit attempt will trigger at this time in Indian Standard Time (IST).
+                </span>
+              </div>
+
+              {/* Retailer Advisory Notice Preview */}
+              <div className="p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-2xl space-y-1">
+                <div className="text-[11px] font-black text-amber-900 flex items-center gap-1">
+                  <span>📢</span>
+                  <span>Retailer Dashboard Advisory Preview:</span>
+                </div>
+                <p className="text-[11px] text-amber-800 leading-relaxed font-medium">
+                  {tradeAutoPayFrequency === 'DAILY'
+                    ? `Automatic debit will run every day at ${tradeAutoPayDebitTime || '10:00 AM'}. Retailer is instructed to maintain minimum balance of ₹${(selectedTradeAutoPayRetailer.outstandingBalance || 0).toLocaleString('en-IN')} in their linked bank account.`
+                    : `Automatic debit will run every ${tradeAutoPayDebitDay ? tradeAutoPayDebitDay.charAt(0) + tradeAutoPayDebitDay.slice(1).toLowerCase() : 'Monday'} at ${tradeAutoPayDebitTime || '10:00 AM'}. Retailer is instructed to maintain minimum balance of ₹${(selectedTradeAutoPayRetailer.outstandingBalance || 0).toLocaleString('en-IN')} in their linked bank account.`}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setTradeAutoPayModalOpen(false)}
+                  className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingTradeAutoPay}
+                  className="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold shadow-md shadow-violet-200 transition-all disabled:opacity-50"
+                >
+                  {savingTradeAutoPay ? 'Saving Schedule...' : 'Save AutoPay Schedule'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
