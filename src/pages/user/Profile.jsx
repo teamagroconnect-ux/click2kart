@@ -180,11 +180,14 @@ export default function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Retailer Credit State
+  const [isCreditEnabled, setIsCreditEnabled] = useState(() => Boolean(user?.isCreditEnabled));
+
   const getInitialTab = () => {
     try {
       const params = new URLSearchParams(location.search);
       const tab = params.get('tab');
-      if (tab === 'credit' && !user?.isCreditEnabled) return 'overview';
+      if (tab === 'credit' && !user?.isCreditEnabled && !isCreditEnabled) return 'overview';
       if (tab && ['overview', 'credit', 'business', 'personal', 'addresses', 'support', 'settings'].includes(tab)) {
         return tab === 'personal' ? 'business' : tab;
       }
@@ -193,20 +196,6 @@ export default function Profile() {
   };
 
   const [activeSection, setActiveSection] = useState(getInitialTab);
-
-  useEffect(() => {
-    try {
-      const params = new URLSearchParams(location.search);
-      const tab = params.get('tab');
-      if (tab === 'credit' && !user?.isCreditEnabled && !isCreditEnabled) {
-        setActiveSection('overview');
-        return;
-      }
-      if (tab && ['overview', 'credit', 'business', 'personal', 'addresses', 'support', 'settings'].includes(tab)) {
-        setActiveSection(tab === 'personal' ? 'business' : tab);
-      }
-    } catch (e) {}
-  }, [location.search, user?.isCreditEnabled, isCreditEnabled]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [originalKyc, setOriginalKyc] = useState({});
@@ -244,8 +233,6 @@ export default function Profile() {
   const [recentOrders, setRecentOrders] = useState([]);
   const [selectedBusinessAddress, setSelectedBusinessAddress] = useState(null);
 
-  // Retailer Credit State
-  const [isCreditEnabled, setIsCreditEnabled] = useState(() => Boolean(user?.isCreditEnabled));
   const [creditData, setCreditData] = useState(null);
   const [creditLoading, setCreditLoading] = useState(false);
   const [creditTransactions, setCreditTransactions] = useState([]);
@@ -313,6 +300,28 @@ export default function Profile() {
   // Application Activity Timeline & Audit Logs modal
   const [showAppTimelineModal, setShowAppTimelineModal] = useState(false);
   const [selectedTimelineApp, setSelectedTimelineApp] = useState(null);
+
+  // Sync active tab with location search
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(location.search);
+      const tab = params.get('tab');
+      if (tab === 'credit' && !user?.isCreditEnabled && !isCreditEnabled) {
+        setActiveSection('overview');
+        return;
+      }
+      if (tab && ['overview', 'credit', 'business', 'personal', 'addresses', 'support', 'settings'].includes(tab)) {
+        setActiveSection(tab === 'personal' ? 'business' : tab);
+      }
+    } catch (e) {}
+  }, [location.search, user?.isCreditEnabled, isCreditEnabled]);
+
+  // Sync isCreditEnabled state when user object updates
+  useEffect(() => {
+    if (user?.isCreditEnabled !== undefined) {
+      setIsCreditEnabled(Boolean(user.isCreditEnabled));
+    }
+  }, [user?.isCreditEnabled]);
 
   const loadBankDetails = async () => {
     try {
