@@ -128,6 +128,159 @@ export default function Enquiry() {
     }
   }
 
+  const renderCreditTermsCard = (amountToRepay, isPartial = false) => {
+    const installments = computeCreditInstallments(amountToRepay, creditTenureDays, creditScheduleType, creditWeeklyDay);
+    return (
+      <div style={{
+        background: '#faf5ff',
+        border: '1.5px solid #d8b4fe',
+        borderRadius: 18,
+        padding: '16px 20px',
+        marginTop: isPartial ? 12 : 0,
+        marginBottom: 14,
+        boxShadow: '0 4px 18px rgba(124,58,237,0.06)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #ede9fe' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 16 }}>🗓️</span>
+            <div>
+              <span style={{ fontSize: 13, fontWeight: 800, color: '#4c1d95' }}>Repayment Tenure & AutoPay Schedule</span>
+              {isPartial && (
+                <div style={{ fontSize: 11, color: '#7c3aed', fontWeight: 700 }}>
+                  For ₹{Math.round(amountToRepay).toLocaleString('en-IN')} Trade Credit Drawn
+                </div>
+              )}
+            </div>
+          </div>
+          <span style={{
+            fontSize: 10,
+            fontWeight: 800,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            padding: '3px 8px',
+            borderRadius: 999,
+            background: profile.autoPayMandate?.status === 'ACTIVE' ? '#d1fae5' : '#fef3c7',
+            color: profile.autoPayMandate?.status === 'ACTIVE' ? '#065f46' : '#92400e',
+            border: `1px solid ${profile.autoPayMandate?.status === 'ACTIVE' ? '#a7f3d0' : '#fde68a'}`
+          }}>
+            {profile.autoPayMandate?.status === 'ACTIVE' ? '⚡ Mandate Active' : '⚡ Auto-Debit'}
+          </span>
+        </div>
+
+        {/* Tenure Selector */}
+        <div style={{ marginBottom: 12 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', marginBottom: 6 }}>
+            Select Repayment Tenure
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+            {[
+              { label: '15 Days', days: 15 },
+              { label: '30 Days', days: 30, recommended: true },
+              { label: '45 Days', days: 45 },
+              { label: '60 Days', days: 60 }
+            ].map(t => (
+              <button
+                key={t.days}
+                type="button"
+                onClick={() => setCreditTenureDays(t.days)}
+                style={{
+                  padding: '8px 4px',
+                  borderRadius: 12,
+                  fontSize: 12,
+                  fontWeight: 800,
+                  border: creditTenureDays === t.days ? '2px solid #7c3aed' : '1px solid #e2e8f0',
+                  background: creditTenureDays === t.days ? '#7c3aed' : 'white',
+                  color: creditTenureDays === t.days ? 'white' : '#1e293b',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  textAlign: 'center'
+                }}
+              >
+                <div>{t.label}</div>
+                {t.recommended && (
+                  <div style={{ fontSize: 9, opacity: 0.8, fontWeight: 700 }}>Popular</div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* AutoPay Frequency Selector */}
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', marginBottom: 6 }}>
+            AutoPay Debit Schedule
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            {[
+              { id: 'WEEKLY', label: 'Weekly AutoPay', sub: 'Every Monday' },
+              { id: 'DAILY', label: 'Daily Micro', sub: 'Daily Debit' },
+              { id: 'LUMP_SUM', label: 'Lump-Sum', sub: `Day ${creditTenureDays}` }
+            ].map(f => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setCreditScheduleType(f.id)}
+                style={{
+                  padding: '8px 6px',
+                  borderRadius: 12,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  border: creditScheduleType === f.id ? '2px solid #7c3aed' : '1px solid #e2e8f0',
+                  background: creditScheduleType === f.id ? '#ede9fe' : 'white',
+                  color: creditScheduleType === f.id ? '#5b21b6' : '#475569',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  textAlign: 'center'
+                }}
+              >
+                <div>{f.label}</div>
+                <div style={{ fontSize: 9, color: '#64748b', fontWeight: 600 }}>{f.sub}</div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Installments Table Preview */}
+        <div style={{ background: 'white', borderRadius: 14, border: '1px solid #e9d5ff', overflow: 'hidden' }}>
+          <div style={{ padding: '8px 12px', background: '#f5f3ff', borderBottom: '1px solid #e9d5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, fontWeight: 800, color: '#5b21b6' }}>
+            <span>Scheduled Auto-Debits ({installments.length} {installments.length === 1 ? 'Instalment' : 'Instalments'})</span>
+            <span>Total Credit: ₹{Math.round(amountToRepay).toLocaleString('en-IN')}</span>
+          </div>
+          <div style={{ maxHeight: 130, overflowY: 'auto' }}>
+            {installments.map(inst => (
+              <div
+                key={inst.installmentNumber}
+                style={{
+                  padding: '8px 12px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: 11,
+                  borderBottom: '1px solid #f3f4f6'
+                }}
+              >
+                <div>
+                  <span style={{ fontWeight: 800, color: '#1e293b' }}>#{inst.installmentNumber}</span>
+                  <span style={{ marginLeft: 8, color: '#64748b' }}>
+                    Due {new Date(inst.dueDate).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' })}
+                  </span>
+                </div>
+                <div style={{ fontWeight: 800, color: '#059669' }}>
+                  ₹{Math.round(inst.amount).toLocaleString('en-IN')}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ marginTop: 10, fontSize: 11, color: '#6b7280', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span>💡</span>
+          <span>Debits occur automatically from your registered bank account. Keep sufficient funds before scheduled debit times.</span>
+        </div>
+      </div>
+    );
+  };
+
   /* ── helpers ── */
   const computeEtaRange = () => {
     const add = (d,n) => { const x=new Date(d); for(let i=0;i<n;i++) x.setDate(x.getDate()+1); return x }
@@ -299,7 +452,7 @@ export default function Enquiry() {
     setCouponError('')
   }
 
-  const handleRazorpay = async ({ items, paymentMethod, deliveryChannel, razorpayOrderId, amountPaise, applyCredit: isApplyCredit }) => {
+  const handleRazorpay = async ({ items, paymentMethod, deliveryChannel, razorpayOrderId, amountPaise, applyCredit: isApplyCredit, creditTerms }) => {
     try { await ensureRazorpayLoaded() } catch { notify('Unable to load payment gateway. Please try again.','error'); return }
     const options = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID||"rzp_test_placeholder",
@@ -315,7 +468,8 @@ export default function Enquiry() {
             paymentMethod,
             deliveryChannel,
             couponCode: appliedCoupon?.code || '',
-            applyCredit: !!isApplyCredit
+            applyCredit: !!isApplyCredit,
+            creditTerms: isApplyCredit ? creditTerms : undefined
           })
           notify('Payment Successful!','success');
           clearCart();
@@ -449,6 +603,19 @@ export default function Enquiry() {
         }
         setLoading(false);
         const willUseCredit = isCreditEligible && applyCredit && creditDeduction > 0;
+        let creditTermsPayload = undefined;
+        if (willUseCredit) {
+          const installments = computeCreditInstallments(creditDeduction, creditTenureDays, creditScheduleType, creditWeeklyDay);
+          creditTermsPayload = {
+            tenureDays: Number(creditTenureDays) || 30,
+            autoPaySchedule: creditScheduleType,
+            weeklyDebitDay: creditWeeklyDay,
+            installmentCount: installments.length,
+            installmentAmount: installments[0]?.amount || creditDeduction,
+            nextDebitDate: installments[0]?.dueDate || null,
+            installments
+          };
+        }
         nav('/manual-payment', {
           state: {
             items: cleanItems,
@@ -456,6 +623,7 @@ export default function Enquiry() {
             totalOrderValue: totalPayable,
             creditAmount: willUseCredit ? creditDeduction : 0,
             applyCredit: willUseCredit,
+            creditTerms: creditTermsPayload,
             deliveryChannel,
             couponCode: appliedCoupon?.code || ''
           }
@@ -466,11 +634,25 @@ export default function Enquiry() {
       if (paymentMethod === 'RAZORPAY') {
         try {
           const willUseCredit = isCreditEligible && applyCredit && creditDeduction > 0;
+          let creditTermsPayload = undefined;
+          if (willUseCredit) {
+            const installments = computeCreditInstallments(creditDeduction, creditTenureDays, creditScheduleType, creditWeeklyDay);
+            creditTermsPayload = {
+              tenureDays: Number(creditTenureDays) || 30,
+              autoPaySchedule: creditScheduleType,
+              weeklyDebitDay: creditWeeklyDay,
+              installmentCount: installments.length,
+              installmentAmount: installments[0]?.amount || creditDeduction,
+              nextDebitDate: installments[0]?.dueDate || null,
+              installments
+            };
+          }
           const { data } = await api.post('/api/orders/prepare-payment', {
             items: cleanItems,
             paymentMethod: 'RAZORPAY',
             couponCode: appliedCoupon?.code || '',
-            applyCredit: willUseCredit
+            applyCredit: willUseCredit,
+            creditTerms: creditTermsPayload
           });
           await handleRazorpay({
             items: cleanItems,
@@ -478,7 +660,8 @@ export default function Enquiry() {
             deliveryChannel,
             razorpayOrderId: data.razorpayOrderId,
             amountPaise: data.amountPaise,
-            applyCredit: willUseCredit
+            applyCredit: willUseCredit,
+            creditTerms: creditTermsPayload
           })
         }
         catch (err) {
@@ -2308,152 +2491,7 @@ export default function Enquiry() {
                             </div>
                           </button>
 
-                          {paymentMethod === 'CREDIT' && (
-                            <div style={{
-                              background: '#faf5ff',
-                              border: '1.5px solid #d8b4fe',
-                              borderRadius: 18,
-                              padding: '16px 20px',
-                              marginBottom: 14,
-                              boxShadow: '0 4px 18px rgba(124,58,237,0.06)'
-                            }}>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #ede9fe' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                  <span style={{ fontSize: 16 }}>🗓️</span>
-                                  <span style={{ fontSize: 13, fontWeight: 800, color: '#4c1d95' }}>Repayment Tenure & AutoPay Schedule</span>
-                                </div>
-                                <span style={{
-                                  fontSize: 10,
-                                  fontWeight: 800,
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.05em',
-                                  padding: '3px 8px',
-                                  borderRadius: 999,
-                                  background: profile.autoPayMandate?.status === 'ACTIVE' ? '#d1fae5' : '#fef3c7',
-                                  color: profile.autoPayMandate?.status === 'ACTIVE' ? '#065f46' : '#92400e',
-                                  border: `1px solid ${profile.autoPayMandate?.status === 'ACTIVE' ? '#a7f3d0' : '#fde68a'}`
-                                }}>
-                                  {profile.autoPayMandate?.status === 'ACTIVE' ? '⚡ Mandate Active' : '⚡ Auto-Debit'}
-                                </span>
-                              </div>
-
-                              {/* Tenure Selector */}
-                              <div style={{ marginBottom: 12 }}>
-                                <label style={{ display: 'block', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', marginBottom: 6 }}>
-                                  Select Repayment Tenure
-                                </label>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-                                  {[
-                                    { label: '15 Days', days: 15 },
-                                    { label: '30 Days', days: 30, recommended: true },
-                                    { label: '45 Days', days: 45 },
-                                    { label: '60 Days', days: 60 }
-                                  ].map(t => (
-                                    <button
-                                      key={t.days}
-                                      type="button"
-                                      onClick={() => setCreditTenureDays(t.days)}
-                                      style={{
-                                        padding: '8px 4px',
-                                        borderRadius: 12,
-                                        fontSize: 12,
-                                        fontWeight: 800,
-                                        border: creditTenureDays === t.days ? '2px solid #7c3aed' : '1px solid #e2e8f0',
-                                        background: creditTenureDays === t.days ? '#7c3aed' : 'white',
-                                        color: creditTenureDays === t.days ? 'white' : '#1e293b',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.15s ease',
-                                        textAlign: 'center'
-                                      }}
-                                    >
-                                      <div>{t.label}</div>
-                                      {t.recommended && (
-                                        <div style={{ fontSize: 9, opacity: 0.8, fontWeight: 700 }}>Popular</div>
-                                      )}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* AutoPay Frequency Selector */}
-                              <div style={{ marginBottom: 14 }}>
-                                <label style={{ display: 'block', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', marginBottom: 6 }}>
-                                  AutoPay Debit Schedule
-                                </label>
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                                  {[
-                                    { id: 'WEEKLY', label: 'Weekly AutoPay', sub: 'Every Monday' },
-                                    { id: 'DAILY', label: 'Daily Micro', sub: 'Daily Debit' },
-                                    { id: 'LUMP_SUM', label: 'Lump-Sum', sub: `Day ${creditTenureDays}` }
-                                  ].map(f => (
-                                    <button
-                                      key={f.id}
-                                      type="button"
-                                      onClick={() => setCreditScheduleType(f.id)}
-                                      style={{
-                                        padding: '8px 6px',
-                                        borderRadius: 12,
-                                        fontSize: 11,
-                                        fontWeight: 800,
-                                        border: creditScheduleType === f.id ? '2px solid #7c3aed' : '1px solid #e2e8f0',
-                                        background: creditScheduleType === f.id ? '#ede9fe' : 'white',
-                                        color: creditScheduleType === f.id ? '#5b21b6' : '#475569',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.15s ease',
-                                        textAlign: 'center'
-                                      }}
-                                    >
-                                      <div>{f.label}</div>
-                                      <div style={{ fontSize: 9, color: '#64748b', fontWeight: 600 }}>{f.sub}</div>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Installments Table Preview */}
-                              {(() => {
-                                const installments = computeCreditInstallments(totalPayable, creditTenureDays, creditScheduleType, creditWeeklyDay);
-                                return (
-                                  <div style={{ background: 'white', borderRadius: 14, border: '1px solid #e9d5ff', overflow: 'hidden' }}>
-                                    <div style={{ padding: '8px 12px', background: '#f5f3ff', borderBottom: '1px solid #e9d5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, fontWeight: 800, color: '#5b21b6' }}>
-                                      <span>Scheduled Auto-Debits ({installments.length} {installments.length === 1 ? 'Instalment' : 'Instalments'})</span>
-                                      <span>Total: ₹{totalPayable.toLocaleString('en-IN')}</span>
-                                    </div>
-                                    <div style={{ maxHeight: 130, overflowY: 'auto' }}>
-                                      {installments.map(inst => (
-                                        <div
-                                          key={inst.installmentNumber}
-                                          style={{
-                                            padding: '8px 12px',
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            fontSize: 11,
-                                            borderBottom: '1px solid #f3f4f6'
-                                          }}
-                                        >
-                                          <div>
-                                            <span style={{ fontWeight: 800, color: '#1e293b' }}>#{inst.installmentNumber}</span>
-                                            <span style={{ marginLeft: 8, color: '#64748b' }}>
-                                              Due {new Date(inst.dueDate).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' })}
-                                            </span>
-                                          </div>
-                                          <div style={{ fontWeight: 800, color: '#059669' }}>
-                                            ₹{Math.round(inst.amount).toLocaleString('en-IN')}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                );
-                              })()}
-
-                              <div style={{ marginTop: 10, fontSize: 11, color: '#6b7280', display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span>💡</span>
-                                <span>Debits occur automatically from your registered bank account. Keep sufficient funds before scheduled debit times.</span>
-                              </div>
-                            </div>
-                          )}
+                          {paymentMethod === 'CREDIT' && renderCreditTermsCard(totalPayable, false)}
                         </>
                       ) : (
                         <div
@@ -2508,6 +2546,7 @@ export default function Enquiry() {
                               </span>
                             </label>
                           </div>
+                          {shouldApplyCredit && creditDeduction > 0 && renderCreditTermsCard(creditDeduction, true)}
                         </div>
                       )
                     )}

@@ -70,7 +70,8 @@ export default function ManualPayment() {
         codAdvance20: cod20,
         deliveryChannel: loc.state?.deliveryChannel,
         couponCode: loc.state?.couponCode || '',
-        applyCredit: !!loc.state?.applyCredit
+        applyCredit: !!loc.state?.applyCredit,
+        creditTerms: loc.state?.creditTerms || undefined
       })
       notify('Payment details submitted. Verification in progress.', 'success')
       clearCart()

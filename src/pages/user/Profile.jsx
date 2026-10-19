@@ -227,14 +227,76 @@ export const POPULAR_INDIAN_BANKS = [
   }
 ];
 
+export const ALL_INDIAN_BANKS = [
+  // Popular / Public Sector
+  { id: 'sbi', name: 'State Bank of India', shortName: 'SBI', ifscPrefix: 'SBIN0', category: 'Public Sector' },
+  { id: 'pnb', name: 'Punjab National Bank', shortName: 'PNB', ifscPrefix: 'PUNB0', category: 'Public Sector' },
+  { id: 'bob', name: 'Bank of Baroda', shortName: 'BOB', ifscPrefix: 'BARB0', category: 'Public Sector' },
+  { id: 'canara', name: 'Canara Bank', shortName: 'Canara', ifscPrefix: 'CNRB0', category: 'Public Sector' },
+  { id: 'union', name: 'Union Bank of India', shortName: 'Union Bank', ifscPrefix: 'UBIN0', category: 'Public Sector' },
+  { id: 'boi', name: 'Bank of India', shortName: 'BOI', ifscPrefix: 'BKID0', category: 'Public Sector' },
+  { id: 'indian_bank', name: 'Indian Bank', shortName: 'Indian Bank', ifscPrefix: 'IDIB0', category: 'Public Sector' },
+  { id: 'central_bank', name: 'Central Bank of India', shortName: 'Central Bank', ifscPrefix: 'CBIN0', category: 'Public Sector' },
+  { id: 'iob', name: 'Indian Overseas Bank', shortName: 'IOB', ifscPrefix: 'IOBA0', category: 'Public Sector' },
+  { id: 'uco', name: 'UCO Bank', shortName: 'UCO Bank', ifscPrefix: 'UCBA0', category: 'Public Sector' },
+  { id: 'bom', name: 'Bank of Maharashtra', shortName: 'BOM', ifscPrefix: 'MAHB0', category: 'Public Sector' },
+  { id: 'psb', name: 'Punjab & Sind Bank', shortName: 'PSB', ifscPrefix: 'PSIB0', category: 'Public Sector' },
+  // Major Private Sector
+  { id: 'hdfc', name: 'HDFC Bank', shortName: 'HDFC', ifscPrefix: 'HDFC0', category: 'Private Sector' },
+  { id: 'icici', name: 'ICICI Bank', shortName: 'ICICI', ifscPrefix: 'ICIC0', category: 'Private Sector' },
+  { id: 'axis', name: 'Axis Bank', shortName: 'Axis', ifscPrefix: 'UTIB0', category: 'Private Sector' },
+  { id: 'kotak', name: 'Kotak Mahindra Bank', shortName: 'Kotak', ifscPrefix: 'KKBK0', category: 'Private Sector' },
+  { id: 'indusind', name: 'IndusInd Bank', shortName: 'IndusInd', ifscPrefix: 'INDB0', category: 'Private Sector' },
+  { id: 'yes', name: 'Yes Bank', shortName: 'Yes Bank', ifscPrefix: 'YESB0', category: 'Private Sector' },
+  { id: 'federal', name: 'Federal Bank', shortName: 'Federal Bank', ifscPrefix: 'FDRL0', category: 'Private Sector' },
+  { id: 'idfc', name: 'IDFC FIRST Bank', shortName: 'IDFC FIRST', ifscPrefix: 'IDFB0', category: 'Private Sector' },
+  { id: 'south_indian', name: 'South Indian Bank', shortName: 'South Indian Bank', ifscPrefix: 'SIBL0', category: 'Private Sector' },
+  { id: 'bandhan', name: 'Bandhan Bank', shortName: 'Bandhan', ifscPrefix: 'BDBL0', category: 'Private Sector' },
+  { id: 'rbl', name: 'RBL Bank', shortName: 'RBL', ifscPrefix: 'RATN0', category: 'Private Sector' },
+  { id: 'karur_vysya', name: 'Karur Vysya Bank', shortName: 'KVB', ifscPrefix: 'KVBL0', category: 'Private Sector' },
+  { id: 'city_union', name: 'City Union Bank', shortName: 'CUB', ifscPrefix: 'CIUB0', category: 'Private Sector' },
+  { id: 'karnataka_bank', name: 'Karnataka Bank', shortName: 'Karnataka Bank', ifscPrefix: 'KARB0', category: 'Private Sector' },
+  { id: 'tamilnad_mercantile', name: 'Tamilnad Mercantile Bank', shortName: 'TMB', ifscPrefix: 'TMBL0', category: 'Private Sector' },
+  { id: 'jk_bank', name: 'Jammu & Kashmir Bank', shortName: 'J&K Bank', ifscPrefix: 'JAKA0', category: 'Private Sector' },
+  { id: 'dhanlaxmi', name: 'Dhanlaxmi Bank', shortName: 'Dhanlaxmi', ifscPrefix: 'DLXB0', category: 'Private Sector' },
+  { id: 'csb', name: 'CSB Bank', shortName: 'CSB', ifscPrefix: 'CSBK0', category: 'Private Sector' },
+  { id: 'nainital', name: 'Nainital Bank', shortName: 'Nainital', ifscPrefix: 'NTBL0', category: 'Private Sector' },
+  // Small Finance Banks
+  { id: 'au_sf', name: 'AU Small Finance Bank', shortName: 'AU SFB', ifscPrefix: 'AUBL0', category: 'Small Finance Bank' },
+  { id: 'equitas_sf', name: 'Equitas Small Finance Bank', shortName: 'Equitas SFB', ifscPrefix: 'ESFB0', category: 'Small Finance Bank' },
+  { id: 'ujjivan_sf', name: 'Ujjivan Small Finance Bank', shortName: 'Ujjivan SFB', ifscPrefix: 'UJVN0', category: 'Small Finance Bank' },
+  { id: 'esaf_sf', name: 'ESAF Small Finance Bank', shortName: 'ESAF SFB', ifscPrefix: 'ESMF0', category: 'Small Finance Bank' },
+  { id: 'capital_sf', name: 'Capital Small Finance Bank', shortName: 'Capital SFB', ifscPrefix: 'CLBL0', category: 'Small Finance Bank' },
+  { id: 'fincare_sf', name: 'Fincare Small Finance Bank', shortName: 'Fincare SFB', ifscPrefix: 'FSFB0', category: 'Small Finance Bank' },
+  { id: 'suryoday_sf', name: 'Suryoday Small Finance Bank', shortName: 'Suryoday SFB', ifscPrefix: 'SURY0', category: 'Small Finance Bank' },
+  { id: 'jana_sf', name: 'Jana Small Finance Bank', shortName: 'Jana SFB', ifscPrefix: 'JSFB0', category: 'Small Finance Bank' },
+  { id: 'utkarsh_sf', name: 'Utkarsh Small Finance Bank', shortName: 'Utkarsh SFB', ifscPrefix: 'UTKS0', category: 'Small Finance Bank' },
+  { id: 'shivalik_sf', name: 'Shivalik Small Finance Bank', shortName: 'Shivalik SFB', ifscPrefix: 'SMCB0', category: 'Small Finance Bank' },
+  { id: 'unity_sf', name: 'Unity Small Finance Bank', shortName: 'Unity SFB', ifscPrefix: 'USFB0', category: 'Small Finance Bank' },
+  // Payments Banks
+  { id: 'airtel_pay', name: 'Airtel Payments Bank', shortName: 'Airtel Bank', ifscPrefix: 'AIRP0', category: 'Payments Bank' },
+  { id: 'paytm_pay', name: 'Paytm Payments Bank', shortName: 'Paytm Bank', ifscPrefix: 'PYTM0', category: 'Payments Bank' },
+  { id: 'india_post', name: 'India Post Payments Bank', shortName: 'IPPB', ifscPrefix: 'IPOS0', category: 'Payments Bank' },
+  { id: 'fino_pay', name: 'Fino Payments Bank', shortName: 'Fino Bank', ifscPrefix: 'FINO0', category: 'Payments Bank' },
+  // Co-operative & Foreign Banks
+  { id: 'saraswat', name: 'Saraswat Co-operative Bank', shortName: 'Saraswat Bank', ifscPrefix: 'SRCB0', category: 'Co-operative Bank' },
+  { id: 'cosmos', name: 'Cosmos Co-operative Bank', shortName: 'Cosmos Bank', ifscPrefix: 'COSB0', category: 'Co-operative Bank' },
+  { id: 'svc', name: 'SVC Co-operative Bank', shortName: 'SVC Bank', ifscPrefix: 'SVCB0', category: 'Co-operative Bank' },
+  { id: 'tjsb', name: 'TJSB Sahakari Bank', shortName: 'TJSB Bank', ifscPrefix: 'TJSB0', category: 'Co-operative Bank' },
+  { id: 'abhyudaya', name: 'Abhyudaya Co-operative Bank', shortName: 'Abhyudaya Bank', ifscPrefix: 'ABHY0', category: 'Co-operative Bank' },
+  { id: 'dbs', name: 'DBS Bank India', shortName: 'DBS Bank', ifscPrefix: 'DBSS0', category: 'Foreign Bank' },
+  { id: 'standard_chartered', name: 'Standard Chartered Bank', shortName: 'StanChart', ifscPrefix: 'SCBL0', category: 'Foreign Bank' },
+  { id: 'hsbc', name: 'HSBC India', shortName: 'HSBC', ifscPrefix: 'HSBC0', category: 'Foreign Bank' }
+];
+
 export const PopularBanksPicker = ({ selectedBankName, onSelectBank }) => {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700">
-          Select Popular Bank
+          Popular Banks
         </label>
-        <span className="text-[10px] text-slate-400 font-medium">Click to auto-fill bank & IFSC</span>
+        <span className="text-[10px] text-slate-400 font-medium">Click to 1-click select</span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         {POPULAR_INDIAN_BANKS.map((b) => {
@@ -264,6 +326,100 @@ export const PopularBanksPicker = ({ selectedBankName, onSelectBank }) => {
         })}
       </div>
     </div>
+  );
+};
+
+/* ── Complete Indian Bank Selector (No typing required) ── */
+export const CompleteIndianBankSelector = ({ selectedBankName, onSelectBank }) => {
+  const [customMode, setCustomMode] = useState(false);
+  const currentMatch = ALL_INDIAN_BANKS.find(
+    b => b.name.toLowerCase() === selectedBankName?.toLowerCase() || b.shortName.toLowerCase() === selectedBankName?.toLowerCase()
+  );
+
+  return (
+    <div className="space-y-3">
+      {/* Popular Banks 1-click cards */}
+      <PopularBanksPicker
+        selectedBankName={selectedBankName}
+        onSelectBank={(b) => {
+          setCustomMode(false);
+          onSelectBank(b);
+        }}
+      />
+
+      {/* Complete All Indian Banks Dropdown */}
+      <div className="space-y-1.5 pt-1">
+        <div className="flex items-center justify-between">
+          <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700">
+            Or Choose from All Indian Banks (60+ Banks)
+          </label>
+          <span className="text-[10px] text-emerald-600 font-bold">✓ 100% No Typing Needed</span>
+        </div>
+        <select
+          value={currentMatch?.id || (customMode ? 'custom' : '')}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === 'custom') {
+              setCustomMode(true);
+            } else {
+              setCustomMode(false);
+              const found = ALL_INDIAN_BANKS.find(b => b.id === val);
+              if (found) onSelectBank(found);
+            }
+          }}
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer"
+        >
+          <option value="" disabled>-- Click to pick your bank from list --</option>
+          {['Public Sector', 'Private Sector', 'Small Finance Bank', 'Payments Bank', 'Co-operative Bank', 'Foreign Bank'].map(category => {
+            const banksInCategory = ALL_INDIAN_BANKS.filter(b => b.category === category);
+            if (banksInCategory.length === 0) return null;
+            return (
+              <optgroup key={category} label={`── ${category} Banks ──`}>
+                {banksInCategory.map(b => (
+                  <option key={b.id} value={b.id}>
+                    {b.name} ({b.ifscPrefix}•••)
+                  </option>
+                ))}
+              </optgroup>
+            );
+          })}
+          <option value="custom">✏️ Other / Local Co-operative Bank (Enter Manually)</option>
+        </select>
+      </div>
+
+      {customMode && (
+        <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 leading-relaxed">
+          💡 You selected manual bank entry. Please type your bank name in the field below.
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ── Helpful Info Badge & Tooltip Component ── */
+export const InfoBadge = ({ title, text }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-flex items-center ml-1.5 align-middle">
+      <button
+        type="button"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(p => !p); }}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        className="w-4 h-4 rounded-full bg-slate-100 hover:bg-violet-100 text-slate-500 hover:text-violet-700 flex items-center justify-center text-[10px] font-black transition-all cursor-help border border-slate-200 hover:border-violet-300"
+        aria-label={title}
+        title={text}
+      >
+        i
+      </button>
+      {open && (
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-slate-900/95 backdrop-blur-md text-white text-[11px] rounded-2xl shadow-2xl z-50 pointer-events-none leading-relaxed border border-slate-700/80 animate-in fade-in zoom-in-95 duration-150 text-left">
+          <strong className="block text-violet-300 font-bold mb-1 text-xs">{title}</strong>
+          <span className="text-slate-200">{text}</span>
+          <span className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
+        </span>
+      )}
+    </span>
   );
 };
 
@@ -412,8 +568,8 @@ export default function Profile() {
 
   // Facility Sub-tabs: 'trade' | 'business'
   const [creditFacilityType, setCreditFacilityType] = useState('trade');
-  // Business Credit Sub-tabs: 'facility' | 'bank_mandate' | 'applications'
-  const [businessSubTab, setBusinessSubTab] = useState('facility');
+  // Business Credit Sub-tabs: 'overview' | 'schedule' | 'bank_mandate' | 'applications'
+  const [businessSubTab, setBusinessSubTab] = useState('overview');
 
   // Business Credit Facility State
   const [businessEligibility, setBusinessEligibility] = useState(null);
@@ -2051,7 +2207,13 @@ export default function Profile() {
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                   <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col justify-between">
                     <div>
-                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Available Credit</div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center">
+                        <span>Available Credit</span>
+                        <InfoBadge
+                          title="Available Credit Balance"
+                          text="The spendable credit remaining on your account right now. You can use this balance at checkout to place wholesale orders with zero upfront payment. Repaying past dues restores this limit immediately."
+                        />
+                      </div>
                       <div className="pf-display font-black text-2xl text-emerald-600">
                         ₹{Number(creditData?.availableCredit || 0).toLocaleString('en-IN')}
                       </div>
@@ -2067,7 +2229,13 @@ export default function Profile() {
                   </div>
 
                   <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Approved Credit Limit</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center">
+                      <span>Approved Credit Limit</span>
+                      <InfoBadge
+                        title="Sanctioned Credit Limit"
+                        text="The total pre-approved revolving credit allocated to your business by Click2Kart administration based on KYC verification and order volume. Timely repayments unlock limit upgrades."
+                      />
+                    </div>
                     <div className="pf-display font-black text-2xl text-slate-800">
                       ₹{Number(creditData?.creditLimit || 0).toLocaleString('en-IN')}
                     </div>
@@ -2075,7 +2243,13 @@ export default function Profile() {
                   </div>
 
                   <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Used Credit</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center">
+                      <span>Used Credit</span>
+                      <InfoBadge
+                        title="Utilized Credit"
+                        text="The total sum currently locked in active unpaid orders placed on credit. Once your repayment is reconciled, this amount is credited back to your available balance."
+                      />
+                    </div>
                     <div className="pf-display font-black text-2xl text-slate-700">
                       ₹{Number(creditData?.usedCredit || 0).toLocaleString('en-IN')}
                     </div>
@@ -2083,7 +2257,13 @@ export default function Profile() {
                   </div>
 
                   <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Outstanding Balance</div>
+                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center">
+                      <span>Outstanding Balance</span>
+                      <InfoBadge
+                        title="Pending Repayments"
+                        text="The actual net amount currently due for repayment. Clear this balance on or before the due date to keep your credit line active and prevent checkout pauses."
+                      />
+                    </div>
                     <div className="pf-display font-black text-2xl text-rose-600">
                       ₹{Number(creditData?.outstandingBalance || 0).toLocaleString('en-IN')}
                     </div>
@@ -2096,7 +2276,13 @@ export default function Profile() {
                 {/* Utilization Progress Bar */}
                 <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-700">Credit Limit Utilization</span>
+                    <span className="font-bold text-slate-700 flex items-center">
+                      <span>Credit Limit Utilization</span>
+                      <InfoBadge
+                        title="Credit Utilization Ratio"
+                        text="Calculated as (Used Credit ÷ Total Credit Limit) × 100. Maintaining your utilization under 70% keeps your account in excellent standing and qualifies you for credit line increases."
+                      />
+                    </span>
                     <span className="font-black text-violet-700">{creditData?.utilization || 0}%</span>
                   </div>
                   <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
@@ -2136,7 +2322,13 @@ export default function Profile() {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-black text-slate-800 text-sm">Unified AutoPay Mandate</span>
+                              <span className="font-black text-slate-800 text-sm flex items-center">
+                                <span>Unified AutoPay Mandate</span>
+                                <InfoBadge
+                                  title="Unified Single e-Mandate"
+                                  text="A single automated debit authorization covering both Wholesale Trade Credit and Business Credit term lines without needing separate bank registrations."
+                                />
+                              </span>
                               {isMandateActive ? (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -2460,16 +2652,28 @@ export default function Profile() {
                     <div className="flex items-center gap-2 border-b border-slate-200/80 pb-3 flex-wrap">
                       <button
                         type="button"
-                        onClick={() => setBusinessSubTab('facility')}
+                        onClick={() => setBusinessSubTab('overview')}
                         className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
-                          businessSubTab === 'facility'
+                          businessSubTab === 'overview'
                             ? 'bg-violet-600 text-white shadow-sm shadow-violet-200'
                             : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
                         }`}
                       >
-                        <span>🏢 Active Facility & Repayment</span>
+                        <span>📊 Executive Overview</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setBusinessSubTab('schedule')}
+                        className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                          businessSubTab === 'schedule'
+                            ? 'bg-violet-600 text-white shadow-sm shadow-violet-200'
+                            : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
+                        }`}
+                      >
+                        <span>📅 Repayments & Schedule</span>
                         {businessFacilities.some(f => f.status === 'ACTIVE') && (
-                          <span className={`w-2 h-2 rounded-full ${businessSubTab === 'facility' ? 'bg-white' : 'bg-emerald-500'}`} />
+                          <span className={`w-2 h-2 rounded-full ${businessSubTab === 'schedule' ? 'bg-white' : 'bg-emerald-500'}`} />
                         )}
                       </button>
 
@@ -2528,8 +2732,473 @@ export default function Profile() {
                       </div>
                     )}
 
-                    {/* TAB 1: ACTIVE FACILITY & REPAYMENTS */}
-                    {businessSubTab === 'facility' && (
+                    {/* TAB 1: EXECUTIVE OVERVIEW */}
+                    {businessSubTab === 'overview' && (
+                      <div className="space-y-6">
+                        {loadingBusinessCredit ? (
+                          <div className="bg-white rounded-2xl p-12 text-center text-slate-400 font-medium">
+                            Loading business credit facility overview...
+                          </div>
+                        ) : businessFacilities.length === 0 ? (
+                          (() => {
+                            const isKycVerified = Boolean(user?.isKycComplete || user?.kyc?.status === 'VERIFIED');
+                            const payoutPendingApp = businessApps.find(a => ['OFFER_ACCEPTED', 'ACCEPTED', 'DISBURSEMENT_PENDING'].includes(a.status));
+                            const pendingApp = businessApps.find(a => ['SUBMITTED', 'UNDER_REVIEW', 'PENDING_REVIEW'].includes(a.status));
+                            const infoReqApp = businessApps.find(a => a.status === 'ADDITIONAL_INFO_REQUIRED');
+
+                            if (payoutPendingApp) {
+                              return (
+                                <div className="bg-white rounded-3xl p-8 border border-purple-200 shadow-sm text-center max-w-xl mx-auto space-y-4">
+                                  <div className="w-14 h-14 rounded-3xl bg-purple-50 text-purple-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                                    🏦
+                                  </div>
+                                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200">
+                                    <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                                    <span>Offer Accepted — Payout In Process</span>
+                                  </div>
+                                  <h3 className="pf-display font-black text-xl text-slate-900">
+                                    ₹{Number(payoutPendingApp.approvedOffer?.approvedAmount || payoutPendingApp.requestedAmount).toLocaleString('en-IN')} Sanction Confirmed
+                                  </h3>
+                                  <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+                                    Your facility agreement has been accepted. Administration is processing the disbursement bank transfer (NEFT/RTGS). Funds will be credited directly to your registered bank account shortly.
+                                  </p>
+                                  <div className="p-3.5 bg-purple-50/60 rounded-2xl border border-purple-100 text-xs text-purple-950 font-medium space-y-1 text-left">
+                                    <div className="flex justify-between font-bold text-slate-800">
+                                      <span>Application #{payoutPendingApp.applicationNumber}</span>
+                                      <span className="text-emerald-700">Net Payout: ₹{Math.round(Number(payoutPendingApp.approvedOffer?.approvedAmount || payoutPendingApp.requestedAmount) * (1 - 0.02 * 1.18)).toLocaleString('en-IN')}</span>
+                                    </div>
+                                    {payoutPendingApp.businessDetails?.bankDetails?.accountNumber ? (
+                                      <div className="text-[11px] text-slate-600 pt-1 border-t border-purple-100">
+                                        Beneficiary Account: <strong className="text-slate-800">{payoutPendingApp.businessDetails.bankDetails.bankName || 'Bank'}</strong> (A/C: <span className="font-mono">{payoutPendingApp.businessDetails.bankDetails.accountNumber}</span>, IFSC: <span className="font-mono">{payoutPendingApp.businessDetails.bankDetails.ifsc}</span>)
+                                      </div>
+                                    ) : (
+                                      <div className="text-[11px] text-slate-600 pt-1 border-t border-purple-100">
+                                        Tenure: {payoutPendingApp.approvedOffer?.approvedTenureMonths || payoutPendingApp.requestedTenureMonths} Months ({payoutPendingApp.approvedOffer?.repaymentFrequency || 'Weekly'})
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            if (pendingApp) {
+                              return (
+                                <div className="bg-white rounded-3xl p-8 border border-amber-200 shadow-sm text-center max-w-xl mx-auto space-y-4">
+                                  <div className="w-14 h-14 rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                                    ⏳
+                                  </div>
+                                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                    <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                                    <span>Application Under Review</span>
+                                  </div>
+                                  <h3 className="pf-display font-black text-xl text-slate-900">
+                                    ₹{Number(pendingApp.requestedAmount).toLocaleString('en-IN')} Working Capital Requested
+                                  </h3>
+                                  <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+                                    Our credit committee is evaluating your application (#{pendingApp.applicationNumber}). You will be notified as soon as sanctioned loan terms are ready.
+                                  </p>
+                                  <div className="p-3 bg-amber-50/50 rounded-2xl border border-amber-100 text-xs text-amber-900 font-semibold">
+                                    Requested Tenure: {pendingApp.requestedTenureMonths} Months • {pendingApp.requestedFrequency || 'Weekly'} instalments
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            if (infoReqApp) {
+                              return (
+                                <div className="bg-white rounded-3xl p-8 border border-amber-200 shadow-sm text-center max-w-xl mx-auto space-y-4">
+                                  <div className="w-14 h-14 rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                                    📋
+                                  </div>
+                                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                    <span>Additional Information Required</span>
+                                  </div>
+                                  <h3 className="pf-display font-black text-xl text-slate-900">
+                                    Application #{infoReqApp.applicationNumber}
+                                  </h3>
+                                  <p className="text-xs text-slate-700 bg-amber-50 p-3 rounded-xl border border-amber-100 leading-relaxed max-w-md mx-auto font-medium">
+                                    Reviewer Note: {infoReqApp.adminNotes || 'Please submit updated documentation.'}
+                                  </p>
+                                  <button
+                                    type="button"
+                                    onClick={() => setActiveSection('support')}
+                                    className="px-5 py-2.5 rounded-xl font-bold text-xs text-white bg-amber-600 hover:bg-amber-700 transition-all shadow-sm"
+                                  >
+                                    Contact Support Desk →
+                                  </button>
+                                </div>
+                              );
+                            }
+
+                            if (isKycVerified) {
+                              return (
+                                <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xs text-center max-w-xl mx-auto space-y-4">
+                                  <div className="w-14 h-14 rounded-3xl bg-violet-50 text-violet-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                                    💼
+                                  </div>
+                                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span>✓ Pre-Qualified Partner</span>
+                                  </div>
+                                  <h3 className="pf-display font-black text-xl text-slate-900">Working Capital Credit Facility</h3>
+                                  <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+                                    Access dedicated working capital to finance wholesale purchase orders, supplier settlements, and seasonal inventory expansion with structured repayment.
+                                  </p>
+                                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200/80 text-left text-xs space-y-2.5 text-slate-700">
+                                    <div className="font-bold text-slate-900">Facility Features & Terms:</div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-violet-600 font-bold">✓</span>
+                                      <span>Flexible tenure: 1 to 12 months with weekly or daily structured instalments</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-violet-600 font-bold">✓</span>
+                                      <span>Interest rate: 18% p.a. calculated on outstanding principal balance</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-violet-600 font-bold">✓</span>
+                                      <span>Transparent 2% processing fee (+ 18% GST) deducted directly at disbursement</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-violet-600 font-bold">✓</span>
+                                      <span>Repayment methods: Instant bank transfer (NEFT/RTGS) and Razorpay checkout</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="pt-2 space-y-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowBusinessApplyModal(true)}
+                                      className="inline-block px-6 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md shadow-violet-200 hover:from-violet-700 hover:to-indigo-700 transition-all cursor-pointer"
+                                    >
+                                      + Apply for Business Working Capital →
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xs text-center max-w-xl mx-auto space-y-4">
+                                <div className="w-14 h-14 rounded-3xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mx-auto shadow-sm">
+                                  🛡️
+                                </div>
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-amber-50 text-amber-700 border border-amber-200">
+                                  <span>KYC Verification Required</span>
+                                </div>
+                                <h3 className="pf-display font-black text-xl text-slate-900">Complete Your Partner KYC</h3>
+                                <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+                                  Complete your 3-step structured business verification to activate wholesale ordering and apply for high-limit business working capital facilities.
+                                </p>
+                                <div className="pt-2">
+                                  <Link
+                                    to="/verify-kyc"
+                                    className="inline-block px-6 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 shadow-md shadow-violet-200 hover:from-violet-700 hover:to-indigo-700 transition-all"
+                                  >
+                                    Complete KYC Verification Desk →
+                                  </Link>
+                                </div>
+                              </div>
+                            );
+                          })()
+                        ) : (
+                          /* Active Facility Executive Overview */
+                          (() => {
+                            const activeFac = businessFacilities.find(f => f.status === 'ACTIVE' || f.status === 'DELINQUENT') || businessFacilities[0];
+                            const isDelinquent = activeFac.status === 'DELINQUENT';
+                            const bank = user?.bankDetails?.accountNumber
+                              ? user.bankDetails
+                              : (businessApps[0]?.businessDetails?.bankDetails || {});
+
+                            return (
+                              <div className="space-y-6">
+                                {/* Header Card */}
+                                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                                  <div>
+                                    <div className="flex items-center gap-2.5 flex-wrap">
+                                      <h3 className="pf-display font-black text-xl text-slate-900">
+                                        Business Working Capital Line
+                                      </h3>
+                                      <span className="font-mono text-xs px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-bold border border-slate-200">
+                                        {activeFac.facilityNumber}
+                                      </span>
+                                      <span
+                                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                                          activeFac.status === 'ACTIVE'
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                            : isDelinquent
+                                            ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                            : 'bg-slate-100 text-slate-600 border-slate-200'
+                                        }`}
+                                      >
+                                        {activeFac.status}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-xs text-slate-500 mt-1">
+                                      <span>Tenure: {activeFac.tenureMonths} Months ({activeFac.repaymentFrequency} instalments) • 18% p.a. accrued daily on principal</span>
+                                      <InfoBadge
+                                        title="Daily Accrual Interest"
+                                        text="Interest is calculated daily at 18% per annum (0.0493% per day) on your outstanding principal balance only. Whenever you repay principal early, your future interest is reduced immediately."
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedRepayFacility(activeFac);
+                                        setBusinessRepayAmount(String(activeFac.nextDueAmount || activeFac.totalOutstandingBalance || ''));
+                                        setShowBusinessRepayModal(true);
+                                      }}
+                                      className="px-4 py-2.5 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-md shadow-violet-200 active:scale-[0.98] transition-all cursor-pointer"
+                                    >
+                                      ⚡ Repay Facility
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setBusinessSubTab('schedule')}
+                                      className="px-4 py-2.5 rounded-xl font-bold text-xs border border-slate-200 text-slate-700 hover:bg-slate-100 transition-all cursor-pointer"
+                                    >
+                                      📅 Full Schedule →
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* 4 Executive KPI Cards with InfoBadges */}
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+                                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col justify-between">
+                                    <div>
+                                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center">
+                                        <span>Disbursed Capital</span>
+                                        <InfoBadge
+                                          title="Sanctioned Disbursed Capital"
+                                          text="The total working capital loan amount disbursed directly to your registered bank account for wholesale order purchases and business liquidity."
+                                        />
+                                      </div>
+                                      <div className="pf-display font-black text-2xl text-slate-900">
+                                        ₹{Math.round(activeFac.disbursedAmount || 0).toLocaleString('en-IN')}
+                                      </div>
+                                    </div>
+                                    <div className="text-[11px] text-slate-400 mt-1">Disbursed loan principal</div>
+                                  </div>
+
+                                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col justify-between">
+                                    <div>
+                                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center">
+                                        <span>Principal Balance</span>
+                                        <InfoBadge
+                                          title="Outstanding Principal"
+                                          text="The remaining principal loan amount. Daily interest is calculated strictly on this amount. Paying down principal lowers your total cost of borrowing."
+                                        />
+                                      </div>
+                                      <div className="pf-display font-black text-2xl text-slate-800">
+                                        ₹{Math.round(activeFac.currentPrincipalBalance || 0).toLocaleString('en-IN')}
+                                      </div>
+                                    </div>
+                                    <div className="text-[11px] text-slate-400 mt-1">
+                                      Reduced from ₹{Math.round(activeFac.disbursedAmount || 0).toLocaleString('en-IN')}
+                                    </div>
+                                  </div>
+
+                                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col justify-between">
+                                    <div>
+                                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center">
+                                        <span>Accrued Interest</span>
+                                        <InfoBadge
+                                          title="Accrued Daily Interest"
+                                          text="Interest accumulated daily at 18% p.a. (0.0493% per day) on outstanding principal. Clear this amount during your regular repayment cycle."
+                                        />
+                                      </div>
+                                      <div className="pf-display font-black text-2xl text-violet-700">
+                                        ₹{Number(activeFac.accruedInterestBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                      </div>
+                                    </div>
+                                    <div className="text-[11px] text-slate-400 mt-1">18% annual daily accrual</div>
+                                  </div>
+
+                                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col justify-between">
+                                    <div>
+                                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 flex items-center">
+                                        <span>Settlement Balance</span>
+                                        <InfoBadge
+                                          title="Total Settlement Amount"
+                                          text="The net exact amount required to completely repay and close this facility today (Principal + Accrued Interest) with zero foreclosure or prepayment penalties."
+                                        />
+                                      </div>
+                                      <div className="pf-display font-black text-2xl text-rose-600">
+                                        ₹{Math.round(activeFac.totalOutstandingBalance || 0).toLocaleString('en-IN')}
+                                      </div>
+                                    </div>
+                                    <div className="text-[11px] text-slate-400 mt-1">Net amount to close today</div>
+                                  </div>
+                                </div>
+
+                                {/* Single Focused Next Due EMI Card */}
+                                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
+                                  {activeFac.nextDueAmount > 0 ? (
+                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+                                      <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse" />
+                                          <span className="text-[10px] uppercase font-black tracking-wider text-amber-800">
+                                            Next Upcoming EMI
+                                          </span>
+                                          {isUnifiedMandateActive ? (
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                              ✓ AutoPay Mandate Active
+                                            </span>
+                                          ) : (
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                              Manual Repayment Active
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        <div className="flex items-baseline gap-3">
+                                          <div className="pf-display font-black text-3xl text-slate-900">
+                                            ₹{Math.round(activeFac.nextDueAmount).toLocaleString('en-IN')}
+                                          </div>
+                                          {activeFac.nextDueDate && (
+                                            <div className="text-xs font-semibold text-slate-500">
+                                              Due by <strong className="text-slate-800">{new Date(activeFac.nextDueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</strong>
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
+                                          {isUnifiedMandateActive
+                                            ? `This amount will be auto-debited from your linked bank account (${bank?.bankName || 'Bank'} ••••${String(bank?.accountNumber || '').slice(-4)}) on the due date. Please maintain sufficient available balance.`
+                                            : 'Please clear this instalment on or before the due date via instant Razorpay payment or NEFT/RTGS bank transfer to maintain your credit score.'}
+                                        </p>
+                                      </div>
+
+                                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedRepayFacility(activeFac);
+                                            setBusinessRepayAmount(String(Math.round(activeFac.nextDueAmount)));
+                                            setShowBusinessRepayModal(true);
+                                          }}
+                                          className="px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-xs uppercase tracking-wider shadow-sm transition-all active:scale-95 cursor-pointer whitespace-nowrap text-center"
+                                        >
+                                          Pay This EMI (₹{Math.round(activeFac.nextDueAmount).toLocaleString('en-IN')})
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setBusinessSubTab('schedule')}
+                                          className="px-4 py-3 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-all cursor-pointer whitespace-nowrap text-center"
+                                        >
+                                          View Breakdown →
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="flex items-center justify-between text-xs py-2">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-black">
+                                          ✓
+                                        </div>
+                                        <div>
+                                          <div className="font-black text-slate-800 text-sm">All Current Dues are Fully Cleared</div>
+                                          <div className="text-slate-400">No overdue instalments pending on this facility.</div>
+                                        </div>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => setBusinessSubTab('schedule')}
+                                        className="text-xs font-bold text-violet-600 hover:underline cursor-pointer"
+                                      >
+                                        View Repayment Schedule →
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* 2 Clean Status Summary Cards */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Card 1: Linked Bank Account */}
+                                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-lg">🏛️</span>
+                                        <h4 className="font-black text-sm text-slate-800">Disbursement & Settlement Bank</h4>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => setBusinessSubTab('bank_mandate')}
+                                        className="text-xs font-bold text-violet-600 hover:underline cursor-pointer"
+                                      >
+                                        Manage →
+                                      </button>
+                                    </div>
+                                    {bank?.accountNumber ? (
+                                      <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-1 text-xs">
+                                        <div className="flex justify-between font-bold text-slate-800">
+                                          <span>{bank.bankName || 'Bank'}</span>
+                                          <span className="font-mono">••••{String(bank.accountNumber).slice(-4)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-[11px] text-slate-500">
+                                          <span>IFSC: <strong className="font-mono">{bank.ifsc}</strong></span>
+                                          <span>{bank.accountType || 'Current Account'}</span>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-100 text-xs text-amber-900 flex justify-between items-center">
+                                        <span>No bank account linked</span>
+                                        <button
+                                          type="button"
+                                          onClick={() => setBusinessSubTab('bank_mandate')}
+                                          className="font-bold underline text-violet-700 ml-2"
+                                        >
+                                          Configure →
+                                        </button>
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  {/* Card 2: Unified AutoPay Mandate */}
+                                  <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-lg">⚡</span>
+                                        <h4 className="font-black text-sm text-slate-800">Unified AutoPay Mandate</h4>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => setBusinessSubTab('bank_mandate')}
+                                        className="text-xs font-bold text-violet-600 hover:underline cursor-pointer"
+                                      >
+                                        Manage →
+                                      </button>
+                                    </div>
+                                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs space-y-1.5">
+                                      <div className="flex items-center justify-between">
+                                        <span className="text-slate-500">Mandate Status:</span>
+                                        {isUnifiedMandateActive ? (
+                                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            ✓ Active ({unifiedMandate?.mandateId || 'Unified e-Mandate'})
+                                          </span>
+                                        ) : (
+                                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                            Optional / Manual
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-[11px] text-slate-500">
+                                        1 single mandate covers both Trade Credit orders and Business Credit capital.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })()
+                        )}
+                      </div>
+                    )}
+
+                    {/* TAB 2: REPAYMENTS & AMORTIZATION SCHEDULE */}
+                    {businessSubTab === 'schedule' && (
                       <div className="space-y-6">
                         {loadingBusinessCredit ? (
                           <div className="bg-white rounded-2xl p-12 text-center text-slate-400 font-medium">
@@ -2871,6 +3540,88 @@ export default function Profile() {
                                       </div>
                                     </div>
                                   </div>
+
+                                  {/* Inline Amortization Schedule Table */}
+                                  {fac.repaymentSchedule && fac.repaymentSchedule.length > 0 ? (
+                                    <div className="p-6 border-t border-slate-100 space-y-3">
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-base">📅</span>
+                                          <h4 className="font-black text-sm text-slate-900">Amortization & Repayment Schedule</h4>
+                                          <span className="text-xs text-slate-400 font-medium">
+                                            ({fac.repaymentSchedule.filter(s => s.status === 'PAID').length} of {fac.repaymentSchedule.length} instalments cleared)
+                                          </span>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedScheduleFacility(fac);
+                                            setShowScheduleModal(true);
+                                          }}
+                                          className="text-xs font-bold text-violet-600 hover:underline cursor-pointer"
+                                        >
+                                          Expand Full View ↗
+                                        </button>
+                                      </div>
+
+                                      <div className="overflow-x-auto rounded-xl border border-slate-100 max-h-72 overflow-y-auto">
+                                        <table className="w-full text-left text-xs text-slate-600">
+                                          <thead className="sticky top-0 bg-slate-50 text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                                            <tr>
+                                              <th className="px-4 py-3">#</th>
+                                              <th className="px-4 py-3">Due Date</th>
+                                              <th className="px-4 py-3">Principal Due</th>
+                                              <th className="px-4 py-3">Interest Due</th>
+                                              <th className="px-4 py-3">Total Due</th>
+                                              <th className="px-4 py-3">Status</th>
+                                              <th className="px-4 py-3 text-right">Repayment</th>
+                                            </tr>
+                                          </thead>
+                                          <tbody className="divide-y divide-slate-100">
+                                            {fac.repaymentSchedule.map((item) => (
+                                              <tr key={item.installmentNumber} className="hover:bg-slate-50/50">
+                                                <td className="px-4 py-2.5 font-bold text-slate-900">#{item.installmentNumber}</td>
+                                                <td className="px-4 py-2.5 whitespace-nowrap font-medium text-slate-900">
+                                                  {new Date(item.dueDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                </td>
+                                                <td className="px-4 py-2.5 whitespace-nowrap">₹{Math.round(item.principalDue).toLocaleString('en-IN')}</td>
+                                                <td className="px-4 py-2.5 whitespace-nowrap">₹{Math.round(item.interestDue).toLocaleString('en-IN')}</td>
+                                                <td className="px-4 py-2.5 whitespace-nowrap font-bold text-slate-900">₹{Math.round(item.totalDue).toLocaleString('en-IN')}</td>
+                                                <td className="px-4 py-2.5 whitespace-nowrap">
+                                                  <span
+                                                    className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                                      item.status === 'PAID'
+                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                        : item.status === 'OVERDUE'
+                                                        ? 'bg-rose-100 text-rose-800'
+                                                        : 'bg-amber-100 text-amber-800'
+                                                    }`}
+                                                  >
+                                                    {item.status}
+                                                  </span>
+                                                </td>
+                                                <td className="px-4 py-2.5 whitespace-nowrap text-right">
+                                                  {item.status !== 'PAID' && (
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => {
+                                                        setSelectedRepayFacility(fac);
+                                                        setBusinessRepayAmount(String(Math.round(item.totalDue)));
+                                                        setShowBusinessRepayModal(true);
+                                                      }}
+                                                      className="px-2.5 py-1 text-[11px] font-bold text-violet-600 bg-violet-50 hover:bg-violet-100 rounded-lg transition cursor-pointer"
+                                                    >
+                                                      Pay ₹{Math.round(item.totalDue).toLocaleString('en-IN')}
+                                                    </button>
+                                                  )}
+                                                </td>
+                                              </tr>
+                                            ))}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  ) : null}
 
                                   {/* Mandate Bar */}
                                   <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
@@ -4596,7 +5347,7 @@ export default function Profile() {
                 Please enter or confirm the bank account where the net sanctioned amount will be disbursed.
               </p>
 
-              <PopularBanksPicker
+              <CompleteIndianBankSelector
                 selectedBankName={disburseBankDetails.bankName}
                 onSelectBank={(bank) => {
                   setDisburseBankDetails(p => ({
@@ -5074,7 +5825,7 @@ export default function Profile() {
             </div>
 
             <form onSubmit={handleSaveBankConfig} className="space-y-4">
-              <PopularBanksPicker
+              <CompleteIndianBankSelector
                 selectedBankName={bankConfigForm.bankName}
                 onSelectBank={(bank) => {
                   setBankConfigForm(p => ({

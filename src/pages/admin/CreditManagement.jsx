@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
-import { PopularBanksPicker } from '../user/Profile'
+import { PopularBanksPicker, CompleteIndianBankSelector } from '../user/Profile'
 
 export default function CreditManagement() {
   const { notify } = useToast()
@@ -2894,7 +2894,7 @@ export default function CreditManagement() {
             </div>
 
             <form onSubmit={handleSaveAdminBank} className="space-y-4">
-              <PopularBanksPicker
+              <CompleteIndianBankSelector
                 selectedBankName={adminBankForm.bankName}
                 onSelectBank={(bank) => {
                   setAdminBankForm(p => ({
