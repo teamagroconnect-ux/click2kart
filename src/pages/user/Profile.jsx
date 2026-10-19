@@ -2024,6 +2024,7 @@ export default function Profile() {
                     <p className="text-slate-400 text-xs mt-1">
                       Revolving credit limit for seamless purchasing and flexible repayments
                     </p>
+                  </div>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
