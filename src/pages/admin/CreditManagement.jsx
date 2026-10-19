@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../lib/api'
 import { useToast } from '../../components/Toast'
+import { PopularBanksPicker } from '../user/Profile'
 
 export default function CreditManagement() {
   const { notify } = useToast()
@@ -14,7 +15,9 @@ export default function CreditManagement() {
     totalAvailable: 0,
     totalUsed: 0,
     totalOutstanding: 0,
-    enabledCount: 0
+    enabledCount: 0,
+    mandatesActiveCount: 0,
+    bankVerifiedCount: 0
   })
 
   // ==========================================
@@ -23,7 +26,7 @@ export default function CreditManagement() {
   const [retailers, setRetailers] = useState([])
   const [loadingRetailers, setLoadingRetailers] = useState(true)
   const [searchQ, setSearchQ] = useState('')
-  const [statusFilter, setStatusFilter] = useState('all') // 'all' | 'enabled' | 'disabled'
+  const [statusFilter, setStatusFilter] = useState('all') // 'all' | 'enabled' | 'disabled' | 'mandate_active' | 'bank_linked' | 'has_dues'
 
   // Retailer Quick Detail Modal state
   const [quickDetailRetailer, setQuickDetailRetailer] = useState(null)
@@ -55,6 +58,49 @@ export default function CreditManagement() {
   const [tradeAutoPayDebitDay, setTradeAutoPayDebitDay] = useState('MONDAY')
   const [tradeAutoPayDebitTime, setTradeAutoPayDebitTime] = useState('10:00 AM')
   const [savingTradeAutoPay, setSavingTradeAutoPay] = useState(false)
+
+  // Admin Retailer Bank Account Details Modal state
+  const [adminBankModalOpen, setAdminBankModalOpen] = useState(false)
+  const [selectedBankRetailer, setSelectedBankRetailer] = useState(null)
+  const [adminBankForm, setAdminBankForm] = useState({
+    accountHolder: '',
+    bankName: '',
+    accountNumber: '',
+    ifsc: '',
+    accountType: 'CURRENT',
+    isVerified: true
+  })
+  const [savingAdminBank, setSavingAdminBank] = useState(false)
+
+  const openAdminBankModal = (retailer) => {
+    setSelectedBankRetailer(retailer)
+    const bk = retailer.bankDetails || {}
+    setAdminBankForm({
+      accountHolder: bk.accountHolder || retailer.kyc?.businessName || retailer.name || '',
+      bankName: bk.bankName || '',
+      accountNumber: bk.accountNumber || '',
+      ifsc: bk.ifsc || '',
+      accountType: bk.accountType || 'CURRENT',
+      isVerified: bk.isVerified !== undefined ? Boolean(bk.isVerified) : true
+    })
+    setAdminBankModalOpen(true)
+  }
+
+  const handleSaveAdminBank = async (e) => {
+    e?.preventDefault()
+    if (!selectedBankRetailer) return
+    setSavingAdminBank(true)
+    try {
+      await api.put(`/api/credit/admin/retailers/${selectedBankRetailer._id}/bank`, adminBankForm)
+      notify('Retailer bank account details updated successfully', 'success')
+      setAdminBankModalOpen(false)
+      loadRetailers()
+    } catch (err) {
+      notify(err?.response?.data?.message || err?.response?.data?.error || 'Failed to update bank details', 'error')
+    } finally {
+      setSavingAdminBank(false)
+    }
+  }
 
   // Presets
   const ADJUST_PRESETS = {
@@ -724,35 +770,50 @@ export default function CreditManagement() {
       {mainTab === 'trade_credit' && (
         <div className="space-y-6">
           {/* Metrics Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-              <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Credit Retailers</div>
-              <div className="text-2xl font-black text-gray-900 mt-2">{stats.enabledCount}</div>
-              <div className="text-[11px] text-gray-500 mt-1">Authorized for order checkout</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
+            <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Credit Users</div>
+              <div className="text-xl font-black text-gray-900 mt-1">{stats.enabledCount}</div>
+              <div className="text-[10px] text-gray-500 mt-0.5">Active facility</div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-              <div className="text-xs font-bold text-blue-500 uppercase tracking-wider">Total Credit Limit</div>
-              <div className="text-2xl font-black text-blue-600 mt-2">₹{(stats.totalLimit || 0).toLocaleString('en-IN')}</div>
-              <div className="text-[11px] text-gray-500 mt-1">Total credit assigned</div>
+            <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Mandates Active</div>
+              <div className="text-xl font-black text-emerald-700 mt-1 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{stats.mandatesActiveCount || 0}</span>
+              </div>
+              <div className="text-[10px] text-gray-500 mt-0.5">AutoPay enabled</div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-              <div className="text-xs font-bold text-emerald-500 uppercase tracking-wider">Available Credit</div>
-              <div className="text-2xl font-black text-emerald-600 mt-2">₹{(stats.totalAvailable || 0).toLocaleString('en-IN')}</div>
-              <div className="text-[11px] text-gray-500 mt-1">Ready for purchases</div>
+            <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Banks Verified</div>
+              <div className="text-xl font-black text-indigo-700 mt-1">{stats.bankVerifiedCount || 0}</div>
+              <div className="text-[10px] text-gray-500 mt-0.5">Disbursement accounts</div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-              <div className="text-xs font-bold text-amber-500 uppercase tracking-wider">Used Credit</div>
-              <div className="text-2xl font-black text-amber-600 mt-2">₹{(stats.totalUsed || 0).toLocaleString('en-IN')}</div>
-              <div className="text-[11px] text-gray-500 mt-1">Currently utilized</div>
+            <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="text-[10px] font-bold text-blue-500 uppercase tracking-wider">Total Limit</div>
+              <div className="text-xl font-black text-blue-600 mt-1">₹{(stats.totalLimit || 0).toLocaleString('en-IN')}</div>
+              <div className="text-[10px] text-gray-500 mt-0.5">Assigned credit</div>
             </div>
 
-            <div className="bg-white p-5 rounded-3xl border border-gray-100 shadow-sm">
-              <div className="text-xs font-bold text-rose-500 uppercase tracking-wider">Outstanding Due</div>
-              <div className="text-2xl font-black text-rose-600 mt-2">₹{(stats.totalOutstanding || 0).toLocaleString('en-IN')}</div>
-              <div className="text-[11px] text-gray-500 mt-1">Total pending repayment</div>
+            <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="text-[10px] font-bold text-teal-600 uppercase tracking-wider">Available</div>
+              <div className="text-xl font-black text-teal-600 mt-1">₹{(stats.totalAvailable || 0).toLocaleString('en-IN')}</div>
+              <div className="text-[10px] text-gray-500 mt-0.5">Spendable pool</div>
+            </div>
+
+            <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Used Credit</div>
+              <div className="text-xl font-black text-amber-600 mt-1">₹{(stats.totalUsed || 0).toLocaleString('en-IN')}</div>
+              <div className="text-[10px] text-gray-500 mt-0.5">Orders drawn</div>
+            </div>
+
+            <div className="bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+              <div className="text-[10px] font-bold text-rose-500 uppercase tracking-wider">Outstanding</div>
+              <div className="text-xl font-black text-rose-600 mt-1">₹{(stats.totalOutstanding || 0).toLocaleString('en-IN')}</div>
+              <div className="text-[10px] text-gray-500 mt-0.5">Pending collection</div>
             </div>
           </div>
 
@@ -770,18 +831,21 @@ export default function CreditManagement() {
               </svg>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
               {[
                 { label: 'All Retailers', value: 'all' },
                 { label: 'Credit Enabled', value: 'enabled' },
+                { label: 'Mandate Active ⚡', value: 'mandate_active' },
+                { label: 'Bank Linked 🏛️', value: 'bank_linked' },
+                { label: 'Outstanding Dues ⚠️', value: 'has_dues' },
                 { label: 'Credit Disabled', value: 'disabled' }
               ].map((f) => (
                 <button
                   key={f.value}
                   onClick={() => setStatusFilter(f.value)}
-                  className={`px-4 py-2 text-xs font-bold rounded-xl transition-all ${
+                  className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                     statusFilter === f.value
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                      ? 'bg-violet-600 text-white shadow-sm'
                       : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
                   }`}
                 >
@@ -797,23 +861,24 @@ export default function CreditManagement() {
               <table className="w-full text-left text-sm border-collapse">
                 <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">
                   <tr>
-                    <th className="px-6 py-4">Retailer</th>
-                    <th className="px-6 py-4">Credit Status</th>
-                    <th className="px-6 py-4">AutoPay</th>
-                    <th className="px-6 py-4">Limit (₹)</th>
-                    <th className="px-6 py-4">Available (₹)</th>
-                    <th className="px-6 py-4">Outstanding (₹)</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
+                    <th className="px-5 py-4">Retailer</th>
+                    <th className="px-4 py-4">Credit Status</th>
+                    <th className="px-4 py-4">AutoPay Mandate</th>
+                    <th className="px-4 py-4">Bank Account</th>
+                    <th className="px-4 py-4">Limit (₹)</th>
+                    <th className="px-4 py-4">Available (₹)</th>
+                    <th className="px-4 py-4">Outstanding (₹)</th>
+                    <th className="px-5 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {loadingRetailers ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-12 text-gray-400 font-semibold">Loading retailers...</td>
+                      <td colSpan="8" className="text-center py-12 text-gray-400 font-semibold">Loading retailers...</td>
                     </tr>
                   ) : retailers.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="text-center py-12 text-gray-400">No retailers found matching criteria</td>
+                      <td colSpan="8" className="text-center py-12 text-gray-400">No retailers found matching criteria</td>
                     </tr>
                   ) : (
                     retailers.map((r) => {
@@ -862,17 +927,60 @@ export default function CreditManagement() {
                               </span>
                             </div>
                           </td>
-                          <td className="px-6 py-4 font-bold text-gray-900">
+                          <td className="px-4 py-4">
+                            {r.bankDetails?.accountNumber ? (
+                              <div className="flex flex-col gap-1 items-start text-xs">
+                                <div className="flex items-center gap-1.5 font-bold text-gray-900">
+                                  <span>{r.bankDetails.bankName || 'Bank'}</span>
+                                  <span className="px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black">
+                                    {r.bankDetails.isVerified ? 'Verified ✓' : 'Linked'}
+                                  </span>
+                                </div>
+                                <div className="font-mono text-[11px] text-gray-500">
+                                  ••••{String(r.bankDetails.accountNumber).slice(-4)} ({r.bankDetails.ifsc || 'IFSC'})
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => openAdminBankModal(r)}
+                                  className="text-[10px] text-violet-600 hover:text-violet-800 font-bold hover:underline cursor-pointer"
+                                >
+                                  ✏️ Edit Bank
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex flex-col gap-1 items-start">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-400">
+                                  Not Linked
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => openAdminBankModal(r)}
+                                  className="text-[11px] text-violet-600 hover:text-violet-800 font-bold hover:underline cursor-pointer"
+                                >
+                                  + Add Bank
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-4 py-4 font-bold text-gray-900">
                             ₹{(r.creditLimit || 0).toLocaleString('en-IN')}
                           </td>
-                          <td className="px-6 py-4 font-black text-emerald-600">
+                          <td className="px-4 py-4 font-black text-emerald-600">
                             ₹{(r.availableCredit || 0).toLocaleString('en-IN')}
                           </td>
-                          <td className="px-6 py-4 font-black text-rose-600">
+                          <td className="px-4 py-4 font-black text-rose-600">
                             ₹{(r.outstandingBalance || 0).toLocaleString('en-IN')}
                           </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-2">
+                          <td className="px-5 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => openAdminBankModal(r)}
+                                title="View & Configure Bank Account"
+                                className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <span>🏛️</span>
+                                <span className="hidden xl:inline">Bank</span>
+                              </button>
                               <button
                                 onClick={() => openTradeAutoPayModal(r)}
                                 title="Configure Auto-Debit Schedule (Daily / Weekly)"
@@ -2753,6 +2861,155 @@ export default function CreditManagement() {
                   className="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-xl text-xs font-bold shadow-md shadow-violet-200 transition-all disabled:opacity-50"
                 >
                   {savingTradeAutoPay ? 'Saving Schedule...' : 'Save AutoPay Schedule'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: View / Update Retailer Bank Account Details */}
+      {adminBankModalOpen && selectedBankRetailer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-gray-100 space-y-5 my-8">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-black text-gray-900">Retailer Bank Account Details</h3>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    Disbursement & Payouts
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Retailer: <strong className="text-gray-800">{selectedBankRetailer.name}</strong> • {selectedBankRetailer.kyc?.businessName || selectedBankRetailer.phone}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAdminBankModalOpen(false)}
+                className="w-8 h-8 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAdminBank} className="space-y-4">
+              <PopularBanksPicker
+                selectedBankName={adminBankForm.bankName}
+                onSelectBank={(bank) => {
+                  setAdminBankForm(p => ({
+                    ...p,
+                    bankName: bank.name,
+                    ifsc: p.ifsc && p.ifsc.startsWith(bank.ifscPrefix) ? p.ifsc : bank.ifscPrefix
+                  }))
+                }}
+              />
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Account Holder Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={adminBankForm.accountHolder}
+                    onChange={(e) => setAdminBankForm(p => ({ ...p, accountHolder: e.target.value }))}
+                    placeholder="e.g. Ramesh Trading Private Limited"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                    Bank Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={adminBankForm.bankName}
+                    onChange={(e) => setAdminBankForm(p => ({ ...p, bankName: e.target.value }))}
+                    placeholder="e.g. HDFC Bank, State Bank of India"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                      Account Number *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={adminBankForm.accountNumber}
+                      onChange={(e) => setAdminBankForm(p => ({ ...p, accountNumber: e.target.value }))}
+                      placeholder="Bank Account Number"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                      IFSC Code *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={adminBankForm.ifsc}
+                      onChange={(e) => setAdminBankForm(p => ({ ...p, ifsc: e.target.value.toUpperCase() }))}
+                      placeholder="e.g. HDFC0001234"
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-mono font-bold uppercase text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                      Account Type
+                    </label>
+                    <select
+                      value={adminBankForm.accountType}
+                      onChange={(e) => setAdminBankForm(p => ({ ...p, accountType: e.target.value }))}
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-gray-800 outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="CURRENT">Current Account</option>
+                      <option value="SAVINGS">Savings Account</option>
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2 pt-6">
+                    <input
+                      type="checkbox"
+                      id="adminBankVerified"
+                      checked={adminBankForm.isVerified}
+                      onChange={(e) => setAdminBankForm(p => ({ ...p, isVerified: e.target.checked }))}
+                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <label htmlFor="adminBankVerified" className="text-xs font-bold text-gray-700 cursor-pointer">
+                      Mark as Verified ✓
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 bg-indigo-50 rounded-2xl border border-indigo-100 text-[11px] text-indigo-900 leading-relaxed">
+                🏛️ This verified bank account will receive Business Credit loan disbursements via NEFT/RTGS and is registered for AutoPay repayment reconciliations.
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setAdminBankModalOpen(false)}
+                  className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingAdminBank}
+                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-indigo-200 transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  {savingAdminBank ? 'Saving Bank Details...' : 'Save & Verify Bank Account'}
                 </button>
               </div>
             </form>

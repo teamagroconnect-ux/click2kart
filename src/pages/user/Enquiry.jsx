@@ -65,6 +65,69 @@ export default function Enquiry() {
   const [couponError,    setCouponError]    = useState('')
   const [isApplying,     setIsApplying]     = useState(false)
 
+  // Credit Repayment Terms & AutoPay Schedule State
+  const [creditTenureDays, setCreditTenureDays] = useState(30)
+  const [creditScheduleType, setCreditScheduleType] = useState('WEEKLY') // 'WEEKLY' | 'DAILY' | 'LUMP_SUM'
+  const [creditWeeklyDay, setCreditWeeklyDay] = useState('MONDAY')
+
+  const computeCreditInstallments = (amount, tenureDays, scheduleType, weeklyDay = 'MONDAY') => {
+    const amt = Number(amount || 0)
+    if (amt <= 0) return []
+    const dayNames = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY']
+    const targetDayIndex = dayNames.indexOf(String(weeklyDay).toUpperCase()) !== -1 ? dayNames.indexOf(String(weeklyDay).toUpperCase()) : 1
+
+    if (scheduleType === 'DAILY') {
+      const count = Math.max(1, Math.min(Number(tenureDays) || 30, 60))
+      const perDay = Math.round((amt / count) * 100) / 100
+      const inst = []
+      let acc = 0
+      for (let i = 1; i <= count; i++) {
+        const d = new Date()
+        d.setDate(d.getDate() + i)
+        const isLast = i === count
+        const instAmt = isLast ? Math.round((amt - acc) * 100) / 100 : perDay
+        acc += instAmt
+        inst.push({
+          installmentNumber: i,
+          dueDate: d.toISOString(),
+          amount: instAmt
+        })
+      }
+      return inst
+    } else if (scheduleType === 'WEEKLY') {
+      const weeks = Math.max(1, Math.round((Number(tenureDays) || 30) / 7))
+      const perWeek = Math.round((amt / weeks) * 100) / 100
+      const inst = []
+      let acc = 0
+      let cur = new Date()
+      let daysUntil = (targetDayIndex + 7 - cur.getDay()) % 7
+      if (daysUntil === 0) daysUntil = 7
+      cur.setDate(cur.getDate() + daysUntil)
+
+      for (let i = 1; i <= weeks; i++) {
+        const isLast = i === weeks
+        const instAmt = isLast ? Math.round((amt - acc) * 100) / 100 : perWeek
+        acc += instAmt
+        inst.push({
+          installmentNumber: i,
+          dueDate: new Date(cur).toISOString(),
+          amount: instAmt
+        })
+        cur.setDate(cur.getDate() + 7)
+      }
+      return inst
+    } else {
+      // LUMP_SUM
+      const d = new Date()
+      d.setDate(d.getDate() + (Number(tenureDays) || 30))
+      return [{
+        installmentNumber: 1,
+        dueDate: d.toISOString(),
+        amount: amt
+      }]
+    }
+  }
+
   /* ── helpers ── */
   const computeEtaRange = () => {
     const add = (d,n) => { const x=new Date(d); for(let i=0;i<n;i++) x.setDate(x.getDate()+1); return x }
@@ -341,12 +404,23 @@ export default function Enquiry() {
           return
         }
         try {
+          const installments = computeCreditInstallments(totalPayable, creditTenureDays, creditScheduleType, creditWeeklyDay);
+          const nextDebit = installments[0]?.dueDate || null;
           const { data } = await api.post('/api/orders', {
             items: cleanItems,
             paymentMethod: 'CREDIT',
             deliveryChannel,
-            couponCode: appliedCoupon?.code || ''
-          })
+            couponCode: appliedCoupon?.code || '',
+            creditTerms: {
+              tenureDays: Number(creditTenureDays) || 30,
+              autoPaySchedule: creditScheduleType,
+              weeklyDebitDay: creditWeeklyDay,
+              installmentCount: installments.length,
+              installmentAmount: installments[0]?.amount || totalPayable,
+              nextDebitDate: nextDebit,
+              installments
+            }
+          });
           clearCart()
           notify('Order placed successfully with Retailer Credit!', 'success')
           const targetId = data?.order?._id || data?.orderId
@@ -2206,32 +2280,181 @@ export default function Enquiry() {
                     {/* Retailer Credit Facility */}
                     {profile?.isCreditEnabled && (
                       canFullCredit ? (
-                        <button
-                          type="button"
-                          className={`eq-pay-opt ${paymentMethod === 'CREDIT' ? 'active-credit' : ''}`}
-                          onClick={() => setPaymentMethod('CREDIT')}
-                        >
-                          <div className="eq-pay-ico credit">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                              <rect x="2" y="5" width="20" height="14" rx="2" />
-                              <line x1="2" y1="10" x2="22" y2="10" />
-                            </svg>
-                          </div>
-                          <div className="eq-pay-info">
-                            <div className="eq-pay-name">
-                              Approved Credit Facility (100% Covered)
+                        <>
+                          <button
+                            type="button"
+                            className={`eq-pay-opt ${paymentMethod === 'CREDIT' ? 'active-credit' : ''}`}
+                            onClick={() => setPaymentMethod('CREDIT')}
+                          >
+                            <div className="eq-pay-ico credit">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <rect x="2" y="5" width="20" height="14" rx="2" />
+                                <line x1="2" y1="10" x2="22" y2="10" />
+                              </svg>
                             </div>
-                            <div className="eq-pay-desc credit-ok">
-                              <span>Available Balance: ₹{Number(profile.availableCredit || 0).toLocaleString('en-IN')}</span>
-                              <span style={{ color: '#059669', fontWeight: 700, marginLeft: 8 }}>
-                                · ✓ Full order covered
-                              </span>
+                            <div className="eq-pay-info">
+                              <div className="eq-pay-name">
+                                Approved Credit Facility (100% Covered)
+                              </div>
+                              <div className="eq-pay-desc credit-ok">
+                                <span>Available Balance: ₹{Number(profile.availableCredit || 0).toLocaleString('en-IN')}</span>
+                                <span style={{ color: '#059669', fontWeight: 700, marginLeft: 8 }}>
+                                  · ✓ Full order covered
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                          <div className="eq-pay-radio">
-                            <div className="eq-pay-radio-dot" />
-                          </div>
-                        </button>
+                            <div className="eq-pay-radio">
+                              <div className="eq-pay-radio-dot" />
+                            </div>
+                          </button>
+
+                          {paymentMethod === 'CREDIT' && (
+                            <div style={{
+                              background: '#faf5ff',
+                              border: '1.5px solid #d8b4fe',
+                              borderRadius: 18,
+                              padding: '16px 20px',
+                              marginBottom: 14,
+                              boxShadow: '0 4px 18px rgba(124,58,237,0.06)'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 14, paddingBottom: 10, borderBottom: '1px solid #ede9fe' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <span style={{ fontSize: 16 }}>🗓️</span>
+                                  <span style={{ fontSize: 13, fontWeight: 800, color: '#4c1d95' }}>Repayment Tenure & AutoPay Schedule</span>
+                                </div>
+                                <span style={{
+                                  fontSize: 10,
+                                  fontWeight: 800,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em',
+                                  padding: '3px 8px',
+                                  borderRadius: 999,
+                                  background: profile.autoPayMandate?.status === 'ACTIVE' ? '#d1fae5' : '#fef3c7',
+                                  color: profile.autoPayMandate?.status === 'ACTIVE' ? '#065f46' : '#92400e',
+                                  border: `1px solid ${profile.autoPayMandate?.status === 'ACTIVE' ? '#a7f3d0' : '#fde68a'}`
+                                }}>
+                                  {profile.autoPayMandate?.status === 'ACTIVE' ? '⚡ Mandate Active' : '⚡ Auto-Debit'}
+                                </span>
+                              </div>
+
+                              {/* Tenure Selector */}
+                              <div style={{ marginBottom: 12 }}>
+                                <label style={{ display: 'block', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', marginBottom: 6 }}>
+                                  Select Repayment Tenure
+                                </label>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                                  {[
+                                    { label: '15 Days', days: 15 },
+                                    { label: '30 Days', days: 30, recommended: true },
+                                    { label: '45 Days', days: 45 },
+                                    { label: '60 Days', days: 60 }
+                                  ].map(t => (
+                                    <button
+                                      key={t.days}
+                                      type="button"
+                                      onClick={() => setCreditTenureDays(t.days)}
+                                      style={{
+                                        padding: '8px 4px',
+                                        borderRadius: 12,
+                                        fontSize: 12,
+                                        fontWeight: 800,
+                                        border: creditTenureDays === t.days ? '2px solid #7c3aed' : '1px solid #e2e8f0',
+                                        background: creditTenureDays === t.days ? '#7c3aed' : 'white',
+                                        color: creditTenureDays === t.days ? 'white' : '#1e293b',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s ease',
+                                        textAlign: 'center'
+                                      }}
+                                    >
+                                      <div>{t.label}</div>
+                                      {t.recommended && (
+                                        <div style={{ fontSize: 9, opacity: 0.8, fontWeight: 700 }}>Popular</div>
+                                      )}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* AutoPay Frequency Selector */}
+                              <div style={{ marginBottom: 14 }}>
+                                <label style={{ display: 'block', fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#6b7280', marginBottom: 6 }}>
+                                  AutoPay Debit Schedule
+                                </label>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                                  {[
+                                    { id: 'WEEKLY', label: 'Weekly AutoPay', sub: 'Every Monday' },
+                                    { id: 'DAILY', label: 'Daily Micro', sub: 'Daily Debit' },
+                                    { id: 'LUMP_SUM', label: 'Lump-Sum', sub: `Day ${creditTenureDays}` }
+                                  ].map(f => (
+                                    <button
+                                      key={f.id}
+                                      type="button"
+                                      onClick={() => setCreditScheduleType(f.id)}
+                                      style={{
+                                        padding: '8px 6px',
+                                        borderRadius: 12,
+                                        fontSize: 11,
+                                        fontWeight: 800,
+                                        border: creditScheduleType === f.id ? '2px solid #7c3aed' : '1px solid #e2e8f0',
+                                        background: creditScheduleType === f.id ? '#ede9fe' : 'white',
+                                        color: creditScheduleType === f.id ? '#5b21b6' : '#475569',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.15s ease',
+                                        textAlign: 'center'
+                                      }}
+                                    >
+                                      <div>{f.label}</div>
+                                      <div style={{ fontSize: 9, color: '#64748b', fontWeight: 600 }}>{f.sub}</div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Installments Table Preview */}
+                              {(() => {
+                                const installments = computeCreditInstallments(totalPayable, creditTenureDays, creditScheduleType, creditWeeklyDay);
+                                return (
+                                  <div style={{ background: 'white', borderRadius: 14, border: '1px solid #e9d5ff', overflow: 'hidden' }}>
+                                    <div style={{ padding: '8px 12px', background: '#f5f3ff', borderBottom: '1px solid #e9d5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, fontWeight: 800, color: '#5b21b6' }}>
+                                      <span>Scheduled Auto-Debits ({installments.length} {installments.length === 1 ? 'Instalment' : 'Instalments'})</span>
+                                      <span>Total: ₹{totalPayable.toLocaleString('en-IN')}</span>
+                                    </div>
+                                    <div style={{ maxHeight: 130, overflowY: 'auto' }}>
+                                      {installments.map(inst => (
+                                        <div
+                                          key={inst.installmentNumber}
+                                          style={{
+                                            padding: '8px 12px',
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            fontSize: 11,
+                                            borderBottom: '1px solid #f3f4f6'
+                                          }}
+                                        >
+                                          <div>
+                                            <span style={{ fontWeight: 800, color: '#1e293b' }}>#{inst.installmentNumber}</span>
+                                            <span style={{ marginLeft: 8, color: '#64748b' }}>
+                                              Due {new Date(inst.dueDate).toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' })}
+                                            </span>
+                                          </div>
+                                          <div style={{ fontWeight: 800, color: '#059669' }}>
+                                            ₹{Math.round(inst.amount).toLocaleString('en-IN')}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                );
+                              })()}
+
+                              <div style={{ marginTop: 10, fontSize: 11, color: '#6b7280', display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <span>💡</span>
+                                <span>Debits occur automatically from your registered bank account. Keep sufficient funds before scheduled debit times.</span>
+                              </div>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         <div
                           style={{

@@ -103,6 +103,170 @@ export const VerifiedPartnerPill = ({ verified = false }) => {
   );
 };
 
+/* ── Popular Indian Banks with Official Color SVG Logos ── */
+export const POPULAR_INDIAN_BANKS = [
+  {
+    id: 'sbi',
+    name: 'State Bank of India',
+    shortName: 'SBI',
+    ifscPrefix: 'SBIN0',
+    color: '#0072bc',
+    bg: '#ebf5fc',
+    logo: (
+      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="18" fill="#0072bc" />
+        <circle cx="20" cy="20" r="6" fill="white" />
+        <rect x="18" y="20" width="4" height="12" fill="#0072bc" />
+      </svg>
+    )
+  },
+  {
+    id: 'hdfc',
+    name: 'HDFC Bank',
+    shortName: 'HDFC Bank',
+    ifscPrefix: 'HDFC0',
+    color: '#004c8f',
+    bg: '#edf4fa',
+    logo: (
+      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="8" fill="#004c8f" />
+        <rect x="8" y="8" width="24" height="24" fill="#ed232a" />
+        <rect x="16" y="8" width="8" height="24" fill="#004c8f" />
+        <rect x="8" y="16" width="24" height="8" fill="#004c8f" />
+        <rect x="14" y="14" width="12" height="12" fill="white" />
+      </svg>
+    )
+  },
+  {
+    id: 'icici',
+    name: 'ICICI Bank',
+    shortName: 'ICICI Bank',
+    ifscPrefix: 'ICIC0',
+    color: '#9e2a2b',
+    bg: '#fcf1f0',
+    logo: (
+      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="8" fill="#9e2a2b" />
+        <circle cx="20" cy="14" r="4" fill="#f37021" />
+        <path d="M16 30V20h8v10h-3v-7h-2v7z" fill="white" />
+      </svg>
+    )
+  },
+  {
+    id: 'axis',
+    name: 'Axis Bank',
+    shortName: 'Axis Bank',
+    ifscPrefix: 'UTIB0',
+    color: '#97144d',
+    bg: '#fbf0f4',
+    logo: (
+      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="8" fill="#97144d" />
+        <path d="M20 9L9 29h6.5l4.5-8.5 4.5 8.5H31L20 9z" fill="white" />
+      </svg>
+    )
+  },
+  {
+    id: 'kotak',
+    name: 'Kotak Mahindra Bank',
+    shortName: 'Kotak Bank',
+    ifscPrefix: 'KKBK0',
+    color: '#e61a27',
+    bg: '#fef1f2',
+    logo: (
+      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="8" fill="#e61a27" />
+        <path d="M12 20c0-4 3-7 6-7s5 4 6 7c1 3 3 7 6 7s6-3 6-7" stroke="white" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+      </svg>
+    )
+  },
+  {
+    id: 'pnb',
+    name: 'Punjab National Bank',
+    shortName: 'PNB',
+    ifscPrefix: 'PUNB0',
+    color: '#a20e36',
+    bg: '#f9eef2',
+    logo: (
+      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="8" fill="#a20e36" />
+        <circle cx="20" cy="20" r="12" fill="#e8981f" />
+        <circle cx="20" cy="20" r="7" fill="#a20e36" />
+      </svg>
+    )
+  },
+  {
+    id: 'bob',
+    name: 'Bank of Baroda',
+    shortName: 'Bank of Baroda',
+    ifscPrefix: 'BARB0',
+    color: '#f26522',
+    bg: '#fef3eb',
+    logo: (
+      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="8" fill="#f26522" />
+        <circle cx="16" cy="20" r="6" fill="white" />
+        <path d="M22 14c3.3 1.5 5 4.5 5 8s-1.7 6.5-5 8" stroke="white" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      </svg>
+    )
+  },
+  {
+    id: 'canara',
+    name: 'Canara Bank',
+    shortName: 'Canara Bank',
+    ifscPrefix: 'CNRB0',
+    color: '#0077b6',
+    bg: '#e8f4fa',
+    logo: (
+      <svg className="w-6 h-6 flex-shrink-0" viewBox="0 0 40 40" fill="none">
+        <rect width="40" height="40" rx="8" fill="#0077b6" />
+        <polygon points="14,12 26,12 20,24" fill="#f39c12" />
+        <polygon points="14,28 26,28 20,16" fill="white" opacity="0.9" />
+      </svg>
+    )
+  }
+];
+
+export const PopularBanksPicker = ({ selectedBankName, onSelectBank }) => {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className="block text-[11px] font-black uppercase tracking-wider text-slate-700">
+          Select Popular Bank
+        </label>
+        <span className="text-[10px] text-slate-400 font-medium">Click to auto-fill bank & IFSC</span>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {POPULAR_INDIAN_BANKS.map((b) => {
+          const isSelected = selectedBankName?.toLowerCase() === b.name.toLowerCase() ||
+            selectedBankName?.toLowerCase() === b.shortName.toLowerCase();
+          return (
+            <button
+              key={b.id}
+              type="button"
+              onClick={() => onSelectBank(b)}
+              className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer ${
+                isSelected
+                  ? 'border-violet-600 bg-violet-50/80 shadow-xs ring-1 ring-violet-500'
+                  : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50 bg-white'
+              }`}
+            >
+              <div className="flex-shrink-0">{b.logo}</div>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-black text-slate-900 truncate leading-snug">{b.shortName}</div>
+                <div className="text-[10px] text-slate-400 font-mono truncate">{b.ifscPrefix}•••</div>
+              </div>
+              {isSelected && (
+                <span className="text-violet-600 text-xs font-black">✓</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 /* ── Avatar Component (Clean Profile Photo) ── */
 const Avatar = ({ user, size = 'md' }) => {
   const sz = { sm: 'w-9 h-9 text-sm', md: 'w-12 h-12 text-base', lg: 'w-16 h-16 text-xl' }[size];
@@ -300,6 +464,13 @@ export default function Profile() {
   // Application Activity Timeline & Audit Logs modal
   const [showAppTimelineModal, setShowAppTimelineModal] = useState(false);
   const [selectedTimelineApp, setSelectedTimelineApp] = useState(null);
+
+  // Unified AutoPay Mandate (1 single mandate covers Trade Credit & Business Credit)
+  const unifiedMandate = (user?.autoPayMandate?.status === 'ACTIVE' ? user.autoPayMandate : null)
+    || (creditData?.autoPayMandate?.status === 'ACTIVE' ? creditData.autoPayMandate : null)
+    || (businessFacilities.find(f => f.autoPayMandate?.status === 'ACTIVE' || f.mandate?.status === 'ACTIVE')?.autoPayMandate 
+        || businessFacilities.find(f => f.autoPayMandate?.status === 'ACTIVE' || f.mandate?.status === 'ACTIVE')?.mandate || null);
+  const isUnifiedMandateActive = Boolean(unifiedMandate?.status === 'ACTIVE');
 
   // Sync active tab with location search
   useEffect(() => {
@@ -1348,8 +1519,13 @@ export default function Profile() {
               {/* Quick Credit Pill in Header */}
               {(isCreditEnabled || user?.isCreditEnabled) && (
                 <button
-                  onClick={() => setActiveSection('credit')}
-                  className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/90 hover:border-emerald-300 hover:bg-emerald-100/70 text-slate-800 text-xs font-bold transition-all shadow-xs hover:scale-[1.01] active:scale-95 text-left group"
+                  type="button"
+                  onClick={() => {
+                    setActiveSection('credit');
+                    setCreditFacilityType('trade');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="inline-flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/90 hover:border-emerald-300 hover:bg-emerald-100/70 text-slate-800 text-xs font-bold transition-all shadow-xs hover:scale-[1.01] active:scale-95 text-left group cursor-pointer"
                 >
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                   <div>
@@ -1444,31 +1620,145 @@ export default function Profile() {
             {/* ──── OVERVIEW ──── */}
             {activeSection === 'overview' && (
               <div className="pf-panel space-y-6">
-                {/* Executive Welcome Card */}
-                <div className="bg-gradient-to-r from-violet-50/70 via-indigo-50/40 to-slate-50 rounded-3xl p-6 sm:p-8 text-slate-900 relative overflow-hidden border border-violet-100/80 shadow-xs">
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div>
-                      <h2 className="pf-display font-black text-2xl sm:text-3xl tracking-tight text-slate-900">
-                        Welcome Back
-                      </h2>
-                      <p className="text-slate-600 text-xs sm:text-sm mt-1 max-w-lg leading-relaxed font-medium">
-                        Manage your partner orders, business verification, and credit facility with Click2Kart.
-                      </p>
+                {/* Ultra-Premium Executive Welcome Card */}
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-[#0d1527] to-[#171335] text-white p-6 sm:p-8 border border-indigo-500/20 shadow-xl shadow-slate-950/20">
+                  {/* Subtle luxury ambient glows */}
+                  <div className="absolute -right-16 -top-16 w-72 h-72 rounded-full bg-violet-600/25 blur-3xl pointer-events-none" />
+                  <div className="absolute -left-16 -bottom-16 w-72 h-72 rounded-full bg-indigo-600/20 blur-3xl pointer-events-none" />
+                  <div className="absolute inset-0 bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:20px_20px] opacity-[0.07] pointer-events-none" />
+
+                  <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    {/* Left: Personalized Greeting & Business Meta */}
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-500/15 text-violet-300 border border-violet-500/30 backdrop-blur-md">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          B2B Wholesale Portal
+                        </span>
+                        {(formData.businessName || formData.tradeName) && (
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-300 bg-white/5 px-3 py-1 rounded-full border border-white/10 backdrop-blur-sm">
+                            <span className="text-violet-400">🏛️</span>
+                            <span className="truncate max-w-[200px]">{formData.businessName || formData.tradeName}</span>
+                          </span>
+                        )}
+                        {(user?.kyc?.status === 'VERIFIED' || user?.isKycComplete) && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-blue-300 bg-blue-500/15 px-2.5 py-1 rounded-full border border-blue-400/30">
+                            <BlueVerifiedIcon cls="w-3 h-3 text-blue-400" />
+                            <span>Verified Partner</span>
+                          </span>
+                        )}
+                      </div>
+
+                      <div>
+                        <h2 className="pf-display font-black text-2xl sm:text-3xl lg:text-4xl tracking-tight text-white flex items-center gap-2 flex-wrap">
+                          <span>Welcome back,</span>
+                          <span className="bg-gradient-to-r from-violet-200 via-indigo-200 to-emerald-200 bg-clip-text text-transparent">
+                            {user?.name || formData.businessName || 'Partner'}
+                          </span>
+                          <span className="inline-block hover:rotate-12 transition-transform origin-bottom-right">👋</span>
+                        </h2>
+                        <p className="text-slate-300/85 text-xs sm:text-sm mt-1.5 max-w-xl leading-relaxed font-medium">
+                          Monitor bulk orders, manage flexible credit facilities, and restock inventory directly at wholesale prices.
+                        </p>
+                      </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3">
+                    {/* Right: Executive Action Tiles */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+                      {/* Action 1: Explore Wholesale Catalogue */}
                       <button
+                        type="button"
                         onClick={() => navigate('/products')}
-                        className="px-5 py-3 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-violet-200 active:scale-95 transition-all"
+                        className="group relative flex items-center gap-3.5 px-5 py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 via-indigo-600 to-violet-700 hover:from-violet-500 hover:to-indigo-600 text-white shadow-lg shadow-violet-950/40 hover:shadow-violet-600/30 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-violet-400/30 cursor-pointer overflow-hidden text-left"
                       >
-                        Product Catalogue →
+                        <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/20 group-hover:scale-110 transition-transform">
+                          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                          </svg>
+                        </div>
+                        <div className="min-w-0 pr-1">
+                          <div className="text-[10px] font-black uppercase tracking-wider text-violet-200/90 leading-none mb-1">
+                            Wholesale Pricing
+                          </div>
+                          <div className="text-sm font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
+                            <span>Browse Catalogue</span>
+                            <span className="text-xs group-hover:translate-x-1 transition-transform">→</span>
+                          </div>
+                        </div>
                       </button>
+
+                      {/* Action 2: Track Orders & Invoices */}
                       <button
+                        type="button"
                         onClick={() => navigate('/orders')}
-                        className="px-5 py-3 rounded-2xl bg-white hover:bg-slate-100 text-slate-700 font-bold text-xs active:scale-95 transition-all border border-slate-200 shadow-xs"
+                        className="group relative flex items-center gap-3.5 px-5 py-3.5 rounded-2xl bg-slate-900/90 hover:bg-slate-800 text-slate-100 shadow-md hover:shadow-slate-800/50 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 border border-slate-700/80 hover:border-slate-600 cursor-pointer overflow-hidden text-left backdrop-blur-sm"
                       >
-                        View Orders
+                        <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-indigo-400 group-hover:text-indigo-300 group-hover:scale-110 transition-all">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                          </svg>
+                        </div>
+                        <div className="min-w-0 pr-1">
+                          <div className="text-[10px] font-black uppercase tracking-wider text-slate-400 leading-none mb-1">
+                            Track Shipments
+                          </div>
+                          <div className="text-sm font-black tracking-tight text-white flex items-center gap-1.5 leading-none">
+                            <span>My Orders</span>
+                            <span className="text-xs text-slate-400 group-hover:text-white group-hover:translate-x-1 transition-all">→</span>
+                          </div>
+                        </div>
                       </button>
+                    </div>
+                  </div>
+
+                  {/* Bottom Quick Feature Highlights */}
+                  <div className="mt-5 pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs text-slate-300">
+                    <div className="flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-xs text-emerald-400 shrink-0">
+                        ⚡
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-[10px] uppercase font-bold text-slate-400 leading-tight">Trade Credit</div>
+                        <div className="text-xs font-black text-emerald-300 truncate">
+                          {(isCreditEnabled || user?.isCreditEnabled)
+                            ? `₹${Number(creditData?.availableCredit ?? user?.availableCredit ?? 0).toLocaleString('en-IN')} Available`
+                            : 'Facility Ready'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-xs text-indigo-400 shrink-0">
+                        🏛️
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-[10px] uppercase font-bold text-slate-400 leading-tight">e-Mandate</div>
+                        <div className="text-xs font-black text-slate-200 truncate">
+                          {isUnifiedMandateActive ? 'Active & Synced ✓' : 'One-Click Setup'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-lg bg-violet-500/15 border border-violet-500/30 flex items-center justify-center text-xs text-violet-400 shrink-0">
+                        🛡️
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-[10px] uppercase font-bold text-slate-400 leading-tight">Verification</div>
+                        <div className="text-xs font-black text-slate-200 truncate">
+                          {(user?.kyc?.status === 'VERIFIED' || user?.isKycComplete) ? 'KYC Verified ✓' : 'Business Partner'}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-xs text-blue-400 shrink-0">
+                        🚚
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-[10px] uppercase font-bold text-slate-400 leading-tight">Wholesale Delivery</div>
+                        <div className="text-xs font-black text-slate-200 truncate">Priority Dispatch</div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1507,8 +1797,12 @@ export default function Profile() {
                         )}
                         <button
                           type="button"
-                          onClick={() => setActiveSection('credit')}
-                          className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all border border-slate-200"
+                          onClick={() => {
+                            setActiveSection('credit');
+                            setCreditFacilityType('trade');
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all border border-slate-200 cursor-pointer"
                         >
                           Credit Hub & AutoPay →
                         </button>
@@ -1521,6 +1815,13 @@ export default function Profile() {
                         <div className="text-2xl font-black text-emerald-600 mt-0.5">
                           ₹{Number(creditData?.availableCredit ?? user?.availableCredit ?? 0).toLocaleString('en-IN')}
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => navigate('/products')}
+                          className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-black text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                        >
+                          <span>Shop with Credit →</span>
+                        </button>
                       </div>
                       <div>
                         <div className="text-[10px] uppercase font-black tracking-wider text-slate-400">Sanctioned Limit</div>
@@ -1723,28 +2024,45 @@ export default function Profile() {
                     <p className="text-slate-400 text-xs mt-1">
                       Revolving credit limit for seamless purchasing and flexible repayments
                     </p>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/products')}
+                      className="px-4 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-md shadow-emerald-200 active:scale-[0.98] transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <span>🛒 Shop Catalogue</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRepayAmount(String(creditData?.outstandingBalance || ''));
+                        setShowRepayModal(true);
+                      }}
+                      disabled={!creditData || (creditData.outstandingBalance || 0) <= 0}
+                      className="px-5 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-lg shadow-violet-200 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      Repay Outstanding Dues
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setRepayAmount(String(creditData?.outstandingBalance || ''));
-                      setShowRepayModal(true);
-                    }}
-                    disabled={!creditData || (creditData.outstandingBalance || 0) <= 0}
-                    className="px-5 py-3 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-lg shadow-violet-200 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    Repay Outstanding Dues
-                  </button>
                 </div>
 
                 {/* 4 Cards Grid */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-                    <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Available Credit</div>
-                    <div className="pf-display font-black text-2xl text-emerald-600">
-                      ₹{Number(creditData?.availableCredit || 0).toLocaleString('en-IN')}
+                  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Available Credit</div>
+                      <div className="pf-display font-black text-2xl text-emerald-600">
+                        ₹{Number(creditData?.availableCredit || 0).toLocaleString('en-IN')}
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-1">Spendable at checkout</div>
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-1">Spendable at checkout</div>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/products')}
+                      className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-black text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                    >
+                      <span>Shop with Credit →</span>
+                    </button>
                   </div>
 
                   <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
@@ -1803,7 +2121,7 @@ export default function Profile() {
                     requiredBalance: Number(creditData?.outstandingBalance || 0),
                     isDuesPending: Number(creditData?.outstandingBalance || 0) > 0
                   };
-                  const isMandateActive = creditData?.autoPayMandate?.status === 'ACTIVE' || user?.autoPayMandate?.status === 'ACTIVE';
+                  const isMandateActive = isUnifiedMandateActive;
                   const bank = user?.bankDetails || creditData?.bankDetails || {};
                   const duesPending = Number(creditData?.outstandingBalance || 0) > 0;
 
@@ -1817,22 +2135,22 @@ export default function Profile() {
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-black text-slate-800 text-sm">Trade Credit AutoPay Mandate</span>
+                              <span className="font-black text-slate-800 text-sm">Unified AutoPay Mandate</span>
                               {isMandateActive ? (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                  <span>Active & Registered</span>
+                                  <span>Active & Authorized (1 Mandate for Both Lines)</span>
                                 </span>
                               ) : (
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                  <span>Mandate Pending</span>
+                                  <span>Mandate Not Yet Configured</span>
                                 </span>
                               )}
                             </div>
                             <p className="text-[11px] text-slate-500 mt-0.5">
                               {isMandateActive
-                                ? `e-Mandate authorized (${creditData?.autoPayMandate?.mandateId || user?.autoPayMandate?.mandateId || 'Razorpay Recurring'}). Automated recovery runs on scheduled due dates.`
-                                : 'Authorize an e-mandate via Razorpay Netbanking or UPI so trade credit dues are settled automatically without manual friction.'}
+                                ? `Unified e-Mandate active (${unifiedMandate?.mandateId || 'Razorpay Recurring'}). Covers both Trade Credit orders and Business Credit loans.`
+                                : 'Authorize 1 single e-mandate via Razorpay Netbanking or UPI so Trade Credit and Business Credit dues are debited automatically without manual friction.'}
                             </p>
                           </div>
                         </div>
@@ -1843,7 +2161,7 @@ export default function Profile() {
                             onClick={handleInitTradeAutoPay}
                             className="px-4 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-violet-200 whitespace-nowrap active:scale-[0.98] transition-all cursor-pointer"
                           >
-                            ⚡ Activate Trade Mandate
+                            ⚡ Activate Unified AutoPay
                           </button>
                         )}
                       </div>
@@ -2557,11 +2875,11 @@ export default function Profile() {
                                   <div className="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
                                     <div className="flex items-center gap-2">
                                       <span className="font-bold text-slate-700">AutoPay Status:</span>
-                                      {(fac.autoPayMandate?.status === 'ACTIVE' || fac.mandate?.status === 'ACTIVE') ? (
+                                      {(isUnifiedMandateActive || fac.autoPayMandate?.status === 'ACTIVE' || fac.mandate?.status === 'ACTIVE') ? (
                                         <span className="text-emerald-700 font-bold flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                                           <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                          <span>AutoPay Active</span>
-                                          <span className="text-slate-400 font-mono text-[10px]">({fac.autoPayMandate?.mandateId || fac.mandate?.mandateId})</span>
+                                          <span>AutoPay Active (Unified Mandate)</span>
+                                          <span className="text-slate-400 font-mono text-[10px]">({unifiedMandate?.mandateId || fac.autoPayMandate?.mandateId || fac.mandate?.mandateId})</span>
                                         </span>
                                       ) : (
                                         <span className="text-slate-600 font-medium flex items-center gap-1.5 bg-amber-50/70 px-2.5 py-1 rounded-full border border-amber-200">
@@ -2572,7 +2890,7 @@ export default function Profile() {
                                       )}
                                     </div>
 
-                                    {!(fac.autoPayMandate?.status === 'ACTIVE' || fac.mandate?.status === 'ACTIVE') && (
+                                    {!(isUnifiedMandateActive || fac.autoPayMandate?.status === 'ACTIVE' || fac.mandate?.status === 'ACTIVE') && (
                                       <button
                                         type="button"
                                         onClick={() => handleInitAutoPay(fac)}
@@ -2690,19 +3008,22 @@ export default function Profile() {
 
                           <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 text-xs space-y-2 text-slate-700">
                             <div className="flex items-center justify-between">
-                              <span className="font-bold">Mandate Facility Status:</span>
-                              {businessFacilities.some(f => f.autoPayMandate?.status === 'ACTIVE' || f.mandate?.status === 'ACTIVE') ? (
-                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                  Active & Authorized
+                              <span className="font-bold">Unified Mandate Status:</span>
+                              {isUnifiedMandateActive ? (
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                  <span>Active & Authorized ({unifiedMandate?.mandateId || 'Unified e-Mandate'})</span>
                                 </span>
                               ) : (
-                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600">
-                                  Optional / Manual Payments Enabled
+                                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                  Mandate Optional / Manual Payments Enabled
                                 </span>
                               )}
                             </div>
                             <p className="text-[11px] text-slate-500">
-                              You can repay your active business credit facility anytime using direct NEFT/RTGS bank transfer or instantly via Razorpay online payment.
+                              {isUnifiedMandateActive
+                                ? 'Your 1 single authorized e-Mandate automatically covers both Wholesale Trade Credit and Business Credit term lines without needing separate setup.'
+                                : 'You can repay your active business credit facility anytime using direct NEFT/RTGS bank transfer or instantly via Razorpay online payment.'}
                             </p>
                           </div>
                         </div>
@@ -4273,6 +4594,18 @@ export default function Profile() {
               <p className="text-[11px] text-slate-500">
                 Please enter or confirm the bank account where the net sanctioned amount will be disbursed.
               </p>
+
+              <PopularBanksPicker
+                selectedBankName={disburseBankDetails.bankName}
+                onSelectBank={(bank) => {
+                  setDisburseBankDetails(p => ({
+                    ...p,
+                    bankName: bank.name,
+                    ifsc: p.ifsc && p.ifsc.startsWith(bank.ifscPrefix) ? p.ifsc : bank.ifscPrefix
+                  }));
+                }}
+              />
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-600 uppercase mb-1">Account Holder Name *</label>
@@ -4740,6 +5073,17 @@ export default function Profile() {
             </div>
 
             <form onSubmit={handleSaveBankConfig} className="space-y-4">
+              <PopularBanksPicker
+                selectedBankName={bankConfigForm.bankName}
+                onSelectBank={(bank) => {
+                  setBankConfigForm(p => ({
+                    ...p,
+                    bankName: bank.name,
+                    ifsc: p.ifsc && p.ifsc.startsWith(bank.ifscPrefix) ? p.ifsc : bank.ifscPrefix
+                  }));
+                }}
+              />
+
               <div className="space-y-3">
                 <div>
                   <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
