@@ -628,6 +628,28 @@ export default function Profile() {
         || businessFacilities.find(f => f.autoPayMandate?.status === 'ACTIVE' || f.mandate?.status === 'ACTIVE')?.mandate || null);
   const isUnifiedMandateActive = Boolean(unifiedMandate?.status === 'ACTIVE');
 
+  // Multi-source unified linked bank account resolver
+  const linkedBank = (() => {
+    if (user?.bankDetails?.accountNumber) return user.bankDetails;
+    if (creditData?.bankDetails?.accountNumber) return creditData.bankDetails;
+    if (user?.kyc?.bankDetails?.accountNumber) return user.kyc.bankDetails;
+    const appWithBank = businessApps?.find(a => a.businessDetails?.bankDetails?.accountNumber);
+    if (appWithBank?.businessDetails?.bankDetails?.accountNumber) return appWithBank.businessDetails.bankDetails;
+    const facWithBank = businessFacilities?.find(f => f.disbursementBank?.accountNumber);
+    if (facWithBank?.disbursementBank?.accountNumber) return facWithBank.disbursementBank;
+    if (user?.kyc?.bankAccountNumber) {
+      return {
+        accountHolder: user?.kyc?.bankAccountHolder || user?.name || '',
+        bankName: user?.kyc?.bankName || '',
+        accountNumber: user?.kyc?.bankAccountNumber,
+        ifsc: user?.kyc?.bankIfsc || '',
+        accountType: user?.kyc?.bankAccountType || 'CURRENT'
+      };
+    }
+    return {};
+  })();
+  const isLinkedBankConfigured = Boolean(linkedBank?.accountNumber);
+
   // Sync active tab with location search
   useEffect(() => {
     try {
@@ -910,8 +932,8 @@ export default function Profile() {
   const openAcceptOfferModal = (offer) => {
     setSelectedOffer(offer);
     setAcceptedTermsChecked(false);
-    const bk = user?.bankDetails?.accountNumber
-      ? user.bankDetails
+    const bk = linkedBank?.accountNumber
+      ? linkedBank
       : (offer.businessDetails?.bankDetails || {});
     setDisburseBankDetails({
       accountHolder: bk.accountHolder || offer.businessDetails?.bankDetails?.accountHolder || user?.kyc?.businessName || user?.name || '',
@@ -925,9 +947,7 @@ export default function Profile() {
   };
 
   const openBankConfigModal = () => {
-    const bk = user?.bankDetails?.accountNumber
-      ? user.bankDetails
-      : (businessApps[0]?.businessDetails?.bankDetails || {});
+    const bk = linkedBank || {};
     setBankConfigForm({
       accountHolder: bk.accountHolder || user?.kyc?.businessName || user?.name || '',
       bankName: bk.bankName || '',
@@ -1931,7 +1951,7 @@ export default function Profile() {
                           <div className="flex items-center gap-2">
                             <span className="pf-display font-black text-base text-slate-900">Trade Credit Facility</span>
                             <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Active Revolving Line
+                              Active Credit Line
                             </span>
                           </div>
                           <p className="text-xs text-slate-500 mt-0.5">Wholesale checkout credit line with automated cycle clearance.</p>
@@ -1946,7 +1966,7 @@ export default function Profile() {
                               setRepayAmount(String(creditData?.outstandingBalance || ''));
                               setShowRepayModal(true);
                             }}
-                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider transition-all shadow-sm shadow-emerald-200 active:scale-95"
+                            className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider transition-all shadow-sm shadow-emerald-200 active:scale-95 cursor-pointer"
                           >
                             Repay ₹{Number(creditData.outstandingBalance).toLocaleString('en-IN')}
                           </button>
@@ -1974,9 +1994,10 @@ export default function Profile() {
                         <button
                           type="button"
                           onClick={() => navigate('/products')}
-                          className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-black text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                          className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-black transition-all border border-emerald-200 cursor-pointer shadow-2xs active:scale-95"
                         >
-                          <span>Shop with Credit →</span>
+                          <span>🛒 Shop Wholesale</span>
+                          <span>→</span>
                         </button>
                       </div>
                       <div>
@@ -2098,39 +2119,147 @@ export default function Profile() {
             {/* ──── CREDIT ACCOUNT ──── */}
             {activeSection === 'credit' && (
               <div className="pf-panel space-y-6">
-                {/* Dual Product Facility Switcher */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
-                  <div>
-                    <h2 className="pf-display font-black text-xl text-slate-800">Partner Financing & Credit Lines</h2>
-                    <p className="text-slate-400 text-xs mt-0.5">Switch between order trade credit and direct business capital</p>
+                {/* ── UNIFIED PARTNER CREDIT POWER BANNER ── */}
+                {(() => {
+                  const comboSanctionedLimit = (creditData?.creditLimit || 0) + businessFacilities.reduce((sum, f) => sum + (f.sanctionedAmount || f.principalAmount || 0), 0);
+                  const comboAvailableToSpend = Number(creditData?.availableCredit ?? user?.availableCredit ?? 0);
+                  const comboTotalOutstanding = (creditData?.outstandingBalance || 0) + businessFacilities.reduce((sum, f) => sum + (f.totalOutstandingBalance || 0), 0);
+
+                  return (
+                    <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-80 h-80 bg-violet-600/10 rounded-full blur-3xl pointer-events-none" />
+                      <div className="absolute bottom-0 left-1/3 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+                      <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5 pb-5 border-b border-white/10">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2.5 flex-wrap">
+                            <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-400/30">
+                              Click2Kart Capital Hub
+                            </span>
+                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold ${
+                              isUnifiedMandateActive 
+                                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30' 
+                                : 'bg-amber-500/20 text-amber-300 border border-amber-400/30'
+                            }`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${isUnifiedMandateActive ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
+                              <span>{isUnifiedMandateActive ? '1 Mandate Active (Unified)' : 'Mandate Inactive (Manual Mode)'}</span>
+                            </span>
+                            {isLinkedBankConfigured && (
+                              <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-white/10 text-slate-200 border border-white/15">
+                                🏛️ {linkedBank.bankName || 'Bank'} ••••{String(linkedBank.accountNumber).slice(-4)}
+                              </span>
+                            )}
+                          </div>
+                          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white mt-1">
+                            Partner Credit Facilities & Capital
+                          </h2>
+                          <p className="text-xs text-slate-400 max-w-xl">
+                            Unified financing power covering instant wholesale order trade lines and direct business capital. 1 linked bank account and 1 automated mandate manages both facilities.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-start md:self-center">
+                          <button
+                            type="button"
+                            onClick={() => setCreditFacilityType('mandate_bank')}
+                            className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 transition-all flex items-center gap-1.5 cursor-pointer backdrop-blur-sm"
+                          >
+                            <span>🏛️ Bank & AutoPay</span>
+                            <span>⚙️</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => navigate('/products')}
+                            className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white text-xs font-black transition-all shadow-md shadow-emerald-900/30 flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <span>🛒 Shop Wholesale</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Combo KPI Grid */}
+                      <div className="relative z-10 pt-5 grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-xs">
+                          <div className="text-[10px] uppercase font-black tracking-wider text-slate-400">Total Sanctioned Capital</div>
+                          <div className="text-xl sm:text-2xl font-black text-white mt-1">
+                            ₹{comboSanctionedLimit.toLocaleString('en-IN')}
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">Trade + Business limits</div>
+                        </div>
+                        <div className="bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-xs">
+                          <div className="text-[10px] uppercase font-black tracking-wider text-emerald-400">Available to Spend</div>
+                          <div className="text-xl sm:text-2xl font-black text-emerald-400 mt-1">
+                            ₹{comboAvailableToSpend.toLocaleString('en-IN')}
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">Spendable on wholesale</div>
+                        </div>
+                        <div className="bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-xs">
+                          <div className="text-[10px] uppercase font-black tracking-wider text-rose-400">Total Outstanding Dues</div>
+                          <div className={`text-xl sm:text-2xl font-black mt-1 ${comboTotalOutstanding > 0 ? 'text-rose-400' : 'text-slate-300'}`}>
+                            ₹{Math.round(comboTotalOutstanding).toLocaleString('en-IN')}
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">{comboTotalOutstanding > 0 ? 'Orders & Loans pending' : 'Zero dues pending'}</div>
+                        </div>
+                        <div className="bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-xs">
+                          <div className="text-[10px] uppercase font-black tracking-wider text-indigo-300">Unified Infrastructure</div>
+                          <div className="text-sm font-black text-white mt-1 truncate">
+                            {isLinkedBankConfigured ? `${linkedBank.bankName || 'Bank'} (••••${String(linkedBank.accountNumber).slice(-4)})` : 'No Bank Linked'}
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">
+                            Mandate: {isUnifiedMandateActive ? 'Active ✓' : 'Manual Repayment'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 3-Tab Facility Switcher */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-3.5 rounded-2xl border border-slate-100 shadow-xs">
+                  <div className="text-xs font-bold text-slate-500 pl-1">
+                    Select Facility Line:
                   </div>
-                  <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl w-fit">
+                  <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl w-fit flex-wrap">
                     <button
                       type="button"
                       onClick={() => setCreditFacilityType('trade')}
-                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
+                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                         creditFacilityType === 'trade'
                           ? 'bg-white text-violet-700 shadow-sm'
                           : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
-                      Trade Credit (Orders)
+                      💳 Trade Credit (Orders)
                     </button>
                     <button
                       type="button"
                       onClick={() => setCreditFacilityType('business')}
-                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 ${
+                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
                         creditFacilityType === 'business'
                           ? 'bg-white text-violet-700 shadow-sm'
                           : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
-                      <span>Business Credit Line</span>
+                      <span>💼 Business Credit Line</span>
                       {businessFacilities.some(f => f.status === 'ACTIVE') ? (
                         <span className="w-2 h-2 rounded-full bg-emerald-500" />
                       ) : businessApps.some(a => a.status === 'APPROVED' || a.status === 'PROACTIVE_GRANTED') ? (
                         <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                       ) : null}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCreditFacilityType('mandate_bank')}
+                      className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer ${
+                        creditFacilityType === 'mandate_bank'
+                          ? 'bg-white text-violet-700 shadow-sm'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      <span>🏛️ Unified Bank & AutoPay</span>
+                      {isUnifiedMandateActive && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -2222,9 +2351,10 @@ export default function Profile() {
                     <button
                       type="button"
                       onClick={() => navigate('/products')}
-                      className="mt-2.5 inline-flex items-center gap-1 text-[11px] font-black text-emerald-700 hover:text-emerald-800 hover:underline cursor-pointer"
+                      className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-black transition-all border border-emerald-200 cursor-pointer shadow-2xs active:scale-95"
                     >
-                      <span>Shop with Credit →</span>
+                      <span>🛒 Shop Wholesale</span>
+                      <span>→</span>
                     </button>
                   </div>
 
@@ -2309,7 +2439,6 @@ export default function Profile() {
                     isDuesPending: Number(creditData?.outstandingBalance || 0) > 0
                   };
                   const isMandateActive = isUnifiedMandateActive;
-                  const bank = user?.bankDetails || creditData?.bankDetails || {};
                   const duesPending = Number(creditData?.outstandingBalance || 0) > 0;
 
                   return (
@@ -2378,49 +2507,86 @@ export default function Profile() {
                         </div>
 
                         {/* Box 2: Balance Advisory & Warning */}
-                        <div className={`p-4 rounded-xl border space-y-1.5 ${
-                          duesPending 
-                            ? 'bg-amber-50/80 border-amber-200 text-amber-950' 
-                            : 'bg-emerald-50/60 border-emerald-200 text-emerald-950'
-                        }`}>
-                          <div className="flex items-center justify-between">
-                            <span className={`text-[10px] uppercase font-black tracking-wider ${duesPending ? 'text-amber-800' : 'text-emerald-800'}`}>
-                              {duesPending ? '⚠️ Required Account Balance' : '✓ Account Status'}
-                            </span>
-                            {duesPending ? (
+                        {!isMandateActive ? (
+                          <div className="p-4 rounded-xl border bg-amber-50/70 border-amber-200 text-amber-950 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] uppercase font-black tracking-wider text-amber-800">
+                                ⚠️ Repayment Mode: Manual Clearance
+                              </span>
                               <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 text-[10px] font-black">
-                                Due for Auto-Debit
+                                AutoPay Inactive
                               </span>
+                            </div>
+                            <div className="text-xs text-amber-950 font-medium leading-relaxed">
+                              Aapke account par AutoPay mandate active nahi hai. Koi automatic deduction nahi hoga. Outstanding dues ({Number(creditData.outstandingBalance || 0) > 0 ? `₹${Number(creditData.outstandingBalance).toLocaleString('en-IN')}` : '₹0'}) manually clear karein before due date. Automatic hassle-free deduction ke liye AutoPay activate karein.
+                            </div>
+                            <div className="pt-1 flex items-center gap-2 flex-wrap">
+                              <button
+                                type="button"
+                                onClick={handleInitTradeAutoPay}
+                                className="px-3.5 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-sm hover:from-violet-700 hover:to-indigo-700 transition cursor-pointer"
+                              >
+                                ⚡ Activate AutoPay Mandate
+                              </button>
+                              {Number(creditData.outstandingBalance || 0) > 0 && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setRepayAmount(String(creditData.outstandingBalance));
+                                    setShowRepayModal(true);
+                                  }}
+                                  className="px-3.5 py-1.5 bg-white border border-amber-300 text-amber-900 rounded-xl text-xs font-bold hover:bg-amber-100 transition cursor-pointer"
+                                >
+                                  Repay Manually →
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className={`p-4 rounded-xl border space-y-1.5 ${
+                            duesPending 
+                              ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950' 
+                              : 'bg-slate-50 border-slate-200 text-slate-700'
+                          }`}>
+                            <div className="flex items-center justify-between">
+                              <span className={`text-[10px] uppercase font-black tracking-wider ${duesPending ? 'text-emerald-800' : 'text-emerald-800'}`}>
+                                {duesPending ? '⚠️ Required Account Balance' : '✓ Account Status'}
+                              </span>
+                              {duesPending ? (
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 text-[10px] font-black">
+                                  Scheduled for Auto-Debit
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                                  No Dues
+                                </span>
+                              )}
+                            </div>
+
+                            {duesPending ? (
+                              <>
+                                <div className="flex items-baseline gap-1.5">
+                                  <span className="font-bold text-xs text-emerald-900">Minimum Balance to Keep:</span>
+                                  <span className="text-base font-black text-rose-700">₹{Number(creditData.outstandingBalance).toLocaleString('en-IN')}</span>
+                                </div>
+                                <p className="text-[11px] text-emerald-950/90 leading-relaxed">
+                                  {linkedBank.accountNumber ? (
+                                    <>Aapke bank account (<strong className="font-semibold">{linkedBank.bankName || 'Bank'} ••••{String(linkedBank.accountNumber).slice(-4)}</strong>) me <strong className="font-bold">₹{Number(creditData.outstandingBalance).toLocaleString('en-IN')}</strong> available balance rakhein. <strong>{schedule.nextDebitFormatted}</strong> par paisa auto-debit hoga to avoid bounce penalties.</>
+                                  ) : (
+                                    <>Apne linked bank account me <strong className="font-bold">₹{Number(creditData.outstandingBalance).toLocaleString('en-IN')}</strong> available balance maintain rakhein. AutoPay agle cycle me <strong>{schedule.nextDebitFormatted}</strong> par debit karega.</>
+                                  )}
+                                </p>
+                              </>
                             ) : (
-                              <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                                No Dues
-                              </span>
+                              <>
+                                <div className="font-bold text-emerald-900">Sabhi dues clear hain (₹0 Outstanding)</div>
+                                <p className="text-[11px] text-emerald-800/90 leading-relaxed">
+                                  Agle auto-debit cycle (<strong>{schedule.nextDebitFormatted}</strong>) par koi deduction nahi hoga jab tak aap naye trade credit orders place nahi karte.
+                                </p>
+                              </>
                             )}
                           </div>
-
-                          {duesPending ? (
-                            <>
-                              <div className="flex items-baseline gap-1.5">
-                                <span className="font-bold text-xs text-amber-800">Minimum Balance to Keep:</span>
-                                <span className="text-base font-black text-rose-700">₹{Number(creditData.outstandingBalance).toLocaleString('en-IN')}</span>
-                              </div>
-                              <p className="text-[11px] text-amber-900/90 leading-relaxed">
-                                {bank.accountNumber ? (
-                                  <>Aapke bank account (<strong className="font-semibold">{bank.bankName || 'Bank'} ••••{String(bank.accountNumber).slice(-4)}</strong>) me <strong className="font-bold">₹{Number(creditData.outstandingBalance).toLocaleString('en-IN')}</strong> available balance rakhein. <strong>{schedule.nextDebitFormatted}</strong> par paisa auto-debit hoga to avoid bounce penalties.</>
-                                ) : (
-                                  <>Apne linked bank account me <strong className="font-bold">₹{Number(creditData.outstandingBalance).toLocaleString('en-IN')}</strong> available balance maintain rakhein. AutoPay agle cycle me <strong>{schedule.nextDebitFormatted}</strong> par debit karega.</>
-                                )}
-                              </p>
-                            </>
-                          ) : (
-                            <>
-                              <div className="font-bold text-emerald-900">Sabhi dues clear hain (₹0 Outstanding)</div>
-                              <p className="text-[11px] text-emerald-800/90 leading-relaxed">
-                                Agle auto-debit cycle (<strong>{schedule.nextDebitFormatted}</strong>) par koi deduction nahi hoga jab tak aap naye trade credit orders place nahi karte.
-                              </p>
-                            </>
-                          )}
-                        </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -2608,7 +2774,7 @@ export default function Profile() {
                 </div>
               </div>
             )
-          ) : (
+          ) : creditFacilityType === 'business' ? (
             <div className="space-y-6">
                     {/* Header Card */}
                     <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -3922,6 +4088,215 @@ export default function Profile() {
                         )}
                       </div>
                     )}
+                  </div>
+                ) : (
+                  /* ──── UNIFIED BANK & AUTOPAY MANDATE HUB (creditFacilityType === 'mandate_bank') ──── */
+                  <div className="space-y-6">
+                    {/* Header Card */}
+                    <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h2 className="pf-display font-black text-xl text-slate-800">Unified Bank & AutoPay Mandate</h2>
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">
+                            Core Infrastructure
+                          </span>
+                          {isUnifiedMandateActive ? (
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              <span>Mandate Active</span>
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                              Mandate Inactive (Manual Mode)
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-slate-400 text-xs mt-1">
+                          Common financial rail shared by both Trade Credit (Wholesale Orders) and Business Working Capital facilities. 1 verified bank account and 1 automated mandate manages both lines.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={openBankConfigModal}
+                          className="px-4 py-2.5 rounded-xl font-black text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer"
+                        >
+                          ✏️ Update Bank
+                        </button>
+                        {!isUnifiedMandateActive && (
+                          <button
+                            type="button"
+                            onClick={handleInitTradeAutoPay}
+                            className="px-4 py-2.5 rounded-xl font-black text-xs text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-md shadow-violet-200 active:scale-95 transition cursor-pointer"
+                          >
+                            ⚡ Activate AutoPay
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 2 Comprehensive Status Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Card 1: Disbursement & Settlement Bank Account */}
+                      <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                          <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl shrink-0">
+                              🏛️
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-black text-base text-slate-900">Linked Bank Account</h3>
+                                {isLinkedBankConfigured ? (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    ✓ Verified
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    Not Configured
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500">Business loan payouts & debit clearing account</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={openBankConfigModal}
+                            className="text-xs font-bold text-violet-600 hover:underline cursor-pointer"
+                          >
+                            {isLinkedBankConfigured ? 'Edit Details →' : '+ Link Bank →'}
+                          </button>
+                        </div>
+
+                        {isLinkedBankConfigured ? (
+                          <div className="space-y-3">
+                            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2 text-xs">
+                              <div className="flex justify-between items-center">
+                                <span className="text-slate-400 uppercase font-bold text-[10px]">Bank Name</span>
+                                <strong className="text-slate-800 text-sm">{linkedBank.bankName || 'Bank'}</strong>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-slate-400 uppercase font-bold text-[10px]">Account Number</span>
+                                <strong className="font-mono text-slate-900 text-sm">••••{String(linkedBank.accountNumber).slice(-4)}</strong>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-slate-400 uppercase font-bold text-[10px]">IFSC Code</span>
+                                <strong className="font-mono text-slate-700">{linkedBank.ifsc}</strong>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-slate-400 uppercase font-bold text-[10px]">Account Holder</span>
+                                <strong className="text-slate-700 truncate max-w-xs">{linkedBank.accountHolder || user?.name}</strong>
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className="text-slate-400 uppercase font-bold text-[10px]">Account Type</span>
+                                <span className="px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700 font-bold text-[10px]">{linkedBank.accountType || 'Current'}</span>
+                              </div>
+                            </div>
+                            <div className="p-3 bg-indigo-50/60 rounded-xl border border-indigo-100 text-[11px] text-indigo-900 leading-relaxed">
+                              💡 <strong>Loan Disbursements & Settle:</strong> Any approved Business Working Capital limit is directly transferred via NEFT/RTGS to this account.
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-6 bg-amber-50/60 rounded-xl border border-amber-200 text-center space-y-3">
+                            <div className="text-2xl">⚠️</div>
+                            <div className="font-bold text-amber-900 text-sm">No Bank Account Linked</div>
+                            <p className="text-xs text-amber-800 max-w-sm mx-auto">
+                              Link your Indian current or savings account so loan disbursements can be processed and mandate debiting can be configured.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={openBankConfigModal}
+                              className="px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md cursor-pointer hover:from-violet-700 hover:to-indigo-700"
+                            >
+                              + Link Indian Bank Account
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Card 2: Unified AutoPay e-Mandate */}
+                      <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-11 h-11 rounded-2xl ${isUnifiedMandateActive ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'} flex items-center justify-center text-xl shrink-0`}>
+                              ⚡
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h3 className="font-black text-base text-slate-900">Unified AutoPay Mandate</h3>
+                                {isUnifiedMandateActive ? (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    ✓ Active
+                                  </span>
+                                ) : (
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    Not Active
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-slate-500">1 Mandate for both Wholesale Orders and Loans</p>
+                            </div>
+                          </div>
+                          {!isUnifiedMandateActive && (
+                            <button
+                              type="button"
+                              onClick={handleInitTradeAutoPay}
+                              className="text-xs font-bold text-violet-600 hover:underline cursor-pointer"
+                            >
+                              Activate Now →
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 space-y-2 text-xs">
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400 uppercase font-bold text-[10px]">Mandate Status</span>
+                            {isUnifiedMandateActive ? (
+                              <span className="font-bold text-emerald-700">Active & Authorized (Recurring)</span>
+                            ) : (
+                              <span className="font-bold text-amber-700">Manual Repayments Only</span>
+                            )}
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400 uppercase font-bold text-[10px]">Mandate ID</span>
+                            <strong className="font-mono text-slate-800">{unifiedMandate?.mandateId || 'NOT_REGISTERED'}</strong>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400 uppercase font-bold text-[10px]">Auth Max Amount</span>
+                            <strong className="text-slate-800">₹{Number(unifiedMandate?.maxAmount || 500000).toLocaleString('en-IN')}</strong>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-400 uppercase font-bold text-[10px]">Coverage Scope</span>
+                            <span className="font-bold text-violet-700">Trade Credit + Business Working Capital</span>
+                          </div>
+                        </div>
+
+                        {!isUnifiedMandateActive ? (
+                          <div className="p-4 bg-amber-50/70 rounded-xl border border-amber-200 text-amber-950 space-y-3">
+                            <p className="text-xs leading-relaxed">
+                              Jab tak AutoPay active nahi hota, aapke kisi bhi due par automatic deduction nahi hoga. Aapko dues manually gateway ya direct bank transfer ke through pay karna hoga before due date.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={handleInitTradeAutoPay}
+                              className="w-full py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md transition cursor-pointer"
+                            >
+                              ⚡ Authorize Unified AutoPay (Razorpay)
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="p-4 bg-emerald-50/70 rounded-xl border border-emerald-200 text-emerald-950 space-y-1 text-xs">
+                            <div className="font-bold flex items-center gap-1.5 text-emerald-900">
+                              <span>✓ Automated Dues Clearance Active</span>
+                            </div>
+                            <p className="text-[11px] text-emerald-900/90 leading-relaxed">
+                              Weekly ya daily cycle par scheduled dues automatically linked bank account se deduct honge. Dues clear hote hi spending limit immediately restore ho jayegi.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -5473,95 +5848,149 @@ export default function Profile() {
             className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 my-8 animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="pf-display font-black text-xl text-slate-900">
-                  Repay Business Credit Facility
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Account: {selectedRepayFacility.facilityNumber}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowBusinessRepayModal(false)}
-                className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center"
-              >
-                <Ico n="close" cls="w-4 h-4" />
-              </button>
-            </div>
+            {(() => {
+              const relatedApp = businessApps?.find(a => String(a._id) === String(selectedRepayFacility.applicationId) || a.applicationNumber === selectedRepayFacility.applicationNumber);
+              const appNo = selectedRepayFacility.applicationNumber || relatedApp?.applicationNumber || '—';
+              const nextDue = Math.round(selectedRepayFacility.nextDueAmount || 0);
+              const fullDue = Math.round(selectedRepayFacility.totalOutstandingBalance || 0);
 
-            <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs">
-              <div>
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Next Due</span>
-                <span className="font-black text-amber-700 text-base">
-                  ₹{Math.round(selectedRepayFacility.nextDueAmount || 0).toLocaleString('en-IN')}
-                </span>
-              </div>
-              <div>
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Outstanding</span>
-                <span className="font-black text-slate-900 text-base">
-                  ₹{Math.round(selectedRepayFacility.totalOutstandingBalance || 0).toLocaleString('en-IN')}
-                </span>
-              </div>
-            </div>
+              return (
+                <>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="pf-display font-black text-xl text-slate-900">
+                          Repay Business Credit Facility
+                        </h3>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-violet-50 text-violet-700 border border-violet-200">
+                          Facility #{selectedRepayFacility.facilityNumber}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1 font-medium">
+                        Tied to Loan Application: <strong className="text-slate-800 font-mono">#{appNo}</strong>
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowBusinessRepayModal(false)}
+                      className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
+                    >
+                      <Ico n="close" cls="w-4 h-4" />
+                    </button>
+                  </div>
 
-            <Field label="Repayment Amount (₹)">
-              <input
-                type="number"
-                min="1"
-                max={selectedRepayFacility.totalOutstandingBalance}
-                value={businessRepayAmount}
-                onChange={(e) => setBusinessRepayAmount(e.target.value)}
-                placeholder="Enter amount to pay"
-                className={inputCls}
-              />
-              <div className="flex gap-2 mt-2">
-                {selectedRepayFacility.nextDueAmount > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setBusinessRepayAmount(String(Math.round(selectedRepayFacility.nextDueAmount)))}
-                    className="text-[11px] font-bold text-violet-600 bg-violet-50 px-2.5 py-1 rounded-lg hover:bg-violet-100 transition"
-                  >
-                    Pay Next Due (₹{Math.round(selectedRepayFacility.nextDueAmount).toLocaleString('en-IN')})
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setBusinessRepayAmount(String(Math.round(selectedRepayFacility.totalOutstandingBalance)))}
-                  className="text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg hover:bg-slate-200 transition"
-                >
-                  Pay Full Balance (₹{Math.round(selectedRepayFacility.totalOutstandingBalance).toLocaleString('en-IN')})
-                </button>
-              </div>
-            </Field>
+                  <div className="grid grid-cols-2 gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Next Scheduled Due</span>
+                      <span className="font-black text-amber-700 text-base">
+                        ₹{nextDue.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Outstanding Balance</span>
+                      <span className="font-black text-slate-900 text-base">
+                        ₹{fullDue.toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </div>
 
-            <Field label="Payment Method">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setBusinessRepayMethod('RAZORPAY')}
-                  className={`py-3 rounded-xl font-black text-xs transition-all border ${
-                    businessRepayMethod === 'RAZORPAY'
-                      ? 'bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-200'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  Online Gateway (Razorpay)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBusinessRepayMethod('BANK_TRANSFER')}
-                  className={`py-3 rounded-xl font-black text-xs transition-all border ${
-                    businessRepayMethod === 'BANK_TRANSFER'
-                      ? 'bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-200'
-                      : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  Direct Bank Transfer
-                </button>
-              </div>
-            </Field>
+                  {/* Amount Selection: Locked, Non-Editable */}
+                  <div className="space-y-2">
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      Select Repayment Option (Amount Locked)
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {nextDue > 0 && (
+                        <div
+                          onClick={() => setBusinessRepayAmount(String(nextDue))}
+                          className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                            Number(businessRepayAmount) === nextDue
+                              ? 'border-violet-600 bg-violet-50/60 shadow-xs'
+                              : 'border-slate-200 bg-white hover:border-slate-300'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-600">Pay Next EMI</span>
+                            <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                              Number(businessRepayAmount) === nextDue ? 'border-violet-600 bg-violet-600' : 'border-slate-300'
+                            }`}>
+                              {Number(businessRepayAmount) === nextDue && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                            </span>
+                          </div>
+                          <div className="text-xl font-black text-slate-900 mt-2">
+                            ₹{nextDue.toLocaleString('en-IN')}
+                          </div>
+                          <div className="text-[10px] text-slate-400 mt-0.5">Scheduled instalment due</div>
+                        </div>
+                      )}
+
+                      <div
+                        onClick={() => setBusinessRepayAmount(String(fullDue))}
+                        className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                          Number(businessRepayAmount) === fullDue
+                            ? 'border-emerald-600 bg-emerald-50/60 shadow-xs'
+                            : 'border-slate-200 bg-white hover:border-slate-300'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-slate-600">Full Settlement</span>
+                          <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                            Number(businessRepayAmount) === fullDue ? 'border-emerald-600 bg-emerald-600' : 'border-slate-300'
+                          }`}>
+                            {Number(businessRepayAmount) === fullDue && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </span>
+                        </div>
+                        <div className="text-xl font-black text-slate-900 mt-2">
+                          ₹{fullDue.toLocaleString('en-IN')}
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">Pre-close entire facility</div>
+                      </div>
+                    </div>
+                    <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 text-[11px] text-slate-600 flex items-center justify-between">
+                      <span>Exact amount to be reconciled:</span>
+                      <strong className="text-violet-700 font-black text-sm">₹{Number(businessRepayAmount || nextDue || fullDue).toLocaleString('en-IN')}</strong>
+                    </div>
+                  </div>
+
+                  <Field label="Payment Method">
+                    {companyBankConfig?.enabled ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setBusinessRepayMethod('RAZORPAY')}
+                          className={`py-3 rounded-xl font-black text-xs transition-all border ${
+                            businessRepayMethod === 'RAZORPAY'
+                              ? 'bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-200'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          Online Gateway (Razorpay)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setBusinessRepayMethod('BANK_TRANSFER')}
+                          className={`py-3 rounded-xl font-black text-xs transition-all border ${
+                            businessRepayMethod === 'BANK_TRANSFER'
+                              ? 'bg-violet-600 text-white border-violet-600 shadow-md shadow-violet-200'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          Direct Bank Transfer
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="p-3.5 rounded-2xl border border-violet-100 bg-violet-50/50 flex items-center justify-between">
+                        <div>
+                          <div className="text-xs font-bold text-slate-900">Instant Online Gateway (Razorpay)</div>
+                          <div className="text-[11px] text-slate-500">Supports Netbanking, UPI, and Debit Cards</div>
+                        </div>
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full whitespace-nowrap">Instant Sync</span>
+                      </div>
+                    )}
+                  </Field>
+                </>
+              );
+            })()}
 
             {businessRepayMethod === 'BANK_TRANSFER' && (
               <div className="space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-100 text-xs">

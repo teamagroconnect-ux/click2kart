@@ -861,117 +861,138 @@ export default function CreditManagement() {
               <table className="w-full text-left text-sm border-collapse">
                 <thead className="bg-gray-50/50 border-b border-gray-50 text-gray-400 font-black uppercase tracking-[0.2em] text-[10px]">
                   <tr>
-                    <th className="px-5 py-4">Retailer</th>
-                    <th className="px-4 py-4">Credit Status</th>
-                    <th className="px-4 py-4">AutoPay Mandate</th>
-                    <th className="px-4 py-4">Bank Account</th>
-                    <th className="px-4 py-4">Limit (₹)</th>
-                    <th className="px-4 py-4">Available (₹)</th>
-                    <th className="px-4 py-4">Outstanding (₹)</th>
-                    <th className="px-5 py-4 text-right">Actions</th>
+                    <th className="px-6 py-5">Retailer Profile</th>
+                    <th className="px-6 py-5">Credit Status</th>
+                    <th className="px-6 py-5">AutoPay Mandate</th>
+                    <th className="px-6 py-5">Bank Account</th>
+                    <th className="px-6 py-5">Limit (₹)</th>
+                    <th className="px-6 py-5">Available (₹)</th>
+                    <th className="px-6 py-5">Outstanding (₹)</th>
+                    <th className="px-6 py-5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {loadingRetailers ? (
-                    <tr>
-                      <td colSpan="8" className="text-center py-12 text-gray-400 font-semibold">Loading retailers...</td>
-                    </tr>
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <tr key={i} className="animate-pulse">
+                        <td colSpan="8" className="px-6 py-8"><div className="h-5 bg-gray-50 rounded-full w-full"></div></td>
+                      </tr>
+                    ))
                   ) : retailers.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="text-center py-12 text-gray-400">No retailers found matching criteria</td>
+                      <td colSpan="8" className="px-6 py-16 text-center text-gray-400 italic font-medium uppercase tracking-[0.2em] text-[10px]">
+                        No retailers match your search or filter criteria.
+                      </td>
                     </tr>
                   ) : (
                     retailers.map((r) => {
                       const isEn = Boolean(r.isCreditEnabled)
+                      const isMandateActive = r.autoPayMandate?.status === 'ACTIVE'
                       return (
-                        <tr key={r._id} className="hover:bg-gray-50/50 transition-colors">
+                        <tr key={r._id} className="group hover:bg-gray-50/40 transition-colors">
                           <td
-                            className="px-6 py-4 cursor-pointer hover:bg-blue-50/50 transition-colors"
+                            className="px-6 py-5 cursor-pointer"
                             onClick={() => openRetailerQuickDetail(r)}
                             title="Click to view full retailer KYC & trade details"
                           >
-                            <div className="font-bold text-gray-900 group flex items-center gap-1.5">
-                              <span>{r.name}</span>
-                              <span className="text-[10px] text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity font-semibold">ℹ️ Details</span>
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 shrink-0 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xs border border-blue-100 shadow-sm">
+                                {r.name?.charAt(0)?.toUpperCase() || 'R'}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-black text-gray-900 text-sm flex items-center gap-1.5">
+                                  <span className="truncate">{r.name}</span>
+                                  <span className="text-[10px] text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity font-bold">ℹ️</span>
+                                </div>
+                                <div className="text-[11px] text-gray-400 font-semibold truncate mt-0.5">
+                                  {r.kyc?.businessName || 'Direct Retailer'} • {r.phone}
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-xs text-gray-500">{r.kyc?.businessName || 'Individual'} • {r.phone}</div>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-5">
                             <span
-                              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider ${
-                                isEn ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-gray-100 text-gray-500'
+                              className={`inline-flex items-center px-3 py-1 rounded-full text-[9px] font-black tracking-widest border uppercase ${
+                                isEn ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-gray-100 text-gray-500 border-gray-200'
                               }`}
                             >
-                              {isEn ? 'Enabled' : 'Disabled'}
+                              {isEn ? 'Approved' : 'Disabled'}
                             </span>
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-5">
                             <div className="flex flex-col gap-1 items-start">
-                              {r.autoPayMandate?.status === 'ACTIVE' ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                              {isMandateActive ? (
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
                                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                   <span>Mandate Active</span>
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500 border border-gray-200">
                                   Mandate Inactive
                                 </span>
                               )}
-                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-700 bg-slate-50 px-2 py-0.5 rounded-lg border border-slate-200/60">
-                                <span className="text-[10px]">🗓️</span>
-                                <span>
-                                  {r.tradeCreditAutoPaySchedule?.frequency === 'DAILY'
-                                    ? `Daily (${r.tradeCreditAutoPaySchedule?.debitTime || '10:00 AM'})`
-                                    : `Weekly (${r.tradeCreditAutoPaySchedule?.weeklyDebitDay ? r.tradeCreditAutoPaySchedule.weeklyDebitDay.slice(0, 3) : 'Mon'} ${r.tradeCreditAutoPaySchedule?.debitTime || '10:00 AM'})`}
+                              {isMandateActive ? (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-700 bg-slate-50 px-2 py-0.5 rounded-md border border-slate-200/70">
+                                  <span>🗓️</span>
+                                  <span>
+                                    {r.tradeCreditAutoPaySchedule?.frequency === 'DAILY'
+                                      ? `Daily (${r.tradeCreditAutoPaySchedule?.debitTime || '10:00 AM'})`
+                                      : `Weekly (${r.tradeCreditAutoPaySchedule?.weeklyDebitDay ? r.tradeCreditAutoPaySchedule.weeklyDebitDay.slice(0, 3) : 'Mon'} ${r.tradeCreditAutoPaySchedule?.debitTime || '10:00 AM'})`}
+                                  </span>
                                 </span>
-                              </span>
+                              ) : (
+                                <span className="text-[10px] text-gray-400 font-medium italic">Manual Clearance</span>
+                              )}
                             </div>
                           </td>
-                          <td className="px-4 py-4">
+                          <td className="px-6 py-5">
                             {r.bankDetails?.accountNumber ? (
-                              <div className="flex flex-col gap-1 items-start text-xs">
-                                <div className="flex items-center gap-1.5 font-bold text-gray-900">
-                                  <span>{r.bankDetails.bankName || 'Bank'}</span>
-                                  <span className="px-1.5 py-0.2 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-black">
+                              <div className="flex flex-col gap-0.5 items-start text-xs">
+                                <div className="flex items-center gap-1.5 font-black text-gray-900">
+                                  <span className="truncate max-w-[130px]">{r.bankDetails.bankName || 'Bank'}</span>
+                                  <span className={`px-1.5 py-0.2 rounded-md text-[9px] font-black uppercase tracking-wider border ${
+                                    r.bankDetails.isVerified ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200'
+                                  }`}>
                                     {r.bankDetails.isVerified ? 'Verified ✓' : 'Linked'}
                                   </span>
                                 </div>
-                                <div className="font-mono text-[11px] text-gray-500">
-                                  ••••{String(r.bankDetails.accountNumber).slice(-4)} ({r.bankDetails.ifsc || 'IFSC'})
+                                <div className="font-mono text-[11px] text-gray-600 font-bold">
+                                  ••••{String(r.bankDetails.accountNumber).slice(-4)}
+                                  <span className="font-sans text-[10px] text-gray-400 font-semibold ml-1.5">({r.bankDetails.ifsc || 'IFSC'})</span>
                                 </div>
                                 <button
                                   type="button"
                                   onClick={() => openAdminBankModal(r)}
-                                  className="text-[10px] text-violet-600 hover:text-violet-800 font-bold hover:underline cursor-pointer"
+                                  className="text-[10px] text-indigo-600 hover:text-indigo-800 font-black hover:underline cursor-pointer flex items-center gap-0.5 mt-0.5"
                                 >
                                   ✏️ Edit Bank
                                 </button>
                               </div>
                             ) : (
                               <div className="flex flex-col gap-1 items-start">
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-400">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">
                                   Not Linked
                                 </span>
                                 <button
                                   type="button"
                                   onClick={() => openAdminBankModal(r)}
-                                  className="text-[11px] text-violet-600 hover:text-violet-800 font-bold hover:underline cursor-pointer"
+                                  className="text-[11px] text-indigo-600 hover:text-indigo-800 font-black hover:underline cursor-pointer flex items-center gap-0.5"
                                 >
                                   + Add Bank
                                 </button>
                               </div>
                             )}
                           </td>
-                          <td className="px-4 py-4 font-bold text-gray-900">
+                          <td className="px-6 py-5 font-black text-gray-900 text-sm">
                             ₹{(r.creditLimit || 0).toLocaleString('en-IN')}
                           </td>
-                          <td className="px-4 py-4 font-black text-emerald-600">
+                          <td className="px-6 py-5 font-black text-emerald-600 text-sm">
                             ₹{(r.availableCredit || 0).toLocaleString('en-IN')}
                           </td>
-                          <td className="px-4 py-4 font-black text-rose-600">
+                          <td className="px-6 py-5 font-black text-rose-600 text-sm">
                             ₹{(r.outstandingBalance || 0).toLocaleString('en-IN')}
                           </td>
-                          <td className="px-5 py-4 text-right">
+                          <td className="px-6 py-5 text-right">
                             <div className="flex items-center justify-end gap-1.5">
                               <button
                                 onClick={() => openAdminBankModal(r)}
@@ -984,7 +1005,7 @@ export default function CreditManagement() {
                               <button
                                 onClick={() => openTradeAutoPayModal(r)}
                                 title="Configure Auto-Debit Schedule (Daily / Weekly)"
-                                className="px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1"
+                                className="px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 border border-violet-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                               >
                                 <span>⚙️</span>
                                 <span>Schedule</span>
@@ -992,7 +1013,7 @@ export default function CreditManagement() {
                               <button
                                 onClick={() => openLedgerModal(r)}
                                 title="View Credit Ledger"
-                                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold transition-all"
+                                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-xl text-xs font-bold transition-all cursor-pointer"
                               >
                                 Ledger
                               </button>
@@ -1006,7 +1027,7 @@ export default function CreditManagement() {
                                       setFormReason('Credit limit enhancement based on consistent repayment history')
                                       setAdjustModalOpen(true)
                                     }}
-                                    className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 rounded-xl text-xs font-bold transition-all"
+                                    className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
                                   >
                                     Adjust
                                   </button>
@@ -1016,7 +1037,7 @@ export default function CreditManagement() {
                                       setFormReason('Temporarily deactivated per credit risk assessment')
                                       setToggleModalOpen(true)
                                     }}
-                                    className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold transition-all"
+                                    className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
                                   >
                                     Disable
                                   </button>
@@ -1029,7 +1050,7 @@ export default function CreditManagement() {
                                     setFormReason('Approved after verification of trade license and business volume')
                                     setToggleModalOpen(true)
                                   }}
-                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all"
+                                  className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer"
                                 >
                                   Enable Credit
                                 </button>

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useState, useMemo } from 'react'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import api from '../../lib/api'
 import { getCloudinaryUrl } from '../../lib/cloudinary'
 import { useAuth } from '../../lib/AuthContext'
@@ -30,48 +30,77 @@ function getStatusIndex(order) {
   return 0
 }
 
-function getStatusColor(status) {
-  if (status === 'FULFILLED' || status === 'DELIVERED') return { bg: 'rgba(5,150,105,0.1)', border: 'rgba(5,150,105,0.2)', color: '#059669' }
-  if (status === 'CANCELLED') return { bg: 'rgba(220,38,38,0.1)', border: 'rgba(220,38,38,0.2)', color: '#dc2626' }
-  if (status === 'SHIPPED') return { bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.2)', color: '#d97706' }
-  if (status === 'PACKED') return { bg: 'rgba(37,99,235,0.1)', border: 'rgba(37,99,235,0.2)', color: '#2563eb' }
-  return { bg: 'rgba(139,92,246,0.1)', border: 'rgba(139,92,246,0.2)', color: '#7c3aed' }
-}
-
-function getDisplayStatus(status) {
-  const statusMap = {
-    'NEW': 'Placed',
-    'PENDING_PAYMENT': 'Pending Payment',
-    'PENDING_CASH_APPROVAL': 'Pending Approval',
-    'PENDING_ADMIN_APPROVAL': 'Pending Approval',
-    'CONFIRMED': 'Processing',
-    'PROCESSING': 'Processing',
-    'PACKED': 'Packed',
-    'SHIPPED': 'Shipped',
-    'OUT_FOR_DELIVERY': 'Out for Delivery',
-    'DELIVERED': 'Delivered',
-    'FULFILLED': 'Delivered',
-    'CANCELLED': 'Cancelled',
-    'RETURNED': 'Returned'
+function getStatusBadge(status) {
+  switch (status) {
+    case 'DELIVERED':
+    case 'FULFILLED':
+      return {
+        bg: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        dot: 'bg-emerald-500',
+        label: 'Delivered'
+      }
+    case 'SHIPPED':
+    case 'OUT_FOR_DELIVERY':
+      return {
+        bg: 'bg-amber-50 text-amber-700 border-amber-200',
+        dot: 'bg-amber-500 animate-pulse',
+        label: status === 'OUT_FOR_DELIVERY' ? 'Out for Delivery' : 'In Transit (Shipped)'
+      }
+    case 'PACKED':
+      return {
+        bg: 'bg-blue-50 text-blue-700 border-blue-200',
+        dot: 'bg-blue-500',
+        label: 'Packed & Ready'
+      }
+    case 'PROCESSING':
+    case 'CONFIRMED':
+      return {
+        bg: 'bg-violet-50 text-violet-700 border-violet-200',
+        dot: 'bg-violet-500 animate-pulse',
+        label: 'Processing'
+      }
+    case 'PENDING_PAYMENT':
+      return {
+        bg: 'bg-rose-50 text-rose-700 border-rose-200',
+        dot: 'bg-rose-500 animate-ping',
+        label: 'Payment Pending'
+      }
+    case 'CANCELLED':
+      return {
+        bg: 'bg-red-50 text-red-700 border-red-200',
+        dot: 'bg-red-500',
+        label: 'Cancelled'
+      }
+    case 'RETURNED':
+      return {
+        bg: 'bg-slate-100 text-slate-700 border-slate-200',
+        dot: 'bg-slate-500',
+        label: 'Returned'
+      }
+    default:
+      return {
+        bg: 'bg-purple-50 text-purple-700 border-purple-200',
+        dot: 'bg-purple-500',
+        label: status || 'Placed'
+      }
   }
-  return statusMap[status] || status
 }
 
 function getPaymentMethodDisplay(method) {
   switch (method) {
     case 'CREDIT':
-      return { label: 'Retailer Credit', bg: 'rgba(16,185,129,0.12)', color: '#059669', border: 'rgba(16,185,129,0.25)', icon: '💳' }
+      return { label: 'Trade Credit', bg: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: '💳' }
     case 'RAZORPAY':
-      return { label: 'Razorpay', bg: 'rgba(59,130,246,0.1)', color: '#2563eb', border: 'rgba(59,130,246,0.2)', icon: '⚡' }
+      return { label: 'Online (Razorpay)', bg: 'bg-blue-50 text-blue-700 border-blue-200', icon: '⚡' }
     case 'BANK_TRANSFER':
-      return { label: 'Bank Transfer / UPI', bg: 'rgba(139,92,246,0.1)', color: '#7c3aed', border: 'rgba(139,92,246,0.2)', icon: '🏦' }
+      return { label: 'Bank Transfer / IMPS', bg: 'bg-violet-50 text-violet-700 border-violet-200', icon: '🏛️' }
     case 'CASH':
-      return { label: 'Bank Deposit / Cash', bg: 'rgba(139,92,246,0.1)', color: '#7c3aed', border: 'rgba(139,92,246,0.2)', icon: '🏦' }
+      return { label: 'Cash / Deposit', bg: 'bg-purple-50 text-purple-700 border-purple-200', icon: '🏦' }
     case 'COD':
     case 'COD_20':
-      return { label: method === 'COD_20' ? 'Advance COD (20%)' : 'Cash on Delivery', bg: 'rgba(100,116,139,0.1)', color: '#475569', border: 'rgba(100,116,139,0.2)', icon: '💵' }
+      return { label: method === 'COD_20' ? 'Advance COD (20%)' : 'Cash on Delivery', bg: 'bg-slate-100 text-slate-700 border-slate-200', icon: '💵' }
     default:
-      return { label: method || 'Prepaid', bg: 'rgba(139,92,246,0.1)', color: '#7c3aed', border: 'rgba(139,92,246,0.2)', icon: '💳' }
+      return { label: method || 'Prepaid', bg: 'bg-slate-100 text-slate-700 border-slate-200', icon: '💳' }
   }
 }
 
@@ -82,8 +111,8 @@ function getETA(createdAt) {
 }
 
 export default function OrderHistory() {
-  const [orders, setOrders]       = useState([])
-  const [loading, setLoading]     = useState(true)
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState(null)
   const [reviewedProductIds, setReviewedProductIds] = useState(new Set())
   const [cancellingOrder, setCancellingOrder] = useState(null)
@@ -92,15 +121,18 @@ export default function OrderHistory() {
   const [cancellingLoading, setCancellingLoading] = useState(false)
   const [copiedWaybill, setCopiedWaybill] = useState(null)
   const [retryingPaymentId, setRetryingPaymentId] = useState(null)
+  
+  // Search & Filter state
+  const [searchQ, setSearchQ] = useState('')
+  const [statusFilter, setStatusFilter] = useState('ALL') // 'ALL' | 'ACTIVE' | 'DELIVERED' | 'CANCELLED' | 'CREDIT'
 
   const navigate = useNavigate()
   const location = useLocation()
-  const { token } = useAuth()
+  const { user, token } = useAuth()
   const { notify } = useToast()
 
   const isLocalDeliveryOrder = (o) => {
     if (!o) return false
-    // If order has a Delhivery waybill, it was routed via Delhivery
     if (o.shipping?.waybill) return false
     return o.deliveryChannel === 'LOCAL_DELIVERY'
   }
@@ -176,7 +208,7 @@ export default function OrderHistory() {
     if (!waybill) return
     navigator.clipboard.writeText(waybill)
     setCopiedWaybill(waybill)
-    notify('AWB copied to clipboard', 'info')
+    notify('AWB Tracking Number copied to clipboard', 'info')
     setTimeout(() => {
       setCopiedWaybill(null)
     }, 2500)
@@ -239,1352 +271,692 @@ export default function OrderHistory() {
   useEffect(() => {
     if (!token) { navigate('/login', { state: { from: location.pathname + location.search } }); return }
     
-    // Fetch orders and reviewed product IDs in parallel
     Promise.all([
       api.get('/api/orders/my'),
       api.get('/api/user/reviews/products')
     ]).then(([ordersRes, reviewsRes]) => {
-      setOrders(ordersRes.data);
-      setReviewedProductIds(new Set(reviewsRes.data.productIds));
-      setLoading(false);
+      setOrders(ordersRes.data || [])
+      setReviewedProductIds(new Set(reviewsRes.data?.productIds || []))
+      setLoading(false)
     }).catch(() => setLoading(false))
   }, [token, navigate])
 
-  /* ── LOADING ── */
-  if (loading) return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;700&display=swap');
-        .oh-load-root { font-family:'DM Sans',sans-serif; background:#f5f3ff; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:32px; position:relative; overflow:hidden; }
-        .oh-load-root::before { content:''; position:absolute; inset:0; background-image:radial-gradient(circle at 2px 2px, rgba(124,58,237,.05) 1px, transparent 0); background-size:32px 32px; }
-        
-        .oh-load-box { position:relative; width:100px; height:100px; display:flex; align-items:center; justify-content:center; z-index:1; }
-        .oh-load-circle { position:absolute; inset:0; border:2px dashed rgba(124,58,237,.2); border-radius:50%; animation:ohRotate 8s linear infinite; }
-        .oh-load-inner { width:60px; height:60px; background:white; border-radius:20px; box-shadow:0 10px 30px rgba(124,58,237,.15); display:flex; align-items:center; justify-content:center; font-size:28px; border:1px solid rgba(124,58,237,.1); animation:ohFloat 2s ease-in-out infinite; }
-        
-        .oh-load-txt-wrap { text-align:center; z-index:1; }
-        .oh-load-h { font-family:'Bebas Neue',sans-serif; font-size:24px; color:#1e1b2e; letter-spacing:.05em; margin-bottom:4px; }
-        .oh-load-p { font-size:10px; font-weight:800; color:#7c3aed; text-transform:uppercase; letter-spacing:.2em; opacity:.6; }
-        
-        @keyframes ohRotate { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
-        @keyframes ohFloat { 0%, 100% { transform:translateY(0) rotate(0deg); } 50% { transform:translateY(-10px) rotate(5deg); } }
-      `}</style>
-      <div className="oh-load-root">
-        <div className="oh-load-box">
-          <div className="oh-load-circle" />
-          <div className="oh-load-inner">📜</div>
+  // Filtered orders calculation
+  const filteredOrders = useMemo(() => {
+    return orders.filter(o => {
+      // Status filter
+      if (statusFilter === 'ACTIVE') {
+        if (!['PROCESSING', 'CONFIRMED', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY'].includes(o.status)) return false
+      } else if (statusFilter === 'DELIVERED') {
+        if (!['DELIVERED', 'FULFILLED'].includes(o.status)) return false
+      } else if (statusFilter === 'CANCELLED') {
+        if (o.status !== 'CANCELLED') return false
+      } else if (statusFilter === 'CREDIT') {
+        if (o.paymentMethod !== 'CREDIT') return false
+      }
+
+      // Search query
+      if (searchQ.trim()) {
+        const q = searchQ.trim().toLowerCase()
+        const idMatch = o._id.toLowerCase().includes(q)
+        const waybillMatch = o.shipping?.waybill?.toLowerCase().includes(q)
+        const cityMatch = o.shippingAddress?.city?.toLowerCase().includes(q)
+        const itemMatch = o.items?.some(it => it.name?.toLowerCase().includes(q))
+        if (!idMatch && !waybillMatch && !cityMatch && !itemMatch) return false
+      }
+
+      return true
+    })
+  }, [orders, statusFilter, searchQ])
+
+  // Stats calculation
+  const stats = useMemo(() => {
+    const totalCount = orders.length
+    const activeCount = orders.filter(o => ['PROCESSING', 'CONFIRMED', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY'].includes(o.status)).length
+    const deliveredCount = orders.filter(o => ['DELIVERED', 'FULFILLED'].includes(o.status)).length
+    const totalSpend = orders
+      .filter(o => o.status !== 'CANCELLED')
+      .reduce((sum, o) => sum + (o.totalEstimate || 0), 0)
+
+    return { totalCount, activeCount, deliveredCount, totalSpend }
+  }, [orders])
+
+  /* ── LOADING SKELETON ── */
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50/60 py-12 px-4 sm:px-6 max-w-5xl mx-auto space-y-6">
+        <div className="h-28 bg-white rounded-3xl border border-slate-200/80 animate-pulse p-6" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-24 bg-white rounded-2xl border border-slate-200/80 animate-pulse" />
+          ))}
         </div>
-        <div className="oh-load-txt-wrap">
-          <h2 className="oh-load-h">Order History</h2>
-          <p className="oh-load-p">Retrieving your purchases…</p>
+        <div className="space-y-4 pt-4">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="h-44 bg-white rounded-3xl border border-slate-200/80 animate-pulse" />
+          ))}
         </div>
       </div>
-    </>
-  )
+    )
+  }
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50/80 text-slate-900 pb-24 pt-6">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 space-y-6">
+        
+        {/* ── HEADER BANNER ── */}
+        <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-violet-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-72 h-72 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-1/4 w-60 h-60 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        .oh-root{
-          font-family:'DM Sans',system-ui,sans-serif;
-          background: linear-gradient(180deg, #fdfcff 0%, #f5f3ff 100%);
-          min-height:100vh; color:#1e1b2e;
-          position:relative; overflow-x:hidden;
-          padding-bottom:env(safe-area-inset-bottom,0px);
-        }
-        .oh-root::before{
-          content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
-          background-image:
-            linear-gradient(rgba(139,92,246,0.04) 1px,transparent 1px),
-            linear-gradient(90deg,rgba(139,92,246,0.04) 1px,transparent 1px);
-          background-size:60px 60px;
-        }
-        .oh-blob{
-          position:fixed; top:-180px; left:50%; transform:translateX(-50%);
-          width:800px; height:500px; border-radius:50%; pointer-events:none; z-index:0;
-          background:radial-gradient(ellipse,rgba(139,92,246,0.08),transparent 65%);
-        }
-        .oh-blob2{
-          position:fixed; bottom:-150px; right:-100px;
-          width:500px; height:500px; border-radius:50%; pointer-events:none; z-index:0;
-          background:radial-gradient(ellipse,rgba(109,40,217,0.05),transparent 65%);
-        }
-        .oh-wrap{
-          max-width:900px; margin:0 auto;
-          padding:36px 16px 80px; position:relative; z-index:1;
-        }
-        @media(min-width:600px){.oh-wrap{padding:48px 24px 80px;}}
-
-        /* ── page header ── */
-        .oh-hd{
-          display:flex; align-items:flex-start; justify-content:space-between;
-          flex-wrap:wrap; gap:14px; margin-bottom:32px;
-          animation:ohUp .6s ease both;
-        }
-        .oh-eyebrow{
-          display:inline-flex; align-items:center; gap:7px;
-          padding:5px 14px; border-radius:100px;
-          background:rgba(139,92,246,0.1); border:1px solid rgba(139,92,246,0.22);
-          color:#7c3aed; font-size:9px; font-weight:700; letter-spacing:.22em; text-transform:uppercase;
-          margin-bottom:10px;
-        }
-        .oh-edot{
-          width:5px; height:5px; border-radius:50%;
-          background:#7c3aed; box-shadow:0 0 5px rgba(124,58,237,.5);
-          animation:ohpulse 2s ease infinite;
-        }
-        @keyframes ohpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
-        .oh-h1{
-          font-family:'Bebas Neue',sans-serif;
-          font-size:clamp(34px,5vw,52px);
-          color:#1e1b2e; letter-spacing:.02em; line-height:1; margin-bottom:6px;
-        }
-        .oh-h1 span{color:#7c3aed;}
-        .oh-sub{font-size:13px;color:#6b7280;font-weight:400;}
-        .oh-count-pill{
-          display:inline-flex; align-items:center; gap:7px;
-          padding:8px 16px; border-radius:100px;
-          background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.18);
-          color:#7c3aed; font-size:12px; font-weight:700; white-space:nowrap;
-        }
-
-        /* ── empty state ── */
-        .oh-empty{
-          background:white; border:1px solid rgba(139,92,246,0.12);
-          border-radius:24px; padding:64px 24px; text-align:center;
-          box-shadow:0 4px 24px rgba(139,92,246,0.06);
-          position:relative; overflow:hidden;
-          animation:ohUp .6s .1s ease both;
-        }
-        .oh-empty::before{
-          content:''; position:absolute; top:0; left:0; right:0; height:3px;
-          background:linear-gradient(90deg,transparent 10%,#7c3aed 50%,transparent 90%);
-        }
-        .oh-empty-ico{
-          width:72px; height:72px; border-radius:20px; margin:0 auto 20px;
-          background:#f5f3ff; border:1px solid rgba(139,92,246,0.18);
-          display:flex; align-items:center; justify-content:center; font-size:30px;
-        }
-        .oh-empty-h{
-          font-family:'Bebas Neue',sans-serif; font-size:28px;
-          color:#1e1b2e; letter-spacing:.03em; margin-bottom:8px;
-        }
-        .oh-empty-p{font-size:14px;color:#9ca3af;margin-bottom:28px;}
-        .oh-shop-btn{
-          display:inline-flex; align-items:center; gap:8px;
-          background:#7c3aed; color:white;
-          padding:13px 28px; border-radius:12px; border:none;
-          font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.14em;
-          cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .25s;
-          box-shadow:0 6px 20px rgba(124,58,237,.28);
-        }
-        .oh-shop-btn:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(124,58,237,.4);}
-
-        /* ── order list ── */
-        .oh-list{display:flex;flex-direction:column;gap:16px;}
-
-        /* ── order card ── */
-        .oh-card{
-          background:white; border:1px solid rgba(139,92,246,0.12);
-          border-radius:20px; overflow:hidden;
-          box-shadow:0 2px 16px rgba(139,92,246,0.05);
-          transition:all .3s; position:relative;
-          animation:ohUp .5s ease both;
-        }
-        .oh-card::before{
-          content:''; position:absolute; top:0; left:0; right:0; height:3px;
-          background:linear-gradient(90deg,transparent 10%,#7c3aed 50%,transparent 90%);
-          opacity:0; transition:opacity .3s;
-        }
-        .oh-card:hover{box-shadow:0 8px 32px rgba(124,58,237,.1);border-color:rgba(124,58,237,.22);}
-        .oh-card:hover::before{opacity:1;}
-        .oh-card.expanded{border-color:rgba(124,58,237,.25);box-shadow:0 8px 32px rgba(124,58,237,.1);}
-        .oh-card.expanded::before{opacity:1;}
-
-        /* card header row */
-        .oh-card-hd{
-          padding:18px 20px; cursor:pointer;
-          border-bottom:1px solid rgba(139,92,246,0.07);
-          background:#faf8ff;
-          display:flex; align-items:center; justify-content:space-between;
-          flex-wrap:wrap; gap:12px;
-          transition:background .2s;
-        }
-        .oh-card-hd:hover{background:#f5f0ff;}
-        @media(max-width:480px){.oh-card-hd{padding:14px 16px;}}
-
-        .oh-card-meta{display:flex;flex-wrap:wrap;gap:20px;align-items:center;}
-        @media(max-width:480px){.oh-card-meta{gap:14px;}}
-
-        .oh-meta-item{}
-        .oh-meta-label{
-          font-size:8px; font-weight:700; letter-spacing:.2em;
-          text-transform:uppercase; color:#9ca3af; margin-bottom:3px;
-        }
-        .oh-meta-val{font-size:14px;font-weight:700;color:#1e1b2e;}
-        @media(max-width:480px){.oh-meta-val{font-size:13px;}}
-
-        /* status pill */
-        .oh-status{
-          display:inline-flex; align-items:center; gap:6px;
-          padding:5px 12px; border-radius:100px;
-          font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
-        }
-        .oh-sdot{width:5px;height:5px;border-radius:50%;animation:ohpulse 2s ease infinite;}
-
-        /* chevron */
-        .oh-chevron{
-          color:#9ca3af; transition:transform .25s; flex-shrink:0;
-        }
-        .oh-chevron.open{transform:rotate(180deg);}
-
-        /* order id */
-        .oh-oid{
-          font-size:10px; color:#c4b5fd; font-weight:600;
-          font-family:monospace; letter-spacing:.05em;
-        }
-
-        /* ── expanded body ── */
-        .oh-body{padding:24px 20px;display:flex;flex-direction:column;gap:24px;}
-        @media(max-width:480px){.oh-body{padding:18px 16px;gap:20px;}}
-
-        /* ── progress stepper ── */
-        .oh-stepper-label{
-          font-size:9px; font-weight:700; letter-spacing:.2em;
-          text-transform:uppercase; color:#9ca3af; margin-bottom:14px;
-        }
-        .oh-stepper{
-          display:flex; align-items:flex-start;
-          position:relative;
-        }
-        .oh-step{
-          flex:1; display:flex; flex-direction:column; align-items:center;
-          position:relative; z-index:1;
-        }
-        /* connecting line */
-        .oh-step:not(:last-child)::after{
-          content:''; position:absolute;
-          top:14px; left:50%; width:100%; height:2px;
-          background:rgba(139,92,246,0.12);
-          z-index:0;
-        }
-        .oh-step.done:not(:last-child)::after{
-          background:linear-gradient(90deg,#7c3aed,rgba(139,92,246,0.3));
-        }
-
-        .oh-step-circle{
-          width:28px; height:28px; border-radius:50%;
-          display:flex; align-items:center; justify-content:center;
-          font-size:10px; font-weight:700; position:relative; z-index:1;
-          transition:all .3s;
-        }
-        .oh-step-circle.done{background:#7c3aed;color:white;box-shadow:0 3px 10px rgba(124,58,237,.3);}
-        .oh-step-circle.done.last{background:#059669;box-shadow:0 3px 10px rgba(5,150,105,.3);}
-        .oh-step-circle.idle{background:#f5f3ff;color:#c4b5fd;border:2px solid rgba(139,92,246,.15);}
-
-        .oh-step-label{
-          margin-top:8px; font-size:9px; font-weight:700;
-          letter-spacing:.12em; text-transform:uppercase; text-align:center;
-          transition:color .3s;
-        }
-        .oh-step-label.done{color:#7c3aed;}
-        .oh-step-label.done.last{color:#059669;}
-        .oh-step-label.idle{color:#c4b5fd;}
-
-        /* eta */
-        .oh-eta{
-          display:inline-flex; align-items:center; gap:6px;
-          font-size:11px; font-weight:600; color:#6b7280;
-          background:#f9f7ff; border:1px solid rgba(139,92,246,.1);
-          padding:7px 14px; border-radius:10px; margin-top:12px;
-        }
-        .oh-eta b{color:#7c3aed;}
-
-        /* ── info grid ── */
-        .oh-info-grid{
-          display:grid; grid-template-columns:1fr;
-          gap:12px;
-        }
-        @media(min-width:540px){.oh-info-grid{grid-template-columns:1fr 1fr;}}
-
-        .oh-info-card{
-          background:#f9f7ff; border:1px solid rgba(139,92,246,.08);
-          border-radius:14px; padding:16px 18px;
-          transition:all .2s;
-        }
-        .oh-info-card:hover{background:white;border-color:rgba(139,92,246,.18);box-shadow:0 4px 16px rgba(124,58,237,.06);}
-        .oh-info-title{
-          font-size:9px; font-weight:700; letter-spacing:.2em;
-          text-transform:uppercase; color:#9ca3af; margin-bottom:10px;
-        }
-        .oh-info-row{font-size:12px;color:#6b7280;line-height:1.6;}
-        .oh-info-row b{color:#1e1b2e;font-weight:600;}
-        .oh-mono{font-family:monospace;font-size:11px;color:#7c3aed;}
-
-        /* ── items ── */
-        .oh-items-label{
-          font-size:9px; font-weight:700; letter-spacing:.2em;
-          text-transform:uppercase; color:#9ca3af; margin-bottom:12px;
-        }
-        .oh-items-list{display:flex;flex-direction:column;gap:10px;}
-
-        .oh-item{
-          display:flex; align-items:center; gap:14px;
-          background:#f9f7ff; border:1px solid rgba(139,92,246,.08);
-          border-radius:14px; padding:12px 16px;
-          transition:all .2s;
-        }
-        .oh-item:hover{background:white;border-color:rgba(139,92,246,.18);}
-
-        .oh-item-img{
-          width:52px; height:52px; border-radius:10px;
-          background:white; border:1px solid rgba(139,92,246,.12);
-          overflow:hidden; flex-shrink:0;
-          display:flex; align-items:center; justify-content:center;
-        }
-        .oh-item-img img{width:100%;height:100%;object-fit:contain;}
-        .oh-item-placeholder{width:24px;height:24px;background:#f5f3ff;border-radius:6px;}
-        .oh-item-name{font-size:14px;font-weight:700;color:#1e1b2e;line-height:1.3;margin-bottom:4px;}
-        .oh-item-meta{font-size:12px;color:#9ca3af;font-weight:500;}
-        .oh-item-price{
-          font-family:'Bebas Neue',sans-serif; font-size:18px;
-          color:#7c3aed; letter-spacing:.03em; flex-shrink:0; margin-left:auto;
-        }
-        .oh-item-row{display:flex;align-items:center;gap:12px;width:100%;cursor:pointer;}
-        .oh-rate-row{
-          margin-top:10px;padding-top:10px;
-          border-top:1px solid rgba(139,92,246,.1);
-          display:flex;flex-wrap:wrap;align-items:center;gap:10px;
-        }
-        .oh-rate-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9ca3af;}
-        .oh-rate-stars{display:flex;gap:4px;}
-        .oh-rate-star{
-          width:28px;height:28px;border-radius:8px;
-          background:white;border:1px solid rgba(139,92,246,.12);
-          display:flex;align-items:center;justify-content:center;
-          cursor:pointer;transition:all .2s;padding:0;
-        }
-        .oh-rate-star:hover{background:#f5f3ff;border-color:rgba(124,58,237,.35);}
-        .oh-rate-star svg{width:14px;height:14px;color:#f59e0b;}
-        .oh-rate-done{font-size:11px;font-weight:700;color:#059669;}
-
-        /* ── action sections ── */
-        .oh-section-label{
-          font-size:9px; font-weight:700; letter-spacing:.2em;
-          text-transform:uppercase; color:#9ca3af; margin-bottom:12px;
-        }
-        .oh-action-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
-
-        /* premium shipment card */
-        .oh-shipment-card{
-          background:linear-gradient(135deg,#fff7ed 0%,#fdfcff 100%);
-          border:1px solid rgba(245,158,11,0.15);
-          border-radius:16px;
-          padding:18px;
-          position:relative;
-          overflow:hidden;
-        }
-        .oh-shipment-card::before{
-          content:'';
-          position:absolute;
-          top:0;
-          left:0;
-          right:0;
-          height:3px;
-          background:linear-gradient(90deg,#f59e0b,#d97706,#f59e0b);
-        }
-        .oh-shipment-header{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          margin-bottom:14px;
-        }
-        .oh-shipment-title{
-          display:flex;
-          align-items:center;
-          gap:10px;
-        }
-        .oh-shipment-icon{
-          width:40px;
-          height:40px;
-          border-radius:12px;
-          background:linear-gradient(135deg,#f59e0b,#d97706);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          box-shadow:0 4px 14px rgba(245,158,11,0.25);
-        }
-        .oh-shipment-icon svg{color:white;}
-        .oh-shipment-info{
-          display:flex;
-          flex-direction:column;
-          gap:2px;
-        }
-        .oh-shipment-label{
-          font-size:10px;
-          font-weight:700;
-          text-transform:uppercase;
-          letter-spacing:.15em;
-          color:#92400e;
-        }
-        .oh-shipment-status{
-          font-size:12px;
-          font-weight:700;
-          color:#78350f;
-        }
-        .oh-shipment-details{
-          display:grid;
-          grid-template-columns:1fr;
-          gap:10px;
-          margin-bottom:14px;
-        }
-        @media(min-width:540px){
-          .oh-shipment-details{
-            grid-template-columns:1fr 1fr;
-          }
-        }
-        .oh-shipment-detail{
-          background:white;
-          border:1px solid rgba(245,158,11,0.12);
-          border-radius:12px;
-          padding:10px 12px;
-        }
-        .oh-shipment-detail-label{
-          font-size:9px;
-          font-weight:700;
-          text-transform:uppercase;
-          letter-spacing:.12em;
-          color:#d97706;
-          margin-bottom:4px;
-        }
-        .oh-shipment-detail-value{
-          font-size:12px;
-          font-weight:700;
-          color:#78350f;
-          font-family:'DM Sans',sans-serif;
-        }
-        .oh-shipment-actions{
-          display:flex;
-          gap:10px;
-        }
-
-        /* tracking pill */
-        .oh-track-pill{
-          display:inline-flex; align-items:center; gap:8px;
-          background:rgba(37,99,235,0.08); border:1px solid rgba(37,99,235,0.2);
-          color:#2563eb; padding:7px 14px; border-radius:10px;
-          font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
-        }
-
-        /* action buttons */
-        .oh-btn{
-          display:inline-flex; align-items:center; gap:7px;
-          padding:9px 18px; border-radius:10px; border:none;
-          font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
-          cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .2s;
-        }
-        .oh-btn.violet{background:#7c3aed;color:white;box-shadow:0 4px 14px rgba(124,58,237,.25);}
-        .oh-btn.violet:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(124,58,237,.35);}
-        .oh-btn.green{background:#059669;color:white;box-shadow:0 4px 14px rgba(5,150,105,.2);}
-        .oh-btn.green:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(5,150,105,.3);}
-        .oh-btn.blue{background:#2563eb;color:white;box-shadow:0 4px 14px rgba(37,99,235,.2);}
-        .oh-btn.blue:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(37,99,235,.3);}
-        .oh-btn.outline{background:white;color:#7c3aed;border:1px solid rgba(139,92,246,.25);}
-        .oh-btn.outline:hover{background:#f5f3ff;border-color:rgba(124,58,237,.4);}
-        .oh-btn.premium-cancel{
-          background: linear-gradient(135deg, #fff5f5 0%, #fff1f2 100%);
-          color: #e11d48;
-          border: 1px solid rgba(225, 29, 72, 0.28);
-          box-shadow: 0 2px 8px rgba(225, 29, 72, 0.08);
-          font-weight: 800;
-          letter-spacing: .08em;
-          transition: all 0.25s ease;
-        }
-        .oh-btn.premium-cancel:hover{
-          background: linear-gradient(135deg, #ffe4e6 0%, #fecdd3 100%);
-          border-color: rgba(225, 29, 72, 0.45);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 14px rgba(225, 29, 72, 0.16);
-        }
-        .oh-btn.pay-now{
-          background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
-          color: white;
-          box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
-          font-weight: 800;
-          letter-spacing: .08em;
-          animation: ohPayGlow 2.5s ease-in-out infinite;
-        }
-        .oh-btn.pay-now:hover{
-          transform: translateY(-1px);
-          box-shadow: 0 6px 20px rgba(124, 58, 237, 0.45);
-        }
-        @keyframes ohPayGlow {
-          0%, 100% { box-shadow: 0 4px 14px rgba(124, 58, 237, 0.28); }
-          50% { box-shadow: 0 4px 22px rgba(124, 58, 237, 0.55); }
-        }
-
-        /* cancellation banner */
-        .oh-cancel-banner{
-          background:linear-gradient(135deg,#fef2f2 0%,#fff1f2 100%);
-          border:1px solid rgba(239,68,68,0.25);
-          border-radius:16px;
-          padding:18px 20px;
-          position:relative;
-          overflow:hidden;
-        }
-        .oh-cancel-banner::before{
-          content:'';
-          position:absolute;
-          top:0; left:0; right:0; height:3px;
-          background:linear-gradient(90deg,#ef4444,#dc2626);
-        }
-        .oh-cancel-hd{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          flex-wrap:wrap;
-          gap:10px;
-          margin-bottom:12px;
-        }
-        .oh-cancel-badge{
-          display:inline-flex;
-          align-items:center;
-          gap:6px;
-          padding:5px 12px;
-          border-radius:100px;
-          background:rgba(220,38,38,0.12);
-          border:1px solid rgba(220,38,38,0.25);
-          color:#dc2626;
-          font-size:11px;
-          font-weight:800;
-          letter-spacing:.1em;
-          text-transform:uppercase;
-        }
-        .oh-cancel-time{
-          font-size:11px;
-          color:#991b1b;
-          font-weight:600;
-        }
-        .oh-cancel-grid{
-          display:grid;
-          grid-template-columns:1fr;
-          gap:8px;
-          font-size:12px;
-        }
-        @media(min-width:540px){
-          .oh-cancel-grid{
-            grid-template-columns:1fr 1fr;
-          }
-        }
-        .oh-cancel-field{
-          background:white;
-          border:1px solid rgba(239,68,68,0.15);
-          border-radius:10px;
-          padding:8px 12px;
-        }
-        .oh-cancel-field-lbl{
-          font-size:9px;
-          font-weight:700;
-          text-transform:uppercase;
-          letter-spacing:.15em;
-          color:#b91c1c;
-          margin-bottom:3px;
-        }
-        .oh-cancel-field-val{
-          font-weight:600;
-          color:#7f1d1d;
-        }
-        .oh-cancel-credit-note{
-          margin-top:10px;
-          padding:9px 12px;
-          border-radius:10px;
-          background:rgba(16,185,129,0.1);
-          border:1px solid rgba(16,185,129,0.2);
-          color:#065f46;
-          font-size:12px;
-          font-weight:600;
-        }
-
-        /* local delivery card */
-        .oh-local-card{
-          background:linear-gradient(135deg,#ecfdf5 0%,#f0fdf4 100%);
-          border:1px solid rgba(16,185,129,0.22);
-          border-radius:16px;
-          padding:18px 20px;
-          position:relative;
-          overflow:hidden;
-        }
-        .oh-local-card::before{
-          content:'';
-          position:absolute;
-          top:0; left:0; right:0; height:3px;
-          background:linear-gradient(90deg,#10b981,#059669);
-        }
-        .oh-local-hd{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          flex-wrap:wrap;
-          gap:10px;
-          margin-bottom:14px;
-        }
-        .oh-local-title-wrap{
-          display:flex;
-          align-items:center;
-          gap:10px;
-        }
-        .oh-local-ico{
-          width:40px;
-          height:40px;
-          border-radius:12px;
-          background:linear-gradient(135deg,#10b981,#059669);
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          font-size:20px;
-          box-shadow:0 4px 14px rgba(16,185,129,0.25);
-        }
-        .oh-local-title-text{
-          font-size:13px;
-          font-weight:800;
-          color:#064e3b;
-          letter-spacing:.02em;
-        }
-        .oh-local-subtitle{
-          font-size:10px;
-          font-weight:600;
-          color:#047857;
-          text-transform:uppercase;
-          letter-spacing:.12em;
-        }
-        .oh-local-status-pill{
-          padding:5px 12px;
-          border-radius:100px;
-          background:rgba(16,185,129,0.15);
-          border:1px solid rgba(16,185,129,0.3);
-          color:#065f46;
-          font-size:10px;
-          font-weight:700;
-          letter-spacing:.1em;
-          text-transform:uppercase;
-        }
-        .oh-local-grid{
-          display:grid;
-          grid-template-columns:1fr;
-          gap:10px;
-        }
-        @media(min-width:540px){
-          .oh-local-grid{
-            grid-template-columns:1fr 1fr;
-          }
-        }
-        .oh-local-field{
-          background:white;
-          border:1px solid rgba(16,185,129,0.16);
-          border-radius:12px;
-          padding:10px 12px;
-        }
-        .oh-local-lbl{
-          font-size:9px;
-          font-weight:700;
-          text-transform:uppercase;
-          letter-spacing:.12em;
-          color:#059669;
-          margin-bottom:4px;
-        }
-        .oh-local-val{
-          font-size:12px;
-          font-weight:700;
-          color:#064e3b;
-        }
-        .oh-local-val a{
-          color:#059669;
-          text-decoration:none;
-          font-weight:800;
-        }
-        .oh-local-val a:hover{
-          text-decoration:underline;
-        }
-
-        /* copy awb button */
-        .oh-copy-btn{
-          display:inline-flex;
-          align-items:center;
-          gap:5px;
-          padding:4px 9px;
-          border-radius:6px;
-          border:1px solid rgba(217,119,6,0.3);
-          background:#fef3c7;
-          color:#92400e;
-          font-size:10px;
-          font-weight:700;
-          cursor:pointer;
-          font-family:'DM Sans',sans-serif;
-          transition:all .2s;
-        }
-        .oh-copy-btn:hover{background:#fde68a;}
-
-        /* ── star rating ── */
-        .oh-stars{display:flex;gap:6px;flex-wrap:wrap;}
-        .oh-star{
-          width:36px; height:36px; border-radius:10px;
-          background:white; border:1px solid rgba(139,92,246,.15);
-          display:flex; align-items:center; justify-content:center;
-          cursor:pointer; transition:all .2s;
-        }
-        .oh-star:hover{background:#f5f3ff;border-color:rgba(124,58,237,.4);transform:scale(1.1);}
-        .oh-star svg{width:16px;height:16px;}
-        .oh-star.low svg{color:#d1d5db;}
-        .oh-star.high svg{color:#f59e0b;}
-
-        /* divider */
-        .oh-divider{
-          height:1px; width:100%;
-          background:linear-gradient(90deg,transparent,rgba(139,92,246,.12),transparent);
-        }
-
-        @keyframes ohUp{
-          from{opacity:0;transform:translateY(16px);}
-          to  {opacity:1;transform:translateY(0);}
-        }
-      `}</style>
-
-      <div className="oh-root">
-        <div className="oh-blob" /><div className="oh-blob2" />
-        <div className="oh-wrap">
-
-          {/* ── PAGE HEADER ── */}
-          <div className="oh-hd">
-            <div>
-              <div className="oh-eyebrow"><span className="oh-edot" /> My Account</div>
-              <h1 className="oh-h1">Order <span>History</span></h1>
-              <p className="oh-sub">Track, manage and review all your wholesale orders.</p>
-            </div>
-            {orders.length > 0 && (
-              <div className="oh-count-pill">
-                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z M16 3H8a2 2 0 00-2 2v2h12V5a2 2 0 00-2-2z"/>
-                </svg>
-                {orders.length} Order{orders.length !== 1 ? 's' : ''}
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-white/10">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-violet-500/20 text-violet-300 border border-violet-400/30">
+                  Wholesale Procurement
+                </span>
+                <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-white/10 text-slate-200 border border-white/15">
+                  Welcome Back, {user?.name || 'Partner'}
+                </span>
               </div>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-1">
+                Wholesale Order History
+              </h1>
+              <p className="text-xs text-slate-400 max-w-lg">
+                Manage your B2B inventory shipments, live Delhivery tracking, order confirmation receipts, and official GST tax invoices.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2.5 self-start md:self-center">
+              <button
+                type="button"
+                onClick={() => navigate('/products')}
+                className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-violet-900/30 transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+              >
+                <span>🛒 Wholesale Catalogue</span>
+              </button>
+            </div>
+          </div>
+
+          {/* KPI Summary Grid */}
+          <div className="relative z-10 pt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-xs">
+              <div className="text-[10px] uppercase font-black tracking-wider text-slate-400">Total Orders</div>
+              <div className="text-2xl font-black text-white mt-1">{stats.totalCount}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">Lifetime wholesale POs</div>
+            </div>
+            <div className="bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-xs">
+              <div className="text-[10px] uppercase font-black tracking-wider text-amber-400">In Transit & Active</div>
+              <div className="text-2xl font-black text-amber-400 mt-1">{stats.activeCount}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">Being packed / delivered</div>
+            </div>
+            <div className="bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-xs">
+              <div className="text-[10px] uppercase font-black tracking-wider text-emerald-400">Delivered</div>
+              <div className="text-2xl font-black text-emerald-400 mt-1">{stats.deliveredCount}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">Successfully fulfilled</div>
+            </div>
+            <div className="bg-white/5 rounded-2xl p-4 border border-white/10 backdrop-blur-xs">
+              <div className="text-[10px] uppercase font-black tracking-wider text-indigo-300">Procurement Value</div>
+              <div className="text-xl sm:text-2xl font-black text-white mt-1">₹{stats.totalSpend.toLocaleString('en-IN')}</div>
+              <div className="text-[10px] text-slate-400 mt-0.5">Net inventory purchase</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── SEARCH & FILTER CONTROLS ── */}
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* Search Box */}
+          <div className="relative flex-1 max-w-md">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+            <input
+              type="text"
+              value={searchQ}
+              onChange={(e) => setSearchQ(e.target.value)}
+              placeholder="Search by Order #, Item Name, City, or AWB..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all"
+            />
+            {searchQ && (
+              <button
+                type="button"
+                onClick={() => setSearchQ('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
+              >
+                ✕
+              </button>
             )}
           </div>
 
-          {/* ── EMPTY ── */}
-          {orders.length === 0 && (
-            <div className="oh-empty">
-              <div className="oh-empty-ico">📦</div>
-              <div className="oh-empty-h">No Orders Yet</div>
-              <p className="oh-empty-p">You haven't placed any orders. Browse our wholesale catalogue to get started.</p>
-              <button className="oh-shop-btn" onClick={() => navigate('/products')}>
-                Browse Catalogue
-                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                </svg>
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+            {[
+              { id: 'ALL', label: 'All Orders', count: orders.length },
+              { id: 'ACTIVE', label: 'Active', count: stats.activeCount },
+              { id: 'DELIVERED', label: 'Delivered', count: stats.deliveredCount },
+              { id: 'CREDIT', label: '💳 Credit Line', count: orders.filter(o => o.paymentMethod === 'CREDIT').length },
+              { id: 'CANCELLED', label: 'Cancelled', count: orders.filter(o => o.status === 'CANCELLED').length }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setStatusFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                  statusFilter === tab.id
+                    ? 'bg-violet-600 text-white shadow-sm shadow-violet-200'
+                    : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/70'
+                }`}
+              >
+                <span>{tab.label}</span>
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                  statusFilter === tab.id ? 'bg-white/20 text-white' : 'bg-slate-200/80 text-slate-700'
+                }`}>
+                  {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── ORDER LIST ── */}
+        {filteredOrders.length === 0 ? (
+          <div className="bg-white rounded-3xl p-12 border border-slate-200/80 shadow-xs text-center space-y-4">
+            <div className="w-16 h-16 rounded-3xl bg-violet-50 text-violet-600 flex items-center justify-center text-3xl mx-auto shadow-sm">
+              📦
+            </div>
+            <h3 className="font-black text-xl text-slate-900">
+              {searchQ || statusFilter !== 'ALL' ? 'No matching wholesale orders found' : 'No orders placed yet'}
+            </h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              {searchQ || statusFilter !== 'ALL'
+                ? 'Try adjusting your search terms or filter selection to find what you are looking for.'
+                : 'Browse our complete B2B wholesale catalogue to order FMCG, staples, and products on instant credit.'}
+            </p>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => { setSearchQ(''); setStatusFilter('ALL'); navigate('/products') }}
+                className="px-6 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-black uppercase tracking-wider shadow-md shadow-violet-200 transition-all cursor-pointer"
+              >
+                Browse Wholesale Catalogue →
               </button>
             </div>
-          )}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredOrders.map((order) => {
+              const isExpanded = expandedId === order._id
+              const badge = getStatusBadge(order.status)
+              const payment = getPaymentMethodDisplay(order.paymentMethod)
+              const statusIdx = getStatusIndex(order)
+              const isDelivered = ['DELIVERED', 'FULFILLED'].includes(order.status)
+              const isDelhivery = Boolean(order.shipping?.waybill)
+              const isLocal = isLocalDeliveryOrder(order)
+              const tokenStr = localStorage.getItem('token')
 
-          {/* ── ORDER LIST ── */}
-          {orders.length > 0 && (
-            <div className="oh-list">
-              {orders.map((order, idx) => {
-                const isExpanded  = expandedId === order._id
-                const statusIdx   = getStatusIndex(order)
-                const displayStatus = getDisplayStatus(order.status)
-                const sc          = getStatusColor(order.status)
-                const eta         = getETA(order.createdAt)
-
-                return (
+              return (
+                <div
+                  key={order._id}
+                  className={`bg-white rounded-3xl border transition-all duration-200 overflow-hidden shadow-xs hover:shadow-sm ${
+                    isExpanded ? 'border-violet-300 ring-2 ring-violet-500/10' : 'border-slate-200/80 hover:border-slate-300'
+                  }`}
+                >
+                  {/* Top Order Summary Row */}
                   <div
-                    key={order._id}
-                    className={`oh-card${isExpanded ? ' expanded' : ''}`}
-                    style={{ animationDelay: `${idx * 60}ms` }}
+                    onClick={() => setExpandedId(isExpanded ? null : order._id)}
+                    className="p-5 sm:p-6 cursor-pointer bg-white hover:bg-slate-50/50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4"
                   >
-                    {/* ── CARD HEADER ── */}
-                    <div className="oh-card-hd" onClick={() => setExpandedId(isExpanded ? null : order._id)}>
-                      <div className="oh-card-meta">
-
-                        <div className="oh-meta-item">
-                          <div className="oh-meta-label">Order Date</div>
-                          <div className="oh-meta-val">{fmtDate(order.createdAt)}</div>
-                        </div>
-
-                        <div className="oh-meta-item">
-                          <div className="oh-meta-label">Total</div>
-                          <div className="oh-meta-val" style={{ fontFamily:'Bebas Neue,sans-serif', fontSize:18, color:'#7c3aed', letterSpacing:'.03em' }}>
-                            ₹{order.totalEstimate?.toLocaleString()}
-                          </div>
-                        </div>
-
-                        <div className="oh-meta-item">
-                          <div className="oh-meta-label">Items</div>
-                          <div className="oh-meta-val">{order.items.length}</div>
-                        </div>
-
-                        {order.paymentMethod && (
-                          <div className="oh-meta-item">
-                            <div className="oh-meta-label">Payment</div>
-                            {(() => {
-                              const pm = getPaymentMethodDisplay(order.paymentMethod)
-                              return (
-                                <div style={{
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  gap: 5,
-                                  padding: '4px 10px',
-                                  borderRadius: 8,
-                                  fontSize: 11,
-                                  fontWeight: 700,
-                                  background: pm.bg,
-                                  color: pm.color,
-                                  border: `1px solid ${pm.border}`
-                                }}>
-                                  <span>{pm.icon}</span>
-                                  <span>{pm.label}</span>
-                                </div>
-                              )
-                            })()}
-                          </div>
-                        )}
-
-                        <div className="oh-meta-item">
-                          <div className="oh-meta-label">Status</div>
-                          <div className="oh-status" style={{ background: sc.bg, border: `1px solid ${sc.border}`, color: sc.color }}>
-                            <span className="oh-sdot" style={{ background: sc.color, boxShadow: `0 0 5px ${sc.color}` }} />
-                            {displayStatus}
-                          </div>
-                        </div>
-
-                        {order.shippingAddress?.line1 && (
-                          <div className="oh-meta-item" style={{ display:'none' }} data-desktop>
-                            <div className="oh-meta-label">Deliver To</div>
-                            <div className="oh-meta-val" style={{ maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:13, color:'#6b7280', fontWeight:600 }}>
-                              {order.shippingAddress.city}, {order.shippingAddress.state}
-                            </div>
-                          </div>
-                        )}
+                    <div className="flex items-start sm:items-center gap-4 flex-1">
+                      {/* Delivery Icon Avatar */}
+                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-xs ${
+                        isDelhivery ? 'bg-amber-50 text-amber-600 border border-amber-200' :
+                        isLocal ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' :
+                        'bg-violet-50 text-violet-600 border border-violet-200'
+                      }`}>
+                        {isDelhivery ? '🚀' : isLocal ? '🚚' : '📦'}
                       </div>
 
-                      <div style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
-                        <span className="oh-oid">#{order._id.slice(-6).toUpperCase()}</span>
-                        <svg className={`oh-chevron${isExpanded ? ' open' : ''}`} width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/>
-                        </svg>
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <span className="font-mono font-black text-sm text-slate-900 tracking-tight">
+                            #{order._id.slice(-6).toUpperCase()}
+                          </span>
+                          
+                          {/* Status Pill */}
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${badge.bg}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+                            <span>{badge.label}</span>
+                          </span>
+
+                          {/* Payment Method Badge */}
+                          <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${payment.bg}`}>
+                            <span>{payment.icon}</span>
+                            <span>{payment.label}</span>
+                          </span>
+
+                          {/* Delivery Route Badge */}
+                          {isDelhivery ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                              <span>🚀 Delhivery Express</span>
+                            </span>
+                          ) : isLocal ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              <span>🚚 Local Express Fleet</span>
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div className="flex items-center gap-4 text-xs text-slate-500 flex-wrap">
+                          <span>Placed on <strong>{fmtDate(order.createdAt)}</strong></span>
+                          <span>•</span>
+                          <span>{order.items?.length || 0} wholesale item{order.items?.length === 1 ? '' : 's'}</span>
+                          {order.shippingAddress?.city && (
+                            <>
+                              <span>•</span>
+                              <span>To {order.shippingAddress.city}, {order.shippingAddress.state}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* ── EXPANDED BODY ── */}
-                    {isExpanded && (
-                      <div className="oh-body">
+                    {/* Right Price & Actions */}
+                    <div className="flex items-center justify-between md:justify-end gap-5 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100">
+                      <div className="text-left md:text-right">
+                        <div className="text-[10px] uppercase font-bold text-slate-400">Total Order Amount</div>
+                        <div className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">
+                          ₹{Number(order.totalEstimate || 0).toLocaleString('en-IN')}
+                        </div>
+                      </div>
 
-                        {/* ORDER TIMELINE OR CANCELLATION BANNER */}
-                        {order.status === 'CANCELLED' ? (
-                          <div className="oh-cancel-banner">
-                            <div className="oh-cancel-hd">
-                              <span className="oh-cancel-badge">❌ Order Cancelled</span>
-                              <span className="oh-cancel-time">
-                                {order.cancellation?.cancelledAt ? fmtIST(order.cancellation.cancelledAt) : fmtIST(order.updatedAt)}
-                              </span>
-                            </div>
-                            <div className="oh-cancel-grid">
-                              <div className="oh-cancel-field">
-                                <div className="oh-cancel-field-lbl">Cancelled By</div>
-                                <div className="oh-cancel-field-val">
-                                  {order.cancellation?.cancelledBy === 'Admin' ? 'Click2Kart Operations / Admin' : (order.cancellation?.cancelledBy || 'Retailer')}
-                                </div>
-                              </div>
-                              <div className="oh-cancel-field">
-                                <div className="oh-cancel-field-lbl">Cancellation Reason</div>
-                                <div className="oh-cancel-field-val">
-                                  {order.cancellation?.reason || 'Cancelled upon customer / admin request'}
-                                </div>
-                              </div>
-                            </div>
-                            {order.paymentMethod === 'CREDIT' && (
-                              <div className="oh-cancel-credit-note">
-                                ✓ <b>Credit Limit Refunded:</b> The credit amount of ₹{order.totalEstimate?.toLocaleString()} utilized for this order has been reversed and credited back to your account balance.
-                              </div>
-                            )}
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          className={`w-9 h-9 rounded-xl border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-transform ${
+                            isExpanded ? 'rotate-180 bg-slate-100' : ''
+                          }`}
+                        >
+                          ▼
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Thumbnail Row Preview (Collapsed Only) */}
+                  {!isExpanded && order.items?.length > 0 && (
+                    <div className="px-6 pb-4 pt-1 flex items-center gap-2 overflow-x-auto no-scrollbar border-t border-slate-100/60 bg-slate-50/30">
+                      {order.items.slice(0, 5).map((it, idx) => (
+                        <div
+                          key={idx}
+                          className="w-10 h-10 rounded-xl bg-white border border-slate-200 p-1 shrink-0 flex items-center justify-center overflow-hidden shadow-2xs"
+                          title={`${it.name} (Qty: ${it.quantity})`}
+                        >
+                          {it.image ? (
+                            <img src={getCloudinaryUrl(it.image, 80)} alt={it.name} className="w-full h-full object-contain" />
+                          ) : (
+                            <span className="text-[10px] font-bold text-slate-400">📦</span>
+                          )}
+                        </div>
+                      ))}
+                      {order.items.length > 5 && (
+                        <span className="text-[11px] font-bold text-slate-500 pl-1">
+                          +{order.items.length - 5} more
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── EXPANDED ORDER DETAILS BODY ── */}
+                  {isExpanded && (
+                    <div className="p-5 sm:p-7 border-t border-slate-200/80 bg-slate-50/40 space-y-6">
+                      
+                      {/* Step Progress Tracker */}
+                      {order.status !== 'CANCELLED' && (
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-black text-slate-800 text-sm">Fulfillment Status Progression</span>
+                            <span className="text-violet-700 font-bold">
+                              ETA: {fmtDate(getETA(order.createdAt))}
+                            </span>
                           </div>
-                        ) : (
-                          <div>
-                            <div className="oh-stepper-label">Order Timeline</div>
-                            <div className="oh-stepper">
-                              {STATUS_STEPS.map((step, i) => {
-                                const done = i <= statusIdx
-                                const isLast = i === STATUS_STEPS.length - 1
+                          
+                          <div className="relative pt-3 pb-1">
+                            {/* Track line */}
+                            <div className="absolute top-5 left-4 right-4 h-1 bg-slate-100 -translate-y-1/2 z-0" />
+                            <div
+                              className="absolute top-5 left-4 h-1 bg-gradient-to-r from-violet-600 to-indigo-600 -translate-y-1/2 z-0 transition-all duration-500"
+                              style={{ width: `${Math.min(100, Math.max(0, (statusIdx / (STATUS_STEPS.length - 1)) * 100))}%` }}
+                            />
+
+                            <div className="relative z-10 flex justify-between">
+                              {STATUS_STEPS.map((step, idx) => {
+                                const isPassed = idx <= statusIdx
+                                const isCurrent = idx === statusIdx
                                 return (
-                                  <div key={step} className={`oh-step${done ? ' done' : ''}`}>
-                                    <div className={`oh-step-circle${done ? ` done${isLast && statusIdx === 4 ? ' last' : ''}` : ' idle'}`}>
-                                      {done
-                                        ? <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>
-                                        : i + 1
-                                      }
+                                  <div key={step} className="flex flex-col items-center">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
+                                      isPassed
+                                        ? 'bg-violet-600 text-white shadow-md shadow-violet-200'
+                                        : 'bg-white border-2 border-slate-200 text-slate-400'
+                                    }`}>
+                                      {isPassed ? '✓' : idx + 1}
                                     </div>
-                                    <div className={`oh-step-label${done ? ` done${isLast && statusIdx === 4 ? ' last' : ''}` : ' idle'}`}>{step}</div>
+                                    <span className={`text-[10px] font-black uppercase tracking-wider mt-1.5 ${
+                                      isCurrent ? 'text-violet-700' : isPassed ? 'text-slate-800' : 'text-slate-400'
+                                    }`}>
+                                      {step}
+                                    </span>
                                   </div>
                                 )
                               })}
                             </div>
-                            {statusIdx < 4 && (
-                              <div className="oh-eta">
-                                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                </svg>
-                                Estimated Delivery: <b>{eta.toLocaleDateString('en-IN', { month:'short', day:'2-digit' })}</b>
-                              </div>
-                            )}
-                          </div>
-                        )}
-
-                        <div className="oh-divider" />
-
-                        {/* INFO GRID */}
-                        <div>
-                          <div className="oh-section-label">Order Details</div>
-                          <div className="oh-info-grid">
-                            <div className="oh-info-card">
-                              <div className="oh-info-title">Customer</div>
-                              <div className="oh-info-row"><b>{order.customer?.name}</b></div>
-                              {order.customer?.phone && <div className="oh-info-row">{order.customer.phone}</div>}
-                              {order.customer?.email && <div className="oh-info-row">{order.customer.email}</div>}
-                            </div>
-                            <div className="oh-info-card">
-                              <div className="oh-info-title">Payment & Channel</div>
-                              <div className="oh-info-row">
-                                Payment Method: <b>{getPaymentMethodDisplay(order.paymentMethod).label}</b>
-                              </div>
-                              <div className="oh-info-row">
-                                Payment Status: <b style={{ color: order.paymentStatus === 'PAID' ? '#059669' : '#d97706' }}>{order.paymentStatus || 'PENDING'}</b>
-                              </div>
-                              <div className="oh-info-row">
-                                Fulfillment: <b>
-                                  {isLocalDeliveryOrder(order)
-                                    ? (isLocalDispatchedOrAssigned(order)
-                                        ? `Local Delivery (${order.localDelivery?.status || 'In Transit'})`
-                                        : 'Local Delivery (Warehouse preparation / Not yet dispatched)')
-                                    : 'Delhivery Logistics'
-                                  }
-                                </b>
-                              </div>
-                            </div>
-                            <div className="oh-info-card">
-                              <div className="oh-info-title">Identifiers</div>
-                              <div className="oh-info-row">Order ID: <span className="oh-mono">{order._id}</span></div>
-                              {order.billId && <div className="oh-info-row">Invoice: <span className="oh-mono">{order.billId}</span></div>}
-                              <div className="oh-info-row" style={{ marginTop:4 }}>Placed: {fmtIST(order.createdAt)}</div>
-                              <div className="oh-info-row">Updated: {fmtIST(order.updatedAt)}</div>
-                            </div>
-                            {order.shippingAddress?.line1 && (
-                              <div className="oh-info-card">
-                                <div className="oh-info-title">Delivery Address</div>
-                                <div className="oh-info-row">
-                                  <b>{order.shippingAddress.line1}</b>
-                                  {order.shippingAddress.line2 && <div>{order.shippingAddress.line2}</div>}
-                                  <div>{order.shippingAddress.city}, {order.shippingAddress.state} — {order.shippingAddress.pincode}</div>
-                                </div>
-                              </div>
-                            )}
                           </div>
                         </div>
+                      )}
 
-                        <div className="oh-divider" />
-
-                        {/* ITEMS */}
-                        <div>
-                          <div className="oh-items-label">Items Ordered ({order.items.length})</div>
-                          <div className="oh-items-list">
-                            {order.items.map((item, i) => {
-                              const pid = orderLineProductId(item)
-                              const canRateProduct = ['DELIVERED', 'FULFILLED'].includes(order.status) && !!pid
-                              const already = pid && reviewedProductIds.has(pid)
-                              
-                              const getAttrs = (attr) => {
-                                if (!attr) return {};
-                                return attr instanceof Map ? Object.fromEntries(attr) : attr;
-                              };
-                              const displayAttributes = getAttrs(item.attributes);
-                              const hasAttributes = displayAttributes && Object.entries(displayAttributes).filter(([, v]) => v).length > 0;
-
-                              return (
-                              <div key={i} className="oh-item" style={{ cursor: 'default', flexDirection: 'column', alignItems: 'stretch' }}>
-                                <div
-                                  className="oh-item-row"
-                                  onClick={() => { if (pid) navigate(`/products/${pid}`) }}
-                                  style={{ cursor: pid ? 'pointer' : 'default' }}
-                                >
-                                  <div className="oh-item-img">
-                                    {item.image
-                                      ? <img src={getCloudinaryUrl(item.image, 100)} alt={item.name} loading="lazy" width="50" height="50" />
-                                      : <div className="oh-item-placeholder" />
-                                    }
-                                  </div>
-                                  <div style={{ flex:1, minWidth:0 }}>
-                                    <div className="oh-item-name">
-                                      {item.name}
-                                      {hasAttributes && (
-                                        <span style={{ marginLeft: 8, color: '#6b7280', fontSize: '0.9em', fontWeight: 500 }}>
-                                          ({Object.values(displayAttributes).filter(v => v).map(v => String(v).toUpperCase()).join(', ')})
-                                        </span>
-                                      )}
-                                    </div>
-                                    <div className="oh-item-meta" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
-                                      <span className="oh-item-qty">Qty: {item.quantity} · ₹{item.price} each</span>
-                                    </div>
-                                  </div>
-                                  <div className="oh-item-price">₹{(item.price * item.quantity).toLocaleString()}</div>
-                                </div>
-                                {canRateProduct && (
-                                  <div className="oh-rate-row" onClick={(e) => e.stopPropagation()}>
-                                    {already ? (
-                              <span className="oh-rate-done">Thanks, you have rated this product!</span>
+                      {/* 2-Column Details: Shipping & Fulfillment info */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Delivery Channel / Tracking */}
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">
+                              Shipping & Logistics
+                            </span>
+                            {isDelhivery ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                🚀 Delhivery Surface/Air
+                              </span>
+                            ) : isLocal ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                🚚 Local Dispatch Fleet
+                              </span>
                             ) : (
-                                      <>
-                                        <span className="oh-rate-lbl">Rate product</span>
-                                        <div className="oh-rate-stars">
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
+                                Standard Warehouse Fulfillment
+                              </span>
+                            )}
+                          </div>
+
+                          {isDelhivery && order.shipping?.waybill ? (
+                            <div className="p-3.5 bg-amber-50/50 rounded-xl border border-amber-200/80 space-y-2 text-xs">
+                              <div className="flex items-center justify-between">
+                                <span className="text-amber-900 font-bold">Delhivery AWB Tracking:</span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyWaybill(order.shipping.waybill)}
+                                  className="text-[10px] font-black uppercase text-amber-800 hover:underline cursor-pointer"
+                                >
+                                  {copiedWaybill === order.shipping.waybill ? '✓ Copied' : '📋 Copy AWB'}
+                                </button>
+                              </div>
+                              <div className="font-mono font-bold text-amber-950 text-sm">
+                                {order.shipping.waybill}
+                              </div>
+                              <div className="pt-1">
+                                <a
+                                  href={`https://www.delhivery.com/track/package/${order.shipping.waybill}`}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] font-black text-amber-800 hover:text-amber-900 underline"
+                                >
+                                  <span>Track Live on Delhivery Portal</span>
+                                  <span>↗</span>
+                                </a>
+                              </div>
+                            </div>
+                          ) : isLocal && isLocalDispatchedOrAssigned(order) ? (
+                            <div className="p-3.5 bg-emerald-50/50 rounded-xl border border-emerald-200/80 space-y-2 text-xs">
+                              <div className="font-bold text-emerald-900 flex justify-between">
+                                <span>Driver / Courier: {order.localDelivery?.assignedPerson || 'Local Partner'}</span>
+                                {order.localDelivery?.status && (
+                                  <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                                    {order.localDelivery.status}
+                                  </span>
+                                )}
+                              </div>
+                              {order.localDelivery?.contactPhone && (
+                                <div className="text-emerald-800">
+                                  Contact: <a href={`tel:${order.localDelivery.contactPhone}`} className="font-mono font-bold underline">{order.localDelivery.contactPhone}</a>
+                                </div>
+                              )}
+                              {order.localDelivery?.trackingNumber && (
+                                <div className="text-[11px] text-emerald-700">
+                                  Tracking #: <span className="font-mono font-bold">{order.localDelivery.trackingNumber}</span>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
+                              Order is routed to our central supply hub. Tracking credentials will appear once packed.
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Delivery Destination Address */}
+                        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs space-y-2 text-xs">
+                          <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 block">
+                            Delivery Destination Address
+                          </span>
+                          <div className="font-bold text-slate-900 text-sm">
+                            {order.shippingAddress?.fullName || user?.name || 'Retail Business'}
+                          </div>
+                          <p className="text-slate-600 leading-relaxed">
+                            {order.shippingAddress?.line1 || order.shippingAddress?.addressLine1 || 'Registered Store Address'}
+                            {(order.shippingAddress?.line2 || order.shippingAddress?.addressLine2) && `, ${order.shippingAddress.line2 || order.shippingAddress.addressLine2}`}
+                            {order.shippingAddress?.city && `, ${order.shippingAddress.city}`}
+                            {order.shippingAddress?.state && ` - ${order.shippingAddress.state}`}
+                            {order.shippingAddress?.pincode && ` (${order.shippingAddress.pincode})`}
+                          </p>
+                          {order.shippingAddress?.phone && (
+                            <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-100">
+                              Recipient Phone: <strong className="text-slate-800 font-mono">{order.shippingAddress.phone}</strong>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Items Table */}
+                      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                        <div className="px-5 py-3.5 bg-slate-50/80 border-b border-slate-200/80 flex items-center justify-between text-xs">
+                          <span className="font-black text-slate-800">Purchased Wholesale Inventory ({order.items?.length || 0})</span>
+                          <span className="text-slate-500 font-semibold">Prices inclusive of GST</span>
+                        </div>
+
+                        <div className="divide-y divide-slate-100">
+                          {order.items?.map((item, idx) => {
+                            const pid = orderLineProductId(item)
+                            const canRateProduct = isDelivered && Boolean(pid)
+                            const alreadyRated = pid && reviewedProductIds.has(pid)
+
+                            return (
+                              <div key={idx} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors">
+                                <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                                  <div
+                                    onClick={() => pid && navigate(`/products/${pid}`)}
+                                    className={`w-14 h-14 rounded-2xl bg-white border border-slate-200 p-1 shrink-0 flex items-center justify-center overflow-hidden shadow-2xs ${
+                                      pid ? 'cursor-pointer hover:border-violet-400' : ''
+                                    }`}
+                                  >
+                                    {item.image ? (
+                                      <img src={getCloudinaryUrl(item.image, 120)} alt={item.name} className="w-full h-full object-contain" />
+                                    ) : (
+                                      <span className="text-lg">📦</span>
+                                    )}
+                                  </div>
+
+                                  <div className="space-y-0.5 flex-1 min-w-0">
+                                    <div
+                                      onClick={() => pid && navigate(`/products/${pid}`)}
+                                      className={`font-black text-slate-900 text-sm truncate ${
+                                        pid ? 'cursor-pointer hover:text-violet-700 hover:underline' : ''
+                                      }`}
+                                    >
+                                      {item.name}
+                                    </div>
+                                    <div className="text-xs text-slate-500 flex items-center gap-2">
+                                      <span>Qty: <strong className="text-slate-800 font-bold">{item.quantity}</strong></span>
+                                      <span>•</span>
+                                      <span>₹{Number(item.price || 0).toLocaleString('en-IN')} / unit</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center justify-between sm:justify-end gap-6 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                  {canRateProduct && (
+                                    <div className="flex items-center gap-1.5">
+                                      {alreadyRated ? (
+                                        <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                                          ✓ Reviewed
+                                        </span>
+                                      ) : (
+                                        <div className="flex items-center gap-1 bg-amber-50/60 px-2.5 py-1 rounded-xl border border-amber-200/80">
+                                          <span className="text-[10px] font-bold text-amber-800">Rate:</span>
                                           {[1, 2, 3, 4, 5].map((star) => (
                                             <button
                                               key={star}
                                               type="button"
-                                              className="oh-rate-star"
-                                              title={`${star} stars`}
                                               onClick={async () => {
                                                 try {
                                                   await api.post(`/api/products/${pid}/reviews`, { rating: star, comment: '' })
                                                   markProductReviewed(pid)
-                                                  notify('Thanks for rating this product', 'success')
+                                                  notify('Thank you for your rating!', 'success')
                                                 } catch (err) {
-                                                  const code = err?.response?.data?.error
-                                                  notify(code === 'not_eligible' ? 'You can rate after this item is on a delivered order' : (err?.response?.data?.error || 'Could not save rating'), 'error')
+                                                  notify('Unable to save rating right now', 'error')
                                                 }
                                               }}
+                                              className="text-amber-400 hover:text-amber-500 text-xs cursor-pointer transition-transform hover:scale-125"
                                             >
-                                              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z"/></svg>
+                                              ★
                                             </button>
                                           ))}
                                         </div>
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                              )
-                            })}
-                          </div>
-                        </div>
-
-                        {/* RATING */}
-                        {order.status === 'FULFILLED' && !order.feedbackRating && (
-                          <>
-                            <div className="oh-divider" />
-                            <div>
-                              <div className="oh-section-label">Rate This Delivery</div>
-                              <div className="oh-stars">
-                                {[1,2,3,4,5].map(star => (
-                                  <button
-                                    key={star}
-                                    className={`oh-star ${star <= 3 ? 'low' : 'high'}`}
-                                    title={`${star} Star`}
-                                    onClick={async () => {
-                                      try {
-                                        const { data } = await api.post(`/api/orders/${order._id}/feedback`, { rating: star })
-                                        setOrders(prev => prev.map(o => o._id === order._id ? { ...o, feedbackRating: data.feedbackRating } : o))
-                                      } catch {}
-                                    }}
-                                  >
-                                    <svg viewBox="0 0 24 24" fill="currentColor">
-                                      <path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z"/>
-                                    </svg>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </>
-                        )}
-
-                        {order.feedbackRating && (
-                          <>
-                            <div className="oh-divider" />
-                            <div>
-                              <div className="oh-section-label">Your Rating</div>
-                              <div className="oh-stars">
-                                {[1,2,3,4,5].map(star => (
-                                  <div key={star} className={`oh-star ${star <= 3 ? 'low' : 'high'}`} style={{ cursor:'default' }}>
-                                    <svg viewBox="0 0 24 24" fill={star <= order.feedbackRating ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.5">
-                                      <path d="M12 .587l3.668 7.431L24 9.748l-6 5.848L19.335 24 12 19.771 4.665 24 6 15.596 0 9.748l8.332-1.73z"/>
-                                    </svg>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </>
-                        )}
-
-                        {/* ORDER ACTIONS & INVOICE */}
-                        <div className="oh-divider" />
-                        <div>
-                          <div className="oh-section-label">Order Actions</div>
-                          <div className="oh-action-row">
-                            {order.paymentStatus === 'PAID' && order.billId && (
-                              <>
-                                <button className="oh-btn green" onClick={() => {
-                                  const t = localStorage.getItem('token')
-                                  window.open(`${api.defaults.baseURL}/api/bills/${order.billId}/pdf?token=${t}`, '_blank')
-                                }}>
-                                  <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a1 1 0 001 1h16a1 1 0 001-1v-3"/></svg>
-                                  Download PDF
-                                </button>
-                                <button className="oh-btn outline" onClick={() => {
-                                  const t = localStorage.getItem('token')
-                                  window.open(`${api.defaults.baseURL}/api/bills/${order.billId}/html?token=${t}`, '_blank')
-                                }}>
-                                  View HTML
-                                </button>
-                              </>
-                            )}
-
-                            <button
-                              type="button"
-                              className="oh-btn outline"
-                              onClick={() => navigate(`/order-confirmation/${order._id}`)}
-                            >
-                              <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                              Order Details & Receipt
-                            </button>
-
-                            {order.paymentStatus !== 'PAID' && order.status !== 'CANCELLED' && (
-                              <button
-                                type="button"
-                                className="oh-btn pay-now"
-                                disabled={retryingPaymentId === order._id}
-                                onClick={() => handleRetryOrderPayment(order)}
-                              >
-                                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                                {retryingPaymentId === order._id ? 'Opening Gateway...' : `Complete Payment (₹${(order.paymentMethod === 'COD_20' ? order.totalEstimate * 0.2 : order.totalEstimate).toLocaleString()})`}
-                              </button>
-                            )}
-
-                            {canCancelOrder(order) && (
-                              <button
-                                type="button"
-                                className="oh-btn premium-cancel"
-                                onClick={() => {
-                                  setCancellingOrder(order)
-                                  setCancelReasonOption('Ordered by mistake')
-                                  setCancelCustomReason('')
-                                }}
-                              >
-                                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                                Cancel Order
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* LOCAL DELIVERY TRACKING - Displayed only when order is truly local delivery and not Delhivery */}
-                        {order.status !== 'CANCELLED' && isLocalDeliveryOrder(order) && isLocalDispatchedOrAssigned(order) && (
-                          <>
-                            <div className="oh-divider" />
-                            <div>
-                              <div className="oh-section-label">Fulfillment: Local Delivery</div>
-                              <div className="oh-local-card">
-                                <div className="oh-local-hd">
-                                  <div className="oh-local-title-wrap">
-                                    <div className="oh-local-ico">🚚</div>
-                                    <div>
-                                      <div className="oh-local-title-text">Click2Kart Local Express Delivery</div>
-                                      <div className="oh-local-subtitle">Internal Fleet / Local Courier</div>
-                                    </div>
-                                  </div>
-                                  <span className="oh-local-status-pill">
-                                    {order.localDelivery?.status || (order.status === 'DELIVERED' ? 'Delivered' : 'Dispatched')}
-                                  </span>
-                                </div>
-                                <div className="oh-local-grid">
-                                  <div className="oh-local-field">
-                                    <div className="oh-local-lbl">Assigned Delivery Partner</div>
-                                    <div className="oh-local-val">
-                                      {order.localDelivery?.assignedPerson || order.localDelivery?.driverName || 'Dispatch partner assigned'}
-                                    </div>
-                                  </div>
-                                  <div className="oh-local-field">
-                                    <div className="oh-local-lbl">Contact / Phone</div>
-                                    <div className="oh-local-val">
-                                      {(order.localDelivery?.contactPhone || order.localDelivery?.driverPhone) ? (
-                                        <a href={`tel:${order.localDelivery.contactPhone || order.localDelivery.driverPhone}`}>
-                                          📞 {order.localDelivery.contactPhone || order.localDelivery.driverPhone}
-                                        </a>
-                                      ) : 'Contact shared upon dispatch'}
-                                    </div>
-                                  </div>
-                                  <div className="oh-local-field">
-                                    <div className="oh-local-lbl">Tracking / Vehicle Ref</div>
-                                    <div className="oh-local-val">
-                                      {order.localDelivery?.trackingNumber || order.localDelivery?.trackingRef || 'Local Logistics Routing'}
-                                    </div>
-                                  </div>
-                                  <div className="oh-local-field">
-                                    <div className="oh-local-lbl">Dispatched On</div>
-                                    <div className="oh-local-val">
-                                      {order.localDelivery?.dispatchedAt ? fmtIST(order.localDelivery.dispatchedAt) : 'Dispatched from warehouse'}
-                                    </div>
-                                  </div>
-                                  {order.localDelivery?.notes && (
-                                    <div className="oh-local-field" style={{ gridColumn: '1 / -1' }}>
-                                      <div className="oh-local-lbl">Delivery Instructions / Notes</div>
-                                      <div className="oh-local-val" style={{ fontWeight: 500, color: '#374151' }}>
-                                        {order.localDelivery.notes}
-                                      </div>
+                                      )}
                                     </div>
                                   )}
+
+                                  <div className="text-right">
+                                    <div className="text-[10px] text-slate-400 font-bold uppercase">Subtotal</div>
+                                    <div className="font-black text-slate-900 text-base">
+                                      ₹{(Number(item.price || 0) * Number(item.quantity || 1)).toLocaleString('en-IN')}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          </>
-                        )}
-
-                        {/* DELHIVERY PREMIUM SHIPMENT CARD */}
-                        {order.status !== 'CANCELLED' && order.shipping?.waybill && (
-                          <>
-                            <div className="oh-divider" />
-                            <div>
-                              <div className="oh-section-label">Logistics & Tracking</div>
-                              <div className="oh-shipment-card">
-                                <div className="oh-shipment-header">
-                                  <div className="oh-shipment-title">
-                                    <div className="oh-shipment-icon">
-                                      <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
-                                      </svg>
-                                    </div>
-                                    <div className="oh-shipment-info">
-                                      <div className="oh-shipment-label">Official Logistics Partner</div>
-                                      <div className="oh-shipment-status" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                        <span>{order.shipping.provider || 'Delhivery Express'}</span>
-                                        <span style={{ fontSize: 9, background: '#fef3c7', color: '#b45309', padding: '1px 6px', borderRadius: 4, fontWeight: 700 }}>
-                                          VERIFIED
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div style={{ textAlign: 'right' }}>
-                                    <div className="oh-shipment-label">Status</div>
-                                    <div className="oh-shipment-status">{order.shipping.status || 'In Transit'}</div>
-                                  </div>
-                                </div>
-                                <div className="oh-shipment-details">
-                                  <div className="oh-shipment-detail">
-                                    <div className="oh-shipment-detail-label">Waybill / AWB Number</div>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                                      <span className="oh-shipment-detail-value" style={{ fontFamily: 'monospace', letterSpacing: '.05em' }}>
-                                        {order.shipping.waybill}
-                                      </span>
-                                      <button
-                                        type="button"
-                                        className="oh-copy-btn"
-                                        onClick={() => handleCopyWaybill(order.shipping.waybill)}
-                                        title="Copy AWB number"
-                                      >
-                                        {copiedWaybill === order.shipping.waybill ? (
-                                          <>
-                                            <svg width="12" height="12" fill="none" stroke="#059669" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"/></svg>
-                                            <span style={{ color: '#059669' }}>Copied!</span>
-                                          </>
-                                        ) : (
-                                          <>
-                                            <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                                            <span>Copy</span>
-                                          </>
-                                        )}
-                                      </button>
-                                    </div>
-                                  </div>
-                                  <div className="oh-shipment-detail">
-                                    <div className="oh-shipment-detail-label">Carrier Network</div>
-                                    <div className="oh-shipment-detail-value">Delhivery Pan-India Express & Surface Hub</div>
-                                  </div>
-                                </div>
-                                <div className="oh-shipment-actions">
-                                  <button className="oh-btn blue" onClick={() => {
-                                    const wb = order.shipping?.waybill
-                                    let url = wb ? `https://www.delhivery.com/track/package/${encodeURIComponent(wb)}` : (order.shipping?.trackingUrl || '')
-                                    if (url && url.includes('track.delhivery.com')) {
-                                      url = url.replace('track.delhivery.com', 'www.delhivery.com')
-                                    }
-                                    if (url) window.open(url, '_blank', 'noopener,noreferrer')
-                                  }}>
-                                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                                    </svg>
-                                    Live Delhivery Tracking
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </>
-                        )}
-
+                            )
+                          })}
+                        </div>
                       </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
 
-        {/* CANCEL ORDER MODAL */}
+                      {/* Action Bar */}
+                      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {order.paymentStatus === 'PAID' && order.billId && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  window.open(`${api.defaults.baseURL}/api/bills/${order.billId}/pdf?token=${tokenStr}`, '_blank')
+                                }}
+                                className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition cursor-pointer flex items-center gap-1.5"
+                              >
+                                <span>📄 Download PDF Tax Invoice</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  window.open(`${api.defaults.baseURL}/api/bills/${order.billId}/html?token=${tokenStr}`, '_blank')
+                                }}
+                                className="px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 transition cursor-pointer"
+                              >
+                                View HTML Invoice ↗
+                              </button>
+                            </>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/order-confirmation/${order._id}`)}
+                            className="px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 font-bold text-xs border border-slate-200 transition cursor-pointer flex items-center gap-1.5"
+                          >
+                            <span>Receipt & Details →</span>
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-end sm:self-center">
+                          {order.paymentStatus !== 'PAID' && order.status !== 'CANCELLED' && (
+                            <button
+                              type="button"
+                              disabled={retryingPaymentId === order._id}
+                              onClick={() => handleRetryOrderPayment(order)}
+                              className="px-4 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-violet-200 active:scale-95 transition cursor-pointer"
+                            >
+                              {retryingPaymentId === order._id ? 'Connecting Gateway…' : `Pay ₹${Number(order.totalEstimate || 0).toLocaleString('en-IN')} Online`}
+                            </button>
+                          )}
+
+                          {canCancelOrder(order) && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCancellingOrder(order)
+                                setCancelReasonOption('Ordered by mistake')
+                                setCancelCustomReason('')
+                              }}
+                              className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 transition cursor-pointer"
+                            >
+                              Cancel Order
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* ── CANCELLATION MODAL ── */}
         {cancellingOrder && (
-          <div style={{
-            position: 'fixed', inset: 0, zIndex: 1000,
-            background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(4px)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 16
-          }}>
-            <div style={{
-              background: 'white', borderRadius: 20, width: '100%', maxWidth: 480,
-              padding: '24px 28px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-              animation: 'ohUp .3s ease'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+          <div
+            className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+            onClick={() => setCancellingOrder(null)}
+          >
+            <div
+              className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 space-y-5 animate-scale-up"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl shrink-0">
                     ⚠️
                   </div>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: 18, color: '#1e1b2e', fontWeight: 800 }}>Cancel Wholesale Order</h3>
-                    <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>
-                      Order #{cancellingOrder._id.slice(-6).toUpperCase()} · ₹{cancellingOrder.totalEstimate?.toLocaleString()}
+                    <h3 className="font-black text-lg text-slate-900">Cancel Wholesale Order</h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Order #{cancellingOrder._id.slice(-6).toUpperCase()} • ₹{Number(cancellingOrder.totalEstimate || 0).toLocaleString('en-IN')}
                     </p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => setCancellingOrder(null)}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#9ca3af', padding: 4 }}
+                  className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center cursor-pointer"
                 >
                   ✕
                 </button>
               </div>
 
-              <p style={{ fontSize: 13, color: '#4b5563', lineHeight: 1.5, marginBottom: 16 }}>
-                Are you sure you want to cancel this wholesale order? Allocated inventory will be returned to stock.
+              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 text-xs text-slate-700 space-y-1.5">
+                <p>Are you sure you want to cancel this wholesale order? Allocated inventory will be returned to stock.</p>
                 {cancellingOrder.paymentMethod === 'CREDIT' && (
-                  <span style={{ color: '#059669', display: 'block', marginTop: 6, fontWeight: 700 }}>
-                    ✓ The ₹{cancellingOrder.totalEstimate?.toLocaleString()} credit utilized will be instantly restored to your available credit limit.
-                  </span>
+                  <p className="font-bold text-emerald-700 pt-1 border-t border-slate-200/60">
+                    ✓ The ₹{Number(cancellingOrder.totalEstimate || 0).toLocaleString('en-IN')} credit utilized will be restored instantly to your available Trade Credit balance.
+                  </p>
                 )}
-              </p>
+              </div>
 
-              <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.1em', color: '#6b7280', marginBottom: 8 }}>
+              <div className="space-y-2 text-xs">
+                <label className="block text-[10px] font-black uppercase tracking-wider text-slate-400">
                   Reason for Cancellation
                 </label>
                 {[
@@ -1596,21 +968,18 @@ export default function OrderHistory() {
                 ].map((opt) => (
                   <label
                     key={opt}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-                      borderRadius: 8, border: `1px solid ${cancelReasonOption === opt ? '#7c3aed' : '#e5e7eb'}`,
-                      background: cancelReasonOption === opt ? '#f5f3ff' : '#ffffff',
-                      marginBottom: 6, cursor: 'pointer', fontSize: 13, color: '#1f2937', fontWeight: 500
-                    }}
+                    className={`flex items-center gap-2.5 p-3 rounded-xl border transition cursor-pointer ${
+                      cancelReasonOption === opt ? 'border-violet-600 bg-violet-50/60' : 'border-slate-200 bg-white hover:bg-slate-50'
+                    }`}
                   >
                     <input
                       type="radio"
                       name="cancelReason"
                       checked={cancelReasonOption === opt}
                       onChange={() => setCancelReasonOption(opt)}
-                      style={{ accentColor: '#7c3aed' }}
+                      className="accent-violet-600"
                     />
-                    {opt}
+                    <span className="font-semibold text-slate-800">{opt}</span>
                   </label>
                 ))}
 
@@ -1618,27 +987,18 @@ export default function OrderHistory() {
                   <textarea
                     value={cancelCustomReason}
                     onChange={(e) => setCancelCustomReason(e.target.value)}
-                    placeholder="Please specify your cancellation reason..."
+                    placeholder="Please specify reason for cancellation..."
                     rows={2}
-                    style={{
-                      width: '100%', marginTop: 8, padding: '8px 12px', borderRadius: 8,
-                      border: '1px solid #d1d5db', fontSize: 13, boxSizing: 'border-box',
-                      fontFamily: 'inherit', outline: 'none'
-                    }}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:ring-2 focus:ring-violet-500 focus:bg-white"
                   />
                 )}
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+              <div className="flex gap-3 pt-2">
                 <button
                   type="button"
-                  disabled={cancellingLoading}
                   onClick={() => setCancellingOrder(null)}
-                  style={{
-                    padding: '10px 18px', borderRadius: 12, border: '1px solid #e2e8f0',
-                    background: '#f8fafc', color: '#475569', fontSize: 12, fontWeight: 700,
-                    cursor: 'pointer', transition: 'all .2s'
-                  }}
+                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-100 transition cursor-pointer"
                 >
                   Keep Order
                 </button>
@@ -1646,24 +1006,15 @@ export default function OrderHistory() {
                   type="button"
                   disabled={cancellingLoading}
                   onClick={handleConfirmCancelOrder}
-                  style={{
-                    padding: '10px 22px', borderRadius: 12, border: 'none',
-                    background: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
-                    color: 'white', fontSize: 12, fontWeight: 800, letterSpacing: '.04em',
-                    boxShadow: '0 4px 14px rgba(225, 29, 72, 0.3)',
-                    cursor: cancellingLoading ? 'not-allowed' : 'pointer',
-                    opacity: cancellingLoading ? 0.7 : 1,
-                    display: 'inline-flex', alignItems: 'center', gap: 6,
-                    transition: 'all .2s'
-                  }}
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-black text-xs uppercase tracking-wider shadow-md shadow-rose-200 transition cursor-pointer disabled:opacity-50"
                 >
-                  {cancellingLoading ? 'Processing...' : 'Confirm Cancellation'}
+                  {cancellingLoading ? 'Cancelling…' : 'Confirm Cancel'}
                 </button>
               </div>
             </div>
           </div>
         )}
       </div>
-    </>
+    </div>
   )
 }
